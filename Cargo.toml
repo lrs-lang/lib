@@ -1,0 +1,17 @@
+[package]
+name = "linux"
+version = "0.1.0"
+authors = [ "mahkoh" ]
+
+[lib]
+name = "linux"
+
+[features]
+default = ["retry"]
+retry = []
+
+[dev-dependencies]
+rand = "*"
+
+[dependencies.rest_easy]
+git = "https://github.com/mahkoh/rest_easy"
