@@ -1,6 +1,6 @@
 use std::num::{Int, SignedInt};
 
-use imp::cty::{c_int};
+use imp::cty::{c_int, c_void, size_t};
 use imp::errno::{self, Errno};
 use imp::result::{Result};
 
@@ -26,5 +26,17 @@ pub fn retry<T: SignedInt, F: FnMut() -> T>(mut f: F) -> Result<T> {
         Err(Errno(-ret.to_i64().unwrap() as c_int))
     } else {
         Ok(ret)
+    }
+}
+
+pub fn memchr(s: &[u8], c: u8) -> Option<usize> {
+    use imp::cty::{memchr};
+
+    let ptr = s.as_ptr();
+    let res = unsafe { memchr(ptr as *const c_void, c as c_int, s.len() as size_t) };
+    if res.is_null() {
+        None
+    } else {
+        Some(res as usize - ptr as usize)
     }
 }

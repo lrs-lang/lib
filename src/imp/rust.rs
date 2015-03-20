@@ -23,6 +23,10 @@ impl AsStr for [u8] {
 
 pub trait AsLinuxStr {
     fn as_linux_str(&self) -> &OsStr;
+    
+    fn as_bytes(&self) -> &[u8] {
+        <OsStr as OsStrExt>::as_bytes(self.as_linux_str())
+    }
 }
 
 impl<'a, T: AsLinuxStr+?Sized> AsLinuxStr for &'a T {
@@ -95,3 +99,35 @@ impl<T: UnsignedInt> UIntRange<T> for ops::RangeFrom<T> {
 impl<T: UnsignedInt> UIntRange<T> for ops::RangeFull {
     fn to_range(self) -> ops::Range<T> { ops::Range { start: T::zero(), end: T::max_value() } }
 }
+
+pub trait IteratorExt2: Iterator {
+    fn collect_into_opt(&mut self, mut buf: &mut [Option<<Self as Iterator>::Item>]) -> usize {
+        let mut count = 0;
+        while buf.len() > 0 {
+            let tmp = buf;
+            tmp[0] = self.next();
+            if tmp[0].is_none() {
+                break;
+            }
+            count += 1;
+            buf = &mut tmp[1..];
+        }
+        count
+    }
+
+    fn collect_into(&mut self, mut buf: &mut [<Self as Iterator>::Item]) -> usize {
+        let mut count = 0;
+        while buf.len() > 0 {
+            let tmp = buf;
+            tmp[0] = match self.next() {
+                Some(v) => v,
+                _ => break,
+            };
+            count += 1;
+            buf = &mut tmp[1..];
+        }
+        count
+    }
+}
+
+impl<T: Iterator> IteratorExt2 for T { }

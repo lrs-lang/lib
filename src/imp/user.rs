@@ -1,14 +1,14 @@
 use std::{self, mem, ptr, fmt};
 use std::io::{BufReader, BufRead};
 use std::ffi::{CStr};
-use std::os::unix::{OsStrExt};
 use std::error::{FromError};
 
 use imp::result::{Result};
 use imp::cty::{uid_t, gid_t, c_char, size_t, c_int};
 use imp::errno::{self};
-use imp::rust::{AsStr, AsLinuxStr, ByteSliceExt};
+use imp::rust::{AsStr, AsLinuxStr, ByteSliceExt, IteratorExt2};
 use imp::file::{File};
+use imp::util::{memchr};
 
 use group::{GroupId};
 
@@ -22,64 +22,41 @@ pub type UserId = uid_t;
 pub struct Info<'a> {
     name:     &'a [u8],
     password: &'a [u8],
-    user_id:  uid_t,
-    group_id: gid_t,
+    user_id:  UserId,
+    group_id: GroupId,
     comment:  &'a [u8],
     home:     &'a [u8],
     shell:    &'a [u8],
 }
 
 impl<'a> Info<'a> {
-    ///// Retrieves user info of the user with id `id`.
-    //pub fn from_user_id(id: uid_t, buf: &'a [u8]) -> Result<Info<'a>> {
-    //    Info::retrieve(|passwd, result| unsafe {
-    //        getpwuid_r(id, passwd, buf.as_ptr() as *mut c_char, buf.len() as size_t,
-    //                   result)
-    //    })
-    //}
+    /// Retrieves user info of the user with id `id`.
+    pub fn from_user_id(id: UserId, buf: &'a mut [u8]) -> Result<Info<'a>> {
+        Info::find_by(buf, |user| user.user_id == id)
+    }
 
-    ///// Retrieves user info of the user with name `name`.
-    //pub fn from_user_name<S: AsLinuxStr>(name: S, buf: &'a [u8]) -> Result<Info<'a>> {
-    //    let name = name.as_linux_str().to_cstring().unwrap();
-    //    Info::retrieve(|passwd, result| unsafe {
-    //        getpwnam_r(name.as_ptr(), passwd, buf.as_ptr() as *mut c_char,
-    //                   buf.len() as size_t, result)
-    //    })
-    //}
+    /// Retrieves user info of the user with name `name`.
+    pub fn from_user_name<S: AsLinuxStr>(name: S, buf: &'a mut [u8]) -> Result<Info<'a>> {
+        let name = name.as_bytes();
+        Info::find_by(buf, |user| user.name == name)
+    }
 
-    //fn retrieve<F: FnMut(&mut passwd, &mut *mut passwd) -> c_int>(
-    //    mut f: F
-    //) -> Result<Info<'a>>
-    //{
-    //    let mut passwd = unsafe { mem::zeroed() };
-    //    let mut result;
-    //    loop {
-    //        result = ptr::null_mut();
-    //        let res = f(&mut passwd, &mut result);
-    //        if res != 0 {
-    //            let err = Errno(-res);
-    //            if !cfg!(feature = "retry") || err != errno::Interrupted {
-    //                return Err(err);
-    //            }
-    //        } else {
-    //            return if result.is_null() {
-    //                Err(errno::DoesNotExist)
-    //            } else {
-    //                unsafe {
-    //                    Ok(Info {
-    //                        name:     CStr::from_ptr(passwd.pw_name).to_bytes(),
-    //                        password: CStr::from_ptr(passwd.pw_passwd).to_bytes(),
-    //                        user_id:  passwd.pw_uid,
-    //                        group_id: passwd.pw_gid,
-    //                        comment:  CStr::from_ptr(passwd.pw_gecos).to_bytes(),
-    //                        home:     CStr::from_ptr(passwd.pw_dir).to_bytes(),
-    //                        shell:    CStr::from_ptr(passwd.pw_shell).to_bytes(),
-    //                    })
-    //                }
-    //            };
-    //        }
-    //    }
-    //}
+    /// Finds the first user that satisfies the predicate.
+    pub fn find_by<F: Fn(&Info) -> bool>(buf: &'a mut [u8], pred: F) -> Result<Info<'a>> {
+        let mut err = Ok(());
+        {
+            let mut iter = iter_buf(Some(&mut err));
+            while let Some(user) = iter.next(buf) {
+                if pred(&user) {
+                    // the borrow checked doesn't understand that return ends the loop
+                    let user = unsafe { mem::transmute(user) };
+                    return Ok(user);
+                }
+            }
+        }
+        try!(err);
+        Err(errno::DoesNotExist)
+    }
 
     /// Copies the contained data and returns owned information.
     pub fn to_owned(&self) -> Information {
@@ -122,32 +99,23 @@ pub struct Information {
 }
 
 impl Information {
-    ///// Retrieves user info of the user with id `id`.
-    //pub fn from_user_id(id: uid_t) -> Result<Information> {
-    //    Information::retrieve(|buf| Info::from_user_id(id, buf))
-    //}
+    /// Retrieves user info of the user with id `id`.
+    pub fn from_user_id(id: uid_t) -> Result<Information> {
+        let mut buf = [0; INFO_BUF_SIZE];
+        Info::from_user_id(id, &mut buf).map(|i| i.to_owned())
+    }
 
-    ///// Retrieves user info of the user with name `name`.
-    //pub fn from_user_name<S: AsLinuxStr>(name: S) -> Result<Information> {
-    //    Information::retrieve(|buf| Info::from_user_name(&name, buf))
-    //}
+    /// Retrieves user info of the user with name `name`.
+    pub fn from_user_name<S: AsLinuxStr>(name: S) -> Result<Information> {
+        let mut buf = [0; INFO_BUF_SIZE];
+        Info::from_user_name(name, &mut buf).map(|i| i.to_owned())
+    }
 
-    //fn retrieve<'a, F: FnMut(&mut [u8]) -> Result<Info<'a>>>(
-    //    mut f: F
-    //) -> Result<Information> 
-    //{
-    //    let mut buf = Vec::with_capacity(128);
-    //    loop {
-    //        let cap = buf.capacity();
-    //        unsafe { buf.set_len(cap); }
-    //        match f(&mut buf) {
-    //            Ok(info) => return Ok(info.to_owned()),
-    //            Err(errno::RangeError) => { },
-    //            Err(e) => return Err(e),
-    //        }
-    //        buf.reserve(cap);
-    //    }
-    //}
+    /// Finds the first user that satisfies the predicate.
+    pub fn find_by<F: Fn(&Info) -> bool>(pred: F) -> Result<Information> {
+        let mut buf = [0; INFO_BUF_SIZE];
+        Info::find_by(&mut buf, pred).map(|i| i.to_owned())
+    }
 
     pub fn to_info<'a>(&'a self) -> Info<'a> {
         Info {
@@ -187,13 +155,13 @@ pub trait UserInfo {
 }
 
 impl<'a> UserInfo for Info<'a> {
-    fn name(&self)     -> &[u8] { self.name }
-    fn password(&self) -> &[u8] { self.password }
-    fn user_id(&self)  -> UserId { self.user_id }
+    fn name(&self)     -> &[u8]   { self.name     }
+    fn password(&self) -> &[u8]   { self.password }
+    fn user_id(&self)  -> UserId  { self.user_id  }
     fn group_id(&self) -> GroupId { self.group_id }
-    fn comment(&self)  -> &[u8] { self.comment }
-    fn home(&self)     -> &[u8] { self.home }
-    fn shell(&self)    -> &[u8] { self.shell }
+    fn comment(&self)  -> &[u8]   { self.comment  }
+    fn home(&self)     -> &[u8]   { self.home     }
+    fn shell(&self)    -> &[u8]   { self.shell    }
 }
 
 impl UserInfo for Information {
@@ -206,31 +174,32 @@ impl UserInfo for Information {
     fn shell(&self)    -> &[u8]   { &self.shell    }
 }
 
-/// Returns an iterator over the users in `/etc/passwd`.
+/// Returns an allocating iterator over the users in `/etc/passwd`.
 ///
 /// Errors can optionally be stored in `error`.
-pub fn iter<'a>(error: Option<&'a mut Result<()>>) -> InfoIter<'a> {
-    InfoIter::new(error)
+pub fn iter<'a>(error: Option<&'a mut Result<()>>) -> InformationIter<'a> {
+    InformationIter::new(error)
 }
 
-pub struct InfoIter<'a> {
+/// An allocating iterator over users.
+pub struct InformationIter<'a> {
     file: BufReader<File>,
     err: Option<&'a mut Result<()>>,
 }
 
-impl<'a> InfoIter<'a> {
-    fn new(error: Option<&'a mut Result<()>>) -> InfoIter<'a> {
+impl<'a> InformationIter<'a> {
+    fn new(error: Option<&'a mut Result<()>>) -> InformationIter<'a> {
         match File::open_read("/etc/passwd") {
             Err(e) => {
                 if let Some(err) = error {
                     *err = Err(e);
                 }
-                InfoIter {
+                InformationIter {
                     file: BufReader::with_capacity(0, File::invalid()),
                     err: None,
                 }
             },
-            Ok(f) => InfoIter {
+            Ok(f) => InformationIter {
                 file: BufReader::new(f),
                 err: error,
             },
@@ -244,7 +213,7 @@ impl<'a> InfoIter<'a> {
     }
 }
 
-impl<'a> Iterator for InfoIter<'a> {
+impl<'a> Iterator for InformationIter<'a> {
     type Item = Information;
 
     fn next(&mut self) -> Option<Information> {
@@ -257,31 +226,147 @@ impl<'a> Iterator for InfoIter<'a> {
                 Some(&b'\n') => &buf[..buf.len()-1],
                 _ => &buf[..],
             };
-            let parts: Vec<_> = SliceExt::split(buf, |&c| c == b':').collect();
-            if parts.len() != 7 {
-                self.set_err(errno::ProtocolError);
-                None
-            } else {
-                let user_id = match parts[2].parse() {
-                    Ok(id) => id,
-                    _ => { self.set_err(errno::ProtocolError); return None; },
-                };
-                let group_id = match parts[3].parse() {
-                    Ok(id) => id,
-                    _ => { self.set_err(errno::ProtocolError); return None; },
-                };
-                Some(Information {
-                    name:     parts[0].to_vec(),
-                    password: parts[1].to_vec(),
-                    user_id:  user_id,
-                    group_id: group_id,
-                    comment:  parts[4].to_vec(),
-                    home:     parts[5].to_vec(),
-                    shell:    parts[6].to_vec(),
-                })
-            }
+            let (parts, uid, gid) = match parse_line(buf) {
+                Some(p) => p,
+                _ => {
+                    self.set_err(errno::InvalidSequence);
+                    return None;
+                }
+            };
+            Some(Information {
+                name:     parts[0].to_vec(),
+                password: parts[1].to_vec(),
+                user_id:  uid,
+                group_id: gid,
+                comment:  parts[4].to_vec(),
+                home:     parts[5].to_vec(),
+                shell:    parts[6].to_vec(),
+            })
         } else {
             None
         }
     }
+}
+
+/// Returns an non-allocating iterator over the users in `/etc/passwd`.
+///
+/// Errors can optionally be stored in `error`.
+pub fn iter_buf<'a>(error: Option<&'a mut Result<()>>) -> InfoIter<'a> {
+    InfoIter::new(error)
+}
+
+/// An allocating iterator over users.
+pub struct InfoIter<'a> {
+    start: usize,
+    end: usize,
+    file: File,
+    err: Option<&'a mut Result<()>>,
+}
+
+impl<'a> InfoIter<'a> {
+    fn new(error: Option<&'a mut Result<()>>) -> InfoIter<'a> {
+        match File::open_read("/etc/passwd") {
+            Err(e) => {
+                if let Some(err) = error { *err = Err(e); }
+                InfoIter {
+                    start: 0,
+                    end: 0,
+                    file: File::invalid(),
+                    err: None,
+                }
+            },
+            Ok(f) => InfoIter {
+                start: 0,
+                end: 0,
+                file: f,
+                err: error,
+            },
+        }
+    }
+
+    fn set_err(&mut self, e: errno::Errno) {
+        if let Some(ref mut err) = self.err {
+            **err = Err(e);
+        }
+    }
+
+    fn fill<'b>(&mut self, buf: &'b mut [u8]) -> &'b [u8] {
+        loop {
+            {
+                // Borrow checked doesn't understand that return ends the loop.
+                let cur = unsafe { mem::transmute(&buf[self.start..self.end]) };
+                if let Some(pos) = memchr(cur, b'\n') {
+                    self.start += pos + 1;
+                    return &cur[..pos];
+                }
+            }
+            // No newline in the current buffer.
+            // Move it to the left, try to read more, repeat.
+            let dst = buf.as_mut_ptr();
+            let src = unsafe { dst.offset(self.start as isize) };
+            unsafe { ptr::copy(dst, src, self.end - self.start); }
+            self.end -= self.start;
+            self.start = 0;
+            match self.file.read(&mut buf[self.end..]) {
+                Err(e) => {
+                    // This can be errno::Interrupted but only if the library was compiled
+                    // without the 'retry' feature. The user wants to handle it himself.
+                    self.set_err(e);
+                    return &[];
+                },
+                Ok(0) => {
+                    if self.end == buf.len() {
+                        // The buffer is too small for this entry.
+                        self.set_err(errno::NoMemory);
+                    } else if self.end > self.start {
+                        // Not at EOF but the buffer is not empty. The file is corrupted.
+                        self.set_err(errno::InvalidSequence);
+                    }
+                    return &[];
+                },
+                Ok(n) => self.end += n,
+            }
+        }
+    }
+
+    /// Reads the next user.
+    ///
+    /// The same buffer must be used for each call to `next`, otherwise the function can
+    /// panic, return errors, or return nonsense results.
+    pub fn next<'b>(&mut self, buf: &'b mut [u8]) -> Option<Info<'b>> { 
+        let buf = self.fill(buf);
+        if buf.len() == 0 {
+            return None;
+        }
+        if let Some((parts, uid, gid)) = parse_line(buf) {
+            Some(Info {
+                name:     parts[0],
+                password: parts[1],
+                user_id:  uid,
+                group_id: gid,
+                comment:  parts[4],
+                home:     parts[5],
+                shell:    parts[6],
+            })
+        } else {
+            self.set_err(errno::InvalidSequence);
+            None
+        }
+    }
+}
+
+fn parse_line(line: &[u8]) -> Option<([&[u8]; 7], UserId, GroupId)> {
+    let mut parts = [&[][..]; 7];
+    if SliceExt::split(line, |&c| c == b':').collect_into(&mut parts) < 7 {
+        return None;
+    }
+    let user_id = match parts[2].parse() {
+        Ok(id) => id,
+        _ => return None,
+    };
+    let group_id = match parts[3].parse() {
+        Ok(id) => id,
+        _ => return None,
+    };
+    Some((parts, user_id, group_id))
 }

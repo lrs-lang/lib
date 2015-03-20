@@ -9,5 +9,6 @@ pub mod group;
 pub mod errno;
 pub mod result;
 pub mod fs;
+pub mod process;
 
 mod imp;

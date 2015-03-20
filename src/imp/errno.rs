@@ -115,7 +115,7 @@ create! {
     LibSectionCorrupted     = (81,  ".lib section in a.out corrupted"),
     TooManySharedLibs       = (82,  "Attempting to link in too many shared libraries"),
     SharedLibExec           = (83,  "Cannot exec a shared library directly"),
-    InvalidSequence         = (84,  "Invalid multibyte sequence"),
+    InvalidSequence         = (84,  "Invalid sequence"),
     Restart                 = (85,  "Interrupted system call should be restarted"),
     StreamPipeError         = (86,  "Streams pipe error"),
     TooManyUsers            = (87,  "Too many users"),

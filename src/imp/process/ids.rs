@@ -1,7 +1,10 @@
-use imp::cty::{uid_t, c_int, gid_t, size_t};
+use imp::cty::{c_int, size_t};
 use imp::syscall::{getresuid, getresgid, setresuid, setresgid, setgroups, getgroups};
 use imp::result::{Result};
 use imp::errno::{self, Errno};
+
+use user::{UserId};
+use group::{GroupId};
 
 macro_rules! rv {
     ($x:expr) => { if $x < 0 { Err(Errno(-$x as c_int)) } else { Ok(()) } };
@@ -10,19 +13,19 @@ macro_rules! rv {
 
 /// User ids of a process.
 #[derive(Copy, Debug, Clone, Eq, PartialEq)]
-pub struct User {
+pub struct UserIds {
     /// Real id
-    pub real:      uid_t,
+    pub real:      UserId,
     /// Effective id
-    pub effective: uid_t,
+    pub effective: UserId,
     /// Saved id
-    pub saved:     uid_t,
+    pub saved:     UserId,
 }
 
-impl User {
+impl UserIds {
     /// Retrieves the user ids of this process.
-    pub fn get() -> User {
-        let mut ids = User {
+    pub fn get() -> UserIds {
+        let mut ids = UserIds {
             real:      0,
             effective: 0,
             saved:     0,
@@ -39,19 +42,19 @@ impl User {
 
 /// Group ids of a process.
 #[derive(Copy, Debug, Clone, Eq, PartialEq)]
-pub struct Group {
+pub struct GroupIds {
     /// Real id
-    pub real:      gid_t,
+    pub real:      GroupId,
     /// Effective id
-    pub effective: gid_t,
+    pub effective: GroupId,
     /// Saved id
-    pub saved:     gid_t,
+    pub saved:     GroupId,
 }
 
-impl Group {
+impl GroupIds {
     /// Retrieves the group ids of this process.
-    pub fn get() -> Group {
-        let mut ids = Group {
+    pub fn get() -> GroupIds {
+        let mut ids = GroupIds {
             real:      0,
             effective: 0,
             saved:     0,
@@ -68,7 +71,7 @@ impl Group {
 
 /// Sets all user ids to the real id.
 pub fn user_drop_privileges() -> Result<()> {
-    let mut ids = User::get();
+    let mut ids = UserIds::get();
     ids.effective = ids.real;
     ids.saved     = ids.real;
     ids.set()
@@ -76,19 +79,19 @@ pub fn user_drop_privileges() -> Result<()> {
 
 /// Sets all group ids to the real id.
 pub fn group_drop_privileges() -> Result<()> {
-    let mut ids = Group::get();
+    let mut ids = GroupIds::get();
     ids.effective = ids.real;
     ids.saved     = ids.real;
     ids.set()
 }
 
 /// Sets the effective user id.
-pub fn user_set_effective(id: uid_t) -> Result<()> {
+pub fn user_set_effective_ids(id: UserId) -> Result<()> {
     rv!(setresuid(-1, id, -1))
 }
 
 /// Sets the effective group id.
-pub fn group_set_effective(id: gid_t) -> Result<()> {
+pub fn group_set_effective_ids(id: GroupId) -> Result<()> {
     rv!(setresgid(-1, id, -1))
 }
 
@@ -98,7 +101,7 @@ pub fn num_supplementary_groups() -> usize {
 }
 
 /// Retreives the supplementary groups.
-pub fn supplementary_groups(buf: &mut [gid_t]) -> Result<usize> {
+pub fn supplementary_groups(buf: &mut [GroupId]) -> Result<usize> {
     if buf.len() > 65536 {
         return Err(errno::InvalidArgument);
     }
@@ -106,7 +109,7 @@ pub fn supplementary_groups(buf: &mut [gid_t]) -> Result<usize> {
 }
 
 /// Sets the supplementary groups.
-pub fn set_supplementary_groups(buf: &[gid_t]) -> Result<()> {
+pub fn set_supplementary_groups(buf: &[GroupId]) -> Result<()> {
     if buf.len() > 65536 {
         return Err(errno::InvalidArgument);
     }

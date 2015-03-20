@@ -2,7 +2,7 @@ extern crate linux;
 extern crate rand;
 
 use rand::{Rng};
-use linux::fs::file::{File, Flags, Mode};
+use linux::file::{File, Flags, Mode};
 
 fn random_path() -> String {
     let mut path = "dragons/".to_string();

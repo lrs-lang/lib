@@ -79,3 +79,7 @@ pub struct rlimit {
 pub struct fsid_t {
 	pub val: [c_int; 2],
 }
+
+extern {
+    pub fn memchr(s: *const c_void, c: c_int, n: size_t) -> *mut c_void;
+}

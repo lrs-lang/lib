@@ -1,12 +1,12 @@
 extern crate linux;
 
-use linux::process::{ids};
+use linux::{process};
 
 fn main() {
-    let user_ids = ids::User::get();
+    let user_ids = process::UserIds::get();
     println!("{:?}", user_ids);
 
     let mut sups = [0; 20];
-    ids::supplementary_groups(&mut sups);
+    process::supplementary_groups(&mut sups);
     println!("{:?}", sups);
 }
