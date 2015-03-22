@@ -4,10 +4,7 @@
 
 extern crate linux;
 
-use std::io::{Read};
-
-use linux::user::{self, UserInfo};
-use linux::group::{self, GroupInfo};
+use linux::user::{self};
 
 fn main() {
     let mut buf = [0; user::INFO_BUF_SIZE];

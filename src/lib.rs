@@ -12,6 +12,7 @@ pub mod user;
 pub mod group;
 pub mod errno;
 pub mod result;
+pub mod dir;
 pub mod fs;
 pub mod process;
 

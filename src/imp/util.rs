@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::num::{Int, SignedInt};
+use std::num::{SignedInt};
 
 use imp::cty::{c_int, c_void, size_t};
 use imp::errno::{self, Errno};

@@ -4,11 +4,15 @@
 
 use std::str::{self, FromStr};
 use std::borrow::{Cow};
-use std::os::unix::{OsStrExt};
+use std::os::unix::ffi::{OsStrExt};
 use std::ffi::{OsStr, OsString, AsOsStr};
 use std::path::{Path, PathBuf, AsPath};
-use std::num::{UnsignedInt};
+use std::num::{Int};
 use std::{ops};
+
+pub use self::truncate::{SaturatingCast};
+
+pub mod truncate;
 
 pub trait AsStr {
     fn as_str(&self) -> Option<&str>;
@@ -84,6 +88,14 @@ impl<'a> ByteSliceExt for &'a [u8] {
     }
 }
 
+pub trait UnsignedInt: Int { }
+
+impl UnsignedInt for u8    { }
+impl UnsignedInt for u16   { }
+impl UnsignedInt for u32   { }
+impl UnsignedInt for u64   { }
+impl UnsignedInt for usize { }
+
 pub trait UIntRange<T: UnsignedInt> {
     fn to_range(self) -> ops::Range<T>;
 }
@@ -135,3 +147,7 @@ pub trait IteratorExt2: Iterator {
 }
 
 impl<T: Iterator> IteratorExt2 for T { }
+
+pub fn is_signed<T: Int>() -> bool {
+    T::min_value() < T::zero()
+}

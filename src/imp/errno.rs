@@ -182,22 +182,23 @@ impl FromError<Errno> for ::std::io::Error {
 impl FromError<::std::io::Error> for Errno {
     fn from_error(e: ::std::io::Error) -> Errno {
         match e.kind() {
-            ErrorKind::BrokenPipe                     => BrokenPipe,
-            ErrorKind::ConnectionAborted              => ConnectionAborted,
+            ErrorKind::PermissionDenied               => NotPermitted,
+            ErrorKind::NotFound                       => DoesNotExist,
             ErrorKind::ConnectionRefused              => ConnectionRefused,
             ErrorKind::ConnectionReset                => ConnectionReset,
-            ErrorKind::FileNotFound                   => DoesNotExist,
-            ErrorKind::Interrupted                    => Interrupted,
-            ErrorKind::InvalidInput                   => InvalidArgument,
-            ErrorKind::MismatchedFileTypeForOperation => NotATerminal,
+            ErrorKind::ConnectionAborted              => ConnectionAborted,
             ErrorKind::NotConnected                   => SocketNotConnected,
-            ErrorKind::Other                          => RustError,
-            ErrorKind::PathAlreadyExists              => FileExists,
-            ErrorKind::PathDoesntExist                => DoesNotExist,
-            ErrorKind::PermissionDenied               => NotPermitted,
-            ErrorKind::ResourceUnavailable            => WouldBlock,
+            ErrorKind::AddrInUse                      => AddressInUse,
+            ErrorKind::AddrNotAvailable               => AddressNotAvailable,
+            ErrorKind::BrokenPipe                     => BrokenPipe,
+            ErrorKind::AlreadyExists                  => FileExists,
+            ErrorKind::WouldBlock                     => WouldBlock,
+            ErrorKind::InvalidInput                   => InvalidArgument,
             ErrorKind::TimedOut                       => SocketTimedOut,
             ErrorKind::WriteZero                      => RustError,
+            ErrorKind::Interrupted                    => Interrupted,
+            ErrorKind::Other                          => RustError,
+            _                                         => RustError,
         }
     }
 }

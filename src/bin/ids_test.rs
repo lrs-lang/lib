@@ -11,6 +11,6 @@ fn main() {
     println!("{:?}", user_ids);
 
     let mut sups = [0; 20];
-    process::supplementary_groups(&mut sups);
+    let _ = process::supplementary_groups(&mut sups);
     println!("{:?}", sups);
 }

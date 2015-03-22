@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use imp::cty::{c_int, size_t};
+use imp::cty::{c_int};
 use imp::syscall::{getresuid, getresgid, setresuid, setresgid, setgroups, getgroups};
 use imp::result::{Result};
 use imp::errno::{self, Errno};

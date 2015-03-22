@@ -2,17 +2,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::{self, mem, ptr, fmt};
+use std::{self, mem, fmt};
 use std::io::{BufReader, BufRead};
-use std::ffi::{CStr};
 use std::error::{FromError};
 
 use imp::result::{Result};
-use imp::cty::{uid_t, gid_t, c_char, size_t, c_int};
+use imp::cty::{uid_t};
 use imp::errno::{self};
 use imp::rust::{AsStr, AsLinuxStr, ByteSliceExt, IteratorExt2};
 use imp::file::{File};
-use imp::util::{memchr};
+
+use super::{LineReader};
 
 use group::{GroupId};
 
@@ -95,8 +95,8 @@ impl<'a> fmt::Debug for Info<'a> {
 pub struct Information {
     name:     Vec<u8>,
     password: Vec<u8>,
-    user_id:  uid_t,
-    group_id: gid_t,
+    user_id:  UserId,
+    group_id: GroupId,
     comment:  Vec<u8>,
     home:     Vec<u8>,
     shell:    Vec<u8>,
@@ -104,7 +104,7 @@ pub struct Information {
 
 impl Information {
     /// Retrieves user info of the user with id `id`.
-    pub fn from_user_id(id: uid_t) -> Result<Information> {
+    pub fn from_user_id(id: UserId) -> Result<Information> {
         let mut buf = [0; INFO_BUF_SIZE];
         Info::from_user_id(id, &mut buf).map(|i| i.to_owned())
     }
@@ -259,78 +259,14 @@ pub fn iter_buf<'a>(error: Option<&'a mut Result<()>>) -> InfoIter<'a> {
     InfoIter::new(error)
 }
 
-/// An allocating iterator over users.
+/// An non-allocating iterator over users.
 pub struct InfoIter<'a> {
-    start: usize,
-    end: usize,
-    file: File,
-    err: Option<&'a mut Result<()>>,
+    reader: LineReader<'a>,
 }
 
 impl<'a> InfoIter<'a> {
     fn new(error: Option<&'a mut Result<()>>) -> InfoIter<'a> {
-        match File::open_read("/etc/passwd") {
-            Err(e) => {
-                if let Some(err) = error { *err = Err(e); }
-                InfoIter {
-                    start: 0,
-                    end: 0,
-                    file: File::invalid(),
-                    err: None,
-                }
-            },
-            Ok(f) => InfoIter {
-                start: 0,
-                end: 0,
-                file: f,
-                err: error,
-            },
-        }
-    }
-
-    fn set_err(&mut self, e: errno::Errno) {
-        if let Some(ref mut err) = self.err {
-            **err = Err(e);
-        }
-    }
-
-    fn fill<'b>(&mut self, buf: &'b mut [u8]) -> &'b [u8] {
-        loop {
-            {
-                // Borrow checked doesn't understand that return ends the loop.
-                let cur = unsafe { mem::transmute(&buf[self.start..self.end]) };
-                if let Some(pos) = memchr(cur, b'\n') {
-                    self.start += pos + 1;
-                    return &cur[..pos];
-                }
-            }
-            // No newline in the current buffer.
-            // Move it to the left, try to read more, repeat.
-            let dst = buf.as_mut_ptr();
-            let src = unsafe { dst.offset(self.start as isize) };
-            unsafe { ptr::copy(dst, src, self.end - self.start); }
-            self.end -= self.start;
-            self.start = 0;
-            match self.file.read(&mut buf[self.end..]) {
-                Err(e) => {
-                    // This can be errno::Interrupted but only if the library was compiled
-                    // without the 'retry' feature. The user wants to handle it himself.
-                    self.set_err(e);
-                    return &[];
-                },
-                Ok(0) => {
-                    if self.end == buf.len() {
-                        // The buffer is too small for this entry.
-                        self.set_err(errno::NoMemory);
-                    } else if self.end > self.start {
-                        // Not at EOF but the buffer is not empty. The file is corrupted.
-                        self.set_err(errno::InvalidSequence);
-                    }
-                    return &[];
-                },
-                Ok(n) => self.end += n,
-            }
-        }
+        InfoIter { reader: LineReader::new("/etc/passwd", error) }
     }
 
     /// Reads the next user.
@@ -338,7 +274,7 @@ impl<'a> InfoIter<'a> {
     /// The same buffer must be used for each call to `next`, otherwise the function can
     /// panic, return errors, or return nonsense results.
     pub fn next<'b>(&mut self, buf: &'b mut [u8]) -> Option<Info<'b>> { 
-        let buf = self.fill(buf);
+        let buf = self.reader.fill(buf);
         if buf.len() == 0 {
             return None;
         }
@@ -353,7 +289,7 @@ impl<'a> InfoIter<'a> {
                 shell:    parts[6],
             })
         } else {
-            self.set_err(errno::InvalidSequence);
+            self.reader.set_err(errno::InvalidSequence);
             None
         }
     }
@@ -361,7 +297,7 @@ impl<'a> InfoIter<'a> {
 
 fn parse_line(line: &[u8]) -> Option<([&[u8]; 7], UserId, GroupId)> {
     let mut parts = [&[][..]; 7];
-    if SliceExt::split(line, |&c| c == b':').collect_into(&mut parts) < 7 {
+    if line.split(|&c| c == b':').collect_into(&mut parts) < 7 {
         return None;
     }
     let user_id = match parts[2].parse() {

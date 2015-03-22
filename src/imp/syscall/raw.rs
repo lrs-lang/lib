@@ -3,11 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use std::{mem};
-use imp::arch::syscall::{nr, syscall0, syscall1, syscall2, syscall3, syscall4, syscall5,
-                         syscall6, SCT};
+use imp::arch::syscall::{nr, syscall0, syscall1, syscall2, syscall3, syscall4, SCT};
 use imp::cty::{c_int, mode_t, size_t, ssize_t, uid_t, gid_t, F_DUPFD_CLOEXEC, F_GETFD,
                F_GETFL, F_SETFD, F_SETFL, statfs, pid_t, c_char, off_t, iovec, c_void,
-               rlimit};
+               rlimit, linux_dirent64};
 
 macro_rules! call {
     ($nr:expr) => {
@@ -182,4 +181,8 @@ pub unsafe fn __fstatfs(fd: c_int, buf: *mut statfs) -> c_int {
 pub unsafe fn __prlimit(pid: pid_t, res: c_int, new: *const rlimit,
                         old: *mut rlimit) -> c_int {
     call!(nr::PRLIMIT64, pid, res, new, old) as c_int
+}
+
+pub unsafe fn __getdents(fd: c_int, dirp: *mut linux_dirent64, count: c_int) -> c_int {
+    call!(nr::GETDENTS, fd, dirp, count) as c_int
 }

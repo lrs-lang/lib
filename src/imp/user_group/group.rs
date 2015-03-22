@@ -2,18 +2,18 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::{self, mem, ptr, fmt, iter};
-use std::ffi::{CStr};
+use std::{self, mem, fmt, iter};
 use std::io::{BufReader, BufRead};
-use std::os::unix::{OsStrExt};
-use std::marker::{PhantomData};
+use std::os::unix::ffi::{OsStrExt};
 use std::error::{FromError};
 
 use imp::result::{Result};
-use imp::cty::{gid_t, c_char, size_t, c_int};
+use imp::cty::{gid_t};
 use imp::errno::{self, Errno};
 use imp::file::{File};
-use imp::rust::{AsStr, AsLinuxStr, ByteSliceExt};
+use imp::rust::{AsStr, AsLinuxStr, ByteSliceExt, IteratorExt2};
+
+use super::{LineReader};
 
 /// Constant default value for non-allocating group info buffer size.
 pub const INFO_BUF_SIZE: usize = 1024;
@@ -26,58 +26,38 @@ pub type GroupId = gid_t;
 pub struct Info<'a> {
     name:     &'a [u8],
     password: &'a [u8],
-    id:       gid_t,
-    members:  *const *const c_char,
+    id:       GroupId,
+    members:  &'a [u8],
 }
 
 impl<'a> Info<'a> {
-    ///// Retrieves group info of the group with id `id`.
-    //pub fn from_group_id(id: gid_t, buf: &'a [u8]) -> Result<Info<'a>> {
-    //    Info::retrieve(|group, result| unsafe {
-    //        getgrgid_r(id, group, buf.as_ptr() as *mut c_char, buf.len() as size_t,
-    //                   result)
-    //    })
-    //}
+    /// Retrieves group info of the group with id `id`.
+    pub fn from_group_id(id: GroupId, buf: &'a mut [u8]) -> Result<Info<'a>> {
+        Info::find_by(buf, |group| group.id == id)
+    }
 
-    ///// Retrieves user info of the user with name `name`.
-    //pub fn from_group_name<S: AsLinuxStr>(name: S, buf: &'a [u8]) -> Result<Info<'a>> {
-    //    let name = name.as_linux_str().to_cstring().unwrap();
-    //    Info::retrieve(|group, result| unsafe {
-    //        getgrnam_r(name.as_ptr(), group, buf.as_ptr() as *mut c_char,
-    //                   buf.len() as size_t, result)
-    //    })
-    //}
+    /// Retrieves group info of the group with name `name`.
+    pub fn from_group_name<S: AsLinuxStr>(name: S, buf: &'a mut [u8]) -> Result<Info<'a>> {
+        let name = name.as_bytes();
+        Info::find_by(buf, |group| group.name == name)
+    }
 
-    //fn retrieve<F: FnMut(&mut group, &mut *mut group) -> c_int>(
-    //    mut f: F
-    //) -> Result<Info<'a>>
-    //{
-    //    let mut group = unsafe { mem::zeroed() };
-    //    let mut result;
-    //    loop {
-    //        result = ptr::null_mut();
-    //        let res = f(&mut group, &mut result);
-    //        if res != 0 {
-    //            let err = Errno(-res as _);
-    //            if !cfg!(feature = "retry") || err != errno::Interrupted {
-    //                return Err(err);
-    //            }
-    //        } else {
-    //            return if result.is_null() {
-    //                Err(errno::DoesNotExist)
-    //            } else {
-    //                unsafe {
-    //                    Ok(Info {
-    //                        name:     CStr::from_ptr(group.gr_name).to_bytes(),
-    //                        password: CStr::from_ptr(group.gr_passwd).to_bytes(),
-    //                        id:       group.gr_gid,
-    //                        members:  mem::transmute(group.gr_mem),
-    //                    })
-    //                }
-    //            };
-    //        }
-    //    }
-    //}
+    /// Finds the first group that satisfies the predicate.
+    pub fn find_by<F: Fn(&Info) -> bool>(buf: &'a mut [u8], pred: F) -> Result<Info<'a>> {
+        let mut err = Ok(());
+        {
+            let mut iter = iter_buf(Some(&mut err));
+            while let Some(group) = iter.next(buf) {
+                if pred(&group) {
+                    // the borrow checked doesn't understand that return ends the loop
+                    let group = unsafe { mem::transmute(group) };
+                    return Ok(group);
+                }
+            }
+        }
+        try!(err);
+        Err(errno::DoesNotExist)
+    }
 
     /// Copies the contained data and returns owned information.
     pub fn to_owned(&self) -> Information {
@@ -85,7 +65,7 @@ impl<'a> Info<'a> {
             name:     self.name.to_vec(),
             password: self.password.to_vec(),
             id:       self.id,
-            members:  self.members().map(|v|v.to_vec()).collect(),
+            members:  self.members().map(|v| v.to_vec()).collect(),
         }
     }
 }
@@ -122,37 +102,28 @@ impl<'a> fmt::Debug for Info<'a> {
 pub struct Information {
     name:     Vec<u8>,
     password: Vec<u8>,
-    id:       gid_t,
+    id:       GroupId,
     members:  Vec<Vec<u8>>,
 }
 
 impl Information {
-    ///// Retrieves group info of the group with id `id`.
-    //pub fn from_group_id(id: gid_t) -> Result<Information> {
-    //    Information::retrieve(|buf| Info::from_group_id(id, buf))
-    //}
+    /// Retrieves group info of the group with id `id`.
+    pub fn from_group_id(id: GroupId) -> Result<Information> {
+        let mut buf = [0; INFO_BUF_SIZE];
+        Info::from_group_id(id, &mut buf).map(|i| i.to_owned())
+    }
 
-    ///// Retrieves group info of the group with name `name`.
-    //pub fn from_group_name<S: AsLinuxStr>(name: S) -> Result<Information> {
-    //    Information::retrieve(|buf| Info::from_group_name(&name, buf))
-    //}
+    /// Retrieves group info of the group with name `name`.
+    pub fn from_group_name<S: AsLinuxStr>(name: S) -> Result<Information> {
+        let mut buf = [0; INFO_BUF_SIZE];
+        Info::from_group_name(name, &mut buf).map(|i| i.to_owned())
+    }
 
-    //fn retrieve<'a, F: FnMut(&mut [u8]) -> Result<Info<'a>>>(
-    //    mut f: F
-    //) -> Result<Information> 
-    //{
-    //    let mut buf = Vec::with_capacity(128);
-    //    loop {
-    //        let cap = buf.capacity();
-    //        unsafe { buf.set_len(cap); }
-    //        match f(&mut buf) {
-    //            Ok(info) => return Ok(info.to_owned()),
-    //            Err(errno::RangeError) => { },
-    //            Err(e) => return Err(e),
-    //        }
-    //        buf.reserve(cap);
-    //    }
-    //}
+    /// Finds the first group that satisfies the predicate.
+    pub fn find_by<F: Fn(&Info) -> bool>(pred: F) -> Result<Information> {
+        let mut buf = [0; INFO_BUF_SIZE];
+        Info::find_by(&mut buf, pred).map(|i| i.to_owned())
+    }
 }
 
 impl fmt::Debug for Information {
@@ -199,29 +170,22 @@ impl<'a: 'b, 'b> GroupInfo<'b> for Info<'a> {
     fn id(&self)       -> GroupId { self.id }
 
     fn members(&'b self) -> InfoMemberIter<'b> {
-        InfoMemberIter { members: self.members, marker: PhantomData }
+        InfoMemberIter { members: self.members.split(comma_split) }
     }
 }
 
+fn comma_split(b: &u8) -> bool { *b == b',' }
+
 /// Iterator over the members in non-allocated group data.
 pub struct InfoMemberIter<'a> {
-    members: *const *const c_char,
-    marker: PhantomData<&'a ()>,
+    members: std::slice::Split<'a, u8, fn(&u8) -> bool>,
 }
 
 impl<'a> Iterator for InfoMemberIter<'a> {
     type Item = &'a [u8];
 
     fn next(&mut self) -> Option<&'a [u8]> {
-        unsafe {
-            if (*self.members).is_null() {
-                None
-            } else {
-                let ret = CStr::from_ptr(*self.members).to_bytes();
-                self.members = self.members.offset(1);
-                Some(ret)
-            }
-        }
+        self.members.next()
     }
 }
 
@@ -250,34 +214,31 @@ impl<'a> Iterator for InformationMemberIter<'a> {
     }
 }
 
-
-// TODO: So much copy paste from ::user ....
-
 /// Returns an iterator over the groups in `/etc/group`.
 ///
 /// Errors can optionally be stored in `error`.
-pub fn iter<'a>(error: Option<&'a mut Result<()>>) -> InfoIter<'a> {
-    InfoIter::new(error)
+pub fn iter<'a>(error: Option<&'a mut Result<()>>) -> InformationIter<'a> {
+    InformationIter::new(error)
 }
 
-pub struct InfoIter<'a> {
+pub struct InformationIter<'a> {
     file: BufReader<File>,
     err: Option<&'a mut Result<()>>,
 }
 
-impl<'a> InfoIter<'a> {
-    fn new(error: Option<&'a mut Result<()>>) -> InfoIter<'a> {
+impl<'a> InformationIter<'a> {
+    fn new(error: Option<&'a mut Result<()>>) -> InformationIter<'a> {
         match File::open_read("/etc/group") {
             Err(e) => {
                 if let Some(err) = error {
                     *err = Err(e);
                 }
-                InfoIter {
+                InformationIter {
                     file: BufReader::with_capacity(0, File::invalid()),
                     err: None,
                 }
             },
-            Ok(f) => InfoIter {
+            Ok(f) => InformationIter {
                 file: BufReader::new(f),
                 err: error,
             },
@@ -291,7 +252,7 @@ impl<'a> InfoIter<'a> {
     }
 }
 
-impl<'a> Iterator for InfoIter<'a> {
+impl<'a> Iterator for InformationIter<'a> {
     type Item = Information;
 
     fn next(&mut self) -> Option<Information> {
@@ -304,7 +265,7 @@ impl<'a> Iterator for InfoIter<'a> {
                 Some(&b'\n') => &buf[..buf.len()-1],
                 _ => &buf[..],
             };
-            let parts: Vec<_> = SliceExt::split(buf, |&c| c == b':').collect();
+            let parts: Vec<_> = buf.split(|&c| c == b':').collect();
             if parts.len() != 4 {
                 self.set_err(errno::ProtocolError);
                 None
@@ -313,8 +274,8 @@ impl<'a> Iterator for InfoIter<'a> {
                     Ok(id) => id,
                     _ => { self.set_err(errno::ProtocolError); return None; },
                 };
-                let members = SliceExt::split(parts[3], |&c| c == b',')
-                                        .map(|s| s.to_vec()).collect();
+                let members = parts[3].split(|&c| c == b',')
+                                      .map(|s| s.to_vec()).collect();
                 Some(Information {
                     name:     parts[0].to_vec(),
                     password: parts[1].to_vec(),
@@ -326,4 +287,56 @@ impl<'a> Iterator for InfoIter<'a> {
             None
         }
     }
+}
+
+/// Returns an non-allocating iterator over the groups in `/etc/group`.
+///
+/// Errors can optionally be stored in `error`.
+pub fn iter_buf<'a>(error: Option<&'a mut Result<()>>) -> InfoIter<'a> {
+    InfoIter::new(error)
+}
+
+/// An non-allocating iterator over groups.
+pub struct InfoIter<'a> {
+    reader: LineReader<'a>,
+}
+
+impl<'a> InfoIter<'a> {
+    fn new(error: Option<&'a mut Result<()>>) -> InfoIter<'a> {
+        InfoIter { reader: LineReader::new("/etc/group", error) }
+    }
+
+    /// Reads the next group.
+    ///
+    /// The same buffer must be used for each call to `next`, otherwise the function can
+    /// panic, return errors, or return nonsense results.
+    pub fn next<'b>(&mut self, buf: &'b mut [u8]) -> Option<Info<'b>> { 
+        let buf = self.reader.fill(buf);
+        if buf.len() == 0 {
+            return None;
+        }
+        if let Some((parts, id)) = parse_line(buf) {
+            Some(Info {
+                name:     parts[0],
+                password: parts[1],
+                id:       id,
+                members:  parts[3],
+            })
+        } else {
+            self.reader.set_err(errno::InvalidSequence);
+            None
+        }
+    }
+}
+
+fn parse_line(line: &[u8]) -> Option<([&[u8]; 4], GroupId)> {
+    let mut parts = [&[][..]; 4];
+    if line.split(|&c| c == b':').collect_into(&mut parts) < 4 {
+        return None;
+    }
+    let id = match parts[2].parse() {
+        Ok(id) => id,
+        _ => return None,
+    };
+    Some((parts, id))
 }

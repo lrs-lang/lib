@@ -2,11 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::ffi::{CStr};
-use std::mem::{transmute};
+#![allow(dead_code)]
 
-use imp::cty::{c_int, mode_t, size_t, ssize_t, off_t, rlimit, pid_t, uid_t, gid_t,
+use std::ffi::{CStr};
+
+use imp::cty::{c_int, mode_t, ssize_t, off_t, rlimit, pid_t, uid_t, gid_t,
                SYSCALL_RLIM_INFINITY, RLIM_INFINITY, statfs};
+use imp::rust::{SaturatingCast};
 
 pub use self::raw::*;
 
@@ -17,39 +19,51 @@ pub fn open(path: &CStr, flags: c_int, mode: mode_t) -> c_int {
 }
 
 pub fn read(fd: c_int, buf: &mut [u8]) -> ssize_t {
-    unsafe { __read(fd, buf.as_mut_ptr() as *mut _, buf.len() as size_t) }
+    unsafe { __read(fd, buf.as_mut_ptr() as *mut _, buf.len().saturating_cast()) }
 }
 
 pub fn write(fd: c_int, buf: &[u8]) -> ssize_t {
-    unsafe { __write(fd, buf.as_ptr() as *const _, buf.len() as size_t) }
+    unsafe { __write(fd, buf.as_ptr() as *const _, buf.len().saturating_cast()) }
 }
 
 pub fn pread(fd: c_int, buf: &mut [u8], offset: off_t) -> ssize_t {
-    unsafe { __pread(fd, buf.as_mut_ptr() as *mut _, buf.len() as size_t, offset) }
+    unsafe {
+        __pread(fd, buf.as_mut_ptr() as *mut _, buf.len().saturating_cast(), offset)
+    }
 }
 
 pub fn pwrite(fd: c_int, buf: &[u8], offset: off_t) -> ssize_t {
-    unsafe { __pwrite(fd, buf.as_ptr() as *const _, buf.len() as size_t, offset) }
+    unsafe {
+        __pwrite(fd, buf.as_ptr() as *const _, buf.len().saturating_cast(), offset)
+    }
 }
 
 pub fn readv(fd: c_int, bufs: &mut [&mut [u8]]) -> ssize_t {
     // XXX: iovec _MUST_ be the same as &mut [u8]
-    unsafe { __readv(fd, bufs.as_mut_ptr() as *mut _, bufs.len() as c_int) }
+    unsafe {
+        __readv(fd, bufs.as_mut_ptr() as *mut _, bufs.len().saturating_cast())
+    }
 }
 
 pub fn writev(fd: c_int, bufs: &[&[u8]]) -> ssize_t {
     // XXX: iovec _MUST_ be the same as &mut [u8]
-    unsafe { __writev(fd, bufs.as_ptr() as *const _, bufs.len() as c_int) }
+    unsafe {
+        __writev(fd, bufs.as_ptr() as *const _, bufs.len().saturating_cast())
+    }
 }
 
 pub fn preadv(fd: c_int, bufs: &mut [&mut [u8]], offset: off_t) -> ssize_t {
     // XXX: iovec _MUST_ be the same as &mut [u8]
-    unsafe { __preadv(fd, bufs.as_mut_ptr() as *mut _, bufs.len() as c_int, offset) }
+    unsafe {
+        __preadv(fd, bufs.as_mut_ptr() as *mut _, bufs.len().saturating_cast(), offset)
+    }
 }
 
 pub fn pwritev(fd: c_int, bufs: &[&[u8]], offset: off_t) -> ssize_t {
     // XXX: iovec _MUST_ be the same as &mut [u8]
-    unsafe { __pwritev(fd, bufs.as_ptr() as *const _, bufs.len() as c_int, offset) }
+    unsafe {
+        __pwritev(fd, bufs.as_ptr() as *const _, bufs.len().saturating_cast(), offset)
+    }
 }
 
 pub fn getresuid(ruid: &mut uid_t, euid: &mut uid_t, suid: &mut uid_t) -> c_int {
@@ -61,11 +75,11 @@ pub fn getresgid(rgid: &mut gid_t, egid: &mut gid_t, sgid: &mut gid_t) -> c_int 
 }
 
 pub fn getgroups(buf: &mut [gid_t]) -> c_int {
-    unsafe { __getgroups(buf.len() as c_int, buf.as_mut_ptr()) }
+    unsafe { __getgroups(buf.len().saturating_cast(), buf.as_mut_ptr()) }
 }
 
 pub fn setgroups(buf: &[gid_t]) -> c_int {
-    unsafe { __setgroups(buf.len() as size_t, buf.as_ptr()) }
+    unsafe { __setgroups(buf.len().saturating_cast(), buf.as_ptr()) }
 }
 
 pub fn statfs(path: &CStr, buf: &mut statfs) -> c_int {
@@ -104,4 +118,10 @@ pub fn prlimit(pid: pid_t, res: c_int, new: Option<&rlimit>,
         }
     }
     ret
+}
+
+pub fn getdents(fd: c_int, buf: &mut [u8]) -> c_int {
+    unsafe {
+        __getdents(fd, buf.as_mut_ptr() as *mut _, buf.len().saturating_cast())
+    }
 }

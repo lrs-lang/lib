@@ -2,13 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::os::unix::{OsStrExt};
+use std::os::unix::ffi::{OsStrExt};
 use std::ffi::{AsOsStr};
 use std::{mem};
 
 use imp::result::{Result};
 use imp::errno::{self, Errno};
-use imp::cty::{self, c_int, c_void, size_t, off_t, iovec, c_uint};
+use imp::cty::{self, c_int, off_t, c_uint};
 use imp::syscall::{open, read, write, close, pread, lseek, pwrite, readv, writev, preadv,
                    pwritev, ftruncate, fsync, fdatasync, syncfs, fadvise, fstatfs,
                    fcntl_dupfd_cloexec, fcntl_getfl, fcntl_setfl, fcntl_getfd,
@@ -17,7 +17,7 @@ use imp::rust::{AsLinuxPath, UIntRange};
 use imp::util::{retry};
 use imp::fs::info::{FileSystemInfo, from_statfs};
 
-use file::{Flags, Mode};
+use file::{Flags};
 
 pub mod flags;
 
@@ -45,6 +45,11 @@ impl File {
     /// A file on which every operation fails.
     pub fn invalid() -> File {
         File { fd: -1, owned: false }
+    }
+
+    /// Returns the file descriptor of this file.
+    pub fn file_desc(&self) -> c_int {
+        self.fd
     }
 
     /// Open the file at path `path` with the specified flags.

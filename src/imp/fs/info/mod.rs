@@ -4,14 +4,13 @@
 
 use std::fmt::{Debug, Formatter, Error};
 use std::{self, mem};
-use std::os::unix::{OsStrExt};
+use std::os::unix::ffi::{OsStrExt};
 use std::ffi::{AsOsStr};
 
 use imp::cty::{statfs};
 use imp::syscall::{statfs};
 use imp::util::{retry};
 use imp::rust::{AsLinuxPath};
-use imp::errno;
 use imp::result::{Result};
 
 use fs::{FileSystem, Flags};

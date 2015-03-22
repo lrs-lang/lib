@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![allow(dead_code)]
+#![allow(dead_code, non_camel_case_types)]
 
 pub use imp::arch::cty::*;
 
@@ -82,6 +82,16 @@ pub struct rlimit {
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct fsid_t {
 	pub val: [c_int; 2],
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct linux_dirent64 {
+    pub d_ino: u64,
+    pub d_off: i64,
+    pub d_reclen: c_ushort,
+    pub d_types: c_uchar,
+    pub d_name: [c_char; 0],
 }
 
 extern {
