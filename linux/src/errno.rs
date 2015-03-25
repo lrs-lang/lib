@@ -2,6 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+//! A small errno wrapper with corresponding constants.
+
 pub use linux_core::errno::{Errno};
 pub use linux_core::errno::{ToCInt};
 

@@ -2,9 +2,16 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+//! Experimental Linux standard library.
+//!
+//! This library tries to create a rust standard library on top of the Linux API. It is
+//! not bound by any other standards. In particular, it does not try to create a
+//! POSIX-like api or an API that can easily be ported to other platforms.
+//!
+//! Currently only `x86_64` is supported.
+
 #![crate_name = "linux"]
 #![crate_type = "lib"]
-#![feature(plugin, asm)]
 
 extern crate linux_file;
 extern crate linux_user_group;
