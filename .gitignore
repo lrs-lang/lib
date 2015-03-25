@@ -1,4 +1,6 @@
 doc
 target
+dragons
 .*
+Cargo.lock
 !.gitignore

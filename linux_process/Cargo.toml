@@ -1,0 +1,13 @@
+[package]
+name = "linux_process"
+version = "0.1.0"
+authors = [ "mahkoh" ]
+
+[lib]
+name = "linux_process"
+
+[dependencies.linux_core]
+path = "../linux_core"
+
+[dependencies.linux_user_group]
+path = "../linux_user_group"

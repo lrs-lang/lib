@@ -1,0 +1,16 @@
+[package]
+name = "linux_file"
+version = "0.1.0"
+authors = [ "mahkoh" ]
+
+[lib]
+name = "linux_file"
+
+[dependencies.linux_core]
+path = "../linux_core"
+
+[dependencies.linux_dev]
+path = "../linux_dev"
+
+[dependencies.linux_fs]
+path = "../linux_fs"
