@@ -178,7 +178,7 @@ impl<'a> Iterator for InfoMemberIter<'a> {
     type Item = &'a LinuxStr;
 
     fn next(&mut self) -> Option<&'a LinuxStr> {
-        self.members.next().map(|v| LinuxStr::from_bytes(v))
+        self.members.next().map(|v| v.as_linux_str())
     }
 }
 

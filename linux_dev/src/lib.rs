@@ -5,7 +5,7 @@
 #![crate_name = "linux_dev"]
 #![crate_type = "lib"]
 
-extern crate "linux_core" as core;
+extern crate linux_core as core;
 
 /// Device Id <-> Device Name mapping
 ///

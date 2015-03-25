@@ -5,8 +5,8 @@
 #![crate_name = "linux_dir"]
 #![crate_type = "lib"]
 
-extern crate "linux_core" as core;
-extern crate "linux_file" as file;
+extern crate linux_core as core;
+extern crate linux_file as file;
 
 use std::path::{Path};
 use std::io::{Cursor};
@@ -14,7 +14,7 @@ use std::ffi::{CStr};
 
 use core::cty::{linux_dirent64, c_uchar};
 use core::ext::{AsLinuxPath};
-use core::string::{LinuxString, LinuxStr};
+use core::string::{LinuxString, LinuxStr, AsLinuxStr};
 use core::result::{Result};
 use core::syscall::{getdents};
 use core::errno::{Errno};
@@ -215,7 +215,7 @@ fn walk_int<F>(path: &Path, f: &mut F)
             WalkEntry {
                 inode: ent.d_ino,
                 ty:    ty,
-                name:  LinuxStr::from_bytes(name),
+                name:  name.as_linux_str(),
             }
         };
         match f(&entry) {

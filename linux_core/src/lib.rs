@@ -4,7 +4,9 @@
 
 #![crate_name = "linux_core"]
 #![crate_type = "lib"]
-#![feature(std_misc, core, plugin, asm, io)]
+#![feature(std_misc, core, plugin, asm, io, into_cow, convert)]
+
+// XXX: Maybe move some of these out? core takes a long time to compile right now.
 
 pub mod cty;
 pub mod arch;

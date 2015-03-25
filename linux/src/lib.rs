@@ -21,3 +21,4 @@ pub mod result;
 pub mod dir;
 pub mod fs;
 pub mod process;
+pub mod string;

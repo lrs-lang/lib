@@ -5,8 +5,8 @@
 #![crate_name = "linux_user_group"]
 #![crate_type = "lib"]
 
-extern crate "linux_core" as core;
-extern crate "linux_file" as file;
+extern crate linux_core as core;
+extern crate linux_file as file;
 
 use std::{mem, ptr};
 

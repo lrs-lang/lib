@@ -5,7 +5,7 @@
 #![crate_name = "linux_fs"]
 #![crate_type = "lib"]
 
-extern crate "linux_core" as core;
+extern crate linux_core as core;
 
 use core::syscall::{sync};
 

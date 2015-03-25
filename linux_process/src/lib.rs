@@ -5,8 +5,8 @@
 #![crate_name = "linux_process"]
 #![crate_type = "lib"]
 
-extern crate "linux_core" as core;
-extern crate "linux_user_group" as user_group;
+extern crate linux_core as core;
+extern crate linux_user_group as user_group;
 
 use core::cty::{pid_t};
 use core::syscall::{getpid, getppid};

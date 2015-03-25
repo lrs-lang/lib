@@ -262,13 +262,13 @@ impl<'a> InfoIter<'a> {
         }
         if let Some((parts, uid, gid)) = parse_line(buf) {
             Some(Info {
-                name:     LinuxStr::from_bytes(parts[0]),
-                password: LinuxStr::from_bytes(parts[1]),
+                name:     parts[0].as_linux_str(),
+                password: parts[1].as_linux_str(),
                 user_id:  uid,
                 group_id: gid,
-                comment:  LinuxStr::from_bytes(parts[4]),
-                home:     LinuxStr::from_bytes(parts[5]),
-                shell:    LinuxStr::from_bytes(parts[6]),
+                comment:  parts[4].as_linux_str(),
+                home:     parts[5].as_linux_str(),
+                shell:    parts[6].as_linux_str(),
             })
         } else {
             self.reader.set_err(errno::InvalidSequence);

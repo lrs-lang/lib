@@ -6,9 +6,9 @@
 #![crate_type = "lib"]
 #![feature(core)]
 
-extern crate "linux_core" as core;
-extern crate "linux_dev" as dev;
-extern crate "linux_fs" as fs;
+extern crate linux_core as core;
+extern crate linux_dev as dev;
+extern crate linux_fs as fs;
 
 use std::{mem};
 
