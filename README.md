@@ -1,3 +1,3 @@
 # linux-rs
 
-![logo](linux/assets/logo.png) Test test
+<img align="right" src="linux/assets/logo.png"> Test test
