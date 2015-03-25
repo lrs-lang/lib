@@ -5,71 +5,16 @@
 use std::str::{self, FromStr};
 use std::borrow::{Cow};
 use std::os::unix::ffi::{OsStrExt};
-use std::ffi::{OsStr, OsString, AsOsStr};
+use std::ffi::{OsStr, OsString, AsOsStr, CString, NulError};
 use std::path::{Path, PathBuf, AsPath};
 use std::num::{Int};
 use std::{ops};
 
 pub use self::truncate::{SaturatingCast};
+pub use self::string::*;
 
 pub mod truncate;
-
-pub trait AsStr {
-    fn as_str(&self) -> Option<&str>;
-    fn as_str_lossy<'a>(&'a self) -> Cow<'a, str>;
-}
-
-impl AsStr for [u8] {
-    fn as_str(&self) -> Option<&str> {
-        str::from_utf8(self).ok()
-    }
-
-    fn as_str_lossy<'a>(&'a self) -> Cow<'a, str> {
-        String::from_utf8_lossy(self)
-    }
-}
-
-pub trait AsLinuxStr {
-    fn as_linux_str(&self) -> &OsStr;
-    
-    fn as_bytes(&self) -> &[u8] {
-        <OsStr as OsStrExt>::as_bytes(self.as_linux_str())
-    }
-}
-
-impl<'a, T: AsLinuxStr+?Sized> AsLinuxStr for &'a T {
-    fn as_linux_str(&self) -> &OsStr {
-        (*self).as_linux_str()
-    }
-}
-
-impl AsLinuxStr for OsStr    { fn as_linux_str(&self) -> &OsStr { self.as_os_str() } }
-impl AsLinuxStr for OsString { fn as_linux_str(&self) -> &OsStr { self.as_os_str() } }
-impl AsLinuxStr for str      { fn as_linux_str(&self) -> &OsStr { self.as_os_str() } }
-impl AsLinuxStr for String   { fn as_linux_str(&self) -> &OsStr { self.as_os_str() } }
-impl AsLinuxStr for Path     { fn as_linux_str(&self) -> &OsStr { self.as_os_str() } }
-impl AsLinuxStr for PathBuf  { fn as_linux_str(&self) -> &OsStr { self.as_os_str() } }
-
-impl AsLinuxStr for [u8] {
-    fn as_linux_str(&self) -> &OsStr {
-        OsStr::from_bytes(self)
-    }
-}
-
-pub trait AsLinuxPath {
-    fn as_linux_path(&self) -> &Path;
-}
-
-impl<T: AsLinuxStr+?Sized> AsLinuxPath for T {
-    fn as_linux_path(&self) -> &Path {
-        self.as_linux_str().as_path()
-    }
-}
-
-pub enum ParseErr<E> {
-    NotUtf8,
-    Err(E),
-}
+pub mod string;
 
 pub trait ByteSliceExt {
     fn parse<F: FromStr>(&self) -> ::std::result::Result<F, ParseErr<<F as FromStr>::Err>>;
@@ -85,6 +30,20 @@ impl<'a> ByteSliceExt for &'a [u8] {
             Ok(r) => Ok(r),
             Err(e) => Err(ParseErr::Err(e)),
         }
+    }
+}
+
+pub trait AsLinuxPath {
+    fn as_linux_path(&self) -> &Path;
+
+    fn to_cstring(&self) -> Result<CString, NulError> {
+        self.as_linux_path().to_cstring()
+    }
+}
+
+impl<T: AsLinuxStr+?Sized> AsLinuxPath for T {
+    fn as_linux_path(&self) -> &Path {
+        self.as_linux_str().as_path()
     }
 }
 

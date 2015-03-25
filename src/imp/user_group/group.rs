@@ -4,14 +4,13 @@
 
 use std::{self, mem, fmt, iter};
 use std::io::{BufReader, BufRead};
-use std::os::unix::ffi::{OsStrExt};
 use std::error::{FromError};
 
 use imp::result::{Result};
 use imp::cty::{gid_t};
 use imp::errno::{self, Errno};
 use imp::file::{File};
-use imp::rust::{AsStr, AsLinuxStr, ByteSliceExt, IteratorExt2};
+use imp::rust::{LinuxStr, LinuxString, AsLinuxStr, ByteSliceExt, IteratorExt2};
 
 use super::{LineReader};
 
@@ -24,8 +23,8 @@ pub type GroupId = gid_t;
 #[derive(Copy, Clone, Eq)]
 #[allow(raw_pointer_derive)]
 pub struct Info<'a> {
-    name:     &'a [u8],
-    password: &'a [u8],
+    name:     &'a LinuxStr,
+    password: &'a LinuxStr,
     id:       GroupId,
     members:  &'a [u8],
 }
@@ -38,7 +37,7 @@ impl<'a> Info<'a> {
 
     /// Retrieves group info of the group with name `name`.
     pub fn from_group_name<S: AsLinuxStr>(name: S, buf: &'a mut [u8]) -> Result<Info<'a>> {
-        let name = name.as_bytes();
+        let name = name.as_linux_str();
         Info::find_by(buf, |group| group.name == name)
     }
 
@@ -62,10 +61,10 @@ impl<'a> Info<'a> {
     /// Copies the contained data and returns owned information.
     pub fn to_owned(&self) -> Information {
         Information {
-            name:     self.name.to_vec(),
-            password: self.password.to_vec(),
+            name:     self.name.to_linux_string(),
+            password: self.password.to_linux_string(),
             id:       self.id,
-            members:  self.members().map(|v| v.to_vec()).collect(),
+            members:  self.members().map(|v| v.to_linux_string()).collect(),
         }
     }
 }
@@ -92,18 +91,21 @@ impl<'a> PartialEq for Info<'a> {
 }
 
 impl<'a> fmt::Debug for Info<'a> {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> std::result::Result<(), fmt::Error> {
-        fmt_group_info(self, fmt)
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        try!(write!(fmt, "Info {{ name: \"{:?}\", password: \"{:?}\", id: {}, members: [",
+                    self.name, self.password, self.id));
+        for member in self.members() { try!(write!(fmt, "\"{:?}\", ", member)) }
+        write!(fmt, "] }}")
     }
 }
 
 /// Struct holding allocated group info.
 #[derive(Clone, Eq, PartialEq)]
 pub struct Information {
-    name:     Vec<u8>,
-    password: Vec<u8>,
+    name:     LinuxString,
+    password: LinuxString,
     id:       GroupId,
-    members:  Vec<Vec<u8>>,
+    members:  Vec<LinuxString>,
 }
 
 impl Information {
@@ -127,35 +129,24 @@ impl Information {
 }
 
 impl fmt::Debug for Information {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> std::result::Result<(), fmt::Error> {
-        fmt_group_info(self, fmt)
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        try!(write!(fmt, "Information {{ name: \"{:?}\", password: \"{:?}\", id: {}, members: [",
+                    self.name, self.password, self.id));
+        for member in &self.members { try!(write!(fmt, "\"{:?}\", ", member)) }
+        write!(fmt, "] }}")
     }
-}
-
-fn fmt_group_info<'a, T: GroupInfo<'a>>(
-    i: &'a T,
-    fmt: &mut fmt::Formatter
-) -> std::result::Result<(), fmt::Error> {
-    try!(write!(fmt, "Info {{ name: \"{}\", password: \"{}\", id: {}, members: [",
-                i.name().as_str_lossy(),
-                i.password().as_str_lossy(),
-                i.id()));
-    for member in i.members() {
-        try!(write!(fmt, "\"{}\", ", member.as_str_lossy()));
-    }
-    write!(fmt, "] }}")
 }
 
 /// Trait for types that hold group info.
 pub trait GroupInfo<'a>
-    where <Self as GroupInfo<'a>>::Iterator: Iterator<Item=&'a [u8]>
+    where <Self as GroupInfo<'a>>::Iterator: Iterator<Item=&'a LinuxStr>
 {
     type Iterator;
 
     /// Name of the group.
-    fn name(&self)       -> &[u8];
+    fn name(&self)       -> &LinuxStr;
     /// Password of the group.
-    fn password(&self)   -> &[u8];
+    fn password(&self)   -> &LinuxStr;
     /// Id of the group.
     fn id(&self)         -> GroupId;
     /// Iterator over the members of the group.
@@ -165,8 +156,8 @@ pub trait GroupInfo<'a>
 impl<'a: 'b, 'b> GroupInfo<'b> for Info<'a> {
     type Iterator = InfoMemberIter<'b>;
 
-    fn name(&self)     -> &[u8] { self.name }
-    fn password(&self) -> &[u8] { self.password }
+    fn name(&self)     -> &LinuxStr { self.name }
+    fn password(&self) -> &LinuxStr { self.password }
     fn id(&self)       -> GroupId { self.id }
 
     fn members(&'b self) -> InfoMemberIter<'b> {
@@ -182,18 +173,18 @@ pub struct InfoMemberIter<'a> {
 }
 
 impl<'a> Iterator for InfoMemberIter<'a> {
-    type Item = &'a [u8];
+    type Item = &'a LinuxStr;
 
-    fn next(&mut self) -> Option<&'a [u8]> {
-        self.members.next()
+    fn next(&mut self) -> Option<&'a LinuxStr> {
+        self.members.next().map(|v| LinuxStr::from_bytes(v))
     }
 }
 
 impl<'a> GroupInfo<'a> for Information {
     type Iterator = InformationMemberIter<'a>;
 
-    fn name(&self)     -> &[u8] { &self.name[..] }
-    fn password(&self) -> &[u8] { &self.password[..] }
+    fn name(&self)     -> &LinuxStr { &self.name }
+    fn password(&self) -> &LinuxStr { &self.password }
     fn id(&self)       -> GroupId { self.id }
 
     fn members(&'a self) -> InformationMemberIter<'a> {
@@ -203,14 +194,14 @@ impl<'a> GroupInfo<'a> for Information {
 
 /// Iterator over the members in allocated group data.
 pub struct InformationMemberIter<'a> {
-    iter: std::slice::Iter<'a, Vec<u8>>,
+    iter: std::slice::Iter<'a, LinuxString>,
 }
 
 impl<'a> Iterator for InformationMemberIter<'a> {
-    type Item = &'a [u8];
+    type Item = &'a LinuxStr;
 
-    fn next(&mut self) -> Option<&'a [u8]> {
-        self.iter.next().map(|v|&v[..])
+    fn next(&mut self) -> Option<&'a LinuxStr> {
+        self.iter.next().map(|v| v.as_linux_str())
     }
 }
 
@@ -275,10 +266,10 @@ impl<'a> Iterator for InformationIter<'a> {
                     _ => { self.set_err(errno::ProtocolError); return None; },
                 };
                 let members = parts[3].split(|&c| c == b',')
-                                      .map(|s| s.to_vec()).collect();
+                                      .map(|s| LinuxString::from_bytes(s)).collect();
                 Some(Information {
-                    name:     parts[0].to_vec(),
-                    password: parts[1].to_vec(),
+                    name:     LinuxString::from_bytes(parts[0]),
+                    password: LinuxString::from_bytes(parts[1]),
                     id:       id,
                     members:  members,
                 })
@@ -317,10 +308,10 @@ impl<'a> InfoIter<'a> {
         }
         if let Some((parts, id)) = parse_line(buf) {
             Some(Info {
-                name:     parts[0],
-                password: parts[1],
+                name:     parts[0].as_linux_str(),
+                password: parts[1].as_linux_str(),
                 id:       id,
-                members:  parts[3],
+                members:  parts[3].as_linux_str().as_slice(),
             })
         } else {
             self.reader.set_err(errno::InvalidSequence);

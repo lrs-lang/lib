@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::os::unix::ffi::{OsStrExt};
-use std::ffi::{AsOsStr};
 use std::{mem};
 
 use imp::result::{Result};
@@ -13,13 +11,14 @@ use imp::syscall::{open, read, write, close, pread, lseek, pwrite, readv, writev
                    pwritev, ftruncate, fsync, fdatasync, syncfs, fadvise, fstatfs,
                    fcntl_dupfd_cloexec, fcntl_getfl, fcntl_setfl, fcntl_getfd,
                    fcntl_setfd};
-use imp::rust::{AsLinuxPath, UIntRange};
+use imp::rust::{AsLinuxPath, UIntRange, AsLinuxStr};
 use imp::util::{retry};
 use imp::fs::info::{FileSystemInfo, from_statfs};
 
 use file::{Flags};
 
 pub mod flags;
+pub mod dev;
 
 macro_rules! rv {
     ($x:expr) => { if $x < 0 { Err(Errno(-$x as c_int)) } else { Ok(()) } };
@@ -58,7 +57,7 @@ impl File {
     ///
     /// Returns the opened file or an error.
     pub fn open<P: AsLinuxPath>(path: P, flags: Flags) -> Result<File> {
-        let path = path.as_linux_path().as_os_str().to_cstring().unwrap();
+        let path = path.to_cstring().unwrap();
         let fd = match retry(|| open(&path, *flags | cty::O_LARGEFILE, *flags.mode())) {
             Ok(fd) => fd,
             // Due to a bug in the kernel, open returns WrongDeviceType instead of

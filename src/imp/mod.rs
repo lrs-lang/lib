@@ -10,9 +10,9 @@ pub mod process;
 pub mod env;
 pub mod user_group;
 pub mod syscall;
-pub mod rust;
 pub mod dir;
 
 pub mod cty;
 pub mod util;
 pub mod arch;
+pub mod rust;

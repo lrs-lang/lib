@@ -4,8 +4,6 @@
 
 use std::fmt::{Debug, Formatter, Error};
 use std::{self, mem};
-use std::os::unix::ffi::{OsStrExt};
-use std::ffi::{AsOsStr};
 
 use imp::cty::{statfs};
 use imp::syscall::{statfs};
@@ -29,7 +27,7 @@ pub struct FileSystemInfo(statfs);
 impl FileSystemInfo {
     /// Returns information about the filesystem located at the path.
     pub fn from_path<P: AsLinuxPath>(path: P) -> Result<FileSystemInfo> {
-        let path = path.as_linux_path().as_os_str().to_cstring().unwrap();
+        let path = path.to_cstring().unwrap();
         let mut buf = unsafe { mem::zeroed() };
         retry(|| statfs(&path, &mut buf)).map(|_| FileSystemInfo(buf))
     }

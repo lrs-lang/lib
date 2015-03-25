@@ -9,7 +9,7 @@ use std::error::{FromError};
 use imp::result::{Result};
 use imp::cty::{uid_t};
 use imp::errno::{self};
-use imp::rust::{AsStr, AsLinuxStr, ByteSliceExt, IteratorExt2};
+use imp::rust::{AsLinuxStr, ByteSliceExt, IteratorExt2, LinuxStr, LinuxString};
 use imp::file::{File};
 
 use super::{LineReader};
@@ -22,15 +22,15 @@ pub const INFO_BUF_SIZE: usize = 1024;
 pub type UserId = uid_t;
 
 /// Struct holding non-allocated user info.
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Info<'a> {
-    name:     &'a [u8],
-    password: &'a [u8],
+    name:     &'a LinuxStr,
+    password: &'a LinuxStr,
     user_id:  UserId,
     group_id: GroupId,
-    comment:  &'a [u8],
-    home:     &'a [u8],
-    shell:    &'a [u8],
+    comment:  &'a LinuxStr,
+    home:     &'a LinuxStr,
+    shell:    &'a LinuxStr,
 }
 
 impl<'a> Info<'a> {
@@ -41,7 +41,7 @@ impl<'a> Info<'a> {
 
     /// Retrieves user info of the user with name `name`.
     pub fn from_user_name<S: AsLinuxStr>(name: S, buf: &'a mut [u8]) -> Result<Info<'a>> {
-        let name = name.as_bytes();
+        let name = name.as_linux_str();
         Info::find_by(buf, |user| user.name == name)
     }
 
@@ -65,41 +65,27 @@ impl<'a> Info<'a> {
     /// Copies the contained data and returns owned information.
     pub fn to_owned(&self) -> Information {
         Information {
-            name:     self.name.to_vec(),
-            password: self.password.to_vec(),
+            name:     self.name.to_linux_string(),
+            password: self.password.to_linux_string(),
             user_id:  self.user_id,
             group_id: self.group_id,
-            comment:  self.comment.to_vec(),
-            home:     self.home.to_vec(),
-            shell:    self.shell.to_vec(),
+            comment:  self.comment.to_linux_string(),
+            home:     self.home.to_linux_string(),
+            shell:    self.shell.to_linux_string(),
         }
-    }
-}
-
-impl<'a> fmt::Debug for Info<'a> {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> std::result::Result<(), fmt::Error> {
-        write!(fmt, "Info {{ name: \"{}\", password: \"{}\", user_id: {}, group_id: {}, \
-                     comment: \"{}\", home: \"{}\", shell: \"{}\" }}",
-               self.name.as_str_lossy(),
-               self.password.as_str_lossy(),
-               self.user_id,
-               self.group_id,
-               self.comment.as_str_lossy(),
-               self.home.as_str_lossy(),
-               self.shell.as_str_lossy())
     }
 }
 
 /// Struct holding allocated user info.
 #[derive(Clone, Eq, PartialEq)]
 pub struct Information {
-    name:     Vec<u8>,
-    password: Vec<u8>,
+    name:     LinuxString,
+    password: LinuxString,
     user_id:  UserId,
     group_id: GroupId,
-    comment:  Vec<u8>,
-    home:     Vec<u8>,
-    shell:    Vec<u8>,
+    comment:  LinuxString,
+    home:     LinuxString,
+    shell:    LinuxString,
 }
 
 impl Information {
@@ -134,48 +120,42 @@ impl Information {
     }
 }
 
-impl fmt::Debug for Information {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> std::result::Result<(), fmt::Error> {
-        self.to_info().fmt(fmt)
-    }
-}
-
 /// Trait for types that hold user info.
 pub trait UserInfo {
     /// Name of the user.
-    fn name(&self)     -> &[u8];
+    fn name(&self)     -> &LinuxStr;
     /// Password of the user.
-    fn password(&self) -> &[u8];
+    fn password(&self) -> &LinuxStr;
     /// User id of the user.
     fn user_id(&self)  -> UserId;
     /// Group id of the user.
     fn group_id(&self) -> GroupId;
     /// Comment of the user.
-    fn comment(&self)  -> &[u8];
+    fn comment(&self)  -> &LinuxStr;
     /// Home folder of the user.
-    fn home(&self)     -> &[u8];
+    fn home(&self)     -> &LinuxStr;
     /// Shell of the user.
-    fn shell(&self)    -> &[u8];
+    fn shell(&self)    -> &LinuxStr;
 }
 
 impl<'a> UserInfo for Info<'a> {
-    fn name(&self)     -> &[u8]   { self.name     }
-    fn password(&self) -> &[u8]   { self.password }
-    fn user_id(&self)  -> UserId  { self.user_id  }
-    fn group_id(&self) -> GroupId { self.group_id }
-    fn comment(&self)  -> &[u8]   { self.comment  }
-    fn home(&self)     -> &[u8]   { self.home     }
-    fn shell(&self)    -> &[u8]   { self.shell    }
+    fn name(&self)     -> &LinuxStr { self.name     }
+    fn password(&self) -> &LinuxStr { self.password }
+    fn user_id(&self)  -> UserId    { self.user_id  }
+    fn group_id(&self) -> GroupId   { self.group_id }
+    fn comment(&self)  -> &LinuxStr { self.comment  }
+    fn home(&self)     -> &LinuxStr { self.home     }
+    fn shell(&self)    -> &LinuxStr { self.shell    }
 }
 
 impl UserInfo for Information {
-    fn name(&self)     -> &[u8]   { &self.name     }
-    fn password(&self) -> &[u8]   { &self.password }
-    fn user_id(&self)  -> UserId  { self.user_id   }
-    fn group_id(&self) -> GroupId { self.group_id  }
-    fn comment(&self)  -> &[u8]   { &self.comment  }
-    fn home(&self)     -> &[u8]   { &self.home     }
-    fn shell(&self)    -> &[u8]   { &self.shell    }
+    fn name(&self)     -> &LinuxStr { &self.name     }
+    fn password(&self) -> &LinuxStr { &self.password }
+    fn user_id(&self)  -> UserId    { self.user_id   }
+    fn group_id(&self) -> GroupId   { self.group_id  }
+    fn comment(&self)  -> &LinuxStr { &self.comment  }
+    fn home(&self)     -> &LinuxStr { &self.home     }
+    fn shell(&self)    -> &LinuxStr { &self.shell    }
 }
 
 /// Returns an allocating iterator over the users in `/etc/passwd`.
@@ -238,13 +218,13 @@ impl<'a> Iterator for InformationIter<'a> {
                 }
             };
             Some(Information {
-                name:     parts[0].to_vec(),
-                password: parts[1].to_vec(),
+                name:     LinuxString::from_bytes(parts[0]),
+                password: LinuxString::from_bytes(parts[1]),
                 user_id:  uid,
                 group_id: gid,
-                comment:  parts[4].to_vec(),
-                home:     parts[5].to_vec(),
-                shell:    parts[6].to_vec(),
+                comment:  LinuxString::from_bytes(parts[4]),
+                home:     LinuxString::from_bytes(parts[5]),
+                shell:    LinuxString::from_bytes(parts[6]),
             })
         } else {
             None
@@ -280,13 +260,13 @@ impl<'a> InfoIter<'a> {
         }
         if let Some((parts, uid, gid)) = parse_line(buf) {
             Some(Info {
-                name:     parts[0],
-                password: parts[1],
+                name:     LinuxStr::from_bytes(parts[0]),
+                password: LinuxStr::from_bytes(parts[1]),
                 user_id:  uid,
                 group_id: gid,
-                comment:  parts[4],
-                home:     parts[5],
-                shell:    parts[6],
+                comment:  LinuxStr::from_bytes(parts[4]),
+                home:     LinuxStr::from_bytes(parts[5]),
+                shell:    LinuxStr::from_bytes(parts[6]),
             })
         } else {
             self.reader.set_err(errno::InvalidSequence);

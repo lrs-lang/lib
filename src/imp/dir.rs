@@ -4,11 +4,10 @@
 
 use std::path::{Path};
 use std::io::{Cursor};
-use std::ffi::{OsString, CStr, OsStr};
-use std::os::unix::ffi::{OsStringExt, OsStrExt};
+use std::ffi::{CStr};
 
 use imp::cty::{linux_dirent64, c_uchar};
-use imp::rust::{AsLinuxPath};
+use imp::rust::{AsLinuxPath, LinuxString, LinuxStr};
 use imp::result::{Result};
 use imp::file::{File, Seek};
 use imp::file::flags::{Flags};
@@ -94,7 +93,7 @@ impl<'a> Iter<'a> {
 pub struct Entry {
     pub inode: u64,
     pub ty:    Type,
-    pub name:  OsString,
+    pub name:  LinuxString,
 }
 
 /// Type of a directory entry.
@@ -159,7 +158,7 @@ impl<'a> Iterator for Iter<'a> {
                 Some(Entry {
                     inode: ent.d_ino,
                     ty:    ty,
-                    name:  OsString::from_vec(name.to_vec()),
+                    name:  LinuxString::from_bytes(name),
                 })
             }
         }
@@ -177,7 +176,7 @@ pub enum WalkOp {
 pub struct WalkEntry<'a> {
     pub inode: u64,
     pub ty:    Type,
-    pub name:  &'a OsStr,
+    pub name:  &'a LinuxStr,
 }
 
 pub fn walk<S, F>(path: S, mut f: F)
@@ -208,7 +207,7 @@ fn walk_int<F>(path: &Path, f: &mut F)
             WalkEntry {
                 inode: ent.d_ino,
                 ty:    ty,
-                name:  OsStr::from_bytes(name),
+                name:  LinuxStr::from_bytes(name),
             }
         };
         match f(&entry) {

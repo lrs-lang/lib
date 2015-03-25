@@ -7,6 +7,7 @@
 pub use self::_statfs::{statfs};
 pub use self::resource::{SYSCALL_RLIM_INFINITY};
 
+mod _stat;
 mod _statfs;
 mod resource;
 

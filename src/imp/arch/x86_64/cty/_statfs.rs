@@ -2,12 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{c_ulong, fsblkcnt_t, fsfilcnt_t};
-use imp::cty::{fsid_t};
+use imp::cty::{c_ulong, fsblkcnt_t, fsfilcnt_t, fsid_t};
 
 // From musl/arch/x86_64/bits/statfs.h
+// See also linux/include/uapi/asm-generic/statfs.h
 
-#[repr(u8)]
+#[repr(C)]
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct statfs {
 	pub f_type:    c_ulong,
