@@ -1,6 +1,6 @@
 # linux-rs
 
-<img align="right" src="linux/assets/logo.png">
+<img align="left" src="linux/assets/logo.png">
 Test test
 Test test
 Test test
