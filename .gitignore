@@ -2,5 +2,6 @@ doc
 target
 dragons
 .*
+*.html
 Cargo.lock
 !.gitignore
