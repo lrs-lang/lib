@@ -1,6 +1,6 @@
 # linux-rs
 
-image:linux/assets/logo.png
+image:linux/assets/logo.png[]
 Experimental Linux standard library.
 
 This library tries to create a rust standard library on top of the Linux API. It
