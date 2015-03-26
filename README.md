@@ -5,7 +5,7 @@ Experimental Linux standard library.
 
 This library tries to create a rust standard library on top of the Linux API. It
 is not bound by any other standards. In particular, it does not try to create a
-POSIX-like api or an API that can easily be ported to other platforms.
+POSIX-like API or an API that can easily be ported to other platforms.
 
 Currently only `x86_64` is supported.
 
@@ -23,7 +23,9 @@ license. Copyright belongs to the individual contributors.
 
 ## Logo
 
-The [logo](linux/assets/logo.png) is based on [Simple Linux
+The [logo](linux/assets/logo.png) shows a penguin in a sprocket.
+
+It is based on [Simple Linux
 Logo](http://dablim.deviantart.com/art/Simple-Linux-Logo-336131202) by
 [Dablim](http://dablim.deviantart.com/) and is licensed under [CC BY-SA
 4.0](http://creativecommons.org/licenses/by-sa/4.0/).
