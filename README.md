@@ -26,4 +26,4 @@ license. Copyright belongs to the individual contributors.
 The [logo](linux/assets/logo.png) is based on [Simple Linux
 Logo](http://dablim.deviantart.com/art/Simple-Linux-Logo-336131202) by
 [Dablim](http://dablim.deviantart.com/) and is licensed under [CC BY
-3.0](http://creativecommons.org/licenses/by/3.0/).
+4.0](http://creativecommons.org/licenses/by/4.0/).
