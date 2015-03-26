@@ -10,6 +10,9 @@ POSIX-like API or an API that can easily be ported to other platforms.
 
 Currently only `x86_64` is supported.
 
+core:: test
+file:: test
+
 == License
 
 :mpl: https://www.mozilla.org/MPL/2.0/
