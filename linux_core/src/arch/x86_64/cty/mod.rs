@@ -4,6 +4,7 @@
 
 #![allow(non_camel_case_types, raw_pointer_derive)]
 
+pub use self::_stat::{stat};
 pub use self::_statfs::{statfs};
 pub use self::resource::{SYSCALL_RLIM_INFINITY};
 

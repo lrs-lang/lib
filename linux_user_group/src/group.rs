@@ -7,10 +7,10 @@ use std::io::{BufReader, BufRead};
 use std::error::{FromError};
 
 use core::result::{Result};
-use core::cty::{gid_t};
 use core::errno::{self, Errno};
 use core::ext::{IteratorExt2};
 use core::string::{LinuxStr, LinuxString, AsLinuxStr};
+use core::alias::{GroupId};
 
 use file::{File};
 
@@ -18,8 +18,6 @@ use {LineReader};
 
 /// Constant default value for non-allocating group info buffer size.
 pub const INFO_BUF_SIZE: usize = 1024;
-
-pub type GroupId = gid_t;
 
 /// Struct holding non-allocated group info.
 #[derive(Copy, Clone, Eq)]

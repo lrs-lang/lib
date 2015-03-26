@@ -8,12 +8,10 @@
 extern crate linux_core as core;
 extern crate linux_user_group as user_group;
 
-use core::cty::{pid_t};
 use core::syscall::{getpid, getppid};
+use core::alias::{ProcessId};
 
 pub mod ids;
-
-pub type ProcessId = pid_t;
 
 /// Returns the process id of this process.
 pub fn this_process_id() -> ProcessId {

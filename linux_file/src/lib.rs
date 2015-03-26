@@ -9,6 +9,7 @@
 extern crate linux_core as core;
 extern crate linux_dev as dev;
 extern crate linux_fs as fs;
+extern crate linux_clock as clock;
 
 use std::{mem};
 
@@ -19,14 +20,16 @@ use core::ext::{AsLinuxPath, UIntRange};
 use core::syscall::{open, read, write, close, pread, lseek, pwrite, readv, writev, preadv,
                     pwritev, ftruncate, fsync, fdatasync, syncfs, fadvise, fstatfs,
                     fcntl_dupfd_cloexec, fcntl_getfl, fcntl_setfl, fcntl_getfd,
-                    fcntl_setfd};
+                    fcntl_setfd, fstat};
 use core::util::{retry};
 
 use fs::info::{FileSystemInfo, from_statfs};
 
 use flags::{Flags};
+use info::{Info, info_from_stat};
 
 pub mod flags;
+pub mod info;
 
 macro_rules! rv {
     ($x:expr) => { if $x < 0 { Err(Errno(-$x as c_int)) } else { Ok(()) } };
@@ -265,6 +268,12 @@ impl File {
     pub fn fs_info(&self) -> Result<FileSystemInfo> {
         let mut buf = unsafe { mem::zeroed() };
         retry(|| fstatfs(self.fd, &mut buf)).map(|_| from_statfs(buf))
+    }
+
+    pub fn info(&self) -> Result<Info> {
+        let mut stat = unsafe { mem::zeroed() };
+        try!(rv!(fstat(self.fd, &mut stat)));
+        Ok(info_from_stat(stat))
     }
 }
 

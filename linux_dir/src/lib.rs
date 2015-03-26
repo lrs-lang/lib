@@ -12,7 +12,7 @@ use std::path::{Path};
 use std::io::{Cursor};
 use std::ffi::{CStr};
 
-use core::cty::{linux_dirent64, c_uchar};
+use core::cty::{linux_dirent64, MODE_TYPE_SHIFT, mode_t};
 use core::ext::{AsLinuxPath};
 use core::string::{LinuxString, LinuxStr, AsLinuxStr};
 use core::result::{Result};
@@ -21,6 +21,7 @@ use core::errno::{Errno};
 
 use file::{File, Seek};
 use file::flags::{Flags};
+use file::info::{Type, file_type_from_mode};
 
 /// The default buffer size used for reading directory entries.
 pub const DEFAULT_BUF_SIZE: usize = 2048;
@@ -104,42 +105,6 @@ pub struct Entry {
     pub name:  LinuxString,
 }
 
-/// Type of a directory entry.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum Type {
-    /// A block device.
-    BlockDevice,
-    /// A character device.
-    CharDevice,
-    /// A directory.
-    Directory,
-    /// A named pipe.
-    FIFO,
-    /// A symbolic link.
-    SymLink,
-    /// A regular file.
-    File,
-    /// A UNIX domain socket.
-    Socket,
-    /// Unknown
-    Unknown,
-}
-
-impl Type {
-    fn from_int(t: c_uchar) -> Type {
-        match t {
-            1  => Type::FIFO,
-            2  => Type::CharDevice,
-            4  => Type::Directory,
-            6  => Type::BlockDevice,
-            8  => Type::File,
-            10 => Type::SymLink,
-            12 => Type::Socket,
-            _  => Type::Unknown,
-        }
-    }
-}
-
 impl<'a> Iterator for Iter<'a> {
     type Item = Entry;
 
@@ -158,7 +123,7 @@ impl<'a> Iterator for Iter<'a> {
             let ent = &*(self.buf.get_ref()[pos..].as_ptr() as *const linux_dirent64);
             let ent_len = ent.d_reclen as usize;
             self.buf.set_position((pos + ent_len) as u64);
-            let ty = Type::from_int(ent.d_types);
+            let ty = file_type_from_mode((ent.d_types as mode_t) << MODE_TYPE_SHIFT);
             let name = CStr::from_ptr(ent.d_name.as_ptr()).to_bytes();
             if name == b"." || name == b".." {
                 self.next()
@@ -211,7 +176,7 @@ fn walk_int<F>(path: &Path, f: &mut F)
             let ent_len = ent.d_reclen as usize;
             iter.buf.set_position((pos + ent_len) as u64);
             let name = CStr::from_ptr(ent.d_name.as_ptr()).to_bytes();
-            let ty = Type::from_int(ent.d_types);
+            let ty = file_type_from_mode((ent.d_types as mode_t) << MODE_TYPE_SHIFT);
             WalkEntry {
                 inode: ent.d_ino,
                 ty:    ty,

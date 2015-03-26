@@ -14,3 +14,6 @@ path = "../linux_dev"
 
 [dependencies.linux_fs]
 path = "../linux_fs"
+
+[dependencies.linux_clock]
+path = "../linux_clock"

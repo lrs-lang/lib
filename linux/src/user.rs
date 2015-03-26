@@ -4,5 +4,6 @@
 
 //! User handling.
 
+pub use linux_core::alias::{UserId};
 pub use linux_user_group::user::{Info, InfoIter, Information, InformationIter,
-            INFO_BUF_SIZE, UserInfo, iter, iter_buf, UserId};
+            INFO_BUF_SIZE, UserInfo, iter, iter_buf};

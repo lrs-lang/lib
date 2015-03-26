@@ -1,6 +1,8 @@
 = linux-rs
 
-image::linux/assets/logo.png[logo,float="left"]
+:logo: linux/assets/logo.png
+
+image::{logo}[logo,float="left"]
 
 Experimental Linux standard library.
 
@@ -22,7 +24,8 @@ the individual contributors.
 - Can be used in proprietary projects.
 - Files can be mixed with files under other licenses.
 - Changes to MPL licensed files must be published under the MPL.
-- Code can freely be copied and used in GPL 2+ and LGPL 2+ projects.
+- Code can freely be copied and used in GPL 2.0+, AGPL 3.0+, and LGPL 2.1+
+  projects.
 
 == Logo
 
@@ -30,7 +33,7 @@ the individual contributors.
 :dablim: http://dablim.deviantart.com/
 :ccby: http://creativecommons.org/licenses/by-sa/4.0/
 
-The link:linux/assets/logo.png[logo] shows a penguin in a sprocket.
+The link:{logo}[logo] shows a penguin in a sprocket.
 
 It is based on {simple-linux-logo}[Simple Linux Logo] by {dablim}[Dablim] and is
 licensed under {ccby}[CC BY-SA 4.0].

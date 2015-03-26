@@ -6,9 +6,7 @@ use core::cty::{c_int};
 use core::syscall::{getresuid, getresgid, setresuid, setresgid, setgroups, getgroups};
 use core::result::{Result};
 use core::errno::{self, Errno};
-
-use user_group::user::{UserId};
-use user_group::group::{GroupId};
+use core::alias::{UserId, GroupId};
 
 macro_rules! rv {
     ($x:expr) => { if $x < 0 { Err(Errno(-$x as c_int)) } else { Ok(()) } };

@@ -28,18 +28,31 @@ pub const O_SYNC:      c_int = 0o4010000;
 pub const O_PATH:      c_int = 0o10000000;
 pub const O_TMPFILE:   c_int = 0o20200000;
 
-pub const S_ISUID: mode_t = 0o4000;
-pub const S_ISGID: mode_t = 0o2000;
-pub const S_ISVTX: mode_t = 0o1000;
-pub const S_IRUSR: mode_t = 0o400;
-pub const S_IWUSR: mode_t = 0o200;
-pub const S_IXUSR: mode_t = 0o100;
-pub const S_IRGRP: mode_t = 0o40;
-pub const S_IWGRP: mode_t = 0o20;
-pub const S_IXGRP: mode_t = 0o10;
-pub const S_IROTH: mode_t = 0o4;
-pub const S_IWOTH: mode_t = 0o2;
-pub const S_IXOTH: mode_t = 0o1;
+pub const MODE_TYPE_SHIFT: usize = 12;
+
+pub const S_IFMT:   mode_t = 0o170000;
+pub const S_IFSOCK: mode_t = 0o140000;
+pub const S_IFLNK:  mode_t = 0o120000;
+pub const S_IFREG:  mode_t = 0o100000;
+pub const S_IFBLK:  mode_t = 0o060000;
+pub const S_IFDIR:  mode_t = 0o040000;
+pub const S_IFCHR:  mode_t = 0o020000;
+pub const S_IFIFO:  mode_t = 0o010000;
+
+pub const S_ISUID:  mode_t = 0o004000;
+pub const S_ISGID:  mode_t = 0o002000;
+pub const S_ISVTX:  mode_t = 0o001000;
+pub const S_IRUSR:  mode_t = 0o000400;
+pub const S_IWUSR:  mode_t = 0o000200;
+pub const S_IXUSR:  mode_t = 0o000100;
+pub const S_IRGRP:  mode_t = 0o000040;
+pub const S_IWGRP:  mode_t = 0o000020;
+pub const S_IXGRP:  mode_t = 0o000010;
+pub const S_IROTH:  mode_t = 0o000004;
+pub const S_IWOTH:  mode_t = 0o000002;
+pub const S_IXOTH:  mode_t = 0o000001;
+
+
 
 pub const SEEK_SET: c_int = 0;
 pub const SEEK_CUR: c_int = 1;

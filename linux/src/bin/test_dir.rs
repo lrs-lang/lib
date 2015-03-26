@@ -4,8 +4,6 @@
 
 extern crate linux;
 
-use std::os::unix::ffi::{OsStrExt};
-
 fn main() {
     for entry in linux::dir::iter(".", None) {
         println!("{:?}", entry);

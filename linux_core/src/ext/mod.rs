@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use std::os::unix::ffi::{OsStrExt};
-use std::ffi::{CString, NulError};
+use std::ffi::{OsStr, CString, NulError};
 use std::path::{Path, AsPath};
 use std::num::{Int};
 use std::{ops};
@@ -18,7 +18,7 @@ pub trait AsLinuxPath {
     fn as_linux_path(&self) -> &Path;
 
     fn to_cstring(&self) -> Result<CString, NulError> {
-        self.as_linux_path().to_cstring()
+        <OsStr as OsStrExt>::to_cstring(self.as_linux_path().as_os_str())
     }
 }
 

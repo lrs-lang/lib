@@ -4,7 +4,7 @@
 
 use std::ffi::{CStr};
 
-use cty::{c_int, mode_t, ssize_t, off_t, rlimit, pid_t, uid_t, gid_t,
+use cty::{c_int, mode_t, ssize_t, off_t, rlimit, pid_t, uid_t, gid_t, stat,
           SYSCALL_RLIM_INFINITY, RLIM_INFINITY, statfs};
 use ext::{SaturatingCast};
 
@@ -122,4 +122,8 @@ pub fn getdents(fd: c_int, buf: &mut [u8]) -> c_int {
     unsafe {
         __getdents(fd, buf.as_mut_ptr() as *mut _, buf.len().saturating_cast())
     }
+}
+
+pub fn fstat(fd: c_int, buf: &mut stat) -> c_int {
+    unsafe { __fstat(fd, buf) }
 }

@@ -16,3 +16,4 @@ pub mod string;
 pub mod result;
 pub mod errno;
 pub mod util;
+pub mod alias;

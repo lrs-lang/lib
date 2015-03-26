@@ -7,21 +7,17 @@ use std::io::{BufReader, BufRead};
 use std::error::{FromError};
 
 use core::result::{Result};
-use core::cty::{uid_t};
 use core::errno::{self};
 use core::ext::{IteratorExt2};
 use core::string::{AsLinuxStr, LinuxStr, LinuxString};
+use core::alias::{UserId, GroupId};
 
 use file::{File};
 
 use {LineReader};
 
-use group::{GroupId};
-
 /// Constant default value for non-allocating user info buffer size.
 pub const INFO_BUF_SIZE: usize = 1024;
-
-pub type UserId = uid_t;
 
 /// Struct holding non-allocated user info.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]

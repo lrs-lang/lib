@@ -12,9 +12,10 @@ extern crate linux_core as core;
 /// Source: http://www.lanana.org/docs/device-list/devices-2.6+.txt
 
 use std::io::{Write};
+use std::{fmt};
 
-use core::cty::{dev_t};
 use core::string::{LinuxString};
+use core::alias::{DeviceId};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum DeviceType {
@@ -22,9 +23,7 @@ pub enum DeviceType {
     Block,
 }
 
-pub type DeviceId = dev_t;
-
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Device(DeviceId, DeviceType);
 
 impl Device {
@@ -59,6 +58,12 @@ impl Device {
     }
 }
 
+impl fmt::Debug for Device {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        write!(fmt, "{:?}", self.to_path())
+    }
+}
+
 fn path_from_device(d: Device) -> LinuxString {
     match d.1 {
         DeviceType::Character => path_from_char_device(d),
@@ -69,8 +74,8 @@ fn path_from_device(d: Device) -> LinuxString {
 fn path_from_char_device(d: Device) -> LinuxString {
     let mut base = b"/dev/".to_vec();
     macro_rules! p {
-        ($fmt:expr) => {{ let _ = write!(base, $fmt); }};
-        ($fmt:expr, $($var:tt)*) => {{ let _ = write!(base, $fmt, $($var)*); }}
+        ($fmt:expr) => {{ let _ = write!(&mut base, $fmt); }};
+        ($fmt:expr, $($var:tt)*) => {{ let _ = write!(&mut base, $fmt, $($var)*); }}
     };
     macro_rules! invalid {
         () => { base = b"[Invalid]".to_vec() }
@@ -798,14 +803,14 @@ fn path_from_char_device(d: Device) -> LinuxString {
 fn path_from_block_device(d: Device) -> LinuxString {
     let mut base = b"/dev/".to_vec();
     macro_rules! p {
-        ($fmt:expr) => {{ let _ = write!(base, $fmt); }};
-        ($fmt:expr, $($var:tt)*) => {{ let _ = write!(base, $fmt, $($var)*); }}
-    };
-    macro_rules! invalid {
-        () => { base = b"[Invalid]".to_vec() }
+        ($fmt:expr) => {{ let _ = write!(&mut base, $fmt); }};
+        ($fmt:expr, $($var:tt)*) => {{ let _ = write!(&mut base, $fmt, $($var)*); }}
     };
     let major = d.major();
     let minor = d.minor() as u8;
+    macro_rules! invalid {
+        () => {{ base.truncate(0); let _ = write!(&mut base, "{:x}:{:x}", major, minor); }}
+    };
     macro_rules! or_invalid {
         ($fmt:expr) => { if minor == 0 { p!($fmt) } else { invalid!() } }
     };
@@ -1169,6 +1174,7 @@ fn path_from_block_device(d: Device) -> LinuxString {
             0 => p!("ub{}",   minor / 8 + b'a'),
             n => p!("ub{}{}", minor / 8 + b'a', n),
         },
+        254 => p!("dm-{}", minor), // not in the documentation
         _ => invalid!(),
     }
     LinuxString::from_vec(base)
