@@ -3,6 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use std::ops::{Deref, DerefMut};
+use std::{fmt};
 
 use core::cty::{self, c_int, mode_t};
 
@@ -246,7 +247,7 @@ impl DerefMut for Flags {
 }
 
 /// The permissions of a file.
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Mode {
     mode: mode_t,
 }
@@ -356,7 +357,7 @@ impl Mode {
     }
 
     /// Checks if the `group writable` bit is set.
-    pub fn is_group_writable(&mut self) -> bool {
+    pub fn is_group_writable(&self) -> bool {
         **self & cty::S_IWGRP != 0
     }
 
@@ -424,3 +425,33 @@ impl DerefMut for Mode {
     }
 }
 
+impl fmt::Debug for Mode {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        macro_rules! w {
+            ($cond:expr, $c:expr) => { try!(if $cond { fmt.write_str($c) } else { fmt.write_str("-") }) }
+        };
+        w!(self.is_owner_readable(), "r");
+        w!(self.is_owner_writable(), "w");
+        match (self.is_owner_executable(), self.is_set_user_id()) {
+            (true,  true)  => try!(fmt.write_str("s")),
+            (true,  false) => try!(fmt.write_str("x")),
+            (false, _)     => try!(fmt.write_str("-")),
+        }
+        w!(self.is_group_readable(), "r");
+        w!(self.is_group_writable(), "w");
+        match (self.is_group_executable(), self.is_set_group_id()) {
+            (true,  true)  => try!(fmt.write_str("s")),
+            (true,  false) => try!(fmt.write_str("x")),
+            (false, _)     => try!(fmt.write_str("-")),
+        }
+        w!(self.is_world_readable(), "r");
+        w!(self.is_world_writable(), "w");
+        match (self.is_world_executable(), self.is_sticky()) {
+            (true,  true)  => try!(fmt.write_str("t")),
+            (true,  false) => try!(fmt.write_str("x")),
+            (false, true)  => try!(fmt.write_str("T")),
+            (false, false) => try!(fmt.write_str("-")),
+        }
+        Ok(())
+    }
+}

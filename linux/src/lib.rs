@@ -12,6 +12,7 @@
 
 #![crate_name = "linux"]
 #![crate_type = "lib"]
+#![allow(trivial_numeric_casts)]
 
 extern crate linux_file;
 extern crate linux_user_group;

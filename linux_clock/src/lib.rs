@@ -2,6 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#![crate_name = "linux_clock"]
+#![crate_type = "lib"]
+#![allow(trivial_numeric_casts)]
+
 extern crate linux_core as core;
 
 use core::cty::{timespec};

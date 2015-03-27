@@ -4,6 +4,7 @@
 
 #![crate_name = "linux_fs"]
 #![crate_type = "lib"]
+#![allow(trivial_numeric_casts)]
 
 extern crate linux_core as core;
 

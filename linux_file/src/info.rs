@@ -76,7 +76,11 @@ impl Info {
     }
 
     pub fn special_file(&self) -> Option<Device> {
-        None
+        match self.file_type() {
+            Type::BlockDevice => Some(Device::from_id(self.0.st_rdev, DeviceType::Block)),
+            Type::CharDevice => Some(Device::from_id(self.0.st_rdev, DeviceType::Character)),
+            _ => None,
+        }
     }
 
     pub fn size(&self) -> u64 {

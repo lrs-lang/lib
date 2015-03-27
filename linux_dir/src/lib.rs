@@ -4,6 +4,7 @@
 
 #![crate_name = "linux_dir"]
 #![crate_type = "lib"]
+#![allow(trivial_numeric_casts)]
 
 extern crate linux_core as core;
 extern crate linux_file as file;

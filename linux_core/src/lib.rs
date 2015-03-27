@@ -5,6 +5,7 @@
 #![crate_name = "linux_core"]
 #![crate_type = "lib"]
 #![feature(std_misc, core, plugin, asm, io, into_cow, convert)]
+#![allow(trivial_numeric_casts, trivial_casts)]
 
 // XXX: Maybe move some of these out? core takes a long time to compile right now.
 
