@@ -170,7 +170,7 @@ create! {
     RFKill                  = (132, "Operation not possible due to RF-kill"),
     HardwarePoison          = (133, "Memory page has hardware error"),
 
-    RustError               = (1024, "Rust custom error"),
+    RustError               = (5000, "Rust custom error"),
 }
 
 impl FromError<Errno> for ::std::io::Error {
@@ -181,6 +181,9 @@ impl FromError<Errno> for ::std::io::Error {
 
 impl FromError<::std::io::Error> for Errno {
     fn from_error(e: ::std::io::Error) -> Errno {
+        if let Some(num) = e.raw_os_error() {
+            return Errno(num as c_int);
+        }
         match e.kind() {
             ErrorKind::PermissionDenied               => NotPermitted,
             ErrorKind::NotFound                       => DoesNotExist,
@@ -200,21 +203,5 @@ impl FromError<::std::io::Error> for Errno {
             ErrorKind::Other                          => RustError,
             _                                         => RustError,
         }
-    }
-}
-
-pub trait ToCInt {
-    fn to_c_int(self) -> c_int;
-}
-
-impl ToCInt for i32 {
-    fn to_c_int(self) -> c_int {
-        self
-    }
-}
-
-impl ToCInt for Errno {
-    fn to_c_int(self) -> c_int {
-        self.0
     }
 }

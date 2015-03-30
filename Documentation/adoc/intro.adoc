@@ -1,0 +1,39 @@
+= linux-rs
+
+:logo: ../../linux/assets/logo.png
+
+image::{logo}[logo,float="left"]
+
+Experimental Linux standard library.
+
+This library tries to create a rust standard library on top of the Linux API. It
+is not bound by any other standards. In particular, it does not try to create a
+POSIX-like API or an API that can easily be ported to other platforms.
+
+Currently only `x86_64` is supported.
+
+== License
+
+:mpl: https://www.mozilla.org/MPL/2.0/
+
+The project is licensed under the {mpl}[MPL 2.0] license. Copyright belongs to
+the individual contributors.
+
+=== tl;dr
+
+- Can be used in proprietary projects.
+- Files can be mixed with files under other licenses.
+- Changes to MPL licensed files must be published under the MPL.
+- Code can freely be copied and used in GPL 2.0+, AGPL 3.0+, and LGPL 2.1+
+  projects.
+
+== Logo
+
+:simple-linux-logo: http://dablim.deviantart.com/art/Simple-Linux-Logo-336131202
+:dablim: http://dablim.deviantart.com/
+:ccby: http://creativecommons.org/licenses/by-sa/4.0/
+
+The link:{logo}[logo] shows a penguin in a sprocket.
+
+It is based on {simple-linux-logo}[Simple Linux Logo] by {dablim}[Dablim] and is
+licensed under {ccby}[CC BY-SA 4.0].

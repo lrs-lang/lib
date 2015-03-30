@@ -5,7 +5,6 @@
 //! A small errno wrapper with corresponding constants.
 
 pub use linux_core::errno::{Errno};
-pub use linux_core::errno::{ToCInt};
 
 pub use linux_core::errno::{AccessDenied};
 pub use linux_core::errno::{AddrFamilyNotSupported};

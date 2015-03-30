@@ -1,0 +1,506 @@
+= Syscalls
+:numbered:
+
+This document contains a list of Linux syscalls together with short
+descriptions.
+
+If there are multiple syscalls that do the same thing, then the obsolete
+variants are not listed. See the manpages for more detailed descriptions, e.g.,
+`man 2 open`.
+
+Note that the manpages describe the glibc wrappers and not the syscalls
+themselves. The syscalls do, in general, look like the wrappers, but one
+difference is how errors are reported. On error, the syscall returns a negative
+value which the wrapper stores in `errno`.
+
+Also note that the manpages are not always complete when talking about the
+differences between the syscall and its wrapper. For example, the `getcwd`
+syscall returns the length of the current working directory on success. The
+manpage does not mention this.
+
+== Files
+
+*openat*:: Opens a file.
+
+*close*:: Closes a file descriptor.
+
+*read*:: Reads data from the object represented by a file descriptor into a
+buffer.
+
+*pread*:: Like `read`, but you can specify the offset from which to read. This
+operation doesn't change the offset of the file description.
+
+*readv*:: Like `read`, but you can specify multiple buffers in which the data
+will be stored.
+
+*preadv*:: Combines `pread` and `readv`.
+
+*write*:: Writes data from a buffer to the object represented by a file
+descriptor.
+
+*pwrite*:: Like `write`, but you can specify the offset to which to write. This
+operation doesn't change the offset of the file description.
+
+*writev*:: Like `write`, but you can specify multiple buffers from which the
+data will be written.
+
+*pwritev*:: Combines `pwrite` and `writev`.
+
+*fstatat*:: Retrieves information stored in an inode.
+
+*lseek*:: Changes the offset of a file description.
+
+*faccessat*:: Checks whether a file exists or whether in user can read, write,
+and/or execute the file. Note that this uses the real user id and not the
+effective user id.
+
+*pipe2*:: Creates a one-directional pipe.
+
+*ioctl*:: Changes the device parameters of a device special file.
+
+*dup3*:: Duplicates a file descriptor.
+
+*fcntl*:: Performs various operations on file descriptors.
+
+*flock*:: Modifies advisory locks on files.
+
+*fsync*:: Flushes all buffered data of a file descriptor to the file system.
+
+*fdatasync*:: Like `fsync` but doesn't flush all metadata.
+
+*truncate*, *ftruncate*:: Changes the length of a file.
+
+*getdents*:: Given a file descriptor to a directory, reads information about the
+files in the directory.
+
+*renameat2*:: Renames a file.
+
+*mkdirat*:: Creates a directory.
+
+*rmdir*:: Deletes an empty directory.
+
+*linkat*:: Given a path, creates a new hardlink to the referenced inode.
+
+*unlinkat*:: Removes a hardlink to an inode.
+
+*symlinkat*:: Creates a symlink to a path.
+
+*readlinkat*:: Given a path to a symbolic link, returns its destination.
+
+*fchmodat*:: Changes the permissions of a file.
+
+*fchownat*:: Changes the owner of a file.
+
+*utimensat*:: Updates the access and modification time of a file.
+
+*umask*:: Sets the processes file mode creation mask.
+
+*mknodat*:: Creates a device special file in the filesystem.
+
+*statfs*, *fstatfs*:: Returns information about the filesystem on which a file
+is stored.
+
+*setxattr*, *lsetxattr*, *fsetxattr*:: Sets an extended attribute on a file.
+
+*getxattr*, *lgetxattr*, *fgetxattr*:: Retrieves an extended attribute from a
+file.
+
+*listxattr*, *llistxattr*, *flistxattr*:: Retrieves all extended attributes from
+a file.
+
+*removexattr*, *lremovexattr*, *fremovexattr*:: Removes an extended attribute
+from a file.
+
+*memfd_create*:: Creates an anonymous file backed by memory.
+
+*readahead*:: Initiates readahead of a file descriptor in the kernel.
+
+*fadvise*:: Informs the kernel that a file will have a certain usage pattern.
+
+*splice*:: Moves data between a file descriptor and a kernel buffer.
+
+*tee*:: Copies data from a file descriptor to a kernel buffer.
+
+*vmsplice*:: Copies user memory to a kernel buffer.
+
+*sync_file_range*:: Flushes parts of a kernel buffered file to disk.
+
+*fallocate*:: Allocates disk space for a file, replaces parts of a file by file
+holes, or collapses a range in a file.
+
+*eventfd2*:: Creates a file descriptor for event notification.
+
+*name_to_handle_at*:: Creates a file handle to a path.
+
+*open_by_handle_at*:: Opens a file handle.
+
+== Files (multiple)
+
+*ppoll*:: Sleeps until at least one of a given set of file descriptors becomes
+"ready".
+
+*pselect6*:: Like `ppoll`.
+
+*io_setup*:: Creates an async I/O context.
+
+*io_destroy*:: Destroys an async I/O context.
+
+*io_getevents*:: Reads events from an async I/O completion queue.
+
+*io_submit*:: Adds I/O request to an async I/O context.
+
+*io_cancel*:: Cancels an I/O request on an async I/O context.
+
+*epoll_create1*:: Creates an epoll instance.
+
+*epoll_ctl*:: Manipulates an epoll instance.
+
+*epoll_pwait*:: Waits for an epoll instance to signal readiness.
+
+*inotify_init1*:: Initializes a file system watcher.
+
+*inotify_add_watch*:: Adds a watch for a directory or file.
+
+*inotify_rm_watch*:: Removes a previously added watch.
+
+*fanotify_init*:: Initializes a file system watcher.
+
+*fanotify_mark*:: Modifies a file system watcher.
+
+*sync*:: Flushes a kernel buffers to the disks.
+
+*syncfs*:: Like `sync` but only flushes one filesystem.
+
+== Memory
+
+*mmap*:: Maps the contents of a file into memory.
+
+*mremap*:: Resizes a mapping.
+
+*munmap*:: Unmaps a region mapped with `mmap`.
+
+*msync*:: Flushes changes in a memory mapped region to the filesystem.
+
+*mprotect*:: Changes whether a certain memory region can be read from, written to,
+or executed.
+
+*madvise*:: Informs the kernel to expect a certain usage pattern of a certain
+memory region.
+
+*brk*:: Changes the program break.
+
+*mincore*:: Determines whether a certain page is in memory.
+
+*mlock*:: Prevents a certain memory region from being swapped out of ram.
+
+*munlock*:: Reverts `mlock`.
+
+*mlockall*:: Like `mlock` but works on all of the calling process's memory.
+
+*munlockall*:: Unlocks all locked pages of the calling process.
+
+*futex*:: Manipulates a fast user-space mutex.
+
+*mbind*:: Sets the memory policy for a memory range.
+
+*set_mempolicy*:: Sets the default memory policy for a process.
+
+*get_mempolicy*:: Gets the memory policy of a process.
+
+*migrate_pages*:: Moves pages between nodes.
+
+*move_pages*:: Moves certain pages to another node.
+
+== Processes
+
+*getpid*:: Returns the process id of the current process (thread group.)
+
+*getppid*:: Returns the process id of the parent process (thread group.)
+
+*setpgid*:: Sets the process group of a process.
+
+*getpgid*:: Returns the process group of a process.
+
+*setsid*:: Creates a new session.
+
+*getsid*:: Returns the session id of a process.
+
+*getgroups*:: Returns the supplementary groups of a process.
+
+*setgroups*:: Sets the supplementary groups of a process.
+
+*setresuid*:: Sets the real, effective, and saved user ids of a process.
+
+*getresuid*:: Gets the real, effective, and saved user ids of a process.
+
+*setresgid*:: Sets the real, effective, and saved group ids of a process.
+
+*getresgid*:: Gets the real, effective, and saved group ids of a process.
+
+*clone*:: Creates a new process (task) that can share parts of its execution
+context with the calling process. This system call is used to create both
+threads and separate processes.
+
+*unshare*:: Unshares certain parts of the current processes execution context
+that are currently shared with other processes.
+
+*execve*:: Executes the program located at a path.
+
+*execveat*:: Like `execve` but relative paths are interpreted relative to a file
+descriptor.
+
+*exit*:: Exits the current thread.
+
+*exit_group*:: Exits the current process (thread group.)
+
+*waitid*:: Waits for a child process to enter a certain state or reaps
+terminated child processes.
+
+*kill*:: Sends a signal to a process or process group.
+
+*tgkill*:: Sends a signal to a thread.
+
+*getcwd*:: Returns the current working directory of the process.
+
+*chdir*:: Changes the current working directory of the process.
+
+*fchdir*:: Like `chdir` but takes a file descriptor instead of a path.
+
+*prlimit64*:: Gets and sets resource limits of a process.
+
+*getrusage*:: Returns resource usage of the calling thread, process, or children
+of the process.
+
+*ptrace*:: "Trace" a process. (for debugging etc.)
+
+*capget*:: Gets the capabilities of a process.
+
+*capset*:: Sets the capabilities of a process.
+
+*personality*:: Changes the execution domain of the process.
+
+*vhangup*:: Simulates a hangup on the current terminal.
+
+*pivot_root*:: Replaces the root directory of the calling process.
+
+*chroot*:: Changes the root directory of the calling process.
+
+*prctl*:: Changes various process properties.
+
+*arch_prctl*:: Changes various architecture dependent process properties.
+
+*ioperm*:: Changes which I/O ports the program can access.
+
+*gettid*:: Returns the task id of the calling thread.
+
+*set_thread_area*:: Sets a TLS entry in the global descriptor table.
+
+*get_thread_area*:: Reads an entry from the global descriptor table.
+
+*set_tid_address*:: Sets an address to which the current thread will write a `0`
+when it terminates.
+
+*ioprio_set*:: Sets the I/O scheduling class and priority of a process, process
+group, or user.
+
+*ioprio_get*:: Gets the I/O scheduling class and priority of a process, process
+group, or user.
+
+*set_robust_list*:: Sets the thread's robust futex list.
+
+*get_robust_list*:: Gets the thread's robust futex list.
+
+*process_vm_readv*:: Reads data from another processes virtual memory.
+
+*process_vm_writev*:: Writes data to another processes virtual memory.
+
+*perf_event_open*:: Sets up a file descriptor for performance monitoring.
+
+*setns*:: Reassociates a thread with a namespace.
+
+*getcpu*:: Returns the CPU on which the current thread is running.
+
+*kcmp*:: Checks whether two processes share resources.
+
+*seccomp*:: Modifies the seccomp state of the process.
+
+*bpf*:: Operates on the kernel's eBPF virtual machine.
+
+== Scheduling
+
+*sched_setattr*:: Sets the thread's scheduling policy and related parameters.
+
+*sched_getattr*:: Sets the thread's scheduling policy and related parameters.
+
+*sched_get_priority_max*:: Returns the maximal static priority of a policy.
+
+*sched_get_priority_min*:: Returns the minimal static priority of a policy.
+
+*sched_rr_get_interval*:: Returns the time quantum of the round-robin policy.
+
+*sched_yield*:: Deschedules the current thread.
+
+*sched_setaffinity*:: Sets the set of CPUs a thread can run on.
+
+*sched_getaffinity*:: Gets the set of CPUs a thread can run on.
+
+*setpriority*:: Sets the dynamic scheduling priority of a process group or user.
+
+*getpriority*:: Gets the dynamic scheduling priority of a process group or user.
+
+*pause*:: Deschedules the current thread until a signal arrives.
+
+== Sockets
+
+*socket*:: Creates a socket endpoint.
+
+*connect*:: Connects a socket to an address.
+
+*accept4*:: Accepts a connection request on a socket.
+
+*recvfrom*:: Receives data on a socket, stores it in a buffer, and returns the
+address the data was received from.
+
+*recvmsg*:: Like `recvfrom` but can store data into multiple buffers and can
+receive auxiliary data.
+
+*recvmmsg*:: Like `recvmsg` but can receive multiple messages at the same time.
+
+*sendto*:: Sends data from a buffer to a specified address.
+
+*sendmsg*:: Like `sendto` but can send data from multiple buffers at once and can
+send auxiliary data.
+
+*sendmmsg*:: Like `sendmsg` but can send multiple messages at the same time.
+
+*shutdown*:: Shuts down parts of a socket.
+
+*bind*:: Assigns an address to a socket.
+
+*listen*:: Marks a socket as accepting connections.
+
+*getsockname*:: Returns the address assigned to a socket.
+
+*getpeername*:: Returns the address of the peer connected to a socket.
+
+*socketpair*:: Creates a pair of sockets that are connected to each other.
+
+*setsockopt*:: Changes a socket option.
+
+*getsockopt*:: Returns the value of a socket option.
+
+== System
+
+*uname*:: Returns static information about the system.
+
+*sysinfo*:: Returns resource usage of the system.
+
+*syslog*:: Manipulates the kernel log buffer.
+
+*sysfs*:: Returns information about the filesystems in the kernel.
+
+*getrandom*:: Returns a certain number of random bytes from the system.
+
+*acct*:: Switches process accounting on or off.
+
+*mount*:: Mounts a filesystem.
+
+*umount2*:: Unmounts a filesystem.
+
+*swapon*:: Turns a file or block device into a potential swap area.
+
+*swapoff*:: Reverts `swapon`.
+
+*reboot*:: Performs various operations related to rebooting.
+
+*sethostname*:: Changes the hostname of the system.
+
+*setdomainname*:: Changes the domain name of the system.
+
+*init_module*:: Loads a kernel module from a path.
+
+*finit_module*:: Like `init_module` but accepts a file descriptor.
+
+*delete_module*:: Unloads a kernel module.
+
+*query_module*:: Returns information about kernel modules.
+
+*quotactl*:: Manipulates and queries disk quota values of users and groups.
+
+*lookup_dcookie*:: Given a cookies, retrieves an associated file path.
+
+*kexec_load*:: Loads a new kernel image to be executed via `reboot`.
+
+*kexec_file_load*:: Loads a new kernel image to be executed via `reboot`.
+
+*add_key*:: Adds a key to the kernel's key management facility.
+
+*request_key*:: Requests a key from the kernel's key management facility.
+
+*keyctl*:: Manipulates the kernel's key management facility.
+
+== IPC
+
+*mq_open*:: Opens a POSIX message queue.
+
+*mq_unlink*:: Removes a POSIX message queue.
+
+*mq_timedsend*:: Adds a message to a POSIX message queue.
+
+*mq_timedreceive*:: Retrieves a message from a POSIX message queue.
+
+*mq_notify*:: Modifies whether this process is notified with a signal when a
+message arrives on a POSIX message queue.
+
+*mq_getsetattr*:: Modifies or retrieves attributes of a POSIX message queue.
+
+== Time
+
+*gettimeofday*:: Returns the current time and timezone.
+
+*settimeofday*:: Sets the current time and timezone.
+
+*times*:: Returns information about the CPU time used by the process and its
+children.
+
+*clock_settime*:: Sets the time of a clock.
+
+*clock_gettime*:: Gets the time of a clock.
+
+*clock_getres*:: Gets the resolution of a clock.
+
+*clock_nanosleep*:: Sleeps until a certain point or for a certain time.
+
+*clock_adjtime*:: Adjusts the time of a clock. Use `adjtimex` instead.
+
+*adjtimex*:: Adjusts the system time.
+
+*timerfd_create*:: Creates a new timer file descriptor.
+
+*timerfd_settime*:: Sets the interval in which the timer expires.
+
+*timerfd_gettime*:: Gets the interval in which the timer expires.
+
+== Signals
+
+*rt_sigaction*:: Changes the action taken when a signal is sent to the thread.
+
+*rt_sigprocmask*:: Changes which signals can be sent to the thread.
+
+*rt_sigreturn*:: Returns from a signal handler.
+
+*rt_sigpending*:: Examines pending signals.
+
+*rt_sigtimedwait*:: Waits for pending signals.
+
+*rt_sigqueueinfo*:: Sends a signal to a process.
+
+*rt_tgsigqueueinfo*:: Sends a signal to a thread.
+
+*rt_sigsuspend*:: Suspends the process until one of a certain set of signals
+arrives.
+
+*sigaltstack*:: Modifies the stack of which signal handlers are executed.
+
+*signalfd4*:: Creates a file descriptor that can be used to receive signals
+synchronously.

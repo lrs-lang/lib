@@ -2,7 +2,7 @@
 
 set -e
 
-cargo doc
-cp assets/doc_style.css target/doc/main.css
-cd target/doc
+rustdoc -L target/debug/deps src/lib.rs
+cp assets/doc_style.css doc/main.css
+cd doc
 rm *.woff
