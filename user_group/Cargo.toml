@@ -7,7 +7,7 @@ authors = [ "mahkoh" ]
 name = "linux_user_group"
 
 [dependencies.linux_core]
-path = "../linux_core"
+path = "../core"
 
 [dependencies.linux_file]
-path = "../linux_file"
+path = "../file"

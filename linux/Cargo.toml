@@ -14,19 +14,19 @@ retry = []
 rand = "*"
 
 [dependencies.linux_file]
-path = "../linux_file"
+path = "../file"
 
 [dependencies.linux_user_group]
-path = "../linux_user_group"
+path = "../user_group"
 
 [dependencies.linux_core]
-path = "../linux_core"
+path = "../core"
 
 [dependencies.linux_dir]
-path = "../linux_dir"
+path = "../dir"
 
 [dependencies.linux_fs]
-path = "../linux_fs"
+path = "../fs"
 
 [dependencies.linux_process]
-path = "../linux_process"
+path = "../process"
