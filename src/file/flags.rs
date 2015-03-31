@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use std::ops::{Deref, DerefMut};
-use std::{fmt};
+use std::{fmt, str};
 
 use core::cty::{self, c_int, mode_t};
 
@@ -453,5 +453,82 @@ impl fmt::Debug for Mode {
             (false, false) => try!(fmt.write_str("-")),
         }
         Ok(())
+    }
+}
+
+impl fmt::Display for Mode {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        <Mode as fmt::Debug>::fmt(self, fmt)
+    }
+}
+
+impl str::FromStr for Mode {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Mode, ()> {
+        if s.len() != 9 {
+            return Err(());
+        }
+        let s = s.as_bytes();
+        let mut mode = Mode::empty();
+        match s[0] {
+            b'r' => mode.set_owner_readable(true),
+            b'-' => { },
+            _ => return Err(()),
+        }
+        match s[1] {
+            b'w' => mode.set_owner_writable(true),
+            b'-' => { },
+            _ => return Err(()),
+        }
+        match s[2] {
+            b's' => {
+                mode.set_owner_executable(true);
+                mode.set_set_user_id(true);
+            },
+            b'x' => mode.set_owner_executable(true),
+            b'-' => { },
+            _ => return Err(()),
+        }
+        match s[3] {
+            b'r' => mode.set_group_readable(true),
+            b'-' => { },
+            _ => return Err(()),
+        }
+        match s[4] {
+            b'w' => mode.set_group_writable(true),
+            b'-' => { },
+            _ => return Err(()),
+        }
+        match s[5] {
+            b's' => {
+                mode.set_group_executable(true);
+                mode.set_set_group_id(true);
+            },
+            b'x' => mode.set_group_executable(true),
+            b'-' => { },
+            _ => return Err(()),
+        }
+        match s[6] {
+            b'r' => mode.set_world_readable(true),
+            b'-' => { },
+            _ => return Err(()),
+        }
+        match s[7] {
+            b'w' => mode.set_world_writable(true),
+            b'-' => { },
+            _ => return Err(()),
+        }
+        match s[8] {
+            b't' => {
+                mode.set_world_executable(true);
+                mode.set_sticky(true);
+            },
+            b'x' => mode.set_world_executable(true),
+            b'T' => mode.set_sticky(true),
+            b'-' => { },
+            _ => return Err(()),
+        }
+        Ok(mode)
     }
 }

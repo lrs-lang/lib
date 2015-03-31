@@ -3,8 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use std::num::{SignedInt};
+use std::ffi::{CStr};
 
-use cty::{c_int, c_void, size_t};
+use cty::{c_int, c_void, size_t, c_char};
 use errno::{Errno};
 use result::{Result};
 
@@ -45,4 +46,9 @@ pub fn memchr(s: &[u8], c: u8) -> Option<usize> {
     } else {
         Some(res as usize - ptr as usize)
     }
+}
+
+pub fn empty_cstr() -> &'static CStr {
+    static EMPTY: [c_char; 1] = [0];
+    unsafe { CStr::from_ptr(EMPTY.as_ptr()) }
 }

@@ -18,20 +18,26 @@ use std::{fmt};
 use core::string::{LinuxString};
 use core::alias::{DeviceId};
 
+/// The type of a device special file.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum DeviceType {
+    /// A character device.
     Character,
+    /// a block device.
     Block,
 }
 
+/// A device special file.
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Device(DeviceId, DeviceType);
 
 impl Device {
+    /// Returns a device based on its id and type.
     pub fn from_id(id: DeviceId, ty: DeviceType) -> Device {
         Device(id, ty)
     }
 
+    /// Returns a device based on its major and minor numbers and type.
     pub fn from_major_minor(major: u32, minor: u32, ty: DeviceType) -> Device {
         let x = major as u64;
         let y = minor as u64;
@@ -40,20 +46,36 @@ impl Device {
         Device(id, ty)
     }
 
+    /// Returns the device id of a device.
     pub fn id(self) -> DeviceId {
         self.0
     }
 
+    /// Returns the major of a device.
     pub fn major(self) -> u32 {
         let x = self.0 as u64;
         (((x >> 32) & 0xfffff000) | ((x >> 8) & 0x00000fff)) as u32
     }
 
+    /// Returns the type of a device.
+    pub fn ty(self) -> DeviceType {
+        self.1
+    }
+
+    /// Returns the minor of a device.
     pub fn minor(self) -> u32 {
         let x = self.0 as u64;
         (((x >> 12) & 0xffffff00) | (x & 0x000000ff)) as u32
     }
 
+    /// Returns the path of a device in "/dev".
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let device = Device::from_major_minor(8, 1, DeviceType::Block);
+    /// assert_eq!(device.to_path(), "/dev/sda1");
+    /// ```
     pub fn to_path(self) -> LinuxString {
         path_from_device(self)
     }

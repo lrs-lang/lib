@@ -188,6 +188,7 @@ pub unsafe fn __getdents(fd: c_int, dirp: *mut linux_dirent64, count: c_int) -> 
     call!(nr::GETDENTS, fd, dirp, count) as c_int
 }
 
-pub unsafe fn __fstat(fd: c_int, buf: *mut stat) -> c_int {
-    call!(nr::FSTAT, fd, buf) as c_int
+pub unsafe fn __fstatat(dir: c_int, file: *const c_char, buf: *mut stat,
+                        flags: c_int) -> c_int {
+    call!(nr::FSTATAT, dir, file, buf, flags) as c_int
 }

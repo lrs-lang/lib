@@ -52,7 +52,13 @@ pub const S_IROTH:  mode_t = 0o000004;
 pub const S_IWOTH:  mode_t = 0o000002;
 pub const S_IXOTH:  mode_t = 0o000001;
 
-pub const AT_FDCWD: c_int = -100;
+pub const AT_FDCWD:            c_int = -100;
+pub const AT_SYMLINK_NOFOLLOW: c_int = 0x100;
+pub const AT_REMOVEDIR:        c_int = 0x200;
+pub const AT_EACCESS:          c_int = 0x200;
+pub const AT_SYMLINK_FOLLOW:   c_int = 0x400;
+pub const AT_NO_AUTOMOUNT:     c_int = 0x800;
+pub const AT_EMPTY_PATH:       c_int = 0x1000;
 
 pub const SEEK_SET: c_int = 0;
 pub const SEEK_CUR: c_int = 1;

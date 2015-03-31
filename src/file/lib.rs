@@ -15,13 +15,13 @@ use std::{mem};
 
 use core::result::{Result};
 use core::errno::{self, Errno};
-use core::cty::{self, c_int, off_t, c_uint, AT_FDCWD};
+use core::cty::{self, c_int, off_t, c_uint, AT_FDCWD, AT_EMPTY_PATH, AT_SYMLINK_NOFOLLOW};
 use core::ext::{AsLinuxPath, UIntRange};
 use core::syscall::{openat, read, write, close, pread, lseek, pwrite, readv, writev,
                     preadv, pwritev, ftruncate, fsync, fdatasync, syncfs, fadvise,
                     fstatfs, fcntl_dupfd_cloexec, fcntl_getfl, fcntl_setfl, fcntl_getfd,
-                    fcntl_setfd, fstat};
-use core::util::{retry};
+                    fcntl_setfd, fstatat};
+use core::util::{retry, empty_cstr};
 
 use fs::info::{FileSystemInfo, from_statfs};
 
@@ -34,6 +34,23 @@ pub mod info;
 macro_rules! rv {
     ($x:expr) => { if $x < 0 { Err(Errno(-$x as c_int)) } else { Ok(()) } };
     ($x:expr, -> $t:ty) => { if $x < 0 { Err(Errno(-$x as c_int)) } else { Ok($x as $t) } };
+}
+
+/// Returns information about the file specified by `path`.
+///
+/// If `path` is a symlink, then this is equivalent to returning information about the
+/// destination of the symlink. Relative paths will be interpreted relative to the current
+/// working directory.
+pub fn _info<P: AsLinuxPath>(path: P) -> Result<Info> {
+    File::current_dir().rel_info(path)
+}
+
+/// Returns information about the file specified by `path`.
+///
+/// This returns information about the file at `path`, even if `path` is a symlink.
+/// Relative paths will be interpreted relative to the current working directory.
+pub fn info_no_follow<P: AsLinuxPath>(path: P) -> Result<Info> {
+    File::current_dir().rel_info_no_follow(path)
 }
 
 /// An opened file in a file system.
@@ -60,12 +77,10 @@ impl File {
         self.fd
     }
 
-    /// Open the file at path `path` with the specified flags. If `path` is relative, the
-    /// `self` must be a directory and the `path` will be interpreted relative to `self`.
+    /// Open the file at path `path` with the specified flags.
     ///
-    /// ### Return value
-    ///
-    /// Returns the opened file or an error.
+    /// If `path` is relative, the `self` must be a directory and the `path` will be
+    /// interpreted relative to `self`.
     pub fn rel_open<P: AsLinuxPath>(&self, path: P, flags: Flags) -> Result<File> {
         let path = path.to_cstring().unwrap();
         let fd = match retry(|| openat(self.fd, &path, *flags | cty::O_LARGEFILE,
@@ -82,8 +97,10 @@ impl File {
         })
     }
 
-    /// Opens the file at path `path` in read mode. If `path` is relative, the
-    /// `self` must be a directory and the `path` will be interpreted relative to `self`.
+    /// Opens the file at path `path` in read mode.
+    ///
+    /// If `path` is relative, the `self` must be a directory and the `path` will be
+    /// interpreted relative to `self`.
     ///
     /// This is equivalent to `file.open` with the default flags.
     pub fn rel_open_read<P: AsLinuxPath>(&self, path: P) -> Result<File> {
@@ -98,10 +115,6 @@ impl File {
     }
 
     /// Open the file at path `path` with the specified flags.
-    ///
-    /// ### Return value
-    ///
-    /// Returns the opened file or an error.
     pub fn open<P: AsLinuxPath>(path: P, flags: Flags) -> Result<File> {
         File::current_dir().rel_open(path, flags)
     }
@@ -133,6 +146,37 @@ impl File {
         } else {
             Ok(())
         }
+    }
+
+    /// Returns information about the file.
+    pub fn info(&self) -> Result<Info> {
+        let mut stat = unsafe { mem::zeroed() };
+        try!(rv!(fstatat(self.fd, empty_cstr(), &mut stat, AT_EMPTY_PATH)));
+        Ok(info_from_stat(stat))
+    }
+
+    /// Returns information about the file specified by `path`.
+    ///
+    /// If `path` is a symlink, then this is equivalent to returning information about the
+    /// destination of the symlink. If `path` is relative, then `self` must be a directory
+    /// and the path will be interpreted relative to `self`.
+    pub fn rel_info<P: AsLinuxPath>(&self, path: P) -> Result<Info> {
+        let path = path.to_cstring().unwrap();
+        let mut stat = unsafe  { mem::zeroed() };
+        try!(rv!(fstatat(self.fd, &path, &mut stat, 0)));
+        Ok(info_from_stat(stat))
+    }
+
+    /// Returns information about the file specified by `path`.
+    ///
+    /// This returns information about the file at `path`, even if `path` is a symlink.
+    /// If `path` is relative, then `self` must be a directory and the path will be
+    /// interpreted relative to `self`.
+    pub fn rel_info_no_follow<P: AsLinuxPath>(&self, path: P) -> Result<Info> {
+        let path = path.to_cstring().unwrap();
+        let mut stat = unsafe  { mem::zeroed() };
+        try!(rv!(fstatat(self.fd, &path, &mut stat, AT_SYMLINK_NOFOLLOW)));
+        Ok(info_from_stat(stat))
     }
 
     /// Performs requested seek operation.
@@ -292,12 +336,6 @@ impl File {
     pub fn fs_info(&self) -> Result<FileSystemInfo> {
         let mut buf = unsafe { mem::zeroed() };
         retry(|| fstatfs(self.fd, &mut buf)).map(|_| from_statfs(buf))
-    }
-
-    pub fn info(&self) -> Result<Info> {
-        let mut stat = unsafe { mem::zeroed() };
-        try!(rv!(fstat(self.fd, &mut stat)));
-        Ok(info_from_stat(stat))
     }
 }
 

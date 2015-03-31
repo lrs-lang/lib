@@ -4,6 +4,8 @@
 
 //! File handling.
 
-pub use linux_file::{File, Seek, Advice};
+pub use linux_file::{File, Seek, Advice, info_no_follow};
+pub use linux_file::_info as info;
 pub use linux_file::flags::{Flags, Mode};
 pub use linux_file::info::{Info, Type};
+pub use linux_dev::{Device, DeviceType};
