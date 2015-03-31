@@ -1,0 +1,15 @@
+[package]
+name = "linux_fs"
+version = "0.1.0"
+authors = [ "various" ]
+
+[lib]
+name = "linux_fs"
+path = "lib.rs"
+
+[features]
+default = ["retry"]
+retry = []
+
+[dependencies.linux_core]
+path = "../core"

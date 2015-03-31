@@ -5,7 +5,7 @@
 use std::num::{SignedInt};
 
 use cty::{c_int, c_void, size_t};
-use errno::{Errno};
+use errno::{self, Errno};
 use result::{Result};
 
 #[cfg(feature = "retry")]
