@@ -1,6 +1,6 @@
 = linux-rs
 
-:logo: linux/assets/logo.png
+:logo: assets/logo.png
 
 image::{logo}[logo,float="left"]
 

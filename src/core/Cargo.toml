@@ -1,7 +1,0 @@
-[package]
-name = "linux_core"
-version = "0.1.0"
-authors = [ "mahkoh" ]
-
-[lib]
-name = "linux_core"
