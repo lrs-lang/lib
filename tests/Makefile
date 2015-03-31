@@ -7,7 +7,7 @@ all: $(bins)
 
 bin/%: src/%.rs ../obj/liblinux.rlib
 	@mkdir -p "$(@D)"
-	rustc -L ../obj "$<" -o "$@"
+	rustc -g -L ../obj "$<" -o "$@"
 
 clean:
 	rm bin/*

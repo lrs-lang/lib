@@ -192,3 +192,7 @@ pub unsafe fn __fstatat(dir: c_int, file: *const c_char, buf: *mut stat,
                         flags: c_int) -> c_int {
     call!(nr::FSTATAT, dir, file, buf, flags) as c_int
 }
+
+pub unsafe fn __faccessat(dir: c_int, file: *const c_char, mode: c_int) -> c_int {
+    call!(nr::FACCESSAT, dir, file, mode) as c_int
+}

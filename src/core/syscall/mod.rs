@@ -127,3 +127,7 @@ pub fn getdents(fd: c_int, buf: &mut [u8]) -> c_int {
 pub fn fstatat(dir: c_int, file: &CStr, buf: &mut stat, flags: c_int) -> c_int {
     unsafe { __fstatat(dir, file.as_ptr(), buf, flags) }
 }
+
+pub fn faccessat(dir: c_int, file: &CStr, mode: c_int) -> c_int {
+    unsafe { __faccessat(dir, file.as_ptr(), mode) }
+}

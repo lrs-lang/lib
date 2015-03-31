@@ -15,17 +15,18 @@ use std::{mem};
 
 use core::result::{Result};
 use core::errno::{self, Errno};
-use core::cty::{self, c_int, off_t, c_uint, AT_FDCWD, AT_EMPTY_PATH, AT_SYMLINK_NOFOLLOW};
+use core::cty::{self, c_int, off_t, c_uint, AT_FDCWD, AT_EMPTY_PATH, AT_SYMLINK_NOFOLLOW,
+                F_OK};
 use core::ext::{AsLinuxPath, UIntRange};
 use core::syscall::{openat, read, write, close, pread, lseek, pwrite, readv, writev,
                     preadv, pwritev, ftruncate, fsync, fdatasync, syncfs, fadvise,
                     fstatfs, fcntl_dupfd_cloexec, fcntl_getfl, fcntl_setfl, fcntl_getfd,
-                    fcntl_setfd, fstatat};
+                    fcntl_setfd, fstatat, faccessat};
 use core::util::{retry, empty_cstr};
 
 use fs::info::{FileSystemInfo, from_statfs};
 
-use flags::{Flags};
+use flags::{Flags, AccessMode, access_mode_to_int};
 use info::{Info, info_from_stat};
 
 pub mod flags;
@@ -52,6 +53,19 @@ pub fn _info<P: AsLinuxPath>(path: P) -> Result<Info> {
 pub fn info_no_follow<P: AsLinuxPath>(path: P) -> Result<Info> {
     File::current_dir().rel_info_no_follow(path)
 }
+
+/// Returns whether the specified path points to an existing file.
+///
+/// If `path` is relative then the path will be interpreted relative to the current
+/// working directory.
+pub fn exists<P: AsLinuxPath>(path: P) -> Result<bool> {
+    File::current_dir().rel_exists(path)
+}
+
+pub fn can_access<P: AsLinuxPath>(path: P, mode: AccessMode) -> Result<bool> {
+    File::current_dir().rel_can_access(path, mode)
+}
+
 
 /// An opened file in a file system.
 #[derive(Debug, Eq, PartialEq)]
@@ -336,6 +350,38 @@ impl File {
     pub fn fs_info(&self) -> Result<FileSystemInfo> {
         let mut buf = unsafe { mem::zeroed() };
         retry(|| fstatfs(self.fd, &mut buf)).map(|_| from_statfs(buf))
+    }
+
+    /// Returns whether the specified path points to an existing file.
+    ///
+    /// If `path` is relative then `self` must be a directory and the path will be
+    /// interpreted relative to `self`.
+    pub fn rel_exists<P: AsLinuxPath>(&self, path: P) -> Result<bool> {
+        let path = path.to_cstring().unwrap();
+        let res = faccessat(self.fd, &path, F_OK);
+        if res >= 0 {
+            Ok(true)
+        } else {
+            let err = Errno(-res);
+            match err {
+                errno::DoesNotExist => Ok(false),
+                _ => Err(err),
+            }
+        }
+    }
+
+    pub fn rel_can_access<P: AsLinuxPath>(&self, path: P, mode: AccessMode) -> Result<bool> {
+        let path = path.to_cstring().unwrap();
+        let res = faccessat(self.fd, &path, access_mode_to_int(mode));
+        if res >= 0 {
+            Ok(true)
+        } else {
+            let err = Errno(-res);
+            match err {
+                errno::AccessDenied => Ok(false),
+                _ => Err(err),
+            }
+        }
     }
 }
 

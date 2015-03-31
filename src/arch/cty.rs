@@ -71,6 +71,11 @@ pub const F_GETFL: c_int = 3;
 pub const F_SETFL: c_int = 4;
 pub const F_DUPFD_CLOEXEC: c_int = 1030;
 
+pub const F_OK: c_int = 0;
+pub const R_OK: c_int = 4;
+pub const W_OK: c_int = 2;
+pub const X_OK: c_int = 1;
+
 pub const IOV_MAX: usize = 1024;
 
 pub const ST_RDONLY:      c_ulong = 1;

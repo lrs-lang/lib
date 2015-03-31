@@ -5,7 +5,7 @@
 use std::ops::{Deref, DerefMut};
 use std::{fmt, str};
 
-use core::cty::{self, c_int, mode_t};
+use core::cty::{self, c_int, mode_t, R_OK, W_OK, X_OK};
 
 /// Flags for opening and modifying a file.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -531,4 +531,104 @@ impl str::FromStr for Mode {
         }
         Ok(mode)
     }
+}
+
+/// A way to access a file.
+///
+/// This type is used to check whether a file can be accessed with a certain set of
+/// permissions.
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct AccessMode {
+    mode: c_int,
+}
+
+impl AccessMode {
+    /// Create an access mode with all bits unset.
+    pub fn empty() -> AccessMode {
+        AccessMode { mode: 0 }
+    }
+
+    /// Checks if the `readable` bit is set.
+    pub fn is_readable(&self) -> bool {
+        self.mode & R_OK != 0
+    }
+
+    /// Sets or unsets the `readable` flag.
+    pub fn set_readable(&mut self, val: bool) {
+        self.set_bit(R_OK, val);
+    }
+
+    /// Checks if the `writable` bit is set.
+    pub fn is_writable(&self) -> bool {
+        self.mode & W_OK != 0
+    }
+
+    /// Sets or unsets the `writable` flag.
+    pub fn set_writable(&mut self, val: bool) {
+        self.set_bit(W_OK, val);
+    }
+
+    /// Checks if the `executable` bit is set.
+    pub fn is_executable(&self) -> bool {
+        self.mode & X_OK != 0
+    }
+
+    /// Sets or unsets the `executable` flag.
+    pub fn set_executable(&mut self, val: bool) {
+        self.set_bit(X_OK, val);
+    }
+
+    fn set_bit(&mut self, bit: c_int, val: bool) {
+        self.mode = (self.mode & !bit) | (bit * val as c_int);
+    }
+}
+
+impl fmt::Debug for AccessMode {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        macro_rules! w {
+            ($cond:expr, $c:expr) => { try!(if $cond { fmt.write_str($c) } else { fmt.write_str("-") }) }
+        };
+        w!(self.is_readable(), "r");
+        w!(self.is_writable(), "w");
+        w!(self.is_executable(), "x");
+        Ok(())
+    }
+}
+
+impl fmt::Display for AccessMode {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        <AccessMode as fmt::Debug>::fmt(self, fmt)
+    }
+}
+
+impl str::FromStr for AccessMode {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<AccessMode, ()> {
+        if s.len() != 3 {
+            return Err(());
+        }
+        let s = s.as_bytes();
+        let mut mode = AccessMode::empty();
+        match s[0] {
+            b'r' => mode.set_readable(true),
+            b'-' => { },
+            _ => return Err(()),
+        }
+        match s[1] {
+            b'w' => mode.set_writable(true),
+            b'-' => { },
+            _ => return Err(()),
+        }
+        match s[2] {
+            b'x' => mode.set_executable(true),
+            b'-' => { },
+            _ => return Err(()),
+        }
+        Ok(mode)
+    }
+}
+
+pub fn access_mode_to_int(mode: AccessMode) -> c_int {
+    mode.mode
 }
