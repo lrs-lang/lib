@@ -45,17 +45,22 @@ pub struct File {
 }
 
 impl File {
-    /// Open the file at path `path` in read mode.
+    /// Opens the file at path `path` in read mode.
     ///
     /// This is equivalent to `File::open` with the default flags.
     pub fn open_read<P: AsLinuxPath>(path: P) -> Result<File> {
         File::open(path, Flags::new())
     }
 
-    /// A file on which every operation fails.
+    /// Creates a file on which every operation fails.
     pub fn invalid() -> File {
         File { fd: -1, owned: false }
     }
+
+    ///// Creates a file that points to the current directory.
+    //pub fn current_dir() -> File {
+    //    File { fd: , owned: false }
+    //}
 
     /// Returns the file descriptor of this file.
     pub fn file_desc(&self) -> c_int {

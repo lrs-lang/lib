@@ -7,10 +7,12 @@
 #![feature(std_misc, core, plugin, asm, io, into_cow, convert)]
 #![allow(trivial_numeric_casts, trivial_casts)]
 
+extern crate linux_arch;
+
+pub use linux_arch::{arch, cty};
+
 // XXX: Maybe move some of these out? core takes a long time to compile right now.
 
-pub mod cty;
-pub mod arch;
 pub mod syscall;
 pub mod ext;
 pub mod string;

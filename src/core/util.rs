@@ -5,11 +5,13 @@
 use std::num::{SignedInt};
 
 use cty::{c_int, c_void, size_t};
-use errno::{self, Errno};
+use errno::{Errno};
 use result::{Result};
 
 #[cfg(feature = "retry")]
 pub fn retry<T: SignedInt, F: FnMut() -> T>(mut f: F) -> Result<T> {
+    use errno;
+
     loop {
         let ret = f();
         if ret.is_negative() {

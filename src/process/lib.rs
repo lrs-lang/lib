@@ -7,7 +7,6 @@
 #![allow(trivial_numeric_casts)]
 
 extern crate linux_core as core;
-extern crate linux_user_group as user_group;
 
 use core::syscall::{getpid, getppid};
 use core::alias::{ProcessId};
