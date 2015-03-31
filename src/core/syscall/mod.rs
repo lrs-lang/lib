@@ -12,8 +12,8 @@ pub use self::raw::*;
 
 pub mod raw;
 
-pub fn open(path: &CStr, flags: c_int, mode: mode_t) -> c_int {
-    unsafe { __open(path.as_ptr(), flags, mode) }
+pub fn openat(dir: c_int, path: &CStr, flags: c_int, mode: mode_t) -> c_int {
+    unsafe { __openat(dir, path.as_ptr(), flags, mode) }
 }
 
 pub fn read(fd: c_int, buf: &mut [u8]) -> ssize_t {

@@ -40,8 +40,9 @@ macro_rules! call {
     };
 }
 
-pub unsafe fn __open(fd: *const c_char, flags: c_int, mode: mode_t) -> c_int {
-    call!(nr::OPEN, fd, flags, mode) as c_int
+pub unsafe fn __openat(dir: c_int, fd: *const c_char, flags: c_int,
+                       mode: mode_t) -> c_int {
+    call!(nr::OPENAT, dir, fd, flags, mode) as c_int
 }
 
 pub unsafe fn __read(fd: c_int, buf: *mut c_void, count: size_t) -> ssize_t {

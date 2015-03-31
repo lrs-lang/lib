@@ -52,7 +52,7 @@ pub const S_IROTH:  mode_t = 0o000004;
 pub const S_IWOTH:  mode_t = 0o000002;
 pub const S_IXOTH:  mode_t = 0o000001;
 
-
+pub const AT_FDCWD: c_int = -100;
 
 pub const SEEK_SET: c_int = 0;
 pub const SEEK_CUR: c_int = 1;

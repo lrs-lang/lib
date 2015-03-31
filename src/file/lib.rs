@@ -15,11 +15,11 @@ use std::{mem};
 
 use core::result::{Result};
 use core::errno::{self, Errno};
-use core::cty::{self, c_int, off_t, c_uint};
+use core::cty::{self, c_int, off_t, c_uint, AT_FDCWD};
 use core::ext::{AsLinuxPath, UIntRange};
-use core::syscall::{open, read, write, close, pread, lseek, pwrite, readv, writev, preadv,
-                    pwritev, ftruncate, fsync, fdatasync, syncfs, fadvise, fstatfs,
-                    fcntl_dupfd_cloexec, fcntl_getfl, fcntl_setfl, fcntl_getfd,
+use core::syscall::{openat, read, write, close, pread, lseek, pwrite, readv, writev,
+                    preadv, pwritev, ftruncate, fsync, fdatasync, syncfs, fadvise,
+                    fstatfs, fcntl_dupfd_cloexec, fcntl_getfl, fcntl_setfl, fcntl_getfd,
                     fcntl_setfd, fstat};
 use core::util::{retry};
 
@@ -45,36 +45,31 @@ pub struct File {
 }
 
 impl File {
-    /// Opens the file at path `path` in read mode.
-    ///
-    /// This is equivalent to `File::open` with the default flags.
-    pub fn open_read<P: AsLinuxPath>(path: P) -> Result<File> {
-        File::open(path, Flags::new())
-    }
-
     /// Creates a file on which every operation fails.
     pub fn invalid() -> File {
         File { fd: -1, owned: false }
     }
 
-    ///// Creates a file that points to the current directory.
-    //pub fn current_dir() -> File {
-    //    File { fd: , owned: false }
-    //}
+    /// Creates a file that points to the current directory.
+    pub fn current_dir() -> File {
+        File { fd: AT_FDCWD, owned: false }
+    }
 
     /// Returns the file descriptor of this file.
     pub fn file_desc(&self) -> c_int {
         self.fd
     }
 
-    /// Open the file at path `path` with the specified flags.
+    /// Open the file at path `path` with the specified flags. If `path` is relative, the
+    /// `self` must be a directory and the `path` will be interpreted relative to `self`.
     ///
     /// ### Return value
     ///
     /// Returns the opened file or an error.
-    pub fn open<P: AsLinuxPath>(path: P, flags: Flags) -> Result<File> {
+    pub fn rel_open<P: AsLinuxPath>(&self, path: P, flags: Flags) -> Result<File> {
         let path = path.to_cstring().unwrap();
-        let fd = match retry(|| open(&path, *flags | cty::O_LARGEFILE, *flags.mode())) {
+        let fd = match retry(|| openat(self.fd, &path, *flags | cty::O_LARGEFILE,
+                                       *flags.mode())) {
             Ok(fd) => fd,
             // Due to a bug in the kernel, open returns WrongDeviceType instead of
             // NoSuchDevice.
@@ -85,6 +80,30 @@ impl File {
             fd: fd,
             owned: true,
         })
+    }
+
+    /// Opens the file at path `path` in read mode. If `path` is relative, the
+    /// `self` must be a directory and the `path` will be interpreted relative to `self`.
+    ///
+    /// This is equivalent to `file.open` with the default flags.
+    pub fn rel_open_read<P: AsLinuxPath>(&self, path: P) -> Result<File> {
+        self.rel_open(path, Flags::new())
+    }
+
+    /// Opens the file at path `path` in read mode.
+    ///
+    /// This is equivalent to `File::open` with the default flags.
+    pub fn open_read<P: AsLinuxPath>(path: P) -> Result<File> {
+        File::current_dir().rel_open_read(path)
+    }
+
+    /// Open the file at path `path` with the specified flags.
+    ///
+    /// ### Return value
+    ///
+    /// Returns the opened file or an error.
+    pub fn open<P: AsLinuxPath>(path: P, flags: Flags) -> Result<File> {
+        File::current_dir().rel_open(path, flags)
     }
 
     /// Reads bytes from the current read position into the buffer.
