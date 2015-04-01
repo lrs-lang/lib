@@ -8,12 +8,19 @@
 
 extern crate linux_core as core;
 
-use core::cty::{timespec};
+use core::cty::{timespec, time_t, c_long};
 
 pub fn duration_from_timespec(t: timespec) -> Duration {
     Duration {
-        seconds: t.tv_sec as i64,
+        seconds:     t.tv_sec  as i64,
         nanoseconds: t.tv_nsec as i64,
+    }
+}
+
+pub fn duration_to_timespec(d: Duration) -> timespec {
+    timespec {
+        tv_sec:  d.seconds     as time_t,
+        tv_nsec: d.nanoseconds as c_long,
     }
 }
 

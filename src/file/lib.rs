@@ -16,17 +16,21 @@ use std::{mem};
 use core::result::{Result};
 use core::errno::{self, Errno};
 use core::cty::{self, c_int, off_t, c_uint, AT_FDCWD, AT_EMPTY_PATH, AT_SYMLINK_NOFOLLOW,
-                F_OK};
+                F_OK, UTIME_NOW, UTIME_OMIT, timespec, RENAME_EXCHANGE, RENAME_NOREPLACE};
 use core::ext::{AsLinuxPath, UIntRange};
 use core::syscall::{openat, read, write, close, pread, lseek, pwrite, readv, writev,
                     preadv, pwritev, ftruncate, fsync, fdatasync, syncfs, fadvise,
                     fstatfs, fcntl_dupfd_cloexec, fcntl_getfl, fcntl_setfl, fcntl_getfd,
-                    fcntl_setfd, fstatat, faccessat};
+                    fcntl_setfd, fstatat, faccessat, truncate, linkat, utimensat,
+                    renameat2};
 use core::util::{retry, empty_cstr};
+
+use clock::{Duration, duration_to_timespec};
 
 use fs::info::{FileSystemInfo, from_statfs};
 
-use flags::{Flags, AccessMode, access_mode_to_int};
+use flags::{Flags, AccessMode, access_mode_to_int, flags_from_int, flags_to_int,
+            mode_to_int};
 use info::{Info, info_from_stat};
 
 pub mod flags;
@@ -62,10 +66,63 @@ pub fn exists<P: AsLinuxPath>(path: P) -> Result<bool> {
     File::current_dir().rel_exists(path)
 }
 
+/// Checks whether the file at `path` can be accessed with the specified mode.
+///
+/// Relative paths are interpreted relative to the current working directory.
 pub fn can_access<P: AsLinuxPath>(path: P, mode: AccessMode) -> Result<bool> {
     File::current_dir().rel_can_access(path, mode)
 }
 
+/// Sets the length of the file at `path`.
+pub fn set_len<P: AsLinuxPath>(path: P, len: u64) -> Result<()> {
+    let path = path.to_cstring().unwrap();
+    try!(retry(|| truncate(&path, len as off_t)));
+    Ok(())
+}
+
+/// Creates a hard link to `old` at `new`.
+///
+/// If `old` is a symlink then it is not dereferenced. Relative paths are interpreted
+/// relative to the current working directory.
+pub fn link<P: AsLinuxPath, Q: AsLinuxPath>(old: P, new: Q) -> Result<()> {
+    let old = old.to_cstring().unwrap();
+    let new = new.to_cstring().unwrap();
+    rv!(linkat(AT_FDCWD, &old, AT_FDCWD, &new, 0))
+}
+
+/// Changes the access and modification times of the file specified by `path`.
+///
+/// Relative paths are interpreted relative to the current working directory. If `path` is
+/// a symlink, then this changes the times of the destination.
+pub fn set_times<P: AsLinuxPath>(path: P, access: Time,
+                                 modification: Time) -> Result<()> {
+    File::current_dir().rel_set_times(path, access, modification)
+}
+
+/// Changes the access and modification times of the file specified by `path`.
+///
+/// Relative paths are interpreted relative to the current working directory. If `path` is
+/// a symlink, then this changes the times of the symlink.
+pub fn set_times_no_follow<P: AsLinuxPath>(path: P, access: Time,
+                                           modification: Time) -> Result<()> {
+    File::current_dir().rel_set_times_no_follow(path, access, modification)
+}
+
+/// Atomically exchanges the two files `one` and `two`.
+///
+/// Relative paths will be interpreted relative to the current working directory.
+pub fn exchange<P: AsLinuxPath, Q: AsLinuxPath>(one: P, two: Q) -> Result<()> {
+    File::current_dir().rel_exchange(one, two)
+}
+
+/// Renames `one` to `two`.
+///
+/// Relative paths will be interpreted relative to the current working directory.  If
+/// `replace` is `false`, then the operation fails if `two` already exists.
+pub fn rename<P: AsLinuxPath, Q: AsLinuxPath>(one: P, two: Q,
+                                              replace: bool) -> Result<()> {
+    File::current_dir().rel_rename(one, two, replace)
+}
 
 /// An opened file in a file system.
 #[derive(Debug, Eq, PartialEq)]
@@ -97,8 +154,9 @@ impl File {
     /// interpreted relative to `self`.
     pub fn rel_open<P: AsLinuxPath>(&self, path: P, flags: Flags) -> Result<File> {
         let path = path.to_cstring().unwrap();
-        let fd = match retry(|| openat(self.fd, &path, *flags | cty::O_LARGEFILE,
-                                       *flags.mode())) {
+        let mode = flags.mode().map(|m| mode_to_int(m)).unwrap_or(0);
+        let fd = match retry(|| openat(self.fd, &path,
+                                       flags_to_int(flags) | cty::O_LARGEFILE, mode)) {
             Ok(fd) => fd,
             // Due to a bug in the kernel, open returns WrongDeviceType instead of
             // NoSuchDevice.
@@ -227,7 +285,7 @@ impl File {
         if ret < 0 {
             Err(Errno(-ret as c_int))
         } else {
-            Ok(Flags::from_int(ret))
+            Ok(flags_from_int(ret))
         }
     }
 
@@ -235,7 +293,7 @@ impl File {
     ///
     /// Only the file status flags can be modified.
     pub fn set_status_flags(&self, flags: Flags) -> Result<()> {
-        let ret = fcntl_setfl(self.fd, *flags);
+        let ret = fcntl_setfl(self.fd, flags_to_int(flags));
         rv!(ret)
     }
 
@@ -370,7 +428,12 @@ impl File {
         }
     }
 
-    pub fn rel_can_access<P: AsLinuxPath>(&self, path: P, mode: AccessMode) -> Result<bool> {
+    /// Checks whether the file at `path` can be accessed with the specified mode.
+    ///
+    /// If `path` is relative then `self` must be a directory and the path will be
+    /// interpreted relative to `self`.
+    pub fn rel_can_access<P: AsLinuxPath>(&self, path: P,
+                                          mode: AccessMode) -> Result<bool> {
         let path = path.to_cstring().unwrap();
         let res = faccessat(self.fd, &path, access_mode_to_int(mode));
         if res >= 0 {
@@ -382,6 +445,76 @@ impl File {
                 _ => Err(err),
             }
         }
+    }
+
+    /// Creates a hard link to this file.
+    ///
+    /// Relative paths are interpreted relative to the current working directory.
+    pub fn link<P: AsLinuxPath>(&self, path: P) -> Result<()> {
+        let path = path.to_cstring().unwrap();
+        rv!(linkat(self.fd, empty_cstr(), AT_FDCWD, &path, AT_EMPTY_PATH))
+    }
+
+    /// Creates a hard link to this file relative to a directory.
+    ///
+    /// Relative paths are interpreted relative to the directory `dir`.
+    pub fn link_rel_to<P: AsLinuxPath>(&self, dir: &File, path: P) -> Result<()> {
+        let path = path.to_cstring().unwrap();
+        rv!(linkat(self.fd, empty_cstr(), dir.fd, &path, AT_EMPTY_PATH))
+    }
+
+    /// Changes the access and modification times of this file.
+    pub fn set_times(&self, access: Time, modification: Time) -> Result<()> {
+        let times = [time_to_timespec(access), time_to_timespec(modification)];
+        rv!(utimensat(self.fd, None, &times, 0))
+    }
+
+    /// Changes the access and modification times of the file specified by `path`.
+    ///
+    /// If `path` is relative then `self` has to be a directory and relative paths are
+    /// interpreted relative to `self`. If `path` is a symlink, then this changes the
+    /// times of the destination.
+    pub fn rel_set_times<P: AsLinuxPath>(&self, path: P, access: Time,
+                                         modification: Time) -> Result<()> {
+        let path = path.to_cstring().unwrap();
+        let times = [time_to_timespec(access), time_to_timespec(modification)];
+        rv!(utimensat(self.fd, Some(&path), &times, 0))
+    }
+
+    /// Changes the access and modification times of the file specified by `path`.
+    ///
+    /// If `path` is relative then `self` has to be a directory and relative paths are
+    /// interpreted relative to `self`. If `path` is a symlink, then this changes the
+    /// times of the symlink.
+    pub fn rel_set_times_no_follow<P: AsLinuxPath>(&self, path: P, access: Time,
+                                                   modification: Time) -> Result<()> {
+        let path = path.to_cstring().unwrap();
+        let times = [time_to_timespec(access), time_to_timespec(modification)];
+        rv!(utimensat(self.fd, Some(&path), &times, AT_SYMLINK_NOFOLLOW))
+    }
+
+    /// Atomically exchanges the two files `one` and `two`.
+    ///
+    /// If one of the paths is relative, then `self` has to be a directory and the path
+    /// will be interpreted relative to `self`.
+    pub fn rel_exchange<P: AsLinuxPath, Q: AsLinuxPath>(&self, one: P,
+                                                        two: Q) -> Result<()> {
+        let one = one.to_cstring().unwrap();
+        let two = two.to_cstring().unwrap();
+        rv!(renameat2(self.fd, &one, self.fd, &two, RENAME_EXCHANGE))
+    }
+
+    /// Renames `one` to `two`.
+    ///
+    /// If one of the paths is relative, then `self` has to be a directory and the path
+    /// will be interpreted relative to `self`. If `replace` is `false`, then the
+    /// operation fails if `two` already exists.
+    pub fn rel_rename<P: AsLinuxPath, Q: AsLinuxPath>(&self, one: P, two: Q,
+                                                      replace: bool) -> Result<()> {
+        let one = one.to_cstring().unwrap();
+        let two = two.to_cstring().unwrap();
+        let flag = if replace { 0 } else { RENAME_NOREPLACE };
+        rv!(renameat2(self.fd, &one, self.fd, &two, flag))
     }
 }
 
@@ -396,6 +529,24 @@ impl Drop for File {
         if self.owned {
             close(self.fd);
         }
+    }
+}
+
+/// Enum used to specify the way time information of a file is modified.
+pub enum Time {
+    /// Donesn't modify the time.
+    Omit,
+    /// Sets the time to the current time.
+    Now,
+    /// Sets the time to the specified time.
+    Val(Duration),
+}
+
+fn time_to_timespec(t: Time) -> timespec {
+    match t {
+        Time::Omit => timespec { tv_sec: 0, tv_nsec: UTIME_OMIT },
+        Time::Now  => timespec { tv_sec: 0, tv_nsec: UTIME_NOW  },
+        Time::Val(v) => duration_to_timespec(v),
     }
 }
 
@@ -456,12 +607,12 @@ pub enum Advice {
 impl Advice {
     fn to_c_int(self) -> c_int {
         match self {
-            Advice::Normal => 0,
-            Advice::Random => 1,
+            Advice::Normal     => 0,
+            Advice::Random     => 1,
             Advice::Sequential => 2,
-            Advice::Need => 3,
-            Advice::DontNeed => 4,
-            Advice::NoReuse => 5,
+            Advice::Need       => 3,
+            Advice::DontNeed   => 4,
+            Advice::NoReuse    => 5,
         }
     }
 }

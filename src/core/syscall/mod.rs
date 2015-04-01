@@ -5,7 +5,7 @@
 use std::ffi::{CStr};
 
 use cty::{c_int, mode_t, ssize_t, off_t, rlimit, pid_t, uid_t, gid_t, stat,
-          SYSCALL_RLIM_INFINITY, RLIM_INFINITY, statfs};
+          SYSCALL_RLIM_INFINITY, RLIM_INFINITY, statfs, timespec};
 use ext::{SaturatingCast};
 
 pub use self::raw::*;
@@ -130,4 +130,24 @@ pub fn fstatat(dir: c_int, file: &CStr, buf: &mut stat, flags: c_int) -> c_int {
 
 pub fn faccessat(dir: c_int, file: &CStr, mode: c_int) -> c_int {
     unsafe { __faccessat(dir, file.as_ptr(), mode) }
+}
+
+pub fn truncate(file: &CStr, len: off_t) -> c_int {
+    unsafe { __truncate(file.as_ptr(), len) }
+}
+
+pub fn linkat(olddir: c_int, oldfile: &CStr, newdir: c_int, newfile: &CStr,
+              flags: c_int) -> c_int {
+    unsafe { __linkat(olddir, oldfile.as_ptr(), newdir, newfile.as_ptr(), flags) }
+}
+
+pub fn utimensat(dir: c_int, file: Option<&CStr>, times: &[timespec; 2],
+                 flags: c_int) -> c_int {
+    let file = file.map(|f| f.as_ptr()).unwrap_or(0 as *const _);
+    unsafe { __utimensat(dir, file, times.as_ptr(), flags) }
+}
+
+pub fn renameat2(olddir: c_int, oldfile: &CStr, newdir: c_int, newfile: &CStr,
+                 flags: c_int) -> c_int {
+    unsafe { __renameat2(olddir, oldfile.as_ptr(), newdir, newfile.as_ptr(), flags) }
 }

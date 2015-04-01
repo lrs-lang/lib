@@ -3,10 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use std::{mem};
-use arch::syscall::{nr, syscall0, syscall1, syscall2, syscall3, syscall4, SCT};
+use arch::syscall::{nr, syscall0, syscall1, syscall2, syscall3, syscall4, syscall5, SCT};
 use cty::{c_int, mode_t, size_t, ssize_t, uid_t, gid_t, F_DUPFD_CLOEXEC, F_GETFD,
           F_GETFL, F_SETFD, F_SETFL, statfs, pid_t, c_char, off_t, iovec, c_void,
-          rlimit, linux_dirent64, stat};
+          rlimit, linux_dirent64, stat, timespec};
 
 macro_rules! call {
     ($nr:expr) => {
@@ -195,4 +195,23 @@ pub unsafe fn __fstatat(dir: c_int, file: *const c_char, buf: *mut stat,
 
 pub unsafe fn __faccessat(dir: c_int, file: *const c_char, mode: c_int) -> c_int {
     call!(nr::FACCESSAT, dir, file, mode) as c_int
+}
+
+pub unsafe fn __truncate(file: *const c_char, len: off_t) -> c_int {
+    call!(nr::TRUNCATE, file, len) as c_int
+}
+
+pub unsafe fn __linkat(olddir: c_int, oldfile: *const c_char, newdir: c_int,
+                       newfile: *const c_char, flags: c_int) -> c_int {
+    call!(nr::LINKAT, olddir, oldfile, newdir, newfile, flags) as c_int
+}
+
+pub unsafe fn __utimensat(dir: c_int, file: *const c_char, times: *const timespec,
+                          flags: c_int) -> c_int {
+    call!(nr::UTIMENSAT, dir, file, times, flags) as c_int
+}
+
+pub unsafe fn __renameat2(olddir: c_int, oldfile: *const c_char, newdir: c_int,
+                          newfile: *const c_char, flags: c_int) -> c_int {
+    call!(nr::RENAMEAT2, olddir, oldfile, newdir, newfile, flags) as c_int
 }

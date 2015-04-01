@@ -4,7 +4,8 @@
 
 //! File handling.
 
-pub use linux_file::{File, Seek, Advice, info_no_follow, exists, can_access};
+pub use linux_file::{File, Seek, Advice, info_no_follow, exists, can_access, set_len,
+                     link, Time, set_times, set_times_no_follow, exchange, rename};
 pub use linux_file::_info as info;
 pub use linux_file::flags::{Flags, Mode, AccessMode};
 pub use linux_file::info::{Info, Type};

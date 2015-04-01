@@ -60,6 +60,10 @@ pub const AT_SYMLINK_FOLLOW:   c_int = 0x400;
 pub const AT_NO_AUTOMOUNT:     c_int = 0x800;
 pub const AT_EMPTY_PATH:       c_int = 0x1000;
 
+pub const RENAME_NOREPLACE: c_int = 1;
+pub const RENAME_EXCHANGE:  c_int = 2;
+pub const RENAME_WHITEOUT:  c_int = 4;
+
 pub const SEEK_SET: c_int = 0;
 pub const SEEK_CUR: c_int = 1;
 pub const SEEK_END: c_int = 2;
@@ -75,6 +79,9 @@ pub const F_OK: c_int = 0;
 pub const R_OK: c_int = 4;
 pub const W_OK: c_int = 2;
 pub const X_OK: c_int = 1;
+
+pub const UTIME_NOW:  c_long = 0x3fffffff;
+pub const UTIME_OMIT: c_long = 0x3ffffffe;
 
 pub const IOV_MAX: usize = 1024;
 
