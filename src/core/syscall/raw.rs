@@ -215,3 +215,21 @@ pub unsafe fn __renameat2(olddir: c_int, oldfile: *const c_char, newdir: c_int,
                           newfile: *const c_char, flags: c_int) -> c_int {
     call!(nr::RENAMEAT2, olddir, oldfile, newdir, newfile, flags) as c_int
 }
+
+pub unsafe fn __mkdirat(dir: c_int, file: *const c_char, mode: mode_t) -> c_int {
+    call!(nr::MKDIRAT, dir, file, mode) as c_int
+}
+
+pub unsafe fn __unlinkat(dir: c_int, file: *const c_char, flags: c_int) -> c_int {
+    call!(nr::UNLINKAT, dir, file, flags) as c_int
+}
+
+pub unsafe fn __symlinkat(target: *const c_char, dir: c_int,
+                          link: *const c_char) -> c_int {
+    call!(nr::SYMLINKAT, target, dir, link) as c_int
+}
+
+pub unsafe fn __readlinkat(dir: c_int, path: *const c_char, buf: *mut c_char,
+                           size: size_t) -> ssize_t {
+    call!(nr::READLINKAT, dir, path, buf, size) as ssize_t
+}

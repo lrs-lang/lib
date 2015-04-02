@@ -62,7 +62,7 @@ impl Flags {
 
     pub fn is_writable(&self) -> bool {
         self.flags & cty::O_ACCMODE == cty::O_RDWR ||
-            self.flags & cty::O_ACCMODE == cty::O_RDONLY
+            self.flags & cty::O_ACCMODE == cty::O_WRONLY
     }
 
     /// If this flag is set, the associated file descriptor will be closed when `exec` is

@@ -4,8 +4,8 @@
 
 use std::ffi::{CStr};
 
-use cty::{c_int, mode_t, ssize_t, off_t, rlimit, pid_t, uid_t, gid_t, stat,
-          SYSCALL_RLIM_INFINITY, RLIM_INFINITY, statfs, timespec};
+use cty::{c_int, mode_t, ssize_t, off_t, rlimit, pid_t, uid_t, gid_t, stat, c_char,
+          size_t, SYSCALL_RLIM_INFINITY, RLIM_INFINITY, statfs, timespec};
 use ext::{SaturatingCast};
 
 pub use self::raw::*;
@@ -150,4 +150,21 @@ pub fn utimensat(dir: c_int, file: Option<&CStr>, times: &[timespec; 2],
 pub fn renameat2(olddir: c_int, oldfile: &CStr, newdir: c_int, newfile: &CStr,
                  flags: c_int) -> c_int {
     unsafe { __renameat2(olddir, oldfile.as_ptr(), newdir, newfile.as_ptr(), flags) }
+}
+
+pub fn mkdirat(dir: c_int, file: &CStr, mode: mode_t) -> c_int {
+    unsafe {  __mkdirat(dir, file.as_ptr(), mode) }
+}
+
+pub fn unlinkat(dir: c_int, file: &CStr, flags: c_int) -> c_int {
+    unsafe { __unlinkat(dir, file.as_ptr(), flags) }
+}
+
+pub fn symlinkat(target: &CStr, dir: c_int, link: &CStr) -> c_int {
+    unsafe { __symlinkat(target.as_ptr(), dir, link.as_ptr()) }
+}
+
+pub fn readlinkat(dir: c_int, path: &CStr, buf: &mut [u8]) -> ssize_t {
+    unsafe { __readlinkat(dir, path.as_ptr(), buf.as_mut_ptr() as *mut c_char,
+                          buf.len() as size_t) }
 }

@@ -12,24 +12,28 @@ extern crate linux_fs as fs;
 extern crate linux_clock as clock;
 
 use std::{mem};
+use std::io::{Write};
+use std::ffi::{CStr};
 
 use core::result::{Result};
 use core::errno::{self, Errno};
 use core::cty::{self, c_int, off_t, c_uint, AT_FDCWD, AT_EMPTY_PATH, AT_SYMLINK_NOFOLLOW,
-                F_OK, UTIME_NOW, UTIME_OMIT, timespec, RENAME_EXCHANGE, RENAME_NOREPLACE};
+                F_OK, UTIME_NOW, UTIME_OMIT, timespec, RENAME_EXCHANGE, RENAME_NOREPLACE,
+                AT_REMOVEDIR, c_char, PATH_MAX};
 use core::ext::{AsLinuxPath, UIntRange};
 use core::syscall::{openat, read, write, close, pread, lseek, pwrite, readv, writev,
                     preadv, pwritev, ftruncate, fsync, fdatasync, syncfs, fadvise,
                     fstatfs, fcntl_dupfd_cloexec, fcntl_getfl, fcntl_setfl, fcntl_getfd,
                     fcntl_setfd, fstatat, faccessat, truncate, linkat, utimensat,
-                    renameat2};
+                    renameat2, mkdirat, unlinkat, symlinkat, readlinkat};
+use core::string::{AsLinuxStrMut, LinuxStr, LinuxString};
 use core::util::{retry, empty_cstr};
 
 use clock::{Duration, duration_to_timespec};
 
 use fs::info::{FileSystemInfo, from_statfs};
 
-use flags::{Flags, AccessMode, access_mode_to_int, flags_from_int, flags_to_int,
+use flags::{Flags, Mode, AccessMode, access_mode_to_int, flags_from_int, flags_to_int,
             mode_to_int};
 use info::{Info, info_from_stat};
 
@@ -124,6 +128,42 @@ pub fn rename<P: AsLinuxPath, Q: AsLinuxPath>(one: P, two: Q,
     File::current_dir().rel_rename(one, two, replace)
 }
 
+/// Creates the directory `path`.
+///
+/// Relative paths will be interpreted relative to the current working directory.
+pub fn mkdir<P: AsLinuxPath>(path: P, mode: Mode) -> Result<()> {
+    File::current_dir().rel_mkdir(path, mode)
+}
+
+/// Removes the file at `path`.
+///
+/// Relative paths will be interpreted relative to the current working directory.  If
+/// `path` refers to a directory, then the directory has to be empty.
+pub fn remove<P: AsLinuxPath>(path: P) -> Result<()> {
+    File::current_dir().rel_remove(path)
+}
+
+/// Creates a symlink from `link` to `target`.
+///
+/// Relative paths will be interpreted relative to the current working directory.
+pub fn symlink<P: AsLinuxPath, Q: AsLinuxPath>(target: P, link: Q) -> Result<()> {
+    File::current_dir().rel_symlink(target, link)
+}
+
+/// Reads the target of the symbolic link `link` into `buf`.
+///
+/// Relative paths will be interpreted relative to the current working directory.
+pub fn read_link_buf<P: AsLinuxPath>(link: P, buf: &mut [u8]) -> Result<&mut LinuxStr> {
+    File::current_dir().rel_read_link_buf(link, buf)
+}
+
+/// Reads the target of the symbolic link `link`.
+///
+/// Relative paths will be interpreted relative to the current working directory.
+pub fn read_link<P: AsLinuxPath>(link: P) -> Result<LinuxString> {
+    File::current_dir().rel_read_link(link)
+}
+
 /// An opened file in a file system.
 #[derive(Debug, Eq, PartialEq)]
 pub struct File {
@@ -146,37 +186,6 @@ impl File {
     /// Returns the file descriptor of this file.
     pub fn file_desc(&self) -> c_int {
         self.fd
-    }
-
-    /// Open the file at path `path` with the specified flags.
-    ///
-    /// If `path` is relative, the `self` must be a directory and the `path` will be
-    /// interpreted relative to `self`.
-    pub fn rel_open<P: AsLinuxPath>(&self, path: P, flags: Flags) -> Result<File> {
-        let path = path.to_cstring().unwrap();
-        let mode = flags.mode().map(|m| mode_to_int(m)).unwrap_or(0);
-        let fd = match retry(|| openat(self.fd, &path,
-                                       flags_to_int(flags) | cty::O_LARGEFILE, mode)) {
-            Ok(fd) => fd,
-            // Due to a bug in the kernel, open returns WrongDeviceType instead of
-            // NoSuchDevice.
-            Err(errno::WrongDeviceType) => return Err(errno::NoSuchDevice),
-            Err(e) => return Err(e),
-        };
-        Ok(File {
-            fd: fd,
-            owned: true,
-        })
-    }
-
-    /// Opens the file at path `path` in read mode.
-    ///
-    /// If `path` is relative, the `self` must be a directory and the `path` will be
-    /// interpreted relative to `self`.
-    ///
-    /// This is equivalent to `file.open` with the default flags.
-    pub fn rel_open_read<P: AsLinuxPath>(&self, path: P) -> Result<File> {
-        self.rel_open(path, Flags::new())
     }
 
     /// Opens the file at path `path` in read mode.
@@ -224,30 +233,6 @@ impl File {
     pub fn info(&self) -> Result<Info> {
         let mut stat = unsafe { mem::zeroed() };
         try!(rv!(fstatat(self.fd, empty_cstr(), &mut stat, AT_EMPTY_PATH)));
-        Ok(info_from_stat(stat))
-    }
-
-    /// Returns information about the file specified by `path`.
-    ///
-    /// If `path` is a symlink, then this is equivalent to returning information about the
-    /// destination of the symlink. If `path` is relative, then `self` must be a directory
-    /// and the path will be interpreted relative to `self`.
-    pub fn rel_info<P: AsLinuxPath>(&self, path: P) -> Result<Info> {
-        let path = path.to_cstring().unwrap();
-        let mut stat = unsafe  { mem::zeroed() };
-        try!(rv!(fstatat(self.fd, &path, &mut stat, 0)));
-        Ok(info_from_stat(stat))
-    }
-
-    /// Returns information about the file specified by `path`.
-    ///
-    /// This returns information about the file at `path`, even if `path` is a symlink.
-    /// If `path` is relative, then `self` must be a directory and the path will be
-    /// interpreted relative to `self`.
-    pub fn rel_info_no_follow<P: AsLinuxPath>(&self, path: P) -> Result<Info> {
-        let path = path.to_cstring().unwrap();
-        let mut stat = unsafe  { mem::zeroed() };
-        try!(rv!(fstatat(self.fd, &path, &mut stat, AT_SYMLINK_NOFOLLOW)));
         Ok(info_from_stat(stat))
     }
 
@@ -410,6 +395,99 @@ impl File {
         retry(|| fstatfs(self.fd, &mut buf)).map(|_| from_statfs(buf))
     }
 
+    /// Creates a hard link to this file.
+    ///
+    /// Relative paths are interpreted relative to the current working directory.
+    pub fn link<P: AsLinuxPath>(&self, path: P) -> Result<()> {
+        let path = path.to_cstring().unwrap();
+        rv!(linkat(self.fd, empty_cstr(), AT_FDCWD, &path, AT_EMPTY_PATH))
+    }
+
+    /// Creates a hard link to this file relative to a directory.
+    ///
+    /// Relative paths are interpreted relative to the directory `dir`.
+    pub fn link_rel_to<P: AsLinuxPath>(&self, dir: &File, path: P) -> Result<()> {
+        let path = path.to_cstring().unwrap();
+        rv!(linkat(self.fd, empty_cstr(), dir.fd, &path, AT_EMPTY_PATH))
+    }
+
+    /// Changes the access and modification times of this file.
+    pub fn set_times(&self, access: Time, modification: Time) -> Result<()> {
+        let times = [time_to_timespec(access), time_to_timespec(modification)];
+        rv!(utimensat(self.fd, None, &times, 0))
+    }
+
+    /// Returns the path of the file that was used to open this file.
+    pub fn filename_buf<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut LinuxStr> {
+        // enough space for "/proc/self/fd/-{u64::MAX}\0"
+        let mut proc_buf = [0; 36];
+        let _ = write!(&mut proc_buf[..], "/proc/self/fd/{}", self.fd);
+        let cstr = unsafe { CStr::from_ptr(proc_buf.as_ptr() as *const c_char) };
+        let len = try!(rv!(readlinkat(self.fd, cstr, buf), -> usize));
+        Ok(buf[..len].as_linux_str_mut())
+    }
+
+    /// Returns the path of the file that was used to open this file.
+    pub fn filename(&self) -> Result<LinuxString> {
+        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        self.filename_buf(&mut buf).map(|f| f.to_linux_string())
+    }
+
+    /// Opens the file at path `path` in read mode.
+    ///
+    /// If `path` is relative, the `self` must be a directory and the `path` will be
+    /// interpreted relative to `self`.
+    ///
+    /// This is equivalent to `file.open` with the default flags.
+    pub fn rel_open_read<P: AsLinuxPath>(&self, path: P) -> Result<File> {
+        self.rel_open(path, Flags::new())
+    }
+
+    /// Open the file at path `path` with the specified flags.
+    ///
+    /// If `path` is relative, the `self` must be a directory and the `path` will be
+    /// interpreted relative to `self`.
+    pub fn rel_open<P: AsLinuxPath>(&self, path: P, flags: Flags) -> Result<File> {
+        let path = path.to_cstring().unwrap();
+        let mode = flags.mode().map(|m| mode_to_int(m)).unwrap_or(0);
+        let fd = match retry(|| openat(self.fd, &path,
+                                       flags_to_int(flags) | cty::O_LARGEFILE, mode)) {
+            Ok(fd) => fd,
+            // Due to a bug in the kernel, open returns WrongDeviceType instead of
+            // NoSuchDevice.
+            Err(errno::WrongDeviceType) => return Err(errno::NoSuchDevice),
+            Err(e) => return Err(e),
+        };
+        Ok(File {
+            fd: fd,
+            owned: true,
+        })
+    }
+
+    /// Returns information about the file specified by `path`.
+    ///
+    /// If `path` is a symlink, then this is equivalent to returning information about the
+    /// destination of the symlink. If `path` is relative, then `self` must be a directory
+    /// and the path will be interpreted relative to `self`.
+    pub fn rel_info<P: AsLinuxPath>(&self, path: P) -> Result<Info> {
+        let path = path.to_cstring().unwrap();
+        let mut stat = unsafe  { mem::zeroed() };
+        try!(rv!(fstatat(self.fd, &path, &mut stat, 0)));
+        Ok(info_from_stat(stat))
+    }
+
+    /// Returns information about the file specified by `path`.
+    ///
+    /// This returns information about the file at `path`, even if `path` is a symlink.
+    /// If `path` is relative, then `self` must be a directory and the path will be
+    /// interpreted relative to `self`.
+    pub fn rel_info_no_follow<P: AsLinuxPath>(&self, path: P) -> Result<Info> {
+        let path = path.to_cstring().unwrap();
+        let mut stat = unsafe  { mem::zeroed() };
+        try!(rv!(fstatat(self.fd, &path, &mut stat, AT_SYMLINK_NOFOLLOW)));
+        Ok(info_from_stat(stat))
+    }
+
     /// Returns whether the specified path points to an existing file.
     ///
     /// If `path` is relative then `self` must be a directory and the path will be
@@ -445,28 +523,6 @@ impl File {
                 _ => Err(err),
             }
         }
-    }
-
-    /// Creates a hard link to this file.
-    ///
-    /// Relative paths are interpreted relative to the current working directory.
-    pub fn link<P: AsLinuxPath>(&self, path: P) -> Result<()> {
-        let path = path.to_cstring().unwrap();
-        rv!(linkat(self.fd, empty_cstr(), AT_FDCWD, &path, AT_EMPTY_PATH))
-    }
-
-    /// Creates a hard link to this file relative to a directory.
-    ///
-    /// Relative paths are interpreted relative to the directory `dir`.
-    pub fn link_rel_to<P: AsLinuxPath>(&self, dir: &File, path: P) -> Result<()> {
-        let path = path.to_cstring().unwrap();
-        rv!(linkat(self.fd, empty_cstr(), dir.fd, &path, AT_EMPTY_PATH))
-    }
-
-    /// Changes the access and modification times of this file.
-    pub fn set_times(&self, access: Time, modification: Time) -> Result<()> {
-        let times = [time_to_timespec(access), time_to_timespec(modification)];
-        rv!(utimensat(self.fd, None, &times, 0))
     }
 
     /// Changes the access and modification times of the file specified by `path`.
@@ -515,6 +571,64 @@ impl File {
         let two = two.to_cstring().unwrap();
         let flag = if replace { 0 } else { RENAME_NOREPLACE };
         rv!(renameat2(self.fd, &one, self.fd, &two, flag))
+    }
+
+    /// Creates the directory `path`.
+    ///
+    /// If `path` is relative, then `self` has to be a directory and the path is
+    /// interpreted relative to `self`.
+    pub fn rel_mkdir<P: AsLinuxPath>(&self, path: P, mode: Mode) -> Result<()> {
+        let path = path.to_cstring().unwrap();
+        rv!(mkdirat(self.fd, &path, mode_to_int(mode)))
+    }
+
+    /// Removes the file at `path`.
+    ///
+    /// If `path` is relative, then `self` has to be a directory and the path is
+    /// interpreted relative to `self`. If `path` refers to a directory, then the
+    /// directory has to be empty.
+    pub fn rel_remove<P: AsLinuxPath>(&self, path: P) -> Result<()> {
+        let path = path.to_cstring().unwrap();
+        let mut ret = unlinkat(self.fd, &path, 0);
+        if Errno(-ret) == errno::IsADirectory {
+            ret = unlinkat(self.fd, &path, AT_REMOVEDIR);
+        }
+        rv!(ret)
+    }
+
+    /// Creates a symlink from `link` to `target`.
+    ///
+    /// If `link` is relative, then `self` has to be a directory and `link` will be
+    /// interpreted relative to `self`.
+    pub fn rel_symlink<P: AsLinuxPath, Q: AsLinuxPath>(&self, target: P,
+                                                       link: Q) -> Result<()> {
+        let target = target.to_cstring().unwrap();
+        let link = link.to_cstring().unwrap();
+        rv!(symlinkat(&target, self.fd, &link))
+    }
+
+    /// Reads the target of the symbolic link `link` into `buf`.
+    ///
+    /// If `link` is relative, then `self` has to be a directory and `link` will be
+    /// interpreted relative to `self`.
+    pub fn rel_read_link_buf<'a, P: AsLinuxPath>(
+            &self,
+            link: P,
+            buf: &'a mut [u8]
+            ) -> Result<&'a mut LinuxStr>
+    {
+        let link = link.to_cstring().unwrap();
+        let len = try!(rv!(readlinkat(self.fd, &link, buf), -> usize));
+        Ok(buf[..len].as_linux_str_mut())
+    }
+
+    /// Reads the target of the symbolic link `link`.
+    ///
+    /// If `link` is relative, then `self` has to be a directory and `link` will be
+    /// interpreted relative to `self`.
+    pub fn rel_read_link<P: AsLinuxPath>(&self, link: P) -> Result<LinuxString> {
+        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        self.rel_read_link_buf(link, &mut buf).map(|f| f.to_linux_string())
     }
 }
 

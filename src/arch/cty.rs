@@ -28,6 +28,8 @@ pub const O_SYNC:      c_int = 0o4010000;
 pub const O_PATH:      c_int = 0o10000000;
 pub const O_TMPFILE:   c_int = 0o20200000;
 
+pub const PATH_MAX: usize = 4096;
+
 pub const MODE_TYPE_SHIFT: usize = 12;
 
 pub const S_IFMT:   mode_t = 0o170000;
