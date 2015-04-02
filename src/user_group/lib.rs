@@ -8,11 +8,11 @@
 extern crate linux_core as core;
 extern crate linux_file as file;
 
-use std::{mem, ptr};
+use std::{mem};
 
 use core::result::{Result};
 use core::errno::{self};
-use core::util::{memchr};
+use core::util::{memchr, memmove};
 
 use file::{File};
 
@@ -66,8 +66,8 @@ impl<'a> LineReader<'a> {
             // No newline in the current buffer.
             // Move it to the left, try to read more, repeat.
             let dst = buf.as_mut_ptr();
-            let src = unsafe { dst.offset(self.start as isize) };
-            unsafe { ptr::copy(dst, src, self.end - self.start); }
+            let src = unsafe { dst.offset(self.start as isize) } as *const u8;
+            unsafe { memmove(dst, src, self.end - self.start); }
             self.end -= self.start;
             self.start = 0;
             match self.file.read(&mut buf[self.end..]) {

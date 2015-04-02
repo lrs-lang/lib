@@ -5,7 +5,7 @@
 #![allow(non_upper_case_globals)]
 
 use std::fmt::{self, Debug, Formatter};
-use std::error::{FromError};
+use std::convert::{From};
 use std::io::{ErrorKind};
 
 use cty::{c_int};
@@ -173,14 +173,14 @@ create! {
     RustError               = (5000, "Rust custom error"),
 }
 
-impl FromError<Errno> for ::std::io::Error {
-    fn from_error(e: Errno) -> ::std::io::Error {
+impl From<Errno> for ::std::io::Error {
+    fn from(e: Errno) -> ::std::io::Error {
         ::std::io::Error::from_os_error(e.0)
     }
 }
 
-impl FromError<::std::io::Error> for Errno {
-    fn from_error(e: ::std::io::Error) -> Errno {
+impl From<::std::io::Error> for Errno {
+    fn from(e: ::std::io::Error) -> Errno {
         if let Some(num) = e.raw_os_error() {
             return Errno(num as c_int);
         }

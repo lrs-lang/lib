@@ -4,7 +4,7 @@
 
 use std::{self, mem, fmt, iter};
 use std::io::{BufReader, BufRead};
-use std::error::{FromError};
+use std::convert::{From};
 
 use core::result::{Result};
 use core::errno::{self, Errno};
@@ -249,7 +249,7 @@ impl<'a> Iterator for InformationIter<'a> {
     fn next(&mut self) -> Option<Information> {
         let mut buf = vec!();
         if let Err(e) = self.file.read_until(b'\n', &mut buf) {
-            self.set_err(FromError::from_error(e));
+            self.set_err(From::from(e));
             None
         } else if buf.len() > 0 {
             let buf = match buf.last() {

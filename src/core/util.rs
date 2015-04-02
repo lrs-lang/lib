@@ -2,12 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::num::{SignedInt};
 use std::ffi::{CStr};
+use std::intrinsics::{copy};
 
 use cty::{c_int, c_void, size_t, c_char};
 use errno::{Errno};
 use result::{Result};
+use ext::{SignedInt};
 
 #[cfg(feature = "retry")]
 pub fn retry<T: SignedInt, F: FnMut() -> T>(mut f: F) -> Result<T> {
@@ -30,7 +31,7 @@ pub fn retry<T: SignedInt, F: FnMut() -> T>(mut f: F) -> Result<T> {
 pub fn retry<T: SignedInt, F: FnMut() -> T>(mut f: F) -> Result<T> {
     let ret = f();
     if ret.is_negative() {
-        Err(Errno(-ret.to_i64().unwrap() as c_int))
+        Err(Errno(-ret.to_i64() as c_int))
     } else {
         Ok(ret)
     }
@@ -46,6 +47,10 @@ pub fn memchr(s: &[u8], c: u8) -> Option<usize> {
     } else {
         Some(res as usize - ptr as usize)
     }
+}
+
+pub unsafe fn memmove<T>(dst: *mut T, src: *const T, num: usize) {
+    copy(src, dst, num);
 }
 
 pub fn empty_cstr() -> &'static CStr {

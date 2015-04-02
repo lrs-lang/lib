@@ -2,11 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::os::unix::ffi::{OsStrExt};
-use std::ffi::{OsStr, CString, NulError};
+use std::ffi::{CString};
 use std::path::{Path, AsPath};
-use std::num::{Int};
-use std::{ops};
+use std::{self, ops};
 
 use string::{AsLinuxStr};
 
@@ -17,8 +15,8 @@ pub mod truncate;
 pub trait AsLinuxPath {
     fn as_linux_path(&self) -> &Path;
 
-    fn to_cstring(&self) -> Result<CString, NulError> {
-        <OsStr as OsStrExt>::to_cstring(self.as_linux_path().as_os_str())
+    fn to_cstring(&self) -> Option<CString> {
+        self.as_linux_path().as_os_str().to_cstring()
     }
 }
 
@@ -28,6 +26,38 @@ impl<T: AsLinuxStr+?Sized> AsLinuxPath for T {
     }
 }
 
+pub trait Int: PartialOrd + ops::Neg {
+    fn zero() -> Self;
+    fn max_value() -> Self;
+    fn min_value() -> Self;
+    fn is_negative(&self) -> bool;
+    fn to_i64(&self) -> i64;
+}
+
+macro_rules! impl_int {
+    ($t:ty, $max:expr, $min:expr) => {
+        impl Int for $t {
+            fn zero() -> $t { 0 }
+            fn max_value() -> $t { $max }
+            fn min_value() -> $t { $min }
+            #[allow(unused_comparisons)]
+            fn is_negative(&self) -> bool { *self < 0 }
+            fn to_i64(&self) -> i64 { *self as i64 }
+        }
+    }
+}
+
+impl_int!(i8,    std::i8::MAX,    std::i8::MIN);
+impl_int!(u8,    std::u8::MAX,    std::u8::MIN);
+impl_int!(i16,   std::i16::MAX,   std::i16::MIN);
+impl_int!(u16,   std::u16::MAX,   std::u16::MIN);
+impl_int!(i32,   std::i32::MAX,   std::i32::MIN);
+impl_int!(u32,   std::u32::MAX,   std::u32::MIN);
+impl_int!(i64,   std::i64::MAX,   std::i64::MIN);
+impl_int!(u64,   std::u64::MAX,   std::u64::MIN);
+impl_int!(isize, std::isize::MAX, std::isize::MIN);
+impl_int!(usize, std::usize::MAX, std::usize::MIN);
+
 pub trait UnsignedInt: Int { }
 
 impl UnsignedInt for u8    { }
@@ -35,6 +65,14 @@ impl UnsignedInt for u16   { }
 impl UnsignedInt for u32   { }
 impl UnsignedInt for u64   { }
 impl UnsignedInt for usize { }
+
+pub trait SignedInt: Int { }
+
+impl SignedInt for i8    { }
+impl SignedInt for i16   { }
+impl SignedInt for i32   { }
+impl SignedInt for i64   { }
+impl SignedInt for isize { }
 
 pub trait UIntRange<T: UnsignedInt> {
     fn to_range(self) -> ops::Range<T>;
