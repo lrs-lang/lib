@@ -26,6 +26,19 @@ pub fn file_type_from_mode(i: mode_t) -> Type {
     }
 }
 
+pub fn file_type_to_mode(t: Type) -> mode_t {
+    match t {
+        Type::BlockDevice => S_IFBLK,
+        Type::CharDevice  => S_IFCHR,
+        Type::Directory   => S_IFDIR,
+        Type::FIFO        => S_IFIFO,
+        Type::SymLink     => S_IFLNK,
+        Type::File        => S_IFREG,
+        Type::Socket      => S_IFSOCK,
+        Type::Unknown     => !0,
+    }
+}
+
 /// Type of a directory entry.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Type {

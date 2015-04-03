@@ -5,7 +5,7 @@
 use std::ffi::{CStr};
 
 use cty::{c_int, mode_t, ssize_t, off_t, rlimit, pid_t, uid_t, gid_t, stat, c_char,
-          size_t, SYSCALL_RLIM_INFINITY, RLIM_INFINITY, statfs, timespec};
+          size_t, SYSCALL_RLIM_INFINITY, RLIM_INFINITY, statfs, timespec, dev_t, c_void};
 use ext::{SaturatingCast};
 
 pub use self::raw::*;
@@ -167,4 +167,73 @@ pub fn symlinkat(target: &CStr, dir: c_int, link: &CStr) -> c_int {
 pub fn readlinkat(dir: c_int, path: &CStr, buf: &mut [u8]) -> ssize_t {
     unsafe { __readlinkat(dir, path.as_ptr(), buf.as_mut_ptr() as *mut c_char,
                           buf.len() as size_t) }
+}
+
+pub fn fchownat(dir: c_int, path: &CStr, user: uid_t, group: gid_t,
+                flags: c_int) -> c_int {
+    unsafe { __fchownat(dir, path.as_ptr(), user, group, flags) }
+}
+
+pub fn fchmodat(dir: c_int, path: &CStr, mode: mode_t) -> c_int {
+    unsafe { __fchmodat(dir, path.as_ptr(), mode) }
+}
+
+pub fn mknodat(dir: c_int, path: &CStr, mode: mode_t, dev: dev_t) -> c_int {
+    unsafe { __mknodat(dir, path.as_ptr(), mode, dev) }
+}
+
+pub fn setxattr(path: &CStr, name: &CStr, val: &[u8], flags: c_int) -> c_int {
+    unsafe { __setxattr(path.as_ptr(), name.as_ptr(), val.as_ptr() as *const c_void,
+                        val.len() as size_t, flags) }
+}
+
+pub fn lsetxattr(path: &CStr, name: &CStr, val: &[u8], flags: c_int) -> c_int {
+    unsafe { __lsetxattr(path.as_ptr(), name.as_ptr(), val.as_ptr() as *const c_void,
+                         val.len() as size_t, flags) }
+}
+
+pub fn fsetxattr(fd: c_int, name: &CStr, val: &[u8], flags: c_int) -> c_int {
+    unsafe { __fsetxattr(fd, name.as_ptr(), val.as_ptr() as *const c_void,
+                         val.len() as size_t, flags) }
+}
+
+pub fn getxattr(path: &CStr, name: &CStr, val: &mut [u8]) -> ssize_t {
+    unsafe { __getxattr(path.as_ptr(), name.as_ptr(), val.as_mut_ptr() as *mut c_void,
+                        val.len() as size_t) }
+}
+
+pub fn lgetxattr(path: &CStr, name: &CStr, val: &mut [u8]) -> ssize_t {
+    unsafe { __lgetxattr(path.as_ptr(), name.as_ptr(), val.as_mut_ptr() as *mut c_void,
+                         val.len() as size_t) }
+}
+
+pub fn fgetxattr(fd: c_int, name: &CStr, val: &mut [u8]) -> ssize_t {
+    unsafe { __fgetxattr(fd, name.as_ptr(), val.as_mut_ptr() as *mut c_void,
+                         val.len() as size_t) }
+}
+
+pub fn removexattr(path: &CStr, name: &CStr) -> c_int {
+    unsafe { __removexattr(path.as_ptr(), name.as_ptr()) }
+}
+
+pub fn lremovexattr(path: &CStr, name: &CStr) -> c_int {
+    unsafe { __lremovexattr(path.as_ptr(), name.as_ptr()) }
+}
+
+pub fn fremovexattr(fd: c_int, name: &CStr) -> c_int {
+    unsafe { __fremovexattr(fd, name.as_ptr()) }
+}
+
+pub fn listxattr(path: &CStr, list: &mut [u8]) -> ssize_t {
+    unsafe { __listxattr(path.as_ptr(), list.as_mut_ptr() as *mut c_char,
+                         list.len() as size_t) }
+}
+
+pub fn llistxattr(path: &CStr, list: &mut [u8]) -> ssize_t {
+    unsafe { __llistxattr(path.as_ptr(), list.as_mut_ptr() as *mut c_char,
+                          list.len() as size_t) }
+}
+
+pub fn flistxattr(fd: c_int, list: &mut [u8]) -> ssize_t {
+    unsafe { __flistxattr(fd, list.as_mut_ptr() as *mut c_char, list.len() as size_t) }
 }

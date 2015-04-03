@@ -94,6 +94,11 @@ impl<T: UnsignedInt> UIntRange<T> for ops::RangeFull {
     fn to_range(self) -> ops::Range<T> { ops::Range { start: T::zero(), end: T::max_value() } }
 }
 
+pub trait BoundedUIntRange<T: UnsignedInt>: UIntRange<T> { }
+
+impl<T: UnsignedInt> BoundedUIntRange<T> for ops::Range<T> { }
+impl<T: UnsignedInt> BoundedUIntRange<T> for ops::RangeTo<T> { }
+
 pub trait IteratorExt2: Iterator {
     fn collect_into_opt(&mut self, mut buf: &mut [Option<<Self as Iterator>::Item>]) -> usize {
         let mut count = 0;

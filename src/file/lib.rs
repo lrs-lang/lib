@@ -19,23 +19,31 @@ use core::result::{Result};
 use core::errno::{self, Errno};
 use core::cty::{self, c_int, off_t, c_uint, AT_FDCWD, AT_EMPTY_PATH, AT_SYMLINK_NOFOLLOW,
                 F_OK, UTIME_NOW, UTIME_OMIT, timespec, RENAME_EXCHANGE, RENAME_NOREPLACE,
-                AT_REMOVEDIR, c_char, PATH_MAX};
-use core::ext::{AsLinuxPath, UIntRange};
+                AT_REMOVEDIR, c_char, PATH_MAX, size_t, FALLOC_FL_KEEP_SIZE,
+                FALLOC_FL_PUNCH_HOLE, FALLOC_FL_COLLAPSE_RANGE, FALLOC_FL_ZERO_RANGE,
+                ssize_t};
+use core::ext::{AsLinuxPath, UIntRange, BoundedUIntRange};
 use core::syscall::{openat, read, write, close, pread, lseek, pwrite, readv, writev,
                     preadv, pwritev, ftruncate, fsync, fdatasync, syncfs, fadvise,
                     fstatfs, fcntl_dupfd_cloexec, fcntl_getfl, fcntl_setfl, fcntl_getfd,
                     fcntl_setfd, fstatat, faccessat, truncate, linkat, utimensat,
-                    renameat2, mkdirat, unlinkat, symlinkat, readlinkat};
-use core::string::{AsLinuxStrMut, LinuxStr, LinuxString};
-use core::util::{retry, empty_cstr};
+                    renameat2, mkdirat, unlinkat, symlinkat, readlinkat, fchownat,
+                    fchmodat, fchmod, mknodat, readahead, fallocate, setxattr, lsetxattr,
+                    fsetxattr, getxattr, lgetxattr, fgetxattr, removexattr, lremovexattr,
+                    fremovexattr, listxattr, llistxattr, flistxattr};
+use core::string::{AsLinuxStrMut, LinuxStr, LinuxString, AsLinuxStr};
+use core::util::{retry, empty_cstr, memchr};
+use core::alias::{UserId, GroupId};
 
 use clock::{Duration, duration_to_timespec};
 
 use fs::info::{FileSystemInfo, from_statfs};
 
+use dev::{Device, DeviceType};
+
 use flags::{Flags, Mode, AccessMode, access_mode_to_int, flags_from_int, flags_to_int,
             mode_to_int};
-use info::{Info, info_from_stat};
+use info::{Info, info_from_stat, Type, file_type_to_mode};
 
 pub mod flags;
 pub mod info;
@@ -131,8 +139,8 @@ pub fn rename<P: AsLinuxPath, Q: AsLinuxPath>(one: P, two: Q,
 /// Creates the directory `path`.
 ///
 /// Relative paths will be interpreted relative to the current working directory.
-pub fn mkdir<P: AsLinuxPath>(path: P, mode: Mode) -> Result<()> {
-    File::current_dir().rel_mkdir(path, mode)
+pub fn create_dir<P: AsLinuxPath>(path: P, mode: Mode) -> Result<()> {
+    File::current_dir().rel_create_dir(path, mode)
 }
 
 /// Removes the file at `path`.
@@ -162,6 +170,248 @@ pub fn read_link_buf<P: AsLinuxPath>(link: P, buf: &mut [u8]) -> Result<&mut Lin
 /// Relative paths will be interpreted relative to the current working directory.
 pub fn read_link<P: AsLinuxPath>(link: P) -> Result<LinuxString> {
     File::current_dir().rel_read_link(link)
+}
+
+/// Changes the owner of the file at `path`.
+///
+/// Relative paths will be interpreted relative to the current working directory.
+pub fn change_owner<P: AsLinuxPath>(path: P, user: UserId, group: GroupId) -> Result<()> {
+    File::current_dir().rel_change_owner(path, user, group)
+}
+
+/// Changes the owner of the file at `path`.
+///
+/// Relative paths will be interpreted relative to the current working directory.  If
+/// `path` refers to a symlink, then this changes the owner of the symlink itself.
+pub fn change_owner_no_follow<P: AsLinuxPath>(path: P, user: UserId,
+                                              group: GroupId) -> Result<()> {
+    File::current_dir().rel_change_owner_no_follow(path, user, group)
+}
+
+/// Change the mode of the file at `path`.
+///
+/// Relative paths will be interpreted relative to the current working directory.
+pub fn change_mode<P: AsLinuxPath>(path: P, mode: Mode) -> Result<()> {
+    File::current_dir().rel_change_mode(path, mode)
+}
+
+/// Creates a file at `path`.
+///
+/// Relative paths will be interpreted relative to the current working directory.
+///
+/// The type must be one of the following:
+///
+/// - `File`
+/// - `FIFO`
+/// - `Socket`
+pub fn create_file<P: AsLinuxPath>(path: P, ty: Type, mode: Mode) -> Result<()> {
+    File::current_dir().rel_create_file(path, ty, mode)
+}
+
+/// Creates a device special file at `path`.
+///
+/// Relative paths will be interpreted relative to the current working directory.
+pub fn create_device<P: AsLinuxPath>(path: P, dev: Device, mode: Mode) -> Result<()> {
+    File::current_dir().rel_create_device(path, dev, mode)
+}
+
+/// Sets an attribute of a file.
+///
+/// Relative paths will be interpreted relative to the current working directory.
+pub fn set_attr<P: AsLinuxPath, S: AsLinuxStr, V: AsRef<[u8]>>(path: P, name: S,
+                                                               val: V) -> Result<()> {
+    let path = path.to_cstring().unwrap();
+    let name = name.to_cstring().unwrap();
+    rv!(setxattr(&path, &name, val.as_ref(), 0))
+}
+
+/// Sets an attribute of a file.
+///
+/// Relative paths will be interpreted relative to the current working directory. If
+/// `path` is a symbolic link, then the attribute of the symbolic link is set.
+pub fn set_attr_no_follow<P: AsLinuxPath, S: AsLinuxStr, V: AsRef<[u8]>>(
+    path: P,
+    name: S,
+    val: V
+    ) -> Result<()>
+{
+    let path = path.to_cstring().unwrap();
+    let name = name.to_cstring().unwrap();
+    rv!(lsetxattr(&path, &name, val.as_ref(), 0))
+}
+
+/// Gets an attribute of a file.
+///
+/// Relative paths will be interpreted relative to the current working directory.
+pub fn get_attr_buf<P: AsLinuxPath, S: AsLinuxStr, V: AsMut<[u8]>>(
+    path: P,
+    name: S,
+    mut val: V
+    ) -> Result<usize>
+{
+    let path = path.to_cstring().unwrap();
+    let name = name.to_cstring().unwrap();
+    rv!(getxattr(&path, &name, val.as_mut()), -> usize)
+}
+
+/// Gets an attribute of a file.
+///
+/// Relative paths will be interpreted relative to the current working directory. If
+/// `path` is a symbolic link, then the attribute of the symbolic link is set.
+pub fn get_attr_no_follow_buf<P: AsLinuxPath, S: AsLinuxStr, V: AsMut<[u8]>>(
+        path: P,
+        name: S,
+        mut val: V
+        ) -> Result<usize>
+{
+    let path = path.to_cstring().unwrap();
+    let name = name.to_cstring().unwrap();
+    rv!(lgetxattr(&path, &name, val.as_mut()), -> usize)
+}
+
+fn get_attr_common<F: FnMut(&mut [u8]) -> ssize_t>(mut f: F) -> Result<Vec<u8>> {
+    let mut vec = vec!();
+    loop {
+        let size = try!(rv!(f(&mut []), -> usize));
+        unsafe {
+            vec.set_len(0);
+            vec.reserve(size);
+            vec.set_len(size);
+            match rv!(f(&mut vec[..]), -> usize) {
+                Ok(n) => {
+                    vec.set_len(n);
+                    return Ok(vec);
+                },
+                Err(errno::RangeError) => { },
+                Err(e) => return Err(e),
+            }
+        }
+    }
+}
+
+/// Gets an attribute of a file.
+///
+/// Relative paths will be interpreted relative to the current working directory.
+pub fn get_attr<P: AsLinuxPath, S: AsLinuxStr>(
+    path: P,
+    name: S,
+    ) -> Result<Vec<u8>>
+{
+    let path = path.to_cstring().unwrap();
+    let name = name.to_cstring().unwrap();
+    get_attr_common(|buf| getxattr(&path, &name, buf))
+}
+
+/// Gets an attribute of a file.
+///
+/// Relative paths will be interpreted relative to the current working directory. If
+/// `path` is a symbolic link, then the attribute of the symbolic link is set.
+pub fn get_attr_no_follow<P: AsLinuxPath, S: AsLinuxStr>(
+    path: P,
+    name: S,
+    ) -> Result<Vec<u8>>
+{
+    let path = path.to_cstring().unwrap();
+    let name = name.to_cstring().unwrap();
+    get_attr_common(|buf| lgetxattr(&path, &name, buf))
+}
+
+/// Removes an attribute of a file.
+///
+/// Relative paths will be interpreted relative to the current working directory.
+pub fn remove_attr<P: AsLinuxPath, S: AsLinuxStr>(path: P, name: S) -> Result<()> {
+    let path = path.to_cstring().unwrap();
+    let name = name.to_cstring().unwrap();
+    rv!(removexattr(&path, &name))
+}
+
+/// Removes an attribute of a file.
+///
+/// Relative paths will be interpreted relative to the current working directory. If
+/// `path` is a symbolic link, then the attribute of the symbolic link is set.
+pub fn remove_attr_no_follow<P: AsLinuxPath, S: AsLinuxStr>(path: P,
+                                                            name: S) -> Result<()> {
+    let path = path.to_cstring().unwrap();
+    let name = name.to_cstring().unwrap();
+    rv!(lremovexattr(&path, &name))
+}
+
+/// Returns the buffer size required in a `list_attr_buf` call.
+///
+/// Relative paths will be interpreted relative to the current working directory.
+pub fn list_attr_size<P: AsLinuxPath>(path: P) -> Result<usize> {
+    let path = path.to_cstring().unwrap();
+    rv!(listxattr(&path, &mut []), -> usize)
+}
+
+/// Returns the buffer size required in a `list_attr_buf_no_follow` call.
+///
+/// Relative paths will be interpreted relative to the current working directory. If
+/// `path` is a symbolic link, then the attribute of the symbolic link is set.
+pub fn list_attr_size_no_follow<P: AsLinuxPath>(path: P) -> Result<usize> {
+    let path = path.to_cstring().unwrap();
+    rv!(llistxattr(&path, &mut []), -> usize)
+}
+
+/// Returns an iterator over the attributes in a file.
+///
+/// Relative paths will be interpreted relative to the current working directory.
+pub fn list_attr_buf<'a, P: AsLinuxPath>(path: P,
+                                         buf: &'a mut [u8]) -> Result<ListAttrIter<'a>> {
+    let path = path.to_cstring().unwrap();
+    let len = try!(rv!(listxattr(&path, buf), -> usize));
+    Ok(ListAttrIter { buf: &buf[..len], pos: 0 })
+}
+
+/// Returns an iterator over the attributes in a file.
+///
+/// Relative paths will be interpreted relative to the current working directory. If
+/// `path` is a symbolic link, then the attribute of the symbolic link is set.
+pub fn list_attr_buf_no_follow<'a, P: AsLinuxPath>(
+    path: P,
+    buf: &'a mut [u8]
+    ) -> Result<ListAttrIter<'a>>
+{
+    let path = path.to_cstring().unwrap();
+    let len = try!(rv!(llistxattr(&path, buf), -> usize));
+    Ok(ListAttrIter { buf: &buf[..len], pos: 0 })
+}
+
+fn list_attr_common<F: FnMut(&mut [u8]) -> ssize_t>(mut f: F) -> Result<ListAttrIterator> {
+    let mut vec = vec!();
+    loop {
+        let size = try!(rv!(f(&mut []), -> usize));
+        unsafe {
+            vec.set_len(0);
+            vec.reserve(size);
+            vec.set_len(size);
+            match rv!(f(&mut vec[..]), -> usize) {
+                Ok(n) => {
+                    vec.set_len(n);
+                    return Ok(ListAttrIterator { buf: vec, pos: 0 });
+                },
+                Err(errno::RangeError) => { },
+                Err(e) => return Err(e),
+            }
+        }
+    }
+}
+
+/// Returns an iterator over the attributes in a file.
+///
+/// Relative paths will be interpreted relative to the current working directory.
+pub fn list_attr<P: AsLinuxPath>(path: P) -> Result<ListAttrIterator> {
+    let path = path.to_cstring().unwrap();
+    list_attr_common(|buf| listxattr(&path, buf))
+}
+
+/// Returns an iterator over the attributes in a file.
+///
+/// Relative paths will be interpreted relative to the current working directory. If
+/// `path` is a symbolic link, then the attribute of the symbolic link is set.
+pub fn list_attr_no_follow<P: AsLinuxPath>(path: P) -> Result<ListAttrIterator> {
+    let path = path.to_cstring().unwrap();
+    list_attr_common(|buf| llistxattr(&path, buf))
 }
 
 /// An opened file in a file system.
@@ -433,6 +683,100 @@ impl File {
         self.filename_buf(&mut buf).map(|f| f.to_linux_string())
     }
 
+    /// Changes the owner of this file.
+    pub fn change_owner(&self, user: UserId, group: GroupId) -> Result<()> {
+        rv!(fchownat(self.fd, empty_cstr(), user, group, AT_EMPTY_PATH))
+    }
+
+    /// Changes the mode of this file.
+    pub fn change_mode(&self, mode: Mode) -> Result<()> {
+        rv!(fchmod(self.fd, mode_to_int(mode)))
+    }
+
+    /// Initiates readahead of the specified range.
+    pub fn readahead<R: BoundedUIntRange<u64>>(&self, range: R) -> Result<()> {
+        let range = range.to_range();
+        rv!(readahead(self.fd, range.start as off_t, (range.end - range.start) as size_t))
+    }
+
+    /// Reserves the specified range in the file system.
+    ///
+    /// Further writes in the specified range are guaranteed not to fail because of a lack
+    /// of storage capacity.
+    pub fn reserve<R: BoundedUIntRange<u64>>(&self, range: R) -> Result<()> {
+        let range = range.to_range();
+        rv!(fallocate(self.fd, FALLOC_FL_KEEP_SIZE, range.start as off_t,
+                      (range.end - range.start) as off_t))
+    }
+
+    /// Creates a hole in the specified range.
+    pub fn create_hole<R: BoundedUIntRange<u64>>(&self, range: R) -> Result<()> {
+        let range = range.to_range();
+        rv!(fallocate(self.fd, FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE,
+                      range.start as off_t, (range.end - range.start) as off_t))
+    }
+
+    /// Removes the specified range from the file and closes the gap.
+    ///
+    /// The range must probably begin and end at a multiple of the block size but this
+    /// depends on the filesystem. This function cannot be used if the range reaches the
+    /// end of the file. Use `set_len` for this purpose.
+    pub fn collapse<R: BoundedUIntRange<u64>>(&self, range: R) -> Result<()> {
+        let range = range.to_range();
+        rv!(fallocate(self.fd, FALLOC_FL_COLLAPSE_RANGE, range.start as off_t,
+                      (range.end - range.start) as off_t))
+    }
+    
+    /// Zeroes the specified range in the file.
+    /// 
+    /// This can be more efficient than manually writing zeroes.
+    pub fn zero<R: BoundedUIntRange<u64>>(&self, range: R) -> Result<()> {
+        let range = range.to_range();
+        rv!(fallocate(self.fd, FALLOC_FL_ZERO_RANGE, range.start as off_t,
+                      (range.end - range.start) as off_t))
+    }
+
+    /// Sets an attribute of this file.
+    pub fn set_attr<S: AsLinuxStr, V: AsRef<[u8]>>(&self, name: S, val: V) -> Result<()> {
+        let name = name.to_cstring().unwrap();
+        rv!(fsetxattr(self.fd, &name, val.as_ref(), 0))
+    }
+
+    /// Gets an attribute of this file.
+    pub fn get_attr_buf<S: AsLinuxStr, V: AsMut<[u8]>>(&self, name: S,
+                                                       mut val: V) -> Result<usize> {
+        let name = name.to_cstring().unwrap();
+        rv!(fgetxattr(self.fd, &name, val.as_mut()), -> usize)
+    }
+
+    /// Gets an attribute of this file.
+    pub fn get_attr<S: AsLinuxStr>(&self, name: S) -> Result<Vec<u8>> {
+        let name = name.to_cstring().unwrap();
+        get_attr_common(|buf| fgetxattr(self.fd, &name, buf))
+    }
+
+    /// Removes an attribute of this file.
+    pub fn remove_attr<S: AsLinuxStr>(&self, name: S) -> Result<()> {
+        let name = name.to_cstring().unwrap();
+        rv!(fremovexattr(self.fd, &name))
+    }
+
+    /// Returns the buffer size required in a `list_attr_buf` call.
+    pub fn list_attr_size(&self) -> Result<usize> {
+        rv!(flistxattr(self.fd, &mut []), -> usize)
+    }
+
+    /// Returns an iterator over the attributes in this file.
+    pub fn list_attr_buf<'a>(&self, buf: &'a mut [u8]) -> Result<ListAttrIter<'a>> {
+        let len = try!(rv!(flistxattr(self.fd, buf), -> usize));
+        Ok(ListAttrIter { buf: &buf[..len], pos: 0 })
+    }
+
+    /// Returns an iterator over the attributes in this file.
+    pub fn list_attr(&self) -> Result<ListAttrIterator> {
+        list_attr_common(|buf| flistxattr(self.fd, buf))
+    }
+
     /// Opens the file at path `path` in read mode.
     ///
     /// If `path` is relative, the `self` must be a directory and the `path` will be
@@ -577,7 +921,7 @@ impl File {
     ///
     /// If `path` is relative, then `self` has to be a directory and the path is
     /// interpreted relative to `self`.
-    pub fn rel_mkdir<P: AsLinuxPath>(&self, path: P, mode: Mode) -> Result<()> {
+    pub fn rel_create_dir<P: AsLinuxPath>(&self, path: P, mode: Mode) -> Result<()> {
         let path = path.to_cstring().unwrap();
         rv!(mkdirat(self.fd, &path, mode_to_int(mode)))
     }
@@ -629,6 +973,70 @@ impl File {
     pub fn rel_read_link<P: AsLinuxPath>(&self, link: P) -> Result<LinuxString> {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
         self.rel_read_link_buf(link, &mut buf).map(|f| f.to_linux_string())
+    }
+
+    /// Changes the owner of the file at `path`.
+    ///
+    /// If `path` is relative, then `self` has to be a directory and `path` will be
+    /// interpreted relative to `self`.
+    pub fn rel_change_owner<P: AsLinuxPath>(&self, path: P, user: UserId,
+                                            group: GroupId) -> Result<()> {
+        let path = path.to_cstring().unwrap();
+        rv!(fchownat(self.fd, &path, user, group, 0))
+    }
+
+    /// Changes the owner of the file at `path`.
+    ///
+    /// If `path` is relative, then `self` has to be a directory and `path` will be
+    /// interpreted relative to `self`. If `path` refers to a symlink, then this changes
+    /// the owner of the symlink itself.
+    pub fn rel_change_owner_no_follow<P: AsLinuxPath>(&self, path: P, user: UserId,
+                                                      group: GroupId) -> Result<()> {
+        let path = path.to_cstring().unwrap();
+        rv!(fchownat(self.fd, &path, user, group, AT_SYMLINK_NOFOLLOW))
+    }
+
+    /// Change the mode of the file at `path`.
+    ///
+    /// If `path` is relative, then `self` has to be a directory and `path` will be
+    /// interpreted relative to `self`.
+    pub fn rel_change_mode<P: AsLinuxPath>(&self, path: P, mode: Mode) -> Result<()> {
+        let path = path.to_cstring().unwrap();
+        rv!(fchmodat(self.fd, &path, mode_to_int(mode)))
+    }
+
+    /// Creates a file at `path`.
+    ///
+    /// If `path` is relative, then `self` has to be a directory and `path` will be
+    /// interpreted relative to `self`.
+    ///
+    /// The type must be one of the following:
+    ///
+    /// - `File`
+    /// - `FIFO`
+    /// - `Socket`
+    pub fn rel_create_file<P: AsLinuxPath>(&self, path: P, ty: Type,
+                                         mode: Mode) -> Result<()> {
+        match ty {
+            Type::File | Type::FIFO | Type::Socket => { },
+            _ => return Err(errno::InvalidArgument),
+        }
+        let path = path.to_cstring().unwrap();
+        rv!(mknodat(self.fd, &path, file_type_to_mode(ty) | mode_to_int(mode), 0))
+    }
+
+    /// Creates a device special file at `path`.
+    ///
+    /// If `path` is relative, then `self` has to be a directory and `path` will be
+    /// interpreted relative to `self`.
+    pub fn rel_create_device<P: AsLinuxPath>(&self, path: P, dev: Device,
+                                           mode: Mode) -> Result<()> {
+        let ty = match dev.ty() {
+            DeviceType::Character => Type::CharDevice,
+            DeviceType::Block     => Type::BlockDevice,
+        };
+        let path = path.to_cstring().unwrap();
+        rv!(mknodat(self.fd, &path, file_type_to_mode(ty) | mode_to_int(mode), dev.id()))
     }
 }
 
@@ -728,5 +1136,43 @@ impl Advice {
             Advice::DontNeed   => 4,
             Advice::NoReuse    => 5,
         }
+    }
+}
+
+pub struct ListAttrIter<'a> {
+    buf: &'a [u8],
+    pos: usize,
+}
+
+impl<'a> Iterator for ListAttrIter<'a> {
+    type Item = &'a LinuxStr;
+
+    fn next(&mut self) -> Option<&'a LinuxStr> {
+        if self.pos == self.buf.len() {
+            return None;
+        }
+        let buf = &self.buf[self.pos..];
+        let len = memchr(buf, 0).unwrap();
+        self.pos += len + 1;
+        Some(buf[..len].as_linux_str())
+    }
+}
+
+pub struct ListAttrIterator {
+    buf: Vec<u8>,
+    pos: usize,
+}
+
+impl Iterator for ListAttrIterator {
+    type Item = LinuxString;
+
+    fn next(&mut self) -> Option<LinuxString> {
+        if self.pos == self.buf.len() {
+            return None;
+        }
+        let buf = &self.buf[self.pos..];
+        let len = memchr(buf, 0).unwrap();
+        self.pos += len + 1;
+        Some(buf[..len].as_linux_str().to_linux_string())
     }
 }

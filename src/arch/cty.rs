@@ -77,6 +77,12 @@ pub const F_GETFL: c_int = 3;
 pub const F_SETFL: c_int = 4;
 pub const F_DUPFD_CLOEXEC: c_int = 1030;
 
+pub const FALLOC_FL_KEEP_SIZE:      c_int = 0x01;
+pub const FALLOC_FL_PUNCH_HOLE:     c_int = 0x02;
+pub const FALLOC_FL_NO_HIDE_STALE:  c_int = 0x04;
+pub const FALLOC_FL_COLLAPSE_RANGE: c_int = 0x08;
+pub const FALLOC_FL_ZERO_RANGE:     c_int = 0x10;
+
 pub const F_OK: c_int = 0;
 pub const R_OK: c_int = 4;
 pub const W_OK: c_int = 2;

@@ -256,6 +256,10 @@ impl ToOwned for LinuxStr {
 /// A trait for converting to a borrowed linux string.
 pub trait AsLinuxStr {
     fn as_linux_str(&self) -> &LinuxStr;
+
+    fn to_cstring(&self) -> Option<CString> {
+        self.as_linux_str().as_os_str().to_cstring()
+    }
 }
 
 impl AsLinuxStr for LinuxStr { fn as_linux_str(&self) -> &LinuxStr { self } }
@@ -274,7 +278,7 @@ impl<'a, T: AsLinuxStr+?Sized> AsLinuxStr for &'a T {
 }
 
 /// A trait for converting to a mutably borrowed linux string.
-pub trait AsLinuxStrMut {
+pub trait AsLinuxStrMut: AsLinuxStr {
     fn as_linux_str_mut(&mut self) -> &mut LinuxStr;
 }
 

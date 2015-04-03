@@ -6,7 +6,7 @@ use std::{mem};
 use arch::syscall::{nr, syscall0, syscall1, syscall2, syscall3, syscall4, syscall5, SCT};
 use cty::{c_int, mode_t, size_t, ssize_t, uid_t, gid_t, F_DUPFD_CLOEXEC, F_GETFD,
           F_GETFL, F_SETFD, F_SETFL, statfs, pid_t, c_char, off_t, iovec, c_void,
-          rlimit, linux_dirent64, stat, timespec};
+          rlimit, linux_dirent64, stat, timespec, dev_t};
 
 macro_rules! call {
     ($nr:expr) => {
@@ -232,4 +232,88 @@ pub unsafe fn __symlinkat(target: *const c_char, dir: c_int,
 pub unsafe fn __readlinkat(dir: c_int, path: *const c_char, buf: *mut c_char,
                            size: size_t) -> ssize_t {
     call!(nr::READLINKAT, dir, path, buf, size) as ssize_t
+}
+
+pub unsafe fn __fchownat(dir: c_int, path: *const c_char, user: uid_t, group: gid_t,
+                         flags: c_int) -> c_int {
+    call!(nr::FCHOWNAT, dir, path, user, group, flags) as c_int
+}
+
+pub fn fchmod(fd: c_int, mode: mode_t) -> c_int {
+    unsafe { call!(nr::FCHMOD, fd, mode) as c_int }
+}
+
+pub unsafe fn __fchmodat(dir: c_int, path: *const c_char, mode: mode_t) -> c_int {
+    call!(nr::FCHMODAT, dir, path, mode) as c_int
+}
+
+pub unsafe fn __mknodat(dir: c_int, path: *const c_char, mode: mode_t,
+                        dev: dev_t) -> c_int {
+    call!(nr::MKNODAT, dir, path, mode, dev) as c_int
+}
+
+#[cfg(target_arch = "x86_64")]
+pub fn readahead(fd: c_int, offset: off_t, count: size_t) -> ssize_t {
+    unsafe { call!(nr::READAHEAD, fd, offset, count) as ssize_t }
+}
+
+#[cfg(target_arch = "x86_64")]
+pub fn fallocate(fd: c_int, mode: c_int, base: off_t, len: off_t) -> c_int {
+    unsafe { call!(nr::FALLOCATE, fd, mode, base, len) as c_int }
+}
+
+pub unsafe fn __setxattr(path: *const c_char, name: *const c_char, val: *const c_void,
+                         size: size_t, flags: c_int) -> c_int {
+    call!(nr::SETXATTR, path, name, val, size, flags) as c_int
+}
+
+pub unsafe fn __lsetxattr(path: *const c_char, name: *const c_char, val: *const c_void,
+                         size: size_t, flags: c_int) -> c_int {
+    call!(nr::LSETXATTR, path, name, val, size, flags) as c_int
+}
+
+pub unsafe fn __fsetxattr(fd: c_int, name: *const c_char, val: *const c_void,
+                         size: size_t, flags: c_int) -> c_int {
+    call!(nr::FSETXATTR, fd, name, val, size, flags) as c_int
+}
+
+pub unsafe fn __getxattr(path: *const c_char, name: *const c_char, val: *mut c_void,
+                         size: size_t) -> ssize_t {
+    call!(nr::GETXATTR, path, name, val, size) as ssize_t
+}
+
+pub unsafe fn __lgetxattr(path: *const c_char, name: *const c_char, val: *mut c_void,
+                         size: size_t) -> ssize_t {
+    call!(nr::LGETXATTR, path, name, val, size) as ssize_t
+}
+
+pub unsafe fn __fgetxattr(fd: c_int, name: *const c_char, val: *mut c_void,
+                         size: size_t) -> ssize_t {
+    call!(nr::FGETXATTR, fd, name, val, size) as ssize_t
+}
+
+pub unsafe fn __removexattr(path: *const c_char, name: *const c_char) -> c_int {
+    call!(nr::REMOVEXATTR, path, name) as c_int
+}
+
+pub unsafe fn __lremovexattr(path: *const c_char, name: *const c_char) -> c_int {
+    call!(nr::LREMOVEXATTR, path, name) as c_int
+}
+
+pub unsafe fn __fremovexattr(fd: c_int, name: *const c_char) -> c_int {
+    call!(nr::FREMOVEXATTR, fd, name) as c_int
+}
+
+pub unsafe fn __listxattr(path: *const c_char, list: *mut c_char,
+                          size: size_t) -> ssize_t {
+    call!(nr::LISTXATTR, path, list, size) as ssize_t
+}
+
+pub unsafe fn __llistxattr(path: *const c_char, list: *mut c_char,
+                          size: size_t) -> ssize_t {
+    call!(nr::LLISTXATTR, path, list, size) as ssize_t
+}
+
+pub unsafe fn __flistxattr(fd: c_int, list: *mut c_char, size: size_t) -> ssize_t {
+    call!(nr::FLISTXATTR, fd, list, size) as ssize_t
 }
