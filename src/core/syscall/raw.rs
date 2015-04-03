@@ -317,3 +317,7 @@ pub unsafe fn __llistxattr(path: *const c_char, list: *mut c_char,
 pub unsafe fn __flistxattr(fd: c_int, list: *mut c_char, size: size_t) -> ssize_t {
     call!(nr::FLISTXATTR, fd, list, size) as ssize_t
 }
+
+pub fn flock(fd: c_int, op: c_int) -> c_int {
+    unsafe { call!(nr::FLOCK, fd, op) as c_int }
+}

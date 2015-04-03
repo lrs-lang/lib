@@ -88,6 +88,11 @@ pub const R_OK: c_int = 4;
 pub const W_OK: c_int = 2;
 pub const X_OK: c_int = 1;
 
+pub const LOCK_SH: c_int = 1;
+pub const LOCK_EX: c_int = 2;
+pub const LOCK_NB: c_int = 4;
+pub const LOCK_UN: c_int = 8;
+
 pub const UTIME_NOW:  c_long = 0x3fffffff;
 pub const UTIME_OMIT: c_long = 0x3ffffffe;
 

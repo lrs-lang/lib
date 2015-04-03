@@ -21,7 +21,7 @@ use core::cty::{self, c_int, off_t, c_uint, AT_FDCWD, AT_EMPTY_PATH, AT_SYMLINK_
                 F_OK, UTIME_NOW, UTIME_OMIT, timespec, RENAME_EXCHANGE, RENAME_NOREPLACE,
                 AT_REMOVEDIR, c_char, PATH_MAX, size_t, FALLOC_FL_KEEP_SIZE,
                 FALLOC_FL_PUNCH_HOLE, FALLOC_FL_COLLAPSE_RANGE, FALLOC_FL_ZERO_RANGE,
-                ssize_t};
+                ssize_t, LOCK_SH, LOCK_EX, LOCK_NB, LOCK_UN};
 use core::ext::{AsLinuxPath, UIntRange, BoundedUIntRange};
 use core::syscall::{openat, read, write, close, pread, lseek, pwrite, readv, writev,
                     preadv, pwritev, ftruncate, fsync, fdatasync, syncfs, fadvise,
@@ -30,7 +30,7 @@ use core::syscall::{openat, read, write, close, pread, lseek, pwrite, readv, wri
                     renameat2, mkdirat, unlinkat, symlinkat, readlinkat, fchownat,
                     fchmodat, fchmod, mknodat, readahead, fallocate, setxattr, lsetxattr,
                     fsetxattr, getxattr, lgetxattr, fgetxattr, removexattr, lremovexattr,
-                    fremovexattr, listxattr, llistxattr, flistxattr};
+                    fremovexattr, listxattr, llistxattr, flistxattr, flock};
 use core::string::{AsLinuxStrMut, LinuxStr, LinuxString, AsLinuxStr};
 use core::util::{retry, empty_cstr, memchr};
 use core::alias::{UserId, GroupId};
@@ -775,6 +775,31 @@ impl File {
     /// Returns an iterator over the attributes in this file.
     pub fn list_attr(&self) -> Result<ListAttrIterator> {
         list_attr_common(|buf| flistxattr(self.fd, buf))
+    }
+
+    /// Tries to lock this file exclusively without blocking.
+    pub fn try_lock_exclusive(&self) -> Result<()> {
+        rv!(flock(self.fd, LOCK_EX | LOCK_NB))
+    }
+
+    /// Tries to lock this file exclusively.
+    pub fn lock_exclusive(&self) -> Result<()> {
+        retry(|| flock(self.fd, LOCK_EX)).map(|_| ())
+    }
+
+    /// Tries to lock this file shared without blocking.
+    pub fn try_lock_shared(&self) -> Result<()> {
+        rv!(flock(self.fd, LOCK_SH | LOCK_NB))
+    }
+
+    /// Tries to lock this file shared.
+    pub fn lock_shared(&self) -> Result<()> {
+        retry(|| flock(self.fd, LOCK_SH)).map(|_| ())
+    }
+
+    /// Unlocks this file.
+    pub fn unlock(&self) -> Result<()> {
+        rv!(flock(self.fd, LOCK_UN))
     }
 
     /// Opens the file at path `path` in read mode.
