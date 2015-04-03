@@ -4,7 +4,7 @@
 
 #![crate_name = "linux_arch"]
 #![crate_type = "lib"]
-#![feature(plugin, asm)]
+#![feature(asm)]
 #![allow(trivial_numeric_casts, trivial_casts)]
 
 pub mod cty;
