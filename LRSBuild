@@ -2,8 +2,9 @@ obj arch
 obj core       arch
 obj dev        core
 obj fs         core
-obj clock      core
+obj time_base  core
 obj process    core
-obj file       core dev fs clock
+obj file       core dev fs time_base
+obj time_ext   core time_base file
 obj dir        core file
 obj user_group core file

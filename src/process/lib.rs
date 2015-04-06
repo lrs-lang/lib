@@ -4,6 +4,7 @@
 
 #![crate_name = "linux_process"]
 #![crate_type = "lib"]
+#![feature(negate_unsigned)]
 #![allow(trivial_numeric_casts)]
 
 extern crate linux_core as core;

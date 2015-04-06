@@ -7,7 +7,7 @@ use std::{fmt};
 use core::cty::{stat, S_IFMT, S_IFDIR, S_IFCHR, S_IFBLK, S_IFREG, S_IFIFO, S_IFLNK,
                 S_IFSOCK, mode_t};
 use core::alias::{InodeId, UserId, GroupId};
-use clock::{Duration, duration_from_timespec};
+use time_base::{Time, time_from_timespec};
 use dev::{Device, DeviceType};
 use flags::{Mode};
 
@@ -121,18 +121,18 @@ impl Info {
     }
 
     /// The last time this file was accessed.
-    pub fn last_access(&self) -> Duration {
-        duration_from_timespec(self.0.st_atim)
+    pub fn last_access(&self) -> Time {
+        time_from_timespec(self.0.st_atim)
     }
 
     /// The last time this file was modified.
-    pub fn last_modification(&self) -> Duration {
-        duration_from_timespec(self.0.st_mtim)
+    pub fn last_modification(&self) -> Time {
+        time_from_timespec(self.0.st_mtim)
     }
 
     /// The time this file was created.
-    pub fn creation(&self) -> Duration {
-        duration_from_timespec(self.0.st_ctim)
+    pub fn creation(&self) -> Time {
+        time_from_timespec(self.0.st_ctim)
     }
 
     /// The type of this file.

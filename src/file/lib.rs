@@ -4,12 +4,13 @@
 
 #![crate_name = "linux_file"]
 #![crate_type = "lib"]
+#![feature(negate_unsigned)]
 #![allow(trivial_numeric_casts)]
 
 extern crate linux_core as core;
 extern crate linux_dev as dev;
 extern crate linux_fs as fs;
-extern crate linux_clock as clock;
+extern crate linux_time_base as time_base;
 
 use std::{mem};
 use std::io::{Write};
@@ -35,7 +36,7 @@ use core::string::{AsLinuxStrMut, LinuxStr, LinuxString, AsLinuxStr};
 use core::util::{retry, empty_cstr, memchr};
 use core::alias::{UserId, GroupId};
 
-use clock::{Duration, duration_to_timespec};
+use time_base::{Time, time_to_timespec};
 
 use fs::info::{FileSystemInfo, from_statfs};
 
@@ -106,8 +107,8 @@ pub fn link<P: AsLinuxPath, Q: AsLinuxPath>(old: P, new: Q) -> Result<()> {
 ///
 /// Relative paths are interpreted relative to the current working directory. If `path` is
 /// a symlink, then this changes the times of the destination.
-pub fn set_times<P: AsLinuxPath>(path: P, access: Time,
-                                 modification: Time) -> Result<()> {
+pub fn set_times<P: AsLinuxPath>(path: P, access: TimeChange,
+                                 modification: TimeChange) -> Result<()> {
     File::current_dir().rel_set_times(path, access, modification)
 }
 
@@ -115,8 +116,8 @@ pub fn set_times<P: AsLinuxPath>(path: P, access: Time,
 ///
 /// Relative paths are interpreted relative to the current working directory. If `path` is
 /// a symlink, then this changes the times of the symlink.
-pub fn set_times_no_follow<P: AsLinuxPath>(path: P, access: Time,
-                                           modification: Time) -> Result<()> {
+pub fn set_times_no_follow<P: AsLinuxPath>(path: P, access: TimeChange,
+                                           modification: TimeChange) -> Result<()> {
     File::current_dir().rel_set_times_no_follow(path, access, modification)
 }
 
@@ -662,8 +663,9 @@ impl File {
     }
 
     /// Changes the access and modification times of this file.
-    pub fn set_times(&self, access: Time, modification: Time) -> Result<()> {
-        let times = [time_to_timespec(access), time_to_timespec(modification)];
+    pub fn set_times(&self, access: TimeChange, modification: TimeChange) -> Result<()> {
+        let times = [time_change_to_timespec(access),
+                     time_change_to_timespec(modification)];
         rv!(utimensat(self.fd, None, &times, 0))
     }
 
@@ -801,7 +803,9 @@ impl File {
     pub fn unlock(&self) -> Result<()> {
         rv!(flock(self.fd, LOCK_UN))
     }
+}
 
+impl File {
     /// Opens the file at path `path` in read mode.
     ///
     /// If `path` is relative, the `self` must be a directory and the `path` will be
@@ -899,10 +903,11 @@ impl File {
     /// If `path` is relative then `self` has to be a directory and relative paths are
     /// interpreted relative to `self`. If `path` is a symlink, then this changes the
     /// times of the destination.
-    pub fn rel_set_times<P: AsLinuxPath>(&self, path: P, access: Time,
-                                         modification: Time) -> Result<()> {
+    pub fn rel_set_times<P: AsLinuxPath>(&self, path: P, access: TimeChange,
+                                         modification: TimeChange) -> Result<()> {
         let path = path.to_cstring().unwrap();
-        let times = [time_to_timespec(access), time_to_timespec(modification)];
+        let times = [time_change_to_timespec(access),
+                     time_change_to_timespec(modification)];
         rv!(utimensat(self.fd, Some(&path), &times, 0))
     }
 
@@ -911,10 +916,11 @@ impl File {
     /// If `path` is relative then `self` has to be a directory and relative paths are
     /// interpreted relative to `self`. If `path` is a symlink, then this changes the
     /// times of the symlink.
-    pub fn rel_set_times_no_follow<P: AsLinuxPath>(&self, path: P, access: Time,
-                                                   modification: Time) -> Result<()> {
+    pub fn rel_set_times_no_follow<P: AsLinuxPath>(&self, path: P, access: TimeChange,
+                                                   modification: TimeChange) -> Result<()> {
         let path = path.to_cstring().unwrap();
-        let times = [time_to_timespec(access), time_to_timespec(modification)];
+        let times = [time_change_to_timespec(access),
+                     time_change_to_timespec(modification)];
         rv!(utimensat(self.fd, Some(&path), &times, AT_SYMLINK_NOFOLLOW))
     }
 
@@ -1080,20 +1086,20 @@ impl Drop for File {
 }
 
 /// Enum used to specify the way time information of a file is modified.
-pub enum Time {
+pub enum TimeChange {
     /// Donesn't modify the time.
     Omit,
     /// Sets the time to the current time.
     Now,
     /// Sets the time to the specified time.
-    Val(Duration),
+    Set(Time),
 }
 
-fn time_to_timespec(t: Time) -> timespec {
+fn time_change_to_timespec(t: TimeChange) -> timespec {
     match t {
-        Time::Omit => timespec { tv_sec: 0, tv_nsec: UTIME_OMIT },
-        Time::Now  => timespec { tv_sec: 0, tv_nsec: UTIME_NOW  },
-        Time::Val(v) => duration_to_timespec(v),
+        TimeChange::Omit => timespec { tv_sec: 0, tv_nsec: UTIME_OMIT },
+        TimeChange::Now  => timespec { tv_sec: 0, tv_nsec: UTIME_NOW  },
+        TimeChange::Set(v) => time_to_timespec(v),
     }
 }
 

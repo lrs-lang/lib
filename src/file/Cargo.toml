@@ -20,5 +20,5 @@ path = "../dev"
 [dependencies.linux_fs]
 path = "../fs"
 
-[dependencies.linux_clock]
-path = "../clock"
+[dependencies.linux_time_base]
+path = "../time_base"

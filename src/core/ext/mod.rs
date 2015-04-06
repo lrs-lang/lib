@@ -26,7 +26,7 @@ impl<T: AsLinuxStr+?Sized> AsLinuxPath for T {
     }
 }
 
-pub trait Int: PartialOrd + ops::Neg {
+pub trait Int: PartialOrd {
     fn zero() -> Self;
     fn max_value() -> Self;
     fn min_value() -> Self;
