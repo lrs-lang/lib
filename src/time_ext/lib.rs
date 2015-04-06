@@ -54,8 +54,9 @@ impl fmt::Debug for DateTime {
         let offset_minutes = self.offset / 60;
         let offset_hours = offset_minutes / 60;
         let offset_minutes = offset_minutes % 60;
-        write!(fmt, "{}-{}-{}T{}:{}:{}+{}:{}", self.year, self.month, self.day,
-               self.hour, self.minute, self.second, offset_hours, offset_minutes)
+        write!(fmt, "{}-{:02}-{:02}T{:02}:{:02}:{:02}+{:02}:{:02}", self.year, self.month,
+               self.day, self.hour, self.minute, self.second, offset_hours,
+               offset_minutes)
     }
 }
 

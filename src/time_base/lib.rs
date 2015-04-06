@@ -10,6 +10,8 @@ extern crate linux_core as core;
 
 use core::cty::{timespec, time_t, c_long};
 
+pub mod clock;
+
 pub fn time_from_timespec(t: timespec) -> Time {
     Time {
         seconds:     t.tv_sec  as i64,

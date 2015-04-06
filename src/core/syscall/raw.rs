@@ -6,7 +6,7 @@ use std::{mem};
 use arch::syscall::{nr, syscall0, syscall1, syscall2, syscall3, syscall4, syscall5, SCT};
 use cty::{c_int, mode_t, size_t, ssize_t, uid_t, gid_t, F_DUPFD_CLOEXEC, F_GETFD,
           F_GETFL, F_SETFD, F_SETFL, statfs, pid_t, c_char, off_t, iovec, c_void,
-          rlimit, linux_dirent64, stat, timespec, dev_t};
+          rlimit, linux_dirent64, stat, timespec, dev_t, clockid_t};
 
 macro_rules! call {
     ($nr:expr) => {
@@ -320,4 +320,21 @@ pub unsafe fn __flistxattr(fd: c_int, list: *mut c_char, size: size_t) -> ssize_
 
 pub fn flock(fd: c_int, op: c_int) -> c_int {
     unsafe { call!(nr::FLOCK, fd, op) as c_int }
+}
+
+pub unsafe fn __clock_getres(clock: clockid_t, res: *mut timespec) -> c_int {
+    call!(nr::CLOCK_GETRES, clock, res) as c_int
+}
+
+pub unsafe fn __clock_gettime(clock: clockid_t, res: *mut timespec) -> c_int {
+    call!(nr::CLOCK_GETTIME, clock, res) as c_int
+}
+
+pub unsafe fn __clock_settime(clock: clockid_t, res: *const timespec) -> c_int {
+    call!(nr::CLOCK_SETTIME, clock, res) as c_int
+}
+
+pub unsafe fn __clock_nanosleep(clock: clockid_t, flags: c_int, req: *const timespec,
+                                rem: *mut timespec) -> c_int {
+    call!(nr::CLOCK_NANOSLEEP, clock, flags, req, rem) as c_int
 }

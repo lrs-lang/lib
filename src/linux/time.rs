@@ -4,4 +4,12 @@
 
 //! Time handling.
 
-pub use linux_clock::{Duration};
+pub use linux_time_base::{Time};
+pub use linux_time_base::clock::{Clock};
+pub use linux_time_base::clock::{CLOCK_REALTIME, CLOCK_MONOTONIC,
+                                 CLOCK_PROCESS_CPUTIME_ID, CLOCK_THREAD_CPUTIME_ID,
+                                 CLOCK_MONOTONIC_RAW, CLOCK_REALTIME_COARSE,
+                                 CLOCK_MONOTONIC_COARSE, CLOCK_BOOTTIME,
+                                 CLOCK_REALTIME_ALARM, CLOCK_BOOTTIME_ALARM,
+                                 CLOCK_SGI_CYCLE, CLOCK_TAI};
+pub use linux_time_ext::{DateTime, Weekday, Zone};
