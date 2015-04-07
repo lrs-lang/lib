@@ -4,7 +4,6 @@
 
 use std::io::{BufRead, Read};
 use std::num::{Int};
-use std::marker::{PhantomFn};
 use std::{mem};
 
 use super::{Zone};
@@ -28,7 +27,7 @@ fn read_u8(ip:  &mut &[u8]) -> Result<u8> { rd!(ip, u8,  1) }
 fn read_i32(ip: &mut &[u8]) -> Result<i32> { rd!(ip, i32, 4) }
 fn read_i64(ip: &mut &[u8]) -> Result<i64> { rd!(ip, i64, 8) }
 
-trait TReader: PhantomFn<Self> {
+trait TReader {
     fn read_seconds(ip: &mut &[u8]) -> Result<i64>;
     fn seconds_width() -> usize;
 }
@@ -121,7 +120,7 @@ fn parse_<T: TReader>(ip: &mut &[u8]) -> Result<Zone> {
     })
 }
 
-fn discard<T: TReader>(ip: &mut &[u8]) -> Result<()> {
+fn discard<T: TReader>(ip: &mut &[u8]) -> Result {
     ip.consume(20);
 
     let is_utc_indicators = try!(read_i32(ip)) as usize;

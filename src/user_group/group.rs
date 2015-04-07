@@ -208,17 +208,17 @@ impl<'a> Iterator for InformationMemberIter<'a> {
 /// Returns an iterator over the groups in `/etc/group`.
 ///
 /// Errors can optionally be stored in `error`.
-pub fn iter<'a>(error: Option<&'a mut Result<()>>) -> InformationIter<'a> {
+pub fn iter<'a>(error: Option<&'a mut Result>) -> InformationIter<'a> {
     InformationIter::new(error)
 }
 
 pub struct InformationIter<'a> {
     file: BufReader<File>,
-    err: Option<&'a mut Result<()>>,
+    err: Option<&'a mut Result>,
 }
 
 impl<'a> InformationIter<'a> {
-    fn new(error: Option<&'a mut Result<()>>) -> InformationIter<'a> {
+    fn new(error: Option<&'a mut Result>) -> InformationIter<'a> {
         match File::open_read("/etc/group") {
             Err(e) => {
                 if let Some(err) = error {
@@ -283,7 +283,7 @@ impl<'a> Iterator for InformationIter<'a> {
 /// Returns an non-allocating iterator over the groups in `/etc/group`.
 ///
 /// Errors can optionally be stored in `error`.
-pub fn iter_buf<'a>(error: Option<&'a mut Result<()>>) -> InfoIter<'a> {
+pub fn iter_buf<'a>(error: Option<&'a mut Result>) -> InfoIter<'a> {
     InfoIter::new(error)
 }
 
@@ -293,7 +293,7 @@ pub struct InfoIter<'a> {
 }
 
 impl<'a> InfoIter<'a> {
-    fn new(error: Option<&'a mut Result<()>>) -> InfoIter<'a> {
+    fn new(error: Option<&'a mut Result>) -> InfoIter<'a> {
         InfoIter { reader: LineReader::new("/etc/group", error) }
     }
 

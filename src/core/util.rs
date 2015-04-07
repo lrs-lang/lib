@@ -3,12 +3,12 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use std::ffi::{CStr};
-use std::intrinsics::{copy};
+use std::{mem};
 
 use cty::{c_int, c_void, size_t, c_char};
 use errno::{Errno};
 use result::{Result};
-use ext::{SignedInt};
+use ext::{SignedInt, Int};
 
 #[cfg(feature = "retry")]
 pub fn retry<T: SignedInt, F: FnMut() -> T>(mut f: F) -> Result<T> {
@@ -49,11 +49,18 @@ pub fn memchr(s: &[u8], c: u8) -> Option<usize> {
     }
 }
 
+#[inline(always)]
 pub unsafe fn memmove<T>(dst: *mut T, src: *const T, num: usize) {
-    copy(src, dst, num);
+    use cty::{memmove};
+
+    memmove(dst as *mut _, src as *const _, (num * mem::size_of::<T>()) as size_t);
 }
 
 pub fn empty_cstr() -> &'static CStr {
     static EMPTY: [c_char; 1] = [0];
     unsafe { CStr::from_ptr(EMPTY.as_ptr()) }
+}
+
+pub fn div_rem<T: Int>(a: T, b: T) -> (T, T) {
+    (a / b, a % b)
 }

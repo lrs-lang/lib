@@ -7,6 +7,7 @@
 #![feature(negate_unsigned)]
 #![allow(trivial_numeric_casts)]
 
+#[macro_use]
 extern crate linux_core as core;
 
 use core::syscall::{getpid, getppid};

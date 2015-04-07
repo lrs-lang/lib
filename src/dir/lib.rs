@@ -31,7 +31,7 @@ pub const DEFAULT_BUF_SIZE: usize = 2048;
 ///
 /// Errors can optionally be stored in the `error` variable which should then be inspected
 /// after the iterator returns ends the loop.
-pub fn iter<'a, S: AsLinuxPath>(path: S, error: Option<&'a mut Result<()>>) -> Iter<'a> {
+pub fn iter<'a, S: AsLinuxPath>(path: S, error: Option<&'a mut Result>) -> Iter<'a> {
     Iter::new(path.as_linux_path(), error)
 }
 
@@ -39,11 +39,11 @@ pub fn iter<'a, S: AsLinuxPath>(path: S, error: Option<&'a mut Result<()>>) -> I
 pub struct Iter<'a> {
     dir: File,
     buf: Cursor<Vec<u8>>,
-    err: Option<&'a mut Result<()>>,
+    err: Option<&'a mut Result>,
 }
 
 impl<'a> Iter<'a> {
-    fn new(path: &Path, error: Option<&'a mut Result<()>>) -> Iter<'a> {
+    fn new(path: &Path, error: Option<&'a mut Result>) -> Iter<'a> {
         let mut flags = Flags::new();
         flags.set_only_directory(true);
         match File::open(path, flags) {
@@ -74,13 +74,13 @@ impl<'a> Iter<'a> {
     }
 
     /// Rewind the iterator to the first entry.
-    pub fn rewind(&mut self) -> Result<()> {
+    pub fn rewind(&mut self) -> Result {
         self.buf.set_position(0);
         unsafe { self.buf.get_mut().set_len(0); }
         self.dir.seek(Seek::Start(0)).map(|_| ())
     }
 
-    fn read(&mut self) -> Result<()> {
+    fn read(&mut self) -> Result {
         self.buf.set_position(0);
         unsafe {
             let inner = self.buf.get_mut();

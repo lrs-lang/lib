@@ -7,6 +7,7 @@
 #![feature(negate_unsigned)]
 #![allow(trivial_numeric_casts)]
 
+#[macro_use]
 extern crate linux_core as core;
 extern crate linux_dev as dev;
 extern crate linux_fs as fs;
@@ -49,11 +50,6 @@ use info::{Info, info_from_stat, Type, file_type_to_mode};
 pub mod flags;
 pub mod info;
 
-macro_rules! rv {
-    ($x:expr) => { if $x < 0 { Err(Errno(-$x as c_int)) } else { Ok(()) } };
-    ($x:expr, -> $t:ty) => { if $x < 0 { Err(Errno(-$x as c_int)) } else { Ok($x as $t) } };
-}
-
 /// Returns information about the file specified by `path`.
 ///
 /// If `path` is a symlink, then this is equivalent to returning information about the
@@ -87,7 +83,7 @@ pub fn can_access<P: AsLinuxPath>(path: P, mode: AccessMode) -> Result<bool> {
 }
 
 /// Sets the length of the file at `path`.
-pub fn set_len<P: AsLinuxPath>(path: P, len: u64) -> Result<()> {
+pub fn set_len<P: AsLinuxPath>(path: P, len: u64) -> Result {
     let path = path.to_cstring().unwrap();
     try!(retry(|| truncate(&path, len as off_t)));
     Ok(())
@@ -97,7 +93,7 @@ pub fn set_len<P: AsLinuxPath>(path: P, len: u64) -> Result<()> {
 ///
 /// If `old` is a symlink then it is not dereferenced. Relative paths are interpreted
 /// relative to the current working directory.
-pub fn link<P: AsLinuxPath, Q: AsLinuxPath>(old: P, new: Q) -> Result<()> {
+pub fn link<P: AsLinuxPath, Q: AsLinuxPath>(old: P, new: Q) -> Result {
     let old = old.to_cstring().unwrap();
     let new = new.to_cstring().unwrap();
     rv!(linkat(AT_FDCWD, &old, AT_FDCWD, &new, 0))
@@ -108,7 +104,7 @@ pub fn link<P: AsLinuxPath, Q: AsLinuxPath>(old: P, new: Q) -> Result<()> {
 /// Relative paths are interpreted relative to the current working directory. If `path` is
 /// a symlink, then this changes the times of the destination.
 pub fn set_times<P: AsLinuxPath>(path: P, access: TimeChange,
-                                 modification: TimeChange) -> Result<()> {
+                                 modification: TimeChange) -> Result {
     File::current_dir().rel_set_times(path, access, modification)
 }
 
@@ -117,14 +113,14 @@ pub fn set_times<P: AsLinuxPath>(path: P, access: TimeChange,
 /// Relative paths are interpreted relative to the current working directory. If `path` is
 /// a symlink, then this changes the times of the symlink.
 pub fn set_times_no_follow<P: AsLinuxPath>(path: P, access: TimeChange,
-                                           modification: TimeChange) -> Result<()> {
+                                           modification: TimeChange) -> Result {
     File::current_dir().rel_set_times_no_follow(path, access, modification)
 }
 
 /// Atomically exchanges the two files `one` and `two`.
 ///
 /// Relative paths will be interpreted relative to the current working directory.
-pub fn exchange<P: AsLinuxPath, Q: AsLinuxPath>(one: P, two: Q) -> Result<()> {
+pub fn exchange<P: AsLinuxPath, Q: AsLinuxPath>(one: P, two: Q) -> Result {
     File::current_dir().rel_exchange(one, two)
 }
 
@@ -133,14 +129,14 @@ pub fn exchange<P: AsLinuxPath, Q: AsLinuxPath>(one: P, two: Q) -> Result<()> {
 /// Relative paths will be interpreted relative to the current working directory.  If
 /// `replace` is `false`, then the operation fails if `two` already exists.
 pub fn rename<P: AsLinuxPath, Q: AsLinuxPath>(one: P, two: Q,
-                                              replace: bool) -> Result<()> {
+                                              replace: bool) -> Result {
     File::current_dir().rel_rename(one, two, replace)
 }
 
 /// Creates the directory `path`.
 ///
 /// Relative paths will be interpreted relative to the current working directory.
-pub fn create_dir<P: AsLinuxPath>(path: P, mode: Mode) -> Result<()> {
+pub fn create_dir<P: AsLinuxPath>(path: P, mode: Mode) -> Result {
     File::current_dir().rel_create_dir(path, mode)
 }
 
@@ -148,14 +144,14 @@ pub fn create_dir<P: AsLinuxPath>(path: P, mode: Mode) -> Result<()> {
 ///
 /// Relative paths will be interpreted relative to the current working directory.  If
 /// `path` refers to a directory, then the directory has to be empty.
-pub fn remove<P: AsLinuxPath>(path: P) -> Result<()> {
+pub fn remove<P: AsLinuxPath>(path: P) -> Result {
     File::current_dir().rel_remove(path)
 }
 
 /// Creates a symlink from `link` to `target`.
 ///
 /// Relative paths will be interpreted relative to the current working directory.
-pub fn symlink<P: AsLinuxPath, Q: AsLinuxPath>(target: P, link: Q) -> Result<()> {
+pub fn symlink<P: AsLinuxPath, Q: AsLinuxPath>(target: P, link: Q) -> Result {
     File::current_dir().rel_symlink(target, link)
 }
 
@@ -176,7 +172,7 @@ pub fn read_link<P: AsLinuxPath>(link: P) -> Result<LinuxString> {
 /// Changes the owner of the file at `path`.
 ///
 /// Relative paths will be interpreted relative to the current working directory.
-pub fn change_owner<P: AsLinuxPath>(path: P, user: UserId, group: GroupId) -> Result<()> {
+pub fn change_owner<P: AsLinuxPath>(path: P, user: UserId, group: GroupId) -> Result {
     File::current_dir().rel_change_owner(path, user, group)
 }
 
@@ -185,14 +181,14 @@ pub fn change_owner<P: AsLinuxPath>(path: P, user: UserId, group: GroupId) -> Re
 /// Relative paths will be interpreted relative to the current working directory.  If
 /// `path` refers to a symlink, then this changes the owner of the symlink itself.
 pub fn change_owner_no_follow<P: AsLinuxPath>(path: P, user: UserId,
-                                              group: GroupId) -> Result<()> {
+                                              group: GroupId) -> Result {
     File::current_dir().rel_change_owner_no_follow(path, user, group)
 }
 
 /// Change the mode of the file at `path`.
 ///
 /// Relative paths will be interpreted relative to the current working directory.
-pub fn change_mode<P: AsLinuxPath>(path: P, mode: Mode) -> Result<()> {
+pub fn change_mode<P: AsLinuxPath>(path: P, mode: Mode) -> Result {
     File::current_dir().rel_change_mode(path, mode)
 }
 
@@ -205,14 +201,14 @@ pub fn change_mode<P: AsLinuxPath>(path: P, mode: Mode) -> Result<()> {
 /// - `File`
 /// - `FIFO`
 /// - `Socket`
-pub fn create_file<P: AsLinuxPath>(path: P, ty: Type, mode: Mode) -> Result<()> {
+pub fn create_file<P: AsLinuxPath>(path: P, ty: Type, mode: Mode) -> Result {
     File::current_dir().rel_create_file(path, ty, mode)
 }
 
 /// Creates a device special file at `path`.
 ///
 /// Relative paths will be interpreted relative to the current working directory.
-pub fn create_device<P: AsLinuxPath>(path: P, dev: Device, mode: Mode) -> Result<()> {
+pub fn create_device<P: AsLinuxPath>(path: P, dev: Device, mode: Mode) -> Result {
     File::current_dir().rel_create_device(path, dev, mode)
 }
 
@@ -220,7 +216,7 @@ pub fn create_device<P: AsLinuxPath>(path: P, dev: Device, mode: Mode) -> Result
 ///
 /// Relative paths will be interpreted relative to the current working directory.
 pub fn set_attr<P: AsLinuxPath, S: AsLinuxStr, V: AsRef<[u8]>>(path: P, name: S,
-                                                               val: V) -> Result<()> {
+                                                               val: V) -> Result {
     let path = path.to_cstring().unwrap();
     let name = name.to_cstring().unwrap();
     rv!(setxattr(&path, &name, val.as_ref(), 0))
@@ -234,7 +230,7 @@ pub fn set_attr_no_follow<P: AsLinuxPath, S: AsLinuxStr, V: AsRef<[u8]>>(
     path: P,
     name: S,
     val: V
-    ) -> Result<()>
+    ) -> Result
 {
     let path = path.to_cstring().unwrap();
     let name = name.to_cstring().unwrap();
@@ -320,7 +316,7 @@ pub fn get_attr_no_follow<P: AsLinuxPath, S: AsLinuxStr>(
 /// Removes an attribute of a file.
 ///
 /// Relative paths will be interpreted relative to the current working directory.
-pub fn remove_attr<P: AsLinuxPath, S: AsLinuxStr>(path: P, name: S) -> Result<()> {
+pub fn remove_attr<P: AsLinuxPath, S: AsLinuxStr>(path: P, name: S) -> Result {
     let path = path.to_cstring().unwrap();
     let name = name.to_cstring().unwrap();
     rv!(removexattr(&path, &name))
@@ -331,7 +327,7 @@ pub fn remove_attr<P: AsLinuxPath, S: AsLinuxStr>(path: P, name: S) -> Result<()
 /// Relative paths will be interpreted relative to the current working directory. If
 /// `path` is a symbolic link, then the attribute of the symbolic link is set.
 pub fn remove_attr_no_follow<P: AsLinuxPath, S: AsLinuxStr>(path: P,
-                                                            name: S) -> Result<()> {
+                                                            name: S) -> Result {
     let path = path.to_cstring().unwrap();
     let name = name.to_cstring().unwrap();
     rv!(lremovexattr(&path, &name))
@@ -470,7 +466,7 @@ impl File {
     }
 
     /// Closes the file descriptor.
-    pub fn close(&mut self) -> Result<()> {
+    pub fn close(&mut self) -> Result {
         if self.owned {
             let ret = close(self.fd);
             self.fd = -1;
@@ -528,7 +524,7 @@ impl File {
     /// Sets the file description flags.
     ///
     /// Only the file status flags can be modified.
-    pub fn set_status_flags(&self, flags: Flags) -> Result<()> {
+    pub fn set_status_flags(&self, flags: Flags) -> Result {
         let ret = fcntl_setfl(self.fd, flags_to_int(flags));
         rv!(ret)
     }
@@ -544,7 +540,7 @@ impl File {
     }
 
     /// Modifies the `close on exec` flag of the file.
-    pub fn set_close_on_exec(&self, val: bool) -> Result<()> {
+    pub fn set_close_on_exec(&self, val: bool) -> Result {
         let mut ret = fcntl_getfd(self.fd);
         if ret >= 0 {
             ret = (ret & !cty::O_CLOEXEC) | (cty::O_CLOEXEC * val as c_int);
@@ -610,27 +606,27 @@ impl File {
     /// Changes the length of the file to the specified length.
     ///
     /// If the requested length is larger than the current length, a hole is created.
-    pub fn set_len(&self, len: i64) -> Result<()> {
+    pub fn set_len(&self, len: i64) -> Result {
         retry(|| ftruncate(self.fd, len as off_t)).map(|_| ())
     }
 
     /// Flushes all data and metadata to the disk.
-    pub fn sync(&self) -> Result<()> {
+    pub fn sync(&self) -> Result {
         rv!(fsync(self.fd))
     }
 
     /// Flushes enough data to the disk that the content of the file can be read again.
-    pub fn data_sync(&self) -> Result<()> {
+    pub fn data_sync(&self) -> Result {
         rv!(fdatasync(self.fd))
     }
 
     /// Writes all data and metadata of the filesystem containing this file to the disk.
-    pub fn sync_filesystem(&self) -> Result<()> {
+    pub fn sync_filesystem(&self) -> Result {
         rv!(syncfs(self.fd))
     }
 
     /// Advise the kernel that the specified range will have a certain usage pattern.
-    pub fn advise<R: UIntRange<u64>>(&self, range: R, advice: Advice) -> Result<()> {
+    pub fn advise<R: UIntRange<u64>>(&self, range: R, advice: Advice) -> Result {
         let range = range.to_range();
         let len = match range.end {
             -1 => 0,
@@ -649,7 +645,7 @@ impl File {
     /// Creates a hard link to this file.
     ///
     /// Relative paths are interpreted relative to the current working directory.
-    pub fn link<P: AsLinuxPath>(&self, path: P) -> Result<()> {
+    pub fn link<P: AsLinuxPath>(&self, path: P) -> Result {
         let path = path.to_cstring().unwrap();
         rv!(linkat(self.fd, empty_cstr(), AT_FDCWD, &path, AT_EMPTY_PATH))
     }
@@ -657,13 +653,13 @@ impl File {
     /// Creates a hard link to this file relative to a directory.
     ///
     /// Relative paths are interpreted relative to the directory `dir`.
-    pub fn link_rel_to<P: AsLinuxPath>(&self, dir: &File, path: P) -> Result<()> {
+    pub fn link_rel_to<P: AsLinuxPath>(&self, dir: &File, path: P) -> Result {
         let path = path.to_cstring().unwrap();
         rv!(linkat(self.fd, empty_cstr(), dir.fd, &path, AT_EMPTY_PATH))
     }
 
     /// Changes the access and modification times of this file.
-    pub fn set_times(&self, access: TimeChange, modification: TimeChange) -> Result<()> {
+    pub fn set_times(&self, access: TimeChange, modification: TimeChange) -> Result {
         let times = [time_change_to_timespec(access),
                      time_change_to_timespec(modification)];
         rv!(utimensat(self.fd, None, &times, 0))
@@ -686,17 +682,17 @@ impl File {
     }
 
     /// Changes the owner of this file.
-    pub fn change_owner(&self, user: UserId, group: GroupId) -> Result<()> {
+    pub fn change_owner(&self, user: UserId, group: GroupId) -> Result {
         rv!(fchownat(self.fd, empty_cstr(), user, group, AT_EMPTY_PATH))
     }
 
     /// Changes the mode of this file.
-    pub fn change_mode(&self, mode: Mode) -> Result<()> {
+    pub fn change_mode(&self, mode: Mode) -> Result {
         rv!(fchmod(self.fd, mode_to_int(mode)))
     }
 
     /// Initiates readahead of the specified range.
-    pub fn readahead<R: BoundedUIntRange<u64>>(&self, range: R) -> Result<()> {
+    pub fn readahead<R: BoundedUIntRange<u64>>(&self, range: R) -> Result {
         let range = range.to_range();
         rv!(readahead(self.fd, range.start as off_t, (range.end - range.start) as size_t))
     }
@@ -705,14 +701,14 @@ impl File {
     ///
     /// Further writes in the specified range are guaranteed not to fail because of a lack
     /// of storage capacity.
-    pub fn reserve<R: BoundedUIntRange<u64>>(&self, range: R) -> Result<()> {
+    pub fn reserve<R: BoundedUIntRange<u64>>(&self, range: R) -> Result {
         let range = range.to_range();
         rv!(fallocate(self.fd, FALLOC_FL_KEEP_SIZE, range.start as off_t,
                       (range.end - range.start) as off_t))
     }
 
     /// Creates a hole in the specified range.
-    pub fn create_hole<R: BoundedUIntRange<u64>>(&self, range: R) -> Result<()> {
+    pub fn create_hole<R: BoundedUIntRange<u64>>(&self, range: R) -> Result {
         let range = range.to_range();
         rv!(fallocate(self.fd, FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE,
                       range.start as off_t, (range.end - range.start) as off_t))
@@ -723,7 +719,7 @@ impl File {
     /// The range must probably begin and end at a multiple of the block size but this
     /// depends on the filesystem. This function cannot be used if the range reaches the
     /// end of the file. Use `set_len` for this purpose.
-    pub fn collapse<R: BoundedUIntRange<u64>>(&self, range: R) -> Result<()> {
+    pub fn collapse<R: BoundedUIntRange<u64>>(&self, range: R) -> Result {
         let range = range.to_range();
         rv!(fallocate(self.fd, FALLOC_FL_COLLAPSE_RANGE, range.start as off_t,
                       (range.end - range.start) as off_t))
@@ -732,14 +728,14 @@ impl File {
     /// Zeroes the specified range in the file.
     /// 
     /// This can be more efficient than manually writing zeroes.
-    pub fn zero<R: BoundedUIntRange<u64>>(&self, range: R) -> Result<()> {
+    pub fn zero<R: BoundedUIntRange<u64>>(&self, range: R) -> Result {
         let range = range.to_range();
         rv!(fallocate(self.fd, FALLOC_FL_ZERO_RANGE, range.start as off_t,
                       (range.end - range.start) as off_t))
     }
 
     /// Sets an attribute of this file.
-    pub fn set_attr<S: AsLinuxStr, V: AsRef<[u8]>>(&self, name: S, val: V) -> Result<()> {
+    pub fn set_attr<S: AsLinuxStr, V: AsRef<[u8]>>(&self, name: S, val: V) -> Result {
         let name = name.to_cstring().unwrap();
         rv!(fsetxattr(self.fd, &name, val.as_ref(), 0))
     }
@@ -758,7 +754,7 @@ impl File {
     }
 
     /// Removes an attribute of this file.
-    pub fn remove_attr<S: AsLinuxStr>(&self, name: S) -> Result<()> {
+    pub fn remove_attr<S: AsLinuxStr>(&self, name: S) -> Result {
         let name = name.to_cstring().unwrap();
         rv!(fremovexattr(self.fd, &name))
     }
@@ -780,27 +776,27 @@ impl File {
     }
 
     /// Tries to lock this file exclusively without blocking.
-    pub fn try_lock_exclusive(&self) -> Result<()> {
+    pub fn try_lock_exclusive(&self) -> Result {
         rv!(flock(self.fd, LOCK_EX | LOCK_NB))
     }
 
     /// Tries to lock this file exclusively.
-    pub fn lock_exclusive(&self) -> Result<()> {
+    pub fn lock_exclusive(&self) -> Result {
         retry(|| flock(self.fd, LOCK_EX)).map(|_| ())
     }
 
     /// Tries to lock this file shared without blocking.
-    pub fn try_lock_shared(&self) -> Result<()> {
+    pub fn try_lock_shared(&self) -> Result {
         rv!(flock(self.fd, LOCK_SH | LOCK_NB))
     }
 
     /// Tries to lock this file shared.
-    pub fn lock_shared(&self) -> Result<()> {
+    pub fn lock_shared(&self) -> Result {
         retry(|| flock(self.fd, LOCK_SH)).map(|_| ())
     }
 
     /// Unlocks this file.
-    pub fn unlock(&self) -> Result<()> {
+    pub fn unlock(&self) -> Result {
         rv!(flock(self.fd, LOCK_UN))
     }
 }
@@ -904,7 +900,7 @@ impl File {
     /// interpreted relative to `self`. If `path` is a symlink, then this changes the
     /// times of the destination.
     pub fn rel_set_times<P: AsLinuxPath>(&self, path: P, access: TimeChange,
-                                         modification: TimeChange) -> Result<()> {
+                                         modification: TimeChange) -> Result {
         let path = path.to_cstring().unwrap();
         let times = [time_change_to_timespec(access),
                      time_change_to_timespec(modification)];
@@ -917,7 +913,7 @@ impl File {
     /// interpreted relative to `self`. If `path` is a symlink, then this changes the
     /// times of the symlink.
     pub fn rel_set_times_no_follow<P: AsLinuxPath>(&self, path: P, access: TimeChange,
-                                                   modification: TimeChange) -> Result<()> {
+                                                   modification: TimeChange) -> Result {
         let path = path.to_cstring().unwrap();
         let times = [time_change_to_timespec(access),
                      time_change_to_timespec(modification)];
@@ -929,7 +925,7 @@ impl File {
     /// If one of the paths is relative, then `self` has to be a directory and the path
     /// will be interpreted relative to `self`.
     pub fn rel_exchange<P: AsLinuxPath, Q: AsLinuxPath>(&self, one: P,
-                                                        two: Q) -> Result<()> {
+                                                        two: Q) -> Result {
         let one = one.to_cstring().unwrap();
         let two = two.to_cstring().unwrap();
         rv!(renameat2(self.fd, &one, self.fd, &two, RENAME_EXCHANGE))
@@ -941,7 +937,7 @@ impl File {
     /// will be interpreted relative to `self`. If `replace` is `false`, then the
     /// operation fails if `two` already exists.
     pub fn rel_rename<P: AsLinuxPath, Q: AsLinuxPath>(&self, one: P, two: Q,
-                                                      replace: bool) -> Result<()> {
+                                                      replace: bool) -> Result {
         let one = one.to_cstring().unwrap();
         let two = two.to_cstring().unwrap();
         let flag = if replace { 0 } else { RENAME_NOREPLACE };
@@ -952,7 +948,7 @@ impl File {
     ///
     /// If `path` is relative, then `self` has to be a directory and the path is
     /// interpreted relative to `self`.
-    pub fn rel_create_dir<P: AsLinuxPath>(&self, path: P, mode: Mode) -> Result<()> {
+    pub fn rel_create_dir<P: AsLinuxPath>(&self, path: P, mode: Mode) -> Result {
         let path = path.to_cstring().unwrap();
         rv!(mkdirat(self.fd, &path, mode_to_int(mode)))
     }
@@ -962,7 +958,7 @@ impl File {
     /// If `path` is relative, then `self` has to be a directory and the path is
     /// interpreted relative to `self`. If `path` refers to a directory, then the
     /// directory has to be empty.
-    pub fn rel_remove<P: AsLinuxPath>(&self, path: P) -> Result<()> {
+    pub fn rel_remove<P: AsLinuxPath>(&self, path: P) -> Result {
         let path = path.to_cstring().unwrap();
         let mut ret = unlinkat(self.fd, &path, 0);
         if Errno(-ret) == errno::IsADirectory {
@@ -976,7 +972,7 @@ impl File {
     /// If `link` is relative, then `self` has to be a directory and `link` will be
     /// interpreted relative to `self`.
     pub fn rel_symlink<P: AsLinuxPath, Q: AsLinuxPath>(&self, target: P,
-                                                       link: Q) -> Result<()> {
+                                                       link: Q) -> Result {
         let target = target.to_cstring().unwrap();
         let link = link.to_cstring().unwrap();
         rv!(symlinkat(&target, self.fd, &link))
@@ -1011,7 +1007,7 @@ impl File {
     /// If `path` is relative, then `self` has to be a directory and `path` will be
     /// interpreted relative to `self`.
     pub fn rel_change_owner<P: AsLinuxPath>(&self, path: P, user: UserId,
-                                            group: GroupId) -> Result<()> {
+                                            group: GroupId) -> Result {
         let path = path.to_cstring().unwrap();
         rv!(fchownat(self.fd, &path, user, group, 0))
     }
@@ -1022,7 +1018,7 @@ impl File {
     /// interpreted relative to `self`. If `path` refers to a symlink, then this changes
     /// the owner of the symlink itself.
     pub fn rel_change_owner_no_follow<P: AsLinuxPath>(&self, path: P, user: UserId,
-                                                      group: GroupId) -> Result<()> {
+                                                      group: GroupId) -> Result {
         let path = path.to_cstring().unwrap();
         rv!(fchownat(self.fd, &path, user, group, AT_SYMLINK_NOFOLLOW))
     }
@@ -1031,7 +1027,7 @@ impl File {
     ///
     /// If `path` is relative, then `self` has to be a directory and `path` will be
     /// interpreted relative to `self`.
-    pub fn rel_change_mode<P: AsLinuxPath>(&self, path: P, mode: Mode) -> Result<()> {
+    pub fn rel_change_mode<P: AsLinuxPath>(&self, path: P, mode: Mode) -> Result {
         let path = path.to_cstring().unwrap();
         rv!(fchmodat(self.fd, &path, mode_to_int(mode)))
     }
@@ -1047,7 +1043,7 @@ impl File {
     /// - `FIFO`
     /// - `Socket`
     pub fn rel_create_file<P: AsLinuxPath>(&self, path: P, ty: Type,
-                                         mode: Mode) -> Result<()> {
+                                         mode: Mode) -> Result {
         match ty {
             Type::File | Type::FIFO | Type::Socket => { },
             _ => return Err(errno::InvalidArgument),
@@ -1061,7 +1057,7 @@ impl File {
     /// If `path` is relative, then `self` has to be a directory and `path` will be
     /// interpreted relative to `self`.
     pub fn rel_create_device<P: AsLinuxPath>(&self, path: P, dev: Device,
-                                           mode: Mode) -> Result<()> {
+                                           mode: Mode) -> Result {
         let ty = match dev.ty() {
             DeviceType::Character => Type::CharDevice,
             DeviceType::Block     => Type::BlockDevice,

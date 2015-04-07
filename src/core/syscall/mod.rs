@@ -6,7 +6,7 @@ use std::ffi::{CStr};
 
 use cty::{c_int, mode_t, ssize_t, off_t, rlimit, pid_t, uid_t, gid_t, stat, c_char,
           size_t, SYSCALL_RLIM_INFINITY, RLIM_INFINITY, statfs, timespec, dev_t, c_void,
-          clockid_t};
+          clockid_t, itimerspec};
 use ext::{SaturatingCast};
 
 pub use self::raw::*;
@@ -254,4 +254,17 @@ pub fn clock_settime(clock: clockid_t, res: &timespec) -> c_int {
 pub fn clock_nanosleep(clock: clockid_t, flags: c_int, req: &timespec,
                        rem: &mut timespec) -> c_int {
     unsafe { __clock_nanosleep(clock, flags, req, rem) }
+}
+
+pub fn timerfd_settime(fd: c_int, flags: c_int, new: &itimerspec,
+                       old: Option<&mut itimerspec>) -> c_int {
+    let old = match old {
+        Some(old) => old as *mut _,
+        _ => 0 as *mut _,
+    };
+    unsafe { __timerfd_settime(fd, flags, new, old) }
+}
+
+pub fn timerfd_gettime(fd: c_int, cur: &mut itimerspec) -> c_int {
+    unsafe { __timerfd_gettime(fd, cur) }
 }

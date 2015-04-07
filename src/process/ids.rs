@@ -2,16 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use core::cty::{c_int};
 use core::syscall::{getresuid, getresgid, setresuid, setresgid, setgroups, getgroups};
 use core::result::{Result};
-use core::errno::{self, Errno};
+use core::errno::{self};
 use core::alias::{UserId, GroupId};
-
-macro_rules! rv {
-    ($x:expr) => { if $x < 0 { Err(Errno(-$x as c_int)) } else { Ok(()) } };
-    ($x:expr, -> $t:ty) => { if $x < 0 { Err(Errno(-$x as c_int)) } else { Ok($x as $t) } };
-}
 
 /// User ids of a process.
 #[derive(Copy, Debug, Clone, Eq, PartialEq)]
@@ -37,7 +31,7 @@ impl UserIds {
     }
 
     /// Sets the user ids of this process.
-    pub fn set(&self) -> Result<()> {
+    pub fn set(&self) -> Result {
         rv!(setresuid(self.real, self.effective, self.saved))
     }
 }
@@ -66,13 +60,13 @@ impl GroupIds {
     }
 
     /// Sets the group ids of this process.
-    pub fn set(&self) -> Result<()> {
+    pub fn set(&self) -> Result {
         rv!(setresgid(self.real, self.effective, self.saved))
     }
 }
 
 /// Sets all user ids to the real id.
-pub fn user_drop_privileges() -> Result<()> {
+pub fn user_drop_privileges() -> Result {
     let mut ids = UserIds::get();
     ids.effective = ids.real;
     ids.saved     = ids.real;
@@ -80,7 +74,7 @@ pub fn user_drop_privileges() -> Result<()> {
 }
 
 /// Sets all group ids to the real id.
-pub fn group_drop_privileges() -> Result<()> {
+pub fn group_drop_privileges() -> Result {
     let mut ids = GroupIds::get();
     ids.effective = ids.real;
     ids.saved     = ids.real;
@@ -88,12 +82,12 @@ pub fn group_drop_privileges() -> Result<()> {
 }
 
 /// Sets the effective user id.
-pub fn user_set_effective_ids(id: UserId) -> Result<()> {
+pub fn user_set_effective_ids(id: UserId) -> Result {
     rv!(setresuid(-1, id, -1))
 }
 
 /// Sets the effective group id.
-pub fn group_set_effective_ids(id: GroupId) -> Result<()> {
+pub fn group_set_effective_ids(id: GroupId) -> Result {
     rv!(setresgid(-1, id, -1))
 }
 
@@ -111,7 +105,7 @@ pub fn supplementary_groups(buf: &mut [GroupId]) -> Result<usize> {
 }
 
 /// Sets the supplementary groups.
-pub fn set_supplementary_groups(buf: &[GroupId]) -> Result<()> {
+pub fn set_supplementary_groups(buf: &[GroupId]) -> Result {
     if buf.len() > 65536 {
         return Err(errno::InvalidArgument);
     }

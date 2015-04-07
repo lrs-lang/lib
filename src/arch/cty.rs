@@ -96,7 +96,13 @@ pub const LOCK_UN: c_int = 8;
 pub const UTIME_NOW:  c_long = 0x3fffffff;
 pub const UTIME_OMIT: c_long = 0x3ffffffe;
 
+pub const TIMER_ABSTIME: c_int = 1;
+
 pub const IOV_MAX: usize = 1024;
+
+pub const TFD_NONBLOCK:      c_int = O_NONBLOCK;
+pub const TFD_CLOEXEC:       c_int = O_CLOEXEC;
+pub const TFD_TIMER_ABSTIME: c_int = 1;
 
 pub const ST_RDONLY:      c_ulong = 1;
 pub const ST_NOSUID:      c_ulong = 2;
@@ -138,6 +144,14 @@ pub struct linux_dirent64 {
     pub d_name: [c_char; 0],
 }
 
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct itimerspec {
+	pub it_interval: timespec,
+	pub it_value:    timespec,
+}
+
 extern {
     pub fn memchr(s: *const c_void, c: c_int, n: size_t) -> *mut c_void;
+    pub fn memmove(dst: *mut c_void, src: *const c_void, n: size_t) -> *mut c_void;
 }

@@ -23,11 +23,11 @@ struct LineReader<'a> {
     start: usize,
     end: usize,
     file: File,
-    err: Option<&'a mut Result<()>>,
+    err: Option<&'a mut Result>,
 }
 
 impl<'a> LineReader<'a> {
-    fn new(file: &str, error: Option<&'a mut Result<()>>) -> LineReader<'a> {
+    fn new(file: &str, error: Option<&'a mut Result>) -> LineReader<'a> {
         match File::open_read(file) {
             Err(e) => {
                 if let Some(err) = error { *err = Err(e); }

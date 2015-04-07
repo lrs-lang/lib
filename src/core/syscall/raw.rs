@@ -6,7 +6,7 @@ use std::{mem};
 use arch::syscall::{nr, syscall0, syscall1, syscall2, syscall3, syscall4, syscall5, SCT};
 use cty::{c_int, mode_t, size_t, ssize_t, uid_t, gid_t, F_DUPFD_CLOEXEC, F_GETFD,
           F_GETFL, F_SETFD, F_SETFL, statfs, pid_t, c_char, off_t, iovec, c_void,
-          rlimit, linux_dirent64, stat, timespec, dev_t, clockid_t};
+          rlimit, linux_dirent64, stat, timespec, dev_t, clockid_t, itimerspec};
 
 macro_rules! call {
     ($nr:expr) => {
@@ -337,4 +337,17 @@ pub unsafe fn __clock_settime(clock: clockid_t, res: *const timespec) -> c_int {
 pub unsafe fn __clock_nanosleep(clock: clockid_t, flags: c_int, req: *const timespec,
                                 rem: *mut timespec) -> c_int {
     call!(nr::CLOCK_NANOSLEEP, clock, flags, req, rem) as c_int
+}
+
+pub fn timerfd_create(clock: c_int, flags: c_int) -> c_int {
+    unsafe { call!(nr::TIMERFD_CREATE, clock, flags) as c_int }
+}
+
+pub unsafe fn __timerfd_settime(fd: c_int, flags: c_int, new: *const itimerspec,
+                                old: *mut itimerspec) -> c_int {
+    call!(nr::TIMERFD_SETTIME, fd, flags, new, old) as c_int
+}
+
+pub unsafe fn __timerfd_gettime(fd: c_int, cur: *mut itimerspec) -> c_int {
+    call!(nr::TIMERFD_GETTIME, fd, cur) as c_int
 }

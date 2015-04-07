@@ -5,6 +5,7 @@
 use std::cmp::{Ordering};
 use {std};
 
+use core::util::{div_rem};
 use super::{Zone, DateTime, Weekday, Time};
 
 const SECS_PER_MIN:         i64 = 60;
@@ -81,9 +82,9 @@ pub fn explode(zone: &Zone, time: i64) -> DateTime {
     }
 
     secs += state.0 - leap_seconds;
-    let (div_secs, rem_secs) = div_rem(secs, SECS_PER_DAY);
+    let (div_secs, mut secs) = div_rem(secs, SECS_PER_DAY);
     days += div_secs;
-    if rem_secs < 0 {
+    if secs < 0 {
         days -= 1;
         secs += SECS_PER_DAY;
     }
@@ -182,7 +183,7 @@ pub fn compact(zone: &Zone, mut date: DateTime) -> (DateTime, Time) {
         }
     }
 
-    (res, Time { seconds: secs, nano_seconds: 0 })
+    (res, Time { seconds: secs, nanoseconds: 0 })
 }
 
 /// Find the largest transition such that the transition time expands to a DateTime which
@@ -268,8 +269,4 @@ fn normalize(date: &mut DateTime) {
     date.year = year;
     date.month = month as i8 + 1;
     date.day = days as i8 + 1;
-}
-
-fn div_rem(a: i64, b: i64) -> (i64, i64) {
-    (a / b, a % b)
 }

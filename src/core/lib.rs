@@ -13,6 +13,8 @@ pub use linux_arch::{arch, cty};
 
 // XXX: Maybe move some of these out? core takes a long time to compile right now.
 
+#[macro_use]
+pub mod macros;
 pub mod syscall;
 pub mod ext;
 pub mod string;
@@ -20,3 +22,4 @@ pub mod result;
 pub mod errno;
 pub mod util;
 pub mod alias;
+pub mod fd_container;

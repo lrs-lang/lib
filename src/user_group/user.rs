@@ -159,18 +159,18 @@ impl UserInfo for Information {
 /// Returns an allocating iterator over the users in `/etc/passwd`.
 ///
 /// Errors can optionally be stored in `error`.
-pub fn iter<'a>(error: Option<&'a mut Result<()>>) -> InformationIter<'a> {
+pub fn iter<'a>(error: Option<&'a mut Result>) -> InformationIter<'a> {
     InformationIter::new(error)
 }
 
 /// An allocating iterator over users.
 pub struct InformationIter<'a> {
     file: BufReader<File>,
-    err: Option<&'a mut Result<()>>,
+    err: Option<&'a mut Result>,
 }
 
 impl<'a> InformationIter<'a> {
-    fn new(error: Option<&'a mut Result<()>>) -> InformationIter<'a> {
+    fn new(error: Option<&'a mut Result>) -> InformationIter<'a> {
         match File::open_read("/etc/passwd") {
             Err(e) => {
                 if let Some(err) = error {
@@ -233,7 +233,7 @@ impl<'a> Iterator for InformationIter<'a> {
 /// Returns an non-allocating iterator over the users in `/etc/passwd`.
 ///
 /// Errors can optionally be stored in `error`.
-pub fn iter_buf<'a>(error: Option<&'a mut Result<()>>) -> InfoIter<'a> {
+pub fn iter_buf<'a>(error: Option<&'a mut Result>) -> InfoIter<'a> {
     InfoIter::new(error)
 }
 
@@ -243,7 +243,7 @@ pub struct InfoIter<'a> {
 }
 
 impl<'a> InfoIter<'a> {
-    fn new(error: Option<&'a mut Result<()>>) -> InfoIter<'a> {
+    fn new(error: Option<&'a mut Result>) -> InfoIter<'a> {
         InfoIter { reader: LineReader::new("/etc/passwd", error) }
     }
 
