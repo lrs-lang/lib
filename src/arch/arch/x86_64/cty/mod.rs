@@ -171,3 +171,13 @@ pub struct timespec {
 pub struct pthread_t {
     s: *mut c_void,
 }
+
+// On all other platforms this is exactly this but without packed.
+//
+// Maybe we should move this out of arch?
+#[repr(C, packed)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub struct epoll_event {
+    pub events: u32,
+    pub data: u64,
+}

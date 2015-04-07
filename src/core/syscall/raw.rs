@@ -3,10 +3,12 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use std::{mem};
-use arch::syscall::{nr, syscall0, syscall1, syscall2, syscall3, syscall4, syscall5, SCT};
+use arch::syscall::{nr, syscall0, syscall1, syscall2, syscall3, syscall4, syscall5,
+                    syscall6, SCT};
 use cty::{c_int, mode_t, size_t, ssize_t, uid_t, gid_t, F_DUPFD_CLOEXEC, F_GETFD,
           F_GETFL, F_SETFD, F_SETFL, statfs, pid_t, c_char, off_t, iovec, c_void,
-          rlimit, linux_dirent64, stat, timespec, dev_t, clockid_t, itimerspec};
+          rlimit, linux_dirent64, stat, timespec, dev_t, clockid_t, itimerspec,
+          epoll_event, sigset_t};
 
 macro_rules! call {
     ($nr:expr) => {
@@ -350,4 +352,19 @@ pub unsafe fn __timerfd_settime(fd: c_int, flags: c_int, new: *const itimerspec,
 
 pub unsafe fn __timerfd_gettime(fd: c_int, cur: *mut itimerspec) -> c_int {
     call!(nr::TIMERFD_GETTIME, fd, cur) as c_int
+}
+
+pub fn epoll_create1(flags: c_int) -> c_int {
+    unsafe { call!(nr::EPOLL_CREATE1, flags) as c_int }
+}
+
+pub unsafe fn __epoll_ctl(epfd: c_int, op: c_int, fd: c_int,
+                          event: *mut epoll_event) -> c_int {
+    call!(nr::EPOLL_CTL, epfd, op, fd, event) as c_int
+}
+
+pub unsafe fn __epoll_pwait(epfd: c_int, events: *mut epoll_event, num: c_int,
+                            timeout: c_int, sigmask: *const sigset_t,
+                            sigsetsize: size_t) -> c_int {
+    call!(nr::EPOLL_PWAIT, epfd, events, num, timeout, sigmask, sigsetsize) as c_int
 }

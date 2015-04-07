@@ -3,10 +3,11 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use std::ffi::{CStr};
+use std::{mem};
 
 use cty::{c_int, mode_t, ssize_t, off_t, rlimit, pid_t, uid_t, gid_t, stat, c_char,
           size_t, SYSCALL_RLIM_INFINITY, RLIM_INFINITY, statfs, timespec, dev_t, c_void,
-          clockid_t, itimerspec};
+          clockid_t, itimerspec, epoll_event, sigset_t};
 use ext::{SaturatingCast};
 
 pub use self::raw::*;
@@ -167,7 +168,7 @@ pub fn symlinkat(target: &CStr, dir: c_int, link: &CStr) -> c_int {
 
 pub fn readlinkat(dir: c_int, path: &CStr, buf: &mut [u8]) -> ssize_t {
     unsafe { __readlinkat(dir, path.as_ptr(), buf.as_mut_ptr() as *mut c_char,
-                          buf.len() as size_t) }
+                          buf.len().saturating_cast()) }
 }
 
 pub fn fchownat(dir: c_int, path: &CStr, user: uid_t, group: gid_t,
@@ -185,32 +186,32 @@ pub fn mknodat(dir: c_int, path: &CStr, mode: mode_t, dev: dev_t) -> c_int {
 
 pub fn setxattr(path: &CStr, name: &CStr, val: &[u8], flags: c_int) -> c_int {
     unsafe { __setxattr(path.as_ptr(), name.as_ptr(), val.as_ptr() as *const c_void,
-                        val.len() as size_t, flags) }
+                        val.len().saturating_cast(), flags) }
 }
 
 pub fn lsetxattr(path: &CStr, name: &CStr, val: &[u8], flags: c_int) -> c_int {
     unsafe { __lsetxattr(path.as_ptr(), name.as_ptr(), val.as_ptr() as *const c_void,
-                         val.len() as size_t, flags) }
+                         val.len().saturating_cast(), flags) }
 }
 
 pub fn fsetxattr(fd: c_int, name: &CStr, val: &[u8], flags: c_int) -> c_int {
     unsafe { __fsetxattr(fd, name.as_ptr(), val.as_ptr() as *const c_void,
-                         val.len() as size_t, flags) }
+                         val.len().saturating_cast(), flags) }
 }
 
 pub fn getxattr(path: &CStr, name: &CStr, val: &mut [u8]) -> ssize_t {
     unsafe { __getxattr(path.as_ptr(), name.as_ptr(), val.as_mut_ptr() as *mut c_void,
-                        val.len() as size_t) }
+                        val.len().saturating_cast()) }
 }
 
 pub fn lgetxattr(path: &CStr, name: &CStr, val: &mut [u8]) -> ssize_t {
     unsafe { __lgetxattr(path.as_ptr(), name.as_ptr(), val.as_mut_ptr() as *mut c_void,
-                         val.len() as size_t) }
+                         val.len().saturating_cast()) }
 }
 
 pub fn fgetxattr(fd: c_int, name: &CStr, val: &mut [u8]) -> ssize_t {
     unsafe { __fgetxattr(fd, name.as_ptr(), val.as_mut_ptr() as *mut c_void,
-                         val.len() as size_t) }
+                         val.len().saturating_cast()) }
 }
 
 pub fn removexattr(path: &CStr, name: &CStr) -> c_int {
@@ -227,16 +228,16 @@ pub fn fremovexattr(fd: c_int, name: &CStr) -> c_int {
 
 pub fn listxattr(path: &CStr, list: &mut [u8]) -> ssize_t {
     unsafe { __listxattr(path.as_ptr(), list.as_mut_ptr() as *mut c_char,
-                         list.len() as size_t) }
+                         list.len().saturating_cast()) }
 }
 
 pub fn llistxattr(path: &CStr, list: &mut [u8]) -> ssize_t {
     unsafe { __llistxattr(path.as_ptr(), list.as_mut_ptr() as *mut c_char,
-                          list.len() as size_t) }
+                          list.len().saturating_cast()) }
 }
 
 pub fn flistxattr(fd: c_int, list: &mut [u8]) -> ssize_t {
-    unsafe { __flistxattr(fd, list.as_mut_ptr() as *mut c_char, list.len() as size_t) }
+    unsafe { __flistxattr(fd, list.as_mut_ptr() as *mut c_char, list.len().saturating_cast()) }
 }
 
 pub fn clock_getres(clock: clockid_t, res: &mut timespec) -> c_int {
@@ -267,4 +268,23 @@ pub fn timerfd_settime(fd: c_int, flags: c_int, new: &itimerspec,
 
 pub fn timerfd_gettime(fd: c_int, cur: &mut itimerspec) -> c_int {
     unsafe { __timerfd_gettime(fd, cur) }
+}
+
+pub fn epoll_ctl(epfd: c_int, op: c_int, fd: c_int,
+                 event: Option<&mut epoll_event>) -> c_int {
+    let event = match event {
+        Some(event) => event as *mut _,
+        _ => 0 as *mut _,
+    };
+    unsafe { __epoll_ctl(epfd, op, fd, event) }
+}
+
+pub fn epoll_pwait(epfd: c_int, events: &mut [epoll_event], timeout: c_int,
+                   sigmask: Option<&sigset_t>) -> c_int {
+    let sigmask = match sigmask {
+        Some(sigmask) => sigmask as *const _,
+        _ => 0 as *const _,
+    };
+    unsafe { __epoll_pwait(epfd, events.as_mut_ptr(), events.len().saturating_cast(),
+                           timeout, sigmask, mem::size_of::<sigset_t>() as size_t) }
 }

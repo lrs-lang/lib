@@ -23,6 +23,7 @@ extern crate linux_time_ext;
 extern crate linux_dir;
 extern crate linux_fs;
 extern crate linux_process;
+extern crate linux_poll;
 
 pub mod file;
 pub mod user;
@@ -35,3 +36,4 @@ pub mod process;
 pub mod string;
 pub mod time;
 pub mod path;
+pub mod poll;
