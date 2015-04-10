@@ -9,7 +9,7 @@
 #[macro_use]
 extern crate linux_core as core;
 
-use std::ops::{Add};
+use std::ops::{Add, Sub};
 
 use core::cty::{timespec, time_t, c_long};
 use core::util::{div_rem};
@@ -111,6 +111,20 @@ impl Add for Time {
         let time = Time {
             seconds: one.seconds.saturating_add(two.seconds),
             nanoseconds: one.nanoseconds + two.nanoseconds,
+        };
+        time.normalize()
+    }
+}
+
+impl Sub for Time {
+    type Output = Time;
+
+    fn sub(self, other: Time) -> Time {
+        let one = self.normalize();
+        let two = other.normalize();
+        let time = Time {
+            seconds: one.seconds.saturating_sub(two.seconds),
+            nanoseconds: one.nanoseconds - two.nanoseconds,
         };
         time.normalize()
     }

@@ -8,9 +8,9 @@
 
 extern crate linux_core as core;
 
-/// Device Id <-> Device Name mapping
-///
-/// Source: http://www.lanana.org/docs/device-list/devices-2.6+.txt
+// Device Id <-> Device Name mapping
+//
+// Source: http://www.lanana.org/docs/device-list/devices-2.6+.txt
 
 use std::io::{Write};
 use std::{fmt};

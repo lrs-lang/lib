@@ -15,13 +15,12 @@ extern crate linux_time_base as time_base;
 
 use std::{mem};
 use std::io::{Write};
-use std::ffi::{CStr};
 
 use core::result::{Result};
 use core::errno::{self, Errno};
 use core::cty::{self, c_int, off_t, c_uint, AT_FDCWD, AT_EMPTY_PATH, AT_SYMLINK_NOFOLLOW,
                 F_OK, UTIME_NOW, UTIME_OMIT, timespec, RENAME_EXCHANGE, RENAME_NOREPLACE,
-                AT_REMOVEDIR, c_char, PATH_MAX, size_t, FALLOC_FL_KEEP_SIZE,
+                AT_REMOVEDIR, PATH_MAX, size_t, FALLOC_FL_KEEP_SIZE,
                 FALLOC_FL_PUNCH_HOLE, FALLOC_FL_COLLAPSE_RANGE, FALLOC_FL_ZERO_RANGE,
                 ssize_t, LOCK_SH, LOCK_EX, LOCK_NB, LOCK_UN};
 use core::ext::{AsLinuxPath, UIntRange, BoundedUIntRange};
@@ -36,6 +35,7 @@ use core::syscall::{openat, read, write, close, pread, lseek, pwrite, readv, wri
 use core::string::{AsLinuxStrMut, LinuxStr, LinuxString, AsLinuxStr};
 use core::util::{retry, empty_cstr, memchr};
 use core::alias::{UserId, GroupId};
+use core::c_str::{CStr};
 
 use time_base::{Time, time_to_timespec};
 
@@ -84,7 +84,8 @@ pub fn can_access<P: AsLinuxPath>(path: P, mode: AccessMode) -> Result<bool> {
 
 /// Sets the length of the file at `path`.
 pub fn set_len<P: AsLinuxPath>(path: P, len: u64) -> Result {
-    let path = path.to_cstring().unwrap();
+    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+    let path = try!(path.to_cstr(&mut buf));
     try!(retry(|| truncate(&path, len as off_t)));
     Ok(())
 }
@@ -94,8 +95,10 @@ pub fn set_len<P: AsLinuxPath>(path: P, len: u64) -> Result {
 /// If `old` is a symlink then it is not dereferenced. Relative paths are interpreted
 /// relative to the current working directory.
 pub fn link<P: AsLinuxPath, Q: AsLinuxPath>(old: P, new: Q) -> Result {
-    let old = old.to_cstring().unwrap();
-    let new = new.to_cstring().unwrap();
+    let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+    let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+    let old = try!(old.to_cstr(&mut buf1));
+    let new = try!(new.to_cstr(&mut buf2));
     rv!(linkat(AT_FDCWD, &old, AT_FDCWD, &new, 0))
 }
 
@@ -217,8 +220,10 @@ pub fn create_device<P: AsLinuxPath>(path: P, dev: Device, mode: Mode) -> Result
 /// Relative paths will be interpreted relative to the current working directory.
 pub fn set_attr<P: AsLinuxPath, S: AsLinuxStr, V: AsRef<[u8]>>(path: P, name: S,
                                                                val: V) -> Result {
-    let path = path.to_cstring().unwrap();
-    let name = name.to_cstring().unwrap();
+    let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+    let mut buf2: [u8; 128] = unsafe { mem::uninitialized() };
+    let path = try!(path.to_cstr(&mut buf1));
+    let name = try!(name.to_cstr(&mut buf2));
     rv!(setxattr(&path, &name, val.as_ref(), 0))
 }
 
@@ -232,8 +237,10 @@ pub fn set_attr_no_follow<P: AsLinuxPath, S: AsLinuxStr, V: AsRef<[u8]>>(
     val: V
     ) -> Result
 {
-    let path = path.to_cstring().unwrap();
-    let name = name.to_cstring().unwrap();
+    let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+    let mut buf2: [u8; 128] = unsafe { mem::uninitialized() };
+    let path = try!(path.to_cstr(&mut buf1));
+    let name = try!(name.to_cstr(&mut buf2));
     rv!(lsetxattr(&path, &name, val.as_ref(), 0))
 }
 
@@ -246,8 +253,10 @@ pub fn get_attr_buf<P: AsLinuxPath, S: AsLinuxStr, V: AsMut<[u8]>>(
     mut val: V
     ) -> Result<usize>
 {
-    let path = path.to_cstring().unwrap();
-    let name = name.to_cstring().unwrap();
+    let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+    let mut buf2: [u8; 128] = unsafe { mem::uninitialized() };
+    let path = try!(path.to_cstr(&mut buf1));
+    let name = try!(name.to_cstr(&mut buf2));
     rv!(getxattr(&path, &name, val.as_mut()), -> usize)
 }
 
@@ -261,8 +270,10 @@ pub fn get_attr_no_follow_buf<P: AsLinuxPath, S: AsLinuxStr, V: AsMut<[u8]>>(
         mut val: V
         ) -> Result<usize>
 {
-    let path = path.to_cstring().unwrap();
-    let name = name.to_cstring().unwrap();
+    let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+    let mut buf2: [u8; 128] = unsafe { mem::uninitialized() };
+    let path = try!(path.to_cstr(&mut buf1));
+    let name = try!(name.to_cstr(&mut buf2));
     rv!(lgetxattr(&path, &name, val.as_mut()), -> usize)
 }
 
@@ -294,8 +305,10 @@ pub fn get_attr<P: AsLinuxPath, S: AsLinuxStr>(
     name: S,
     ) -> Result<Vec<u8>>
 {
-    let path = path.to_cstring().unwrap();
-    let name = name.to_cstring().unwrap();
+    let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+    let mut buf2: [u8; 128] = unsafe { mem::uninitialized() };
+    let path = try!(path.to_cstr(&mut buf1));
+    let name = try!(name.to_cstr(&mut buf2));
     get_attr_common(|buf| getxattr(&path, &name, buf))
 }
 
@@ -308,8 +321,10 @@ pub fn get_attr_no_follow<P: AsLinuxPath, S: AsLinuxStr>(
     name: S,
     ) -> Result<Vec<u8>>
 {
-    let path = path.to_cstring().unwrap();
-    let name = name.to_cstring().unwrap();
+    let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+    let mut buf2: [u8; 128] = unsafe { mem::uninitialized() };
+    let path = try!(path.to_cstr(&mut buf1));
+    let name = try!(name.to_cstr(&mut buf2));
     get_attr_common(|buf| lgetxattr(&path, &name, buf))
 }
 
@@ -317,8 +332,10 @@ pub fn get_attr_no_follow<P: AsLinuxPath, S: AsLinuxStr>(
 ///
 /// Relative paths will be interpreted relative to the current working directory.
 pub fn remove_attr<P: AsLinuxPath, S: AsLinuxStr>(path: P, name: S) -> Result {
-    let path = path.to_cstring().unwrap();
-    let name = name.to_cstring().unwrap();
+    let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+    let mut buf2: [u8; 128] = unsafe { mem::uninitialized() };
+    let path = try!(path.to_cstr(&mut buf1));
+    let name = try!(name.to_cstr(&mut buf2));
     rv!(removexattr(&path, &name))
 }
 
@@ -328,8 +345,10 @@ pub fn remove_attr<P: AsLinuxPath, S: AsLinuxStr>(path: P, name: S) -> Result {
 /// `path` is a symbolic link, then the attribute of the symbolic link is set.
 pub fn remove_attr_no_follow<P: AsLinuxPath, S: AsLinuxStr>(path: P,
                                                             name: S) -> Result {
-    let path = path.to_cstring().unwrap();
-    let name = name.to_cstring().unwrap();
+    let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+    let mut buf2: [u8; 128] = unsafe { mem::uninitialized() };
+    let path = try!(path.to_cstr(&mut buf1));
+    let name = try!(name.to_cstr(&mut buf2));
     rv!(lremovexattr(&path, &name))
 }
 
@@ -337,7 +356,8 @@ pub fn remove_attr_no_follow<P: AsLinuxPath, S: AsLinuxStr>(path: P,
 ///
 /// Relative paths will be interpreted relative to the current working directory.
 pub fn list_attr_size<P: AsLinuxPath>(path: P) -> Result<usize> {
-    let path = path.to_cstring().unwrap();
+    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+    let path = try!(path.to_cstr(&mut buf));
     rv!(listxattr(&path, &mut []), -> usize)
 }
 
@@ -346,7 +366,8 @@ pub fn list_attr_size<P: AsLinuxPath>(path: P) -> Result<usize> {
 /// Relative paths will be interpreted relative to the current working directory. If
 /// `path` is a symbolic link, then the attribute of the symbolic link is set.
 pub fn list_attr_size_no_follow<P: AsLinuxPath>(path: P) -> Result<usize> {
-    let path = path.to_cstring().unwrap();
+    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+    let path = try!(path.to_cstr(&mut buf));
     rv!(llistxattr(&path, &mut []), -> usize)
 }
 
@@ -355,7 +376,8 @@ pub fn list_attr_size_no_follow<P: AsLinuxPath>(path: P) -> Result<usize> {
 /// Relative paths will be interpreted relative to the current working directory.
 pub fn list_attr_buf<'a, P: AsLinuxPath>(path: P,
                                          buf: &'a mut [u8]) -> Result<ListAttrIter<'a>> {
-    let path = path.to_cstring().unwrap();
+    let mut pbuf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+    let path = try!(path.to_cstr(&mut pbuf));
     let len = try!(rv!(listxattr(&path, buf), -> usize));
     Ok(ListAttrIter { buf: &buf[..len], pos: 0 })
 }
@@ -369,7 +391,8 @@ pub fn list_attr_buf_no_follow<'a, P: AsLinuxPath>(
     buf: &'a mut [u8]
     ) -> Result<ListAttrIter<'a>>
 {
-    let path = path.to_cstring().unwrap();
+    let mut pbuf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+    let path = try!(path.to_cstr(&mut pbuf));
     let len = try!(rv!(llistxattr(&path, buf), -> usize));
     Ok(ListAttrIter { buf: &buf[..len], pos: 0 })
 }
@@ -398,7 +421,8 @@ fn list_attr_common<F: FnMut(&mut [u8]) -> ssize_t>(mut f: F) -> Result<ListAttr
 ///
 /// Relative paths will be interpreted relative to the current working directory.
 pub fn list_attr<P: AsLinuxPath>(path: P) -> Result<ListAttrIterator> {
-    let path = path.to_cstring().unwrap();
+    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+    let path = try!(path.to_cstr(&mut buf));
     list_attr_common(|buf| listxattr(&path, buf))
 }
 
@@ -407,7 +431,8 @@ pub fn list_attr<P: AsLinuxPath>(path: P) -> Result<ListAttrIterator> {
 /// Relative paths will be interpreted relative to the current working directory. If
 /// `path` is a symbolic link, then the attribute of the symbolic link is set.
 pub fn list_attr_no_follow<P: AsLinuxPath>(path: P) -> Result<ListAttrIterator> {
-    let path = path.to_cstring().unwrap();
+    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+    let path = try!(path.to_cstr(&mut buf));
     list_attr_common(|buf| llistxattr(&path, buf))
 }
 
@@ -646,7 +671,8 @@ impl File {
     ///
     /// Relative paths are interpreted relative to the current working directory.
     pub fn link<P: AsLinuxPath>(&self, path: P) -> Result {
-        let path = path.to_cstring().unwrap();
+        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let path = try!(path.to_cstr(&mut buf));
         rv!(linkat(self.fd, empty_cstr(), AT_FDCWD, &path, AT_EMPTY_PATH))
     }
 
@@ -654,7 +680,8 @@ impl File {
     ///
     /// Relative paths are interpreted relative to the directory `dir`.
     pub fn link_rel_to<P: AsLinuxPath>(&self, dir: &File, path: P) -> Result {
-        let path = path.to_cstring().unwrap();
+        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let path = try!(path.to_cstr(&mut buf));
         rv!(linkat(self.fd, empty_cstr(), dir.fd, &path, AT_EMPTY_PATH))
     }
 
@@ -670,7 +697,8 @@ impl File {
         // enough space for "/proc/self/fd/-{u64::MAX}\0"
         let mut proc_buf = [0; 36];
         let _ = write!(&mut proc_buf[..], "/proc/self/fd/{}", self.fd);
-        let cstr = unsafe { CStr::from_ptr(proc_buf.as_ptr() as *const c_char) };
+        // FIXME: not actually correct
+        let cstr = unsafe { CStr::from_nt_slice_mut(&mut proc_buf) };
         let len = try!(rv!(readlinkat(self.fd, cstr, buf), -> usize));
         Ok(buf[..len].as_linux_str_mut())
     }
@@ -736,26 +764,30 @@ impl File {
 
     /// Sets an attribute of this file.
     pub fn set_attr<S: AsLinuxStr, V: AsRef<[u8]>>(&self, name: S, val: V) -> Result {
-        let name = name.to_cstring().unwrap();
+        let mut buf: [u8; 128] = unsafe { mem::uninitialized() };
+        let name = try!(name.to_cstr(&mut buf));
         rv!(fsetxattr(self.fd, &name, val.as_ref(), 0))
     }
 
     /// Gets an attribute of this file.
     pub fn get_attr_buf<S: AsLinuxStr, V: AsMut<[u8]>>(&self, name: S,
                                                        mut val: V) -> Result<usize> {
-        let name = name.to_cstring().unwrap();
+        let mut buf: [u8; 128] = unsafe { mem::uninitialized() };
+        let name = try!(name.to_cstr(&mut buf));
         rv!(fgetxattr(self.fd, &name, val.as_mut()), -> usize)
     }
 
     /// Gets an attribute of this file.
     pub fn get_attr<S: AsLinuxStr>(&self, name: S) -> Result<Vec<u8>> {
-        let name = name.to_cstring().unwrap();
+        let mut buf: [u8; 128] = unsafe { mem::uninitialized() };
+        let name = try!(name.to_cstr(&mut buf));
         get_attr_common(|buf| fgetxattr(self.fd, &name, buf))
     }
 
     /// Removes an attribute of this file.
     pub fn remove_attr<S: AsLinuxStr>(&self, name: S) -> Result {
-        let name = name.to_cstring().unwrap();
+        let mut buf: [u8; 128] = unsafe { mem::uninitialized() };
+        let name = try!(name.to_cstr(&mut buf));
         rv!(fremovexattr(self.fd, &name))
     }
 
@@ -817,7 +849,8 @@ impl File {
     /// If `path` is relative, the `self` must be a directory and the `path` will be
     /// interpreted relative to `self`.
     pub fn rel_open<P: AsLinuxPath>(&self, path: P, flags: Flags) -> Result<File> {
-        let path = path.to_cstring().unwrap();
+        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let path = try!(path.to_cstr(&mut buf));
         let mode = flags.mode().map(|m| mode_to_int(m)).unwrap_or(0);
         let fd = match retry(|| openat(self.fd, &path,
                                        flags_to_int(flags) | cty::O_LARGEFILE, mode)) {
@@ -839,7 +872,8 @@ impl File {
     /// destination of the symlink. If `path` is relative, then `self` must be a directory
     /// and the path will be interpreted relative to `self`.
     pub fn rel_info<P: AsLinuxPath>(&self, path: P) -> Result<Info> {
-        let path = path.to_cstring().unwrap();
+        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let path = try!(path.to_cstr(&mut buf));
         let mut stat = unsafe  { mem::zeroed() };
         try!(rv!(fstatat(self.fd, &path, &mut stat, 0)));
         Ok(info_from_stat(stat))
@@ -851,7 +885,8 @@ impl File {
     /// If `path` is relative, then `self` must be a directory and the path will be
     /// interpreted relative to `self`.
     pub fn rel_info_no_follow<P: AsLinuxPath>(&self, path: P) -> Result<Info> {
-        let path = path.to_cstring().unwrap();
+        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let path = try!(path.to_cstr(&mut buf));
         let mut stat = unsafe  { mem::zeroed() };
         try!(rv!(fstatat(self.fd, &path, &mut stat, AT_SYMLINK_NOFOLLOW)));
         Ok(info_from_stat(stat))
@@ -862,7 +897,8 @@ impl File {
     /// If `path` is relative then `self` must be a directory and the path will be
     /// interpreted relative to `self`.
     pub fn rel_exists<P: AsLinuxPath>(&self, path: P) -> Result<bool> {
-        let path = path.to_cstring().unwrap();
+        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let path = try!(path.to_cstr(&mut buf));
         let res = faccessat(self.fd, &path, F_OK);
         if res >= 0 {
             Ok(true)
@@ -881,7 +917,8 @@ impl File {
     /// interpreted relative to `self`.
     pub fn rel_can_access<P: AsLinuxPath>(&self, path: P,
                                           mode: AccessMode) -> Result<bool> {
-        let path = path.to_cstring().unwrap();
+        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let path = try!(path.to_cstr(&mut buf));
         let res = faccessat(self.fd, &path, access_mode_to_int(mode));
         if res >= 0 {
             Ok(true)
@@ -901,7 +938,8 @@ impl File {
     /// times of the destination.
     pub fn rel_set_times<P: AsLinuxPath>(&self, path: P, access: TimeChange,
                                          modification: TimeChange) -> Result {
-        let path = path.to_cstring().unwrap();
+        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let path = try!(path.to_cstr(&mut buf));
         let times = [time_change_to_timespec(access),
                      time_change_to_timespec(modification)];
         rv!(utimensat(self.fd, Some(&path), &times, 0))
@@ -914,7 +952,8 @@ impl File {
     /// times of the symlink.
     pub fn rel_set_times_no_follow<P: AsLinuxPath>(&self, path: P, access: TimeChange,
                                                    modification: TimeChange) -> Result {
-        let path = path.to_cstring().unwrap();
+        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let path = try!(path.to_cstr(&mut buf));
         let times = [time_change_to_timespec(access),
                      time_change_to_timespec(modification)];
         rv!(utimensat(self.fd, Some(&path), &times, AT_SYMLINK_NOFOLLOW))
@@ -926,8 +965,10 @@ impl File {
     /// will be interpreted relative to `self`.
     pub fn rel_exchange<P: AsLinuxPath, Q: AsLinuxPath>(&self, one: P,
                                                         two: Q) -> Result {
-        let one = one.to_cstring().unwrap();
-        let two = two.to_cstring().unwrap();
+        let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let one = try!(one.to_cstr(&mut buf1));
+        let two = try!(two.to_cstr(&mut buf2));
         rv!(renameat2(self.fd, &one, self.fd, &two, RENAME_EXCHANGE))
     }
 
@@ -938,8 +979,10 @@ impl File {
     /// operation fails if `two` already exists.
     pub fn rel_rename<P: AsLinuxPath, Q: AsLinuxPath>(&self, one: P, two: Q,
                                                       replace: bool) -> Result {
-        let one = one.to_cstring().unwrap();
-        let two = two.to_cstring().unwrap();
+        let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let one = try!(one.to_cstr(&mut buf1));
+        let two = try!(two.to_cstr(&mut buf2));
         let flag = if replace { 0 } else { RENAME_NOREPLACE };
         rv!(renameat2(self.fd, &one, self.fd, &two, flag))
     }
@@ -949,7 +992,8 @@ impl File {
     /// If `path` is relative, then `self` has to be a directory and the path is
     /// interpreted relative to `self`.
     pub fn rel_create_dir<P: AsLinuxPath>(&self, path: P, mode: Mode) -> Result {
-        let path = path.to_cstring().unwrap();
+        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let path = try!(path.to_cstr(&mut buf));
         rv!(mkdirat(self.fd, &path, mode_to_int(mode)))
     }
 
@@ -959,7 +1003,8 @@ impl File {
     /// interpreted relative to `self`. If `path` refers to a directory, then the
     /// directory has to be empty.
     pub fn rel_remove<P: AsLinuxPath>(&self, path: P) -> Result {
-        let path = path.to_cstring().unwrap();
+        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let path = try!(path.to_cstr(&mut buf));
         let mut ret = unlinkat(self.fd, &path, 0);
         if Errno(-ret) == errno::IsADirectory {
             ret = unlinkat(self.fd, &path, AT_REMOVEDIR);
@@ -973,8 +1018,10 @@ impl File {
     /// interpreted relative to `self`.
     pub fn rel_symlink<P: AsLinuxPath, Q: AsLinuxPath>(&self, target: P,
                                                        link: Q) -> Result {
-        let target = target.to_cstring().unwrap();
-        let link = link.to_cstring().unwrap();
+        let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let target = try!(target.to_cstr(&mut buf1));
+        let link = try!(link.to_cstr(&mut buf2));
         rv!(symlinkat(&target, self.fd, &link))
     }
 
@@ -988,7 +1035,8 @@ impl File {
             buf: &'a mut [u8]
             ) -> Result<&'a mut LinuxStr>
     {
-        let link = link.to_cstring().unwrap();
+        let mut pbuf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let link = try!(link.to_cstr(&mut pbuf));
         let len = try!(rv!(readlinkat(self.fd, &link, buf), -> usize));
         Ok(buf[..len].as_linux_str_mut())
     }
@@ -1008,7 +1056,8 @@ impl File {
     /// interpreted relative to `self`.
     pub fn rel_change_owner<P: AsLinuxPath>(&self, path: P, user: UserId,
                                             group: GroupId) -> Result {
-        let path = path.to_cstring().unwrap();
+        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let path = try!(path.to_cstr(&mut buf));
         rv!(fchownat(self.fd, &path, user, group, 0))
     }
 
@@ -1019,7 +1068,8 @@ impl File {
     /// the owner of the symlink itself.
     pub fn rel_change_owner_no_follow<P: AsLinuxPath>(&self, path: P, user: UserId,
                                                       group: GroupId) -> Result {
-        let path = path.to_cstring().unwrap();
+        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let path = try!(path.to_cstr(&mut buf));
         rv!(fchownat(self.fd, &path, user, group, AT_SYMLINK_NOFOLLOW))
     }
 
@@ -1028,7 +1078,8 @@ impl File {
     /// If `path` is relative, then `self` has to be a directory and `path` will be
     /// interpreted relative to `self`.
     pub fn rel_change_mode<P: AsLinuxPath>(&self, path: P, mode: Mode) -> Result {
-        let path = path.to_cstring().unwrap();
+        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let path = try!(path.to_cstr(&mut buf));
         rv!(fchmodat(self.fd, &path, mode_to_int(mode)))
     }
 
@@ -1048,7 +1099,8 @@ impl File {
             Type::File | Type::FIFO | Type::Socket => { },
             _ => return Err(errno::InvalidArgument),
         }
-        let path = path.to_cstring().unwrap();
+        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let path = try!(path.to_cstr(&mut buf));
         rv!(mknodat(self.fd, &path, file_type_to_mode(ty) | mode_to_int(mode), 0))
     }
 
@@ -1062,7 +1114,8 @@ impl File {
             DeviceType::Character => Type::CharDevice,
             DeviceType::Block     => Type::BlockDevice,
         };
-        let path = path.to_cstring().unwrap();
+        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let path = try!(path.to_cstr(&mut buf));
         rv!(mknodat(self.fd, &path, file_type_to_mode(ty) | mode_to_int(mode), dev.id()))
     }
 }

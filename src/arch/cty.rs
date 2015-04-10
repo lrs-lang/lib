@@ -141,6 +141,8 @@ pub const ST_RELATIME:    c_ulong = 4096;
 
 pub const RLIM_INFINITY: c_ulonglong = !0;
 
+pub const CPU_SET_SIZE: usize = 128;
+
 pub type rlim_t = c_ulonglong;
 
 #[repr(C)]

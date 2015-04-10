@@ -1,5 +1,6 @@
 obj arch
 obj core       arch
+obj sys        core
 obj dev        core
 obj fs         core
 obj time_base  core

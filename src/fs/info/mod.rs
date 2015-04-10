@@ -5,7 +5,7 @@
 use std::fmt::{Debug, Formatter, Error};
 use std::{self, mem};
 
-use core::cty::{statfs};
+use core::cty::{PATH_MAX, statfs};
 use core::syscall::{statfs};
 use core::util::{retry};
 use core::ext::{AsLinuxPath};
@@ -28,7 +28,8 @@ pub struct FileSystemInfo(statfs);
 impl FileSystemInfo {
     /// Returns information about the filesystem located at the path.
     pub fn from_path<P: AsLinuxPath>(path: P) -> Result<FileSystemInfo> {
-        let path = path.to_cstring().unwrap();
+        let mut path_buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+        let path = try!(path.to_cstr(&mut path_buf));
         let mut buf = unsafe { mem::zeroed() };
         retry(|| statfs(&path, &mut buf)).map(|_| FileSystemInfo(buf))
     }

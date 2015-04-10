@@ -368,3 +368,7 @@ pub unsafe fn __epoll_pwait(epfd: c_int, events: *mut epoll_event, num: c_int,
                             sigsetsize: size_t) -> c_int {
     call!(nr::EPOLL_PWAIT, epfd, events, num, timeout, sigmask, sigsetsize) as c_int
 }
+
+pub unsafe fn __sched_getaffinity(tid: pid_t, size: size_t, set: *mut u8) -> c_int {
+    call!(nr::SCHED_GETAFFINITY, tid, size, set) as c_int
+}

@@ -2,9 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::ffi::{CStr};
 use std::{mem};
 
+use c_str::{CStr};
 use cty::{c_int, mode_t, ssize_t, off_t, rlimit, pid_t, uid_t, gid_t, stat, c_char,
           size_t, SYSCALL_RLIM_INFINITY, RLIM_INFINITY, statfs, timespec, dev_t, c_void,
           clockid_t, itimerspec, epoll_event, sigset_t};
@@ -287,4 +287,8 @@ pub fn epoll_pwait(epfd: c_int, events: &mut [epoll_event], timeout: c_int,
     };
     unsafe { __epoll_pwait(epfd, events.as_mut_ptr(), events.len().saturating_cast(),
                            timeout, sigmask, mem::size_of::<sigset_t>() as size_t) }
+}
+
+pub fn sched_getaffinity(tid: pid_t, set: &mut [u8]) -> c_int {
+    unsafe { __sched_getaffinity(tid, set.len().saturating_cast(), set.as_mut_ptr()) }
 }

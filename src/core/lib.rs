@@ -4,7 +4,7 @@
 
 #![crate_name = "linux_core"]
 #![crate_type = "lib"]
-#![feature(std_misc, io, into_cow, convert)]
+#![feature(std_misc, io, into_cow, core)]
 #![allow(trivial_numeric_casts, trivial_casts)]
 
 extern crate linux_arch;
@@ -18,6 +18,7 @@ pub mod macros;
 pub mod syscall;
 pub mod ext;
 pub mod string;
+pub mod c_str;
 pub mod result;
 pub mod errno;
 pub mod util;

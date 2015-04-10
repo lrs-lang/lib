@@ -6,9 +6,15 @@ use std::str::{self, FromStr};
 use std::{fmt, ops, mem, cmp};
 use std::borrow::{Borrow, BorrowMut, IntoCow, Cow, ToOwned};
 use std::path::{Path, PathBuf};
-use std::ffi::{AsOsStr, OsStr, CString, NulError, OsString};
-use std::os::unix::ffi::{OsStrExt};
 use std::convert::{AsMut, AsRef, Into};
+use std::slice::{bytes};
+use std::ffi::{OsStr, OsString, AsOsStr};
+use std::os::unix::ffi::{OsStrExt};
+
+use result::{Result};
+use util::{memchr};
+use errno::{self};
+use c_str::{CStr, CString};
 
 /// An owned byte vector that can be interpreted as a string but doesn't necessarily
 /// contain UTF-8.
@@ -117,11 +123,11 @@ impl AsMut<LinuxStr> for LinuxString {
     }
 }
 
-impl AsRef<Path> for LinuxString {
-    fn as_ref(&self) -> &Path {
-       (*self).as_ref() 
-    }
-}
+//impl AsRef<Path> for LinuxString {
+//    fn as_ref(&self) -> &Path {
+//       (*self).as_ref() 
+//    }
+//}
 
 impl IntoCow<'static, LinuxStr> for LinuxString {
     fn into_cow(self) -> Cow<'static, LinuxStr> {
@@ -161,7 +167,7 @@ impl LinuxStr {
     }
 
     /// Like `str::parse`, but first tries to interpret the contained slice as UTF-8.
-    pub fn parse<F: FromStr>(&self) -> Result<F, ParseErr<<F as FromStr>::Err>> {
+    pub fn parse<F: FromStr>(&self) -> ::std::result::Result<F, ParseErr<<F as FromStr>::Err>> {
         let st = match self.as_str() {
             Some(st) => st,
             _ => return Err(ParseErr::NotUtf8),
@@ -178,8 +184,18 @@ impl LinuxStr {
     }
 
     /// Turns the `LinuxStr` into `CString` unless there is an interior null byte.
-    pub fn to_cstring(&self) -> Result<CString, NulError> {
-        CString::new(self.inner.to_vec())
+    pub fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<Cow<'a, CStr>> {
+        let slice = self.as_slice();
+        if memchr(slice, 0).is_some() {
+            return Err(errno::InvalidArgument);
+        }
+        if slice.len() < buf.len() {
+            bytes::copy_memory(slice, buf);
+            buf[slice.len()] = 0;
+            Ok(Cow::Borrowed(unsafe { CStr::from_nt_slice_mut(buf) }))
+        } else {
+            Ok(Cow::Owned(unsafe { CString::from_vec_unchecked(slice.to_vec()) }))
+        }
     }
 }
 
@@ -257,8 +273,8 @@ impl ToOwned for LinuxStr {
 pub trait AsLinuxStr {
     fn as_linux_str(&self) -> &LinuxStr;
 
-    fn to_cstring(&self) -> Option<CString> {
-        self.as_linux_str().as_os_str().to_cstring()
+    fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<Cow<'a, CStr>> {
+        self.as_linux_str().to_cstr(buf)
     }
 }
 
@@ -272,6 +288,8 @@ impl AsLinuxStr for str      { fn as_linux_str(&self) -> &LinuxStr { self.as_byt
 impl AsLinuxStr for String   { fn as_linux_str(&self) -> &LinuxStr { self.as_bytes().as_linux_str() } }
 impl AsLinuxStr for Path     { fn as_linux_str(&self) -> &LinuxStr { self.as_os_str().as_linux_str() } }
 impl AsLinuxStr for PathBuf  { fn as_linux_str(&self) -> &LinuxStr { self.as_os_str().as_linux_str() } }
+impl AsLinuxStr for CStr     { fn as_linux_str(&self) -> &LinuxStr { self.as_slice().as_linux_str() } }
+impl AsLinuxStr for CString  { fn as_linux_str(&self) -> &LinuxStr { self.as_slice().as_linux_str() } }
 
 impl<'a, T: AsLinuxStr+?Sized> AsLinuxStr for &'a T {
     fn as_linux_str(&self) -> &LinuxStr { (*self).as_linux_str() }

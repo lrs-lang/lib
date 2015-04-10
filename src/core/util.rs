@@ -2,13 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::ffi::{CStr};
 use std::{mem};
 
-use cty::{c_int, c_void, size_t, c_char};
+use cty::{c_int, c_void, size_t};
 use errno::{Errno};
 use result::{Result};
 use ext::{SignedInt, Int};
+use c_str::{CStr};
 
 #[cfg(feature = "retry")]
 pub fn retry<T: SignedInt, F: FnMut() -> T>(mut f: F) -> Result<T> {
@@ -57,8 +57,8 @@ pub unsafe fn memmove<T>(dst: *mut T, src: *const T, num: usize) {
 }
 
 pub fn empty_cstr() -> &'static CStr {
-    static EMPTY: [c_char; 1] = [0];
-    unsafe { CStr::from_ptr(EMPTY.as_ptr()) }
+    static EMPTY: [u8; 1] = [0];
+    unsafe { CStr::from_nt_slice(&EMPTY) }
 }
 
 pub fn div_rem<T: Int>(a: T, b: T) -> (T, T) {

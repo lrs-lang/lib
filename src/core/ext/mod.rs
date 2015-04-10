@@ -2,11 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::ffi::{CString};
-use std::path::{Path, AsPath};
 use std::{self, ops};
+use std::borrow::{Cow};
+use std::convert::{AsRef};
+use std::path::{Path};
 
 use string::{AsLinuxStr};
+use result::{Result};
+use c_str::{CStr};
 
 pub use self::truncate::{SaturatingCast};
 
@@ -15,14 +18,16 @@ pub mod truncate;
 pub trait AsLinuxPath {
     fn as_linux_path(&self) -> &Path;
 
-    fn to_cstring(&self) -> Option<CString> {
-        self.as_linux_path().as_os_str().to_cstring()
-    }
+    fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<Cow<'a, CStr>>;
 }
 
 impl<T: AsLinuxStr+?Sized> AsLinuxPath for T {
     fn as_linux_path(&self) -> &Path {
-        self.as_linux_str().as_path()
+        AsRef::<Path>::as_ref(self.as_linux_str())
+    }
+
+    fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<Cow<'a, CStr>> {
+        AsLinuxStr::to_cstr(self, buf)
     }
 }
 
