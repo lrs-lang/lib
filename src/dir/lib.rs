@@ -19,6 +19,7 @@ use core::string::{LinuxString, LinuxStr, AsLinuxStr};
 use core::result::{Result};
 use core::syscall::{getdents};
 use core::errno::{Errno};
+use core::fd_container::{FDContainer};
 
 use file::{File, Seek};
 use file::flags::{Flags};
@@ -86,7 +87,7 @@ impl<'a> Iter<'a> {
             let inner = self.buf.get_mut();
             let cap = inner.capacity();
             inner.set_len(cap);
-            let res = getdents(self.dir.file_desc(), inner);
+            let res = getdents(self.dir.borrow(), inner);
             if res < 0 {
                 inner.set_len(0);
                 Err(Errno(-res))

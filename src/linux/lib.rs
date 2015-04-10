@@ -39,3 +39,4 @@ pub mod time;
 pub mod path;
 pub mod poll;
 pub mod sys;
+pub mod fd;

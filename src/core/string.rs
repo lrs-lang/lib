@@ -280,6 +280,7 @@ pub trait AsLinuxStr {
 
 impl AsLinuxStr for LinuxStr { fn as_linux_str(&self) -> &LinuxStr { self } }
 impl AsLinuxStr for LinuxString { fn as_linux_str(&self) -> &LinuxStr { self.borrow() } }
+impl AsLinuxStr for [i8]     { fn as_linux_str(&self) -> &LinuxStr { unsafe { mem::transmute(self) } } }
 impl AsLinuxStr for [u8]     { fn as_linux_str(&self) -> &LinuxStr { unsafe { mem::transmute(self) } } }
 impl AsLinuxStr for Vec<u8>  { fn as_linux_str(&self) -> &LinuxStr { self[..].as_linux_str() } }
 impl AsLinuxStr for OsStr    { fn as_linux_str(&self) -> &LinuxStr { self.as_bytes().as_linux_str() } }

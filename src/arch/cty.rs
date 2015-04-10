@@ -143,6 +143,38 @@ pub const RLIM_INFINITY: c_ulonglong = !0;
 
 pub const CPU_SET_SIZE: usize = 128;
 
+pub const GRND_NONBLOCK : c_uint = 0x0001;
+pub const GRND_RANDOM   : c_uint = 0x0002;
+
+pub const MS_RDONLY      : c_ulong = 1;
+pub const MS_NOSUID      : c_ulong = 2;
+pub const MS_NODEV       : c_ulong = 4;
+pub const MS_NOEXEC      : c_ulong = 8;
+pub const MS_SYNCHRONOUS : c_ulong = 16;
+pub const MS_REMOUNT     : c_ulong = 32;
+pub const MS_MANDLOCK    : c_ulong = 64;
+pub const MS_DIRSYNC     : c_ulong = 128;
+pub const MS_NOATIME     : c_ulong = 1024;
+pub const MS_NODIRATIME  : c_ulong = 2048;
+pub const MS_BIND        : c_ulong = 4096;
+pub const MS_MOVE        : c_ulong = 8192;
+pub const MS_REC         : c_ulong = 16384;
+pub const MS_SILENT      : c_ulong = 32768;
+pub const MS_POSIXACL    : c_ulong = 1 << 16;
+pub const MS_UNBINDABLE  : c_ulong = 1 << 17;
+pub const MS_PRIVATE     : c_ulong = 1 << 18;
+pub const MS_SLAVE       : c_ulong = 1 << 19;
+pub const MS_SHARED      : c_ulong = 1 << 20;
+pub const MS_RELATIME    : c_ulong = 1 << 21;
+pub const MS_KERNMOUNT   : c_ulong = 1 << 22;
+pub const MS_I_VERSION   : c_ulong = 1 << 23;
+pub const MS_STRICTATIME : c_ulong = 1 << 24;
+
+pub const MNT_FORCE       : c_int = 0x00000001;
+pub const MNT_DETACH      : c_int = 0x00000002;
+pub const MNT_EXPIRE      : c_int = 0x00000004;
+pub const UMOUNT_NOFOLLOW : c_int = 0x00000008;
+
 pub type rlim_t = c_ulonglong;
 
 #[repr(C)]
@@ -175,7 +207,39 @@ pub struct itimerspec {
 	pub it_value:    timespec,
 }
 
+#[repr(C)]
+pub struct utsname {
+	pub sysname:    [c_char; 65],
+	pub nodename:   [c_char; 65],
+	pub release:    [c_char; 65],
+	pub version:    [c_char; 65],
+	pub machine:    [c_char; 65],
+	pub domainname: [c_char; 65],
+}
+impl Copy for utsname { }
+impl Clone for utsname { fn clone(&self) -> utsname { *self } }
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct sysinfo {
+	pub uptime:    c_ulong,
+	pub loads:     [c_ulong; 3],
+	pub totalram:  c_ulong,
+	pub freeram:   c_ulong,
+	pub sharedram: c_ulong,
+	pub bufferram: c_ulong,
+	pub totalswap: c_ulong,
+	pub freeswap:  c_ulong,
+	pub procs:     c_ushort,
+	pub pad:       c_ushort,
+	pub totalhigh: c_ulong,
+	pub freehigh:  c_ulong,
+	pub mem_unit:  c_uint,
+    pub _reserved: [c_char; SYSINFO_RESERVED],
+}
+
 extern {
     pub fn memchr(s: *const c_void, c: c_int, n: size_t) -> *mut c_void;
     pub fn memmove(dst: *mut c_void, src: *const c_void, n: size_t) -> *mut c_void;
+    pub fn strlen(s: *const c_char) -> size_t;
 }

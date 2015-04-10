@@ -7,7 +7,8 @@ use std::{mem};
 use c_str::{CStr};
 use cty::{c_int, mode_t, ssize_t, off_t, rlimit, pid_t, uid_t, gid_t, stat, c_char,
           size_t, SYSCALL_RLIM_INFINITY, RLIM_INFINITY, statfs, timespec, dev_t, c_void,
-          clockid_t, itimerspec, epoll_event, sigset_t};
+          clockid_t, itimerspec, epoll_event, sigset_t, utsname, sysinfo, c_uint,
+          c_ulong};
 use ext::{SaturatingCast};
 
 pub use self::raw::*;
@@ -291,4 +292,37 @@ pub fn epoll_pwait(epfd: c_int, events: &mut [epoll_event], timeout: c_int,
 
 pub fn sched_getaffinity(tid: pid_t, set: &mut [u8]) -> c_int {
     unsafe { __sched_getaffinity(tid, set.len().saturating_cast(), set.as_mut_ptr()) }
+}
+
+pub fn uname(buf: &mut utsname) -> c_int {
+    unsafe { __uname(buf) }
+}
+
+pub fn sysinfo(buf: &mut sysinfo) -> c_int {
+    unsafe { __sysinfo(buf) }
+}
+
+pub fn getrandom(buf: &mut [u8], flags: c_uint) -> c_int {
+    unsafe { __getrandom(buf.as_ptr() as *mut c_void, buf.len() as size_t, flags) }
+}
+
+pub fn acct(filename: &CStr) -> c_int {
+    unsafe { __acct(filename.as_ptr()) }
+}
+
+pub fn mount(src: &CStr, dst: &CStr, ty: &CStr, flags: c_ulong, data: &CStr) -> c_int {
+    unsafe { __mount(src.as_ptr(), dst.as_ptr(), ty.as_ptr(), flags,
+                     data.as_ptr() as *const c_void) }
+}
+
+pub fn umount2(dst: &CStr, flags: c_int) -> c_int {
+    unsafe { __umount2(dst.as_ptr(), flags) }
+}
+
+pub fn sethostname(name: &[u8]) -> c_int {
+    unsafe { __sethostname(name.as_ptr() as *const c_char, name.len() as size_t) }
+}
+
+pub fn setdomainname(name: &[u8]) -> c_int {
+    unsafe { __setdomainname(name.as_ptr() as *const c_char, name.len() as size_t) }
 }

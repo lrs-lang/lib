@@ -6,11 +6,13 @@
 #![crate_type = "lib"]
 #![allow(trivial_numeric_casts)]
 
+#[macro_use]
 extern crate linux_core as core;
 
 use core::syscall::{sync};
 
 pub mod info;
+pub mod mount;
 
 /// Writes all buffered data and metadata to the disks.
 pub fn sync_all() {

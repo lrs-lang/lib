@@ -5,6 +5,9 @@
 //! File system information.
 
 pub use linux_fs::{sync_all};
+
+pub use linux_fs::mount::{mount, MountFlags, unmount, UnmountFlags};
+
 pub use linux_fs::info::{FileSystemInfo};
 pub use linux_fs::info::mount::{Flags};
 pub use linux_fs::info::types::{FileSystem};

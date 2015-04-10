@@ -8,7 +8,7 @@ use arch::syscall::{nr, syscall0, syscall1, syscall2, syscall3, syscall4, syscal
 use cty::{c_int, mode_t, size_t, ssize_t, uid_t, gid_t, F_DUPFD_CLOEXEC, F_GETFD,
           F_GETFL, F_SETFD, F_SETFL, statfs, pid_t, c_char, off_t, iovec, c_void,
           rlimit, linux_dirent64, stat, timespec, dev_t, clockid_t, itimerspec,
-          epoll_event, sigset_t};
+          epoll_event, sigset_t, utsname, sysinfo, c_uint, c_ulong};
 
 macro_rules! call {
     ($nr:expr) => {
@@ -371,4 +371,37 @@ pub unsafe fn __epoll_pwait(epfd: c_int, events: *mut epoll_event, num: c_int,
 
 pub unsafe fn __sched_getaffinity(tid: pid_t, size: size_t, set: *mut u8) -> c_int {
     call!(nr::SCHED_GETAFFINITY, tid, size, set) as c_int
+}
+
+pub unsafe fn __uname(buf: *mut utsname) -> c_int {
+    call!(nr::UNAME, buf) as c_int
+}
+
+pub unsafe fn __sysinfo(buf: *mut sysinfo) -> c_int {
+    call!(nr::SYSINFO, buf) as c_int
+}
+
+pub unsafe fn __getrandom(buf: *mut c_void, buflen: size_t, flags: c_uint) -> c_int {
+    call!(nr::GETRANDOM, buf, buflen, flags) as c_int
+}
+
+pub unsafe fn __acct(filename: *const c_char) -> c_int {
+    call!(nr::ACCT, filename) as c_int
+}
+
+pub unsafe fn __mount(src: *const c_char, dst: *const c_char, ty: *const c_char,
+                      flags: c_ulong, data: *const c_void) -> c_int {
+    call!(nr::MOUNT, src, dst, ty, flags, data) as c_int
+}
+
+pub unsafe fn __umount2(dst: *const c_char, flags: c_int) -> c_int {
+    call!(nr::UMOUNT2, dst, flags) as c_int
+}
+
+pub unsafe fn __sethostname(name: *const c_char, len: size_t) -> c_int {
+    call!(nr::SETHOSTNAME, name, len) as c_int
+}
+
+pub unsafe fn __setdomainname(name: *const c_char, len: size_t) -> c_int {
+    call!(nr::SETDOMAINNAME, name, len) as c_int
 }

@@ -36,6 +36,7 @@ use core::string::{AsLinuxStrMut, LinuxStr, LinuxString, AsLinuxStr};
 use core::util::{retry, empty_cstr, memchr};
 use core::alias::{UserId, GroupId};
 use core::c_str::{CStr};
+use core::fd_container::{FDContainer, FD};
 
 use time_base::{Time, time_to_timespec};
 
@@ -453,11 +454,6 @@ impl File {
     /// Creates a file that points to the current directory.
     pub fn current_dir() -> File {
         File { fd: AT_FDCWD, owned: false }
-    }
-
-    /// Returns the file descriptor of this file.
-    pub fn file_desc(&self) -> c_int {
-        self.fd
     }
 
     /// Opens the file at path `path` in read mode.
@@ -1131,6 +1127,30 @@ impl Drop for File {
         if self.owned {
             close(self.fd);
         }
+    }
+}
+
+impl FDContainer for File {
+    fn unwrap(self) -> FD {
+        let fd = self.fd;
+        unsafe { mem::forget(self); }
+        fd
+    }
+
+    fn is_owned(&self) -> bool {
+        self.owned
+    }
+
+    fn borrow(&self) -> FD {
+        self.fd
+    }
+
+    fn from_owned(fd: FD) -> File {
+        File { fd: fd, owned: true }
+    }
+
+    fn from_borrowed(fd: FD) -> File {
+        File { fd: fd, owned: false }
     }
 }
 

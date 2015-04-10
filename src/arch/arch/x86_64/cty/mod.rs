@@ -181,3 +181,8 @@ pub struct epoll_event {
     pub events: u32,
     pub data: u64,
 }
+
+// 20-2*sizeof(__kernel_ulong_t)-sizeof(__u32)
+//
+// Rust is a joke language without any kind of CTFE and its devs are fucking retarded.
+pub const SYSINFO_RESERVED: usize = 0;

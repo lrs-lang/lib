@@ -1,11 +1,11 @@
 obj arch
 obj core       arch
-obj sys        core
 obj dev        core
 obj fs         core
 obj time_base  core
 obj process    core
-obj poll       core
+obj sys        core time_base
+obj poll       core time_base
 obj file       core dev fs time_base
 obj time_ext   core time_base file
 obj dir        core file
