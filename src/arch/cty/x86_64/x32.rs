@@ -4,10 +4,7 @@
 
 #![allow(non_camel_case_types, raw_pointer_derive)]
 
-use cty::{self};
-use super::super::{gen};
-
-pub use gen::{
+pub use ::cty::gen::{
     __kernel_old_uid_t, __kernel_old_gid_t, __kernel_old_dev_t,
 };
 
@@ -16,8 +13,8 @@ pub const USER_POINTER_ALIGN : usize = 4;
 pub type c_long  = i32;
 pub type c_ulong = u32;
 
-pub type __kernel_long_t  = cty::c_longlong;
-pub type __kernel_ulong_t = cty::c_ulonglong;
+pub type __kernel_long_t  = ::cty::cty::c_longlong;
+pub type __kernel_ulong_t = ::cty::cty::c_ulonglong;
 
 pub const __NR_rt_sigaction      : usize = 512;
 pub const __NR_rt_sigreturn      : usize = 513;

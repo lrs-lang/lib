@@ -27,7 +27,7 @@ pub use ::syscall::common::{
     listxattr, llistxattr, llseek, lookup_dcookie, lremovexattr, lseek, lsetxattr,
     lstat64, lstat, madvise, mbind, memfd_create, migrate_pages, mincore, mkdirat, mkdir,
     mknodat, mknod, mlockall, mlock, mount, move_pages, mprotect,
-    mq_getsetattr, mq_notify, mq_open, mq_timedreceive, mq_timedsend, mq_unlink, mremap,
+    mq_getsetattr, mq_open, mq_timedreceive, mq_timedsend, mq_unlink, mremap,
     msgctl, msgget, msgrcv, msgsnd, msync, munlockall, munlock, munmap, name_to_handle_at,
     nanosleep, newfstatat, newfstat, newlstat, newstat, newuname, nice, old_getrlimit,
     old_mmap, old_readdir, old_select, oldumount, olduname, openat, open_by_handle_at,
@@ -36,11 +36,11 @@ pub use ::syscall::common::{
     process_vm_writev, pselect6, ptrace, pwrite64, pwritev, quotactl, readahead, read,
     readlinkat, readlink, readv, reboot, recv, recvfrom, recvmmsg, recvmsg,
     remap_file_pages, removexattr, renameat2, renameat, rename, request_key,
-    restart_syscall, rmdir, rt_sigaction, rt_sigpending, rt_sigprocmask, rt_sigqueueinfo,
-    rt_sigsuspend, rt_sigtimedwait, rt_tgsigqueueinfo, sched_getaffinity, sched_getattr,
+    restart_syscall, rmdir, rt_sigaction, rt_sigpending, rt_sigprocmask,
+    rt_sigsuspend, sched_getaffinity, sched_getattr,
     sched_getparam, sched_get_priority_max, sched_get_priority_min, sched_getscheduler,
     sched_rr_get_interval, sched_setaffinity, sched_setattr, sched_setparam,
-    sched_setscheduler, sched_yield, seccomp, select, semctl, semget, semop, semtimedop,
+    sched_setscheduler, sched_yield, seccomp, select, semget, semop, semtimedop,
     send, sendfile64, sendfile, sendmmsg, sendmsg, sendto, setdomainname, setfsgid16,
     setfsgid, setfsuid16, setfsuid, setgid16, setgid, setgroups16, setgroups, sethostname,
     setitimer, set_mempolicy, setns, setpgid, setpriority, setregid16, setregid,
@@ -50,14 +50,19 @@ pub use ::syscall::common::{
     signalfd4, signalfd, signal, sigpending, sigprocmask, socketcall, socket, socketpair,
     splice, ssetmask, stat64, stat, statfs64, statfs, stime, swapoff, swapon, symlinkat,
     symlink, sync, sync_file_range2, sync_file_range, syncfs, sysctl, sysfs, sysinfo,
-    syslog, tee, tgkill, timer_create, timer_delete, timerfd_create, timerfd_gettime,
+    syslog, tee, tgkill, timer_delete, timerfd_create, timerfd_gettime,
     timerfd_settime, timer_getoverrun, timer_gettime, timer_settime, times, time, tkill,
     truncate64, truncate, umask, umount, uname, unlinkat, unlink, unshare, uselib, ustat,
-    utime, utimensat, utimes, vfork, vhangup, vmsplice, wait4, waitid, waitpid, write,
+    utime, utimensat, utimes, vfork, vhangup, vmsplice, wait4, waitpid, write,
     writev,
 };
 
 use cty::{
+    c_uint, k_int, k_long, k_ulong, user_desc,
+};
+
+use cty::{
+    __NR_iopl, __NR_set_thread_area, __NR_get_thread_area, __NR_mmap,
 };
 
 #[cfg(target_pointer_width = "32")]
@@ -69,6 +74,8 @@ mod abi;
 mod abi;
 
 mod common {
+    use ::syscall::arch::abi::{SCT};
+
     #[inline(always)]
     pub unsafe fn syscall0(n: SCT) -> SCT {
         let mut ret : SCT;
@@ -159,12 +166,4 @@ pub unsafe fn get_thread_area(u_info: *mut user_desc) -> k_int {
 pub unsafe fn mmap(addr: k_ulong, len: k_ulong, prot: k_ulong, flags: k_ulong,
                    fd: k_ulong, off: k_ulong) -> k_long {
     call!(__NR_mmap, addr, len, prot, flags, fd, off) as k_long
-}
-
-pub unsafe fn vm86old(v86: *mut vm86_struct) -> k_int {
-    call!(__NR_vm86old, v86) as k_int
-}
-
-pub unsafe fn vm86(cmd: k_ulong, arg: k_ulong) -> k_int {
-    call!(__NR_vm86, cmd, arg) as k_int
 }

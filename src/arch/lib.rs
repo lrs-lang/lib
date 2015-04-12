@@ -4,8 +4,9 @@
 
 #![crate_name = "linux_arch"]
 #![crate_type = "lib"]
-#![feature(asm)]
-#![allow(trivial_numeric_casts, trivial_casts, non_upper_case_globals, dead_code)]
+#![feature(asm, negate_unsigned)]
+#![allow(trivial_numeric_casts, trivial_casts, non_upper_case_globals, dead_code,
+         raw_pointer_derive, non_snake_case, overflowing_literals)]
 
 pub mod cty;
 pub mod syscall;

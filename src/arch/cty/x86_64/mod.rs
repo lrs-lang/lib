@@ -96,6 +96,10 @@ pub use ::cty::gen::{
 };
 
 pub use ::cty::gen::{
+    _NSIG_BPW, _NSIG_WORDS,
+};
+
+pub use ::cty::gen::{
     old_sigset_t,
 };
 
@@ -156,6 +160,23 @@ pub use ::cty::gen::{
     TIOCM_LOOP,
 };
 
+pub use ::cty::gen::{
+    POLLIN, POLLPRI, POLLOUT, POLLERR, POLLHUP, POLLNVAL, POLLRDNORM, POLLRDBAND,
+    POLLWRNORM, POLLWRBAND, POLLMSG, POLLREMOVE, POLLRDHUP, POLLFREE, POLL_BUSY_LOOP,
+    pollfd,
+};
+
+pub use ::cty::gen::{
+    RLIMIT_CPU, RLIMIT_FSIZE, RLIMIT_DATA, RLIMIT_STACK, RLIMIT_CORE, RLIMIT_RSS,
+    RLIMIT_NPROC, RLIMIT_NOFILE, RLIMIT_MEMLOCK, RLIMIT_AS, RLIMIT_LOCKS,
+    RLIMIT_SIGPENDING, RLIMIT_MSGQUEUE, RLIMIT_NICE, RLIMIT_RTPRIO, RLIMIT_RTTIME,
+    RLIM_NLIMITS, RLIM_INFINITY,
+};
+
+pub use ::cty::gen::{
+    shminfo64,
+};
+
 pub use self::abi::{
     __kernel_old_uid_t, __kernel_old_gid_t, __kernel_old_dev_t, __kernel_long_t,
     __kernel_ulong_t, c_long, c_ulong,
@@ -213,6 +234,26 @@ pub type __kernel_size_t    = __kernel_ulong_t;
 pub type __kernel_ssize_t   = __kernel_long_t;
 pub type __kernel_ptrdiff_t = __kernel_long_t;
 
+// bitfield manipulation
+
+pub fn bf32_get(f: u32, start: usize, width: usize) -> u32 {
+    (f >> start) & ((1 << width) - 1)
+}
+
+pub fn bf32_set(f: u32, start: usize, width: usize, val: u32) -> u32 {
+    let mask = (1 << width) - 1;
+    (f & !(mask << start)) | ((val & mask) << start)
+}
+
+pub fn bf64_get(f: u64, start: usize, width: usize) -> u64 {
+    (f >> start) & ((1 << width) - 1)
+}
+
+pub fn bf64_set(f: u64, start: usize, width: usize, val: u64) -> u64 {
+    let mask = (1 << width) - 1;
+    (f & !(mask << start)) | ((val & mask) << start)
+}
+
 // stat.h
 
 #[repr(C)]
@@ -264,6 +305,23 @@ pub type __statfs_word = __kernel_long_t;
 pub type __fsword_t = __statfs_word;
 pub type fsblkcnt_t = __statfs_word;
 
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+pub struct statfs64 {
+    pub f_type:     __statfs_word,
+    pub f_bsize:    __statfs_word,
+    pub f_blocks:   __u64,
+    pub f_bfree:    __u64,
+    pub f_bavail:   __u64,
+    pub f_files:    __u64,
+    pub f_ffree:    __u64,
+    pub f_fsid:     __kernel_fsid_t,
+    pub f_namelen:  __statfs_word,
+    pub f_frsize:   __statfs_word,
+    pub f_flags:    __statfs_word,
+    pub f_spare: [__statfs_word; 4],
+}
+
 // eventpoll.h
 
 #[repr(C, packed)]
@@ -275,7 +333,8 @@ pub struct epoll_event {
 
 // signal.h
 
-pub const NSIG : usize = 32;
+pub const _NSIG : usize = 32;
+pub const NSIG : usize = _NSIG;
 
 pub type sigset_t = c_ulong;
 
@@ -327,13 +386,14 @@ pub const SA_ONESHOT   : c_int = SA_RESETHAND;
 pub const SA_RESTORER  : c_int = 0x04000000;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy)]
 pub struct sigaction {
 	pub sa_handler: __sighandler_t,
 	pub sa_flags: c_ulong,
 	pub sa_restorer: __sigrestore_t,
 	pub sa_mask: sigset_t,
 }
+impl Clone for sigaction { fn clone(&self) -> sigaction { *self } }
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
@@ -724,8 +784,6 @@ impl ::cty::bpf_insn {
 }
 
 // msgbuf.h
-//
-// This belongs in gen but needs CTFE
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
@@ -743,163 +801,75 @@ pub struct msqid64_ds {
 	pub __unused5:  __kernel_ulong_t,
 }
 
-// perf_event.h
+// sembuf.h
 
-// "systems language"
-impl ::cty::perf_event_attr {
-    pub fn sample_period(&self) -> __u64 { self.__union_one }
-    pub fn set_sample_period(&self, val: __u64) { self.__union_one = val }
-
-    pub fn sample_freq(&self) -> __u64 { self.__union_one }
-    pub fn set_sample_freq(&self, val: __u64) { self.__union_one = val }
-
-    pub fn disabled                 (&self) -> bool { (self.perf_flags >> 0) & 1 != 0 }
-    pub fn inherit                  (&self) -> bool { (self.perf_flags >> 1) & 1 != 0 }
-    pub fn pinned                   (&self) -> bool { (self.perf_flags >> 2) & 1 != 0 }
-    pub fn exclusive                (&self) -> bool { (self.perf_flags >> 3) & 1 != 0 }
-    pub fn exclude_user             (&self) -> bool { (self.perf_flags >> 4) & 1 != 0 }
-    pub fn exclude_kernel           (&self) -> bool { (self.perf_flags >> 5) & 1 != 0 }
-    pub fn exclude_hv               (&self) -> bool { (self.perf_flags >> 6) & 1 != 0 }
-    pub fn exclude_idle             (&self) -> bool { (self.perf_flags >> 7) & 1 != 0 }
-    pub fn mmap                     (&self) -> bool { (self.perf_flags >> 8) & 1 != 0 }
-    pub fn comm                     (&self) -> bool { (self.perf_flags >> 9) & 1 != 0 }
-    pub fn freq                     (&self) -> bool { (self.perf_flags >> 10) & 1 != 0 }
-    pub fn inherit_stat             (&self) -> bool { (self.perf_flags >> 11) & 1 != 0 }
-    pub fn enable_on_exec           (&self) -> bool { (self.perf_flags >> 12) & 1 != 0 }
-    pub fn task                     (&self) -> bool { (self.perf_flags >> 13) & 1 != 0 }
-    pub fn watermark                (&self) -> bool { (self.perf_flags >> 14) & 1 != 0 }
-    pub fn precise_ip               (&self) -> u64  { (self.perf_flags >> 15) & 3 }
-    pub fn mmap_data                (&self) -> bool { (self.perf_flags >> 17) & 1 != 0 }
-    pub fn sample_id_all            (&self) -> bool { (self.perf_flags >> 18) & 1 != 0 }
-    pub fn exclude_host             (&self) -> bool { (self.perf_flags >> 19) & 1 != 0 }
-    pub fn exclude_guest            (&self) -> bool { (self.perf_flags >> 20) & 1 != 0 }
-    pub fn exclude_callchain_kernel (&self) -> bool { (self.perf_flags >> 21) & 1 != 0 }
-    pub fn exclude_callchain_user   (&self) -> bool { (self.perf_flags >> 22) & 1 != 0 }
-    pub fn mmap2                    (&self) -> bool { (self.perf_flags >> 23) & 1 != 0 }
-    pub fn comm_exec                (&self) -> bool { (self.perf_flags >> 24) & 1 != 0 }
-
-    pub fn set_disabled                 (&mut self, val: bool) { self.set_flag(0, val) }
-    pub fn set_inherit                  (&mut self, val: bool) { self.set_flag(1, val) }
-    pub fn set_pinned                   (&mut self, val: bool) { self.set_flag(2, val) }
-    pub fn set_exclusive                (&mut self, val: bool) { self.set_flag(3, val) }
-    pub fn set_exclude_user             (&mut self, val: bool) { self.set_flag(4, val) }
-    pub fn set_exclude_kernel           (&mut self, val: bool) { self.set_flag(5, val) }
-    pub fn set_exclude_hv               (&mut self, val: bool) { self.set_flag(6, val) }
-    pub fn set_exclude_idle             (&mut self, val: bool) { self.set_flag(7, val) }
-    pub fn set_mmap                     (&mut self, val: bool) { self.set_flag(8, val) }
-    pub fn set_comm                     (&mut self, val: bool) { self.set_flag(9, val) }
-    pub fn set_freq                     (&mut self, val: bool) { self.set_flag(10, val) }
-    pub fn set_inherit_stat             (&mut self, val: bool) { self.set_flag(11, val) }
-    pub fn set_enable_on_exec           (&mut self, val: bool) { self.set_flag(12, val) }
-    pub fn set_task                     (&mut self, val: bool) { self.set_flag(13, val) }
-    pub fn set_watermark                (&mut self, val: bool) { self.set_flag(14, val) }
-    pub fn set_precise_ip               (&mut self, val: u64 ) {
-        let flag = 3 << 15;
-        let val = (val & 3) << 15;
-        self.perf_flags = (self.perf_flags & !flag) | val;
-    }
-    pub fn set_mmap_data                (&mut self, val: bool) { self.set_flag(17, val) }
-    pub fn set_sample_id_all            (&mut self, val: bool) { self.set_flag(18, val) }
-    pub fn set_exclude_host             (&mut self, val: bool) { self.set_flag(19, val) }
-    pub fn set_exclude_guest            (&mut self, val: bool) { self.set_flag(20, val) }
-    pub fn set_exclude_callchain_kernel (&mut self, val: bool) { self.set_flag(21, val) }
-    pub fn set_exclude_callchain_user   (&mut self, val: bool) { self.set_flag(22, val) }
-    pub fn set_mmap2                    (&mut self, val: bool) { self.set_flag(23, val) }
-    pub fn set_comm_exec                (&mut self, val: bool) { self.set_flag(24, val) }
-
-    fn set_flag(&mut self, pos: u64, val: bool) {
-        let flag = 1 << pos;
-        self.perf_flags = (self.perf_flags & !flag) | (flag * val as u64);
-    }
-
-    pub fn wakeup_events(&self) -> __u32 { self.__union_two }
-    pub fn set_wakeup_events(&self, val: __u32) { self.__union_two = val }
-
-    pub fn wakeup_watermark(&self) -> __u32 { self.__union_two }
-    pub fn set_wakeup_watermark(&self, val: __u32) { self.__union_two = val }
-
-    pub fn bp_addr(&self) -> __u64 { self.__union_three }
-    pub fn set_bp_addr(&self, val: __u64) { self.__union_three = val }
-
-    pub fn config1(&self) -> __u64 { self.__union_three }
-    pub fn set_config1(&self, val: __u64) { self.__union_three = val }
-
-    pub fn bp_len(&self) -> __u64 { self.__union_four }
-    pub fn set_bp_len(&self, val: __u64) { self.__union_four = val }
-
-    pub fn config2(&self) -> __u64 { self.__union_four }
-    pub fn set_config2(&self, val: __u64) { self.__union_four = val }
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+pub struct semid64_ds {
+	pub sem_perm:  ipc64_perm,
+	pub sem_otime: __kernel_time_t,
+	pub __unused1: __kernel_ulong_t,
+	pub sem_ctime: __kernel_time_t,
+	pub __unused2: __kernel_ulong_t,
+	pub sem_nsems: __kernel_ulong_t,
+	pub __unused3: __kernel_ulong_t,
+	pub __unused4: __kernel_ulong_t,
 }
 
-impl ::cty::perf_event_mmap_page {
-    pub fn capabilities(&self) -> __u64 { self.__union_one }
-    pub fn set_capabilities(&self, val: __u64) { self.__union_one = val }
+// shmbuf.h
 
-    pub fn cap_bit0               (&self) -> bool { (self.__union_one >> 0) & 1 != 0 }
-    pub fn cap_bit0_is_deprecated (&self) -> bool { (self.__union_one >> 1) & 1 != 0 }
-    pub fn cap_user_rdpmc         (&self) -> bool { (self.__union_one >> 2) & 1 != 0 }
-    pub fn cap_user_time          (&self) -> bool { (self.__union_one >> 3) & 1 != 0 }
-    pub fn cap_user_time_zero     (&self) -> bool { (self.__union_one >> 4) & 1 != 0 }
-
-    pub fn set_cap_bit0               (&mut self, val: bool) { self.set_flag(0, val) }
-    pub fn set_cap_bit0_is_deprecated (&mut self, val: bool) { self.set_flag(1, val) }
-    pub fn set_cap_user_rdpmc         (&mut self, val: bool) { self.set_flag(2, val) }
-    pub fn set_cap_user_time          (&mut self, val: bool) { self.set_flag(3, val) }
-    pub fn set_cap_user_time_zero     (&mut self, val: bool) { self.set_flag(4, val) }
-
-    fn set_flag(&mut self, pos: u64, val: bool) {
-        let flag = 1 << pos;
-        self.__union_one = (self.__union_one & !flag) | (flag * val as u64);
-    }
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+pub struct shmid64_ds {
+    pub shm_perm:   ipc64_perm,
+    pub shm_segsz:  __kernel_size_t, // XXX: was: size_t
+    pub shm_atime:  __kernel_time_t,
+    pub shm_dtime:  __kernel_time_t,
+    pub shm_ctime:  __kernel_time_t,
+    pub shm_cpid:   __kernel_pid_t,
+    pub shm_lpid:   __kernel_pid_t,
+    pub shm_nattch: __kernel_ulong_t,
+    pub __unused4:  __kernel_ulong_t,
+    pub __unused5:  __kernel_ulong_t,
 }
 
-impl ::cty::perf_mem_data_src {
-    pub fn mem_op(&self) -> __u64 { self.val & 0b11111 }
-    pub fn mem_lvl(&self) -> __u64 { (self.val >> 5) & 0b1111_11111_11111 }
-    pub fn mem_snoop(&self) -> __u64 { (self.val >> (5 + 14)) & 0b11111 }
-    pub fn mem_lock(&self) -> __u64 { (self.val >> (5 + 14 + 5)) & 0b11 }
-    pub fn mem_dtlb(&self) -> __u64 { (self.val >> (5 + 14 + 5 + 2)) & 0b11_11111 }
+// x86_64 specific:
 
-    pub fn set_mem_op    (&mut self, val: __u64) {
-        let flag = 0b11111 << 0;
-        let val = (val & 0b11111) << 0;
-        self.val = (self.val & !flag) | val;
-    }
-    pub fn set_mem_lvl   (&mut self, val: __u64) {
-        let flag = 0b1111_11111_11111 < 5;
-        let val = (val & 0b1111_11111_11111) << 5;
-        self.val = (self.val & !flag) | val;
-    }
-    pub fn set_mem_snoop (&mut self, val: __u64) {
-        let flag = 0b11111 < (5 + 14);
-        let val = (val & 0b11111) << (5 + 14);
-        self.val = (self.val & !flag) | val;
-    }
-    pub fn set_mem_lock  (&mut self, val: __u64) {
-        let flag = 0b11 < (5 + 14 + 5);
-        let val = (val & 0b11) << (5 + 14 + 5);
-        self.val = (self.val & !flag) | val;
-    }
-    pub fn set_mem_dtlb  (&mut self, val: __u64) {
-        let flag = 0b11_11111 < (5 + 14 + 5 + 2);
-        let val = (val & 0b11) << (5 + 14 + 5 + 2);
-        self.val = (self.val & !flag) | val;
-    }
+// ldt.h
+
+pub const LDT_ENTRIES    : c_int = 8192;
+pub const LDT_ENTRY_SIZE : c_int = 8;
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+pub struct user_desc {
+	pub entry_number: c_uint,
+	pub base_addr:    c_uint,
+	pub limit:        c_uint,
+	//unsigned int seg_32bit:1;
+	//unsigned int contents:2;
+	//unsigned int read_exec_only:1;
+	//unsigned int limit_in_pages:1;
+	//unsigned int seg_not_present:1;
+	//unsigned int useable:1;
+	//unsigned int lm:1;
+    __bitfield_one: c_uint,
 }
 
-impl ::cty::perf_branch_entry {
-    pub fn mispred   (&self) -> bool { (self.__bitfield_one >> 0) & 1 != 0 }
-    pub fn predicted (&self) -> bool { (self.__bitfield_one >> 1) & 1 != 0 }
-    pub fn in_tx     (&self) -> bool { (self.__bitfield_one >> 2) & 1 != 0 }
-    pub fn abort     (&self) -> bool { (self.__bitfield_one >> 3) & 1 != 0 }
+impl user_desc {
+    pub fn seg_32bit       (&self) -> bool { bf32_get(self.__bitfield_one, 0, 1) != 0 }
+    pub fn contents        (&self) -> c_uint { bf32_get(self.__bitfield_one, 1, 2) }
+    pub fn read_exec_only  (&self) -> bool { bf32_get(self.__bitfield_one, 3, 1) != 0 }
+    pub fn limit_in_pages  (&self) -> bool { bf32_get(self.__bitfield_one, 4, 1) != 0 }
+    pub fn seg_not_present (&self) -> bool { bf32_get(self.__bitfield_one, 5, 1) != 0 }
+    pub fn useable         (&self) -> bool { bf32_get(self.__bitfield_one, 6, 1) != 0 }
+    pub fn lm              (&self) -> bool { bf32_get(self.__bitfield_one, 7, 1) != 0 }
 
-    pub fn set_mispred   (&mut self, val: bool) { self.set_flag(0, val) }
-    pub fn set_predicted (&mut self, val: bool) { self.set_flag(1, val) }
-    pub fn set_in_tx     (&mut self, val: bool) { self.set_flag(2, val) }
-    pub fn set_abort     (&mut self, val: bool) { self.set_flag(3, val) }
-
-    fn set_flag(&mut self, pos: u64, val: bool) {
-        let flag = 1 << pos;
-        self.__bitfield_one = (self.__bitfield_one & !flag) | (flag * val as u64);
-    }
+    pub fn set_seg_32bit       (&mut self, val: bool) { self.__bitfield_one = bf32_set(self.__bitfield_one, 0, 1, val as c_uint) }
+    pub fn set_contents        (&mut self, val: c_uint) { self.__bitfield_one = bf32_set(self.__bitfield_one, 1, 2, val) }
+    pub fn set_read_exec_only  (&mut self, val: bool) { self.__bitfield_one = bf32_set(self.__bitfield_one, 3, 1, val as c_uint) }
+    pub fn set_limit_in_pages  (&mut self, val: bool) { self.__bitfield_one = bf32_set(self.__bitfield_one, 4, 1, val as c_uint) }
+    pub fn set_seg_not_present (&mut self, val: bool) { self.__bitfield_one = bf32_set(self.__bitfield_one, 5, 1, val as c_uint) }
+    pub fn set_useable         (&mut self, val: bool) { self.__bitfield_one = bf32_set(self.__bitfield_one, 6, 1, val as c_uint) }
+    pub fn set_lm              (&mut self, val: bool) { self.__bitfield_one = bf32_set(self.__bitfield_one, 7, 1, val as c_uint) }
 }

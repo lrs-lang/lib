@@ -15,31 +15,32 @@ pub unsafe fn syscall0(n: SCT) -> SCT {
 }
 
 #[inline(always)]
-pub unsafe fn syscall1(n: SCT) -> SCT {
+pub unsafe fn syscall1(n: SCT, a1: SCT) -> SCT {
     ::syscall::arch::common::syscall1(n + __X32_SYSCALL_BIT, a1)
 }
 
 #[inline(always)]
-pub unsafe fn syscall2(n: SCT) -> SCT {
+pub unsafe fn syscall2(n: SCT, a1: SCT, a2: SCT) -> SCT {
     ::syscall::arch::common::syscall2(n + __X32_SYSCALL_BIT, a1, a2)
 }
 
 #[inline(always)]
-pub unsafe fn syscall3(n: SCT) -> SCT {
+pub unsafe fn syscall3(n: SCT, a1: SCT, a2: SCT, a3: SCT) -> SCT {
     ::syscall::arch::common::syscall3(n + __X32_SYSCALL_BIT, a1, a2, a3)
 }
 
 #[inline(always)]
-pub unsafe fn syscall4(n: SCT) -> SCT {
+pub unsafe fn syscall4(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT) -> SCT {
     ::syscall::arch::common::syscall4(n + __X32_SYSCALL_BIT, a1, a2, a3, a4)
 }
 
 #[inline(always)]
-pub unsafe fn syscall5(n: SCT) -> SCT {
+pub unsafe fn syscall5(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT, a5: SCT) -> SCT {
     ::syscall::arch::common::syscall5(n + __X32_SYSCALL_BIT, a1, a2, a3, a4, a5)
 }
 
 #[inline(always)]
-pub unsafe fn syscall6(n: SCT) -> SCT {
+pub unsafe fn syscall6(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT, a5: SCT,
+                       a6: SCT) -> SCT {
     ::syscall::arch::common::syscall6(n + __X32_SYSCALL_BIT, a1, a2, a3, a4, a5, a6)
 }

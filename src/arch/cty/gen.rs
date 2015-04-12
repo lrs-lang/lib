@@ -343,7 +343,7 @@ pub struct sigset_t {
     pub sig: [::cty::c_ulong; ::cty::_NSIG_WORDS],
 }
 
-pub type old_sigset_t = c_ulong;
+pub type old_sigset_t = ::cty::c_ulong;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
@@ -508,7 +508,7 @@ pub struct ipc64_perm {
     pub cuid: ::cty::__kernel_uid32_t,
     pub cgid: ::cty::__kernel_gid32_t,
     pub mode: ::cty::__kernel_mode_t,
-    pub __pad1: [::cty::uchar; 4 - ::cty::BYTES_PER_KERNEL_MODE_T],
+    pub __pad1: [::cty::c_uchar; 4 - ::cty::BYTES_PER_KERNEL_MODE_T],
     pub seq:       ::cty::c_ushort,
     pub __pad2:    ::cty::c_ushort,
     pub __unused1: ::cty::__kernel_ulong_t,
@@ -537,7 +537,7 @@ pub const _IOC_WRITE : ::cty::c_uint = 1;
 pub const _IOC_READ  : ::cty::c_uint = 2;
 
 pub fn _IOC(dir: ::cty::c_uint, ty: ::cty::c_uint, nr: ::cty::c_uint,
-            size: ::cty::c_uint) -> c_uint {
+            size: ::cty::c_uint) -> ::cty::c_uint {
 	(dir << ::cty::_IOC_DIRSHIFT) | (ty   << ::cty::_IOC_TYPESHIFT) |
 	(nr  << ::cty::_IOC_NRSHIFT)  | (size << ::cty::_IOC_SIZESHIFT)
 }
@@ -577,7 +577,7 @@ pub fn _IOC_TYPE(nr: ::cty::c_uint) -> ::cty::c_uint { (nr >> ::cty::_IOC_TYPESH
 pub fn _IOC_NR(nr:   ::cty::c_uint) -> ::cty::c_uint { (nr >> ::cty::_IOC_NRSHIFT)   & ::cty::_IOC_NRMASK   }
 pub fn _IOC_SIZE(nr: ::cty::c_uint) -> ::cty::c_uint { (nr >> ::cty::_IOC_SIZESHIFT) & ::cty::_IOC_SIZEMASK }
 
-pub const IOC_IN        : c_uint = _IOC_WRITE             << _IOC_DIRSHIFT;
+pub const IOC_IN        : ::cty::c_uint = _IOC_WRITE             << _IOC_DIRSHIFT;
 pub const IOC_OUT       : ::cty::c_uint = _IOC_READ              << _IOC_DIRSHIFT;
 pub const IOC_INOUT     : ::cty::c_uint = (_IOC_WRITE|_IOC_READ) << _IOC_DIRSHIFT;
 pub const IOCSIZE_MASK  : ::cty::c_uint = _IOC_SIZEMASK          << _IOC_SIZESHIFT;
@@ -902,3 +902,66 @@ pub const TIOCM_RI   : ::cty::c_uint = ::cty::TIOCM_RNG;
 pub const TIOCM_OUT1 : ::cty::c_uint = 0x2000;
 pub const TIOCM_OUT2 : ::cty::c_uint = 0x4000;
 pub const TIOCM_LOOP : ::cty::c_uint = 0x8000;
+
+// poll.h
+
+pub const POLLIN         : ::cty::c_int = 0x0001;
+pub const POLLPRI        : ::cty::c_int = 0x0002;
+pub const POLLOUT        : ::cty::c_int = 0x0004;
+pub const POLLERR        : ::cty::c_int = 0x0008;
+pub const POLLHUP        : ::cty::c_int = 0x0010;
+pub const POLLNVAL       : ::cty::c_int = 0x0020;
+pub const POLLRDNORM     : ::cty::c_int = 0x0040;
+pub const POLLRDBAND     : ::cty::c_int = 0x0080;
+pub const POLLWRNORM     : ::cty::c_int = 0x0100;
+pub const POLLWRBAND     : ::cty::c_int = 0x0200;
+pub const POLLMSG        : ::cty::c_int = 0x0400;
+pub const POLLREMOVE     : ::cty::c_int = 0x1000;
+pub const POLLRDHUP      : ::cty::c_int = 0x2000;
+pub const POLLFREE       : ::cty::c_int = 0x4000;
+pub const POLL_BUSY_LOOP : ::cty::c_int = 0x8000;
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+pub struct pollfd {
+    pub fd:      ::cty::c_int,
+    pub events:  ::cty::c_short,
+    pub revents: ::cty::c_short,
+}
+
+// resource.h
+
+pub const RLIMIT_CPU        : ::cty::c_ulong = 0;
+pub const RLIMIT_FSIZE      : ::cty::c_ulong = 1;
+pub const RLIMIT_DATA       : ::cty::c_ulong = 2;
+pub const RLIMIT_STACK      : ::cty::c_ulong = 3;
+pub const RLIMIT_CORE       : ::cty::c_ulong = 4;
+pub const RLIMIT_RSS        : ::cty::c_ulong = 5;
+pub const RLIMIT_NPROC      : ::cty::c_ulong = 6;
+pub const RLIMIT_NOFILE     : ::cty::c_ulong = 7;
+pub const RLIMIT_MEMLOCK    : ::cty::c_ulong = 8;
+pub const RLIMIT_AS         : ::cty::c_ulong = 9;
+pub const RLIMIT_LOCKS      : ::cty::c_ulong = 10;
+pub const RLIMIT_SIGPENDING : ::cty::c_ulong = 11;
+pub const RLIMIT_MSGQUEUE   : ::cty::c_ulong = 12;
+pub const RLIMIT_NICE       : ::cty::c_ulong = 13;
+pub const RLIMIT_RTPRIO     : ::cty::c_ulong = 14;
+pub const RLIMIT_RTTIME     : ::cty::c_ulong = 15;
+pub const RLIM_NLIMITS      : ::cty::c_ulong = 16;
+pub const RLIM_INFINITY     : ::cty::c_ulong = !0;
+
+// shmbuf.h
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+pub struct shminfo64 {
+    pub shmmax:    ::cty::__kernel_ulong_t,
+    pub shmmin:    ::cty::__kernel_ulong_t,
+    pub shmmni:    ::cty::__kernel_ulong_t,
+    pub shmseg:    ::cty::__kernel_ulong_t,
+    pub shmall:    ::cty::__kernel_ulong_t,
+    pub __unused1: ::cty::__kernel_ulong_t,
+    pub __unused2: ::cty::__kernel_ulong_t,
+    pub __unused3: ::cty::__kernel_ulong_t,
+    pub __unused4: ::cty::__kernel_ulong_t,
+}

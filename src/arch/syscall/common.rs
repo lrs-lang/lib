@@ -8,13 +8,13 @@ use cty::{
     sockaddr, timespec, timex, uid_t, umode_t, c_char, aio_context_t, clock_t,
     fd_set, file_handle, getcpu_cache, iocb, io_event, iovec, itimerspec, itimerval,
     kexec_segment, key_t, k_long, linux_dirent, linux_dirent64, mmap_arg_struct,
-    mmsghdr, mode_t, mq_attr, mqd_t, msgbuf, msqid_ds, new_utsname, off_t,
+    mmsghdr, mode_t, mq_attr, mqd_t, msgbuf, msqid64_ds, new_utsname, off_t,
     __old_kernel_stat, old_linux_dirent, oldold_utsname, old_sigaction, old_sigset_t,
     old_utsname, perf_event_attr, pid_t, pollfd, qid_t, rlimit, rlimit64,
     robust_list_head, rusage, __s32, sched_attr, sched_param, sel_arg_struct, sembuf,
-    shmid_ds, sigaction, sigevent, __sighandler_t, sighandler_t, siginfo, siginfo_t,
+    shmid64_ds, sigaction,
     ssize_t, stack_t, stat, stat64, statfs, statfs64, __sysctl_args, sysinfo, timer_t,
-    time_t, timeval, timezone, tms, __u64, user_msghdr, ustat, utimbuf,
+    time_t, timeval, timezone, tms, __u64, user_msghdr, ustat, utimbuf, IPC_64, k_uchar,
 };
 
 use cty::{
@@ -48,7 +48,7 @@ use cty::{
     __NR_lsetxattr, __NR_lstat64, __NR_lstat, __NR_madvise, __NR_mbind, __NR_memfd_create,
     __NR_migrate_pages, __NR_mincore, __NR_mkdirat, __NR_mkdir, __NR_mknodat, __NR_mknod,
     __NR_mlockall, __NR_mlock, __NR_mmap_pgoff, __NR_mount, __NR_move_pages,
-    __NR_mprotect, __NR_mq_getsetattr, __NR_mq_notify, __NR_mq_open, __NR_mq_timedreceive,
+    __NR_mprotect, __NR_mq_getsetattr, __NR_mq_open, __NR_mq_timedreceive,
     __NR_mq_timedsend, __NR_mq_unlink, __NR_mremap, __NR_msgctl, __NR_msgget, __NR_msgrcv,
     __NR_msgsnd, __NR_msync, __NR_munlockall, __NR_munlock, __NR_munmap,
     __NR_name_to_handle_at, __NR_nanosleep, __NR_newfstatat, __NR_newfstat, __NR_newlstat,
@@ -62,13 +62,13 @@ use cty::{
     __NR_readlinkat, __NR_readlink, __NR_readv, __NR_reboot, __NR_recv, __NR_recvfrom,
     __NR_recvmmsg, __NR_recvmsg, __NR_remap_file_pages, __NR_removexattr, __NR_renameat2,
     __NR_renameat, __NR_rename, __NR_request_key, __NR_restart_syscall, __NR_rmdir,
-    __NR_rt_sigaction, __NR_rt_sigpending, __NR_rt_sigprocmask, __NR_rt_sigqueueinfo,
-    __NR_rt_sigsuspend, __NR_rt_sigtimedwait, __NR_rt_tgsigqueueinfo,
+    __NR_rt_sigaction, __NR_rt_sigpending, __NR_rt_sigprocmask,
+    __NR_rt_sigsuspend,
     __NR_sched_getaffinity, __NR_sched_getattr, __NR_sched_getparam,
     __NR_sched_get_priority_max, __NR_sched_get_priority_min, __NR_sched_getscheduler,
     __NR_sched_rr_get_interval, __NR_sched_setaffinity, __NR_sched_setattr,
     __NR_sched_setparam, __NR_sched_setscheduler, __NR_sched_yield, __NR_seccomp,
-    __NR_select, __NR_semctl, __NR_semget, __NR_semop, __NR_semtimedop, __NR_send,
+    __NR_select,__NR_semget, __NR_semop, __NR_semtimedop, __NR_send,
     __NR_sendfile64, __NR_sendfile, __NR_sendmmsg, __NR_sendmsg, __NR_sendto,
     __NR_setdomainname, __NR_setfsgid16, __NR_setfsgid, __NR_setfsuid16, __NR_setfsuid,
     __NR_setgid16, __NR_setgid, __NR_setgroups16, __NR_setgroups, __NR_sethostname,
@@ -83,12 +83,12 @@ use cty::{
     __NR_statfs64, __NR_statfs, __NR_stime, __NR_swapoff, __NR_swapon, __NR_symlinkat,
     __NR_symlink, __NR_sync, __NR_sync_file_range2, __NR_sync_file_range, __NR_syncfs,
     __NR_sysctl, __NR_sysfs, __NR_sysinfo, __NR_syslog, __NR_tee, __NR_tgkill,
-    __NR_timer_create, __NR_timer_delete, __NR_timerfd_create, __NR_timerfd_gettime,
+    __NR_timer_delete, __NR_timerfd_create, __NR_timerfd_gettime,
     __NR_timerfd_settime, __NR_timer_getoverrun, __NR_timer_gettime, __NR_timer_settime,
     __NR_times, __NR_time, __NR_tkill, __NR_truncate64, __NR_truncate, __NR_umask,
     __NR_umount, __NR_uname, __NR_unlinkat, __NR_unlink, __NR_unshare, __NR_uselib,
     __NR_ustat, __NR_utime, __NR_utimensat, __NR_utimes, __NR_vfork, __NR_vhangup,
-    __NR_vmsplice, __NR_wait4, __NR_waitid, __NR_waitpid, __NR_write, __NR_writev,
+    __NR_vmsplice, __NR_wait4, __NR_waitpid, __NR_write, __NR_writev,
 };
 
 use super::arch::{
@@ -263,11 +263,11 @@ pub unsafe fn execve(filename: *const c_char, argv: *const *const c_char,
 }
 
 pub unsafe fn exit(error_code: k_int) {
-    call!(__NR_exit, error_code)
+    call!(__NR_exit, error_code);
 }
 
 pub unsafe fn exit_group(error_code: k_int) {
-    call!(__NR_exit_group, error_code)
+    call!(__NR_exit_group, error_code);
 }
 
 pub unsafe fn faccessat(dfd: k_int, filename: *const c_char, mode: k_int) -> k_int {
@@ -733,7 +733,7 @@ pub unsafe fn migrate_pages(pid: pid_t, maxnode: k_ulong, old_nodes: *const k_ul
     call!(__NR_migrate_pages, pid, maxnode, old_nodes, new_nodes) as k_long
 }
 
-pub unsafe fn mincore(start: k_ulong, len: size_t, vec: *mut c_uchar) -> k_int {
+pub unsafe fn mincore(start: k_ulong, len: size_t, vec: *mut k_uchar) -> k_int {
     call!(__NR_mincore, start, len, vec) as k_int
 }
 
@@ -787,9 +787,9 @@ pub unsafe fn mq_getsetattr(mqdes: mqd_t, u_mqstat: *const mq_attr,
     call!(__NR_mq_getsetattr, mqdes, u_mqstat, u_omqstat) as k_int
 }
 
-pub unsafe fn mq_notify(mqdes: mqd_t, u_notification: *const sigevent) -> k_int {
-    call!(__NR_mq_notify, mqdes, u_notification) as k_int
-}
+//pub unsafe fn mq_notify(mqdes: mqd_t, u_notification: *const sigevent) -> k_int {
+//    call!(__NR_mq_notify, mqdes, u_notification) as k_int
+//}
 
 pub unsafe fn mq_open(u_name: *const c_char, oflag: k_int, mode: umode_t,
                       u_attr: *mut mq_attr) -> mqd_t {
@@ -817,8 +817,9 @@ pub unsafe fn mremap(addr: k_ulong, old_len: k_ulong, new_len: k_ulong, flags: k
     call!(__NR_mremap, addr, old_len, new_len, flags, new_addr) as *mut c_void
 }
 
-pub unsafe fn msgctl(msqid: k_int, cmd: k_int, buf: *mut msqid_ds) -> k_int {
-    call!(__NR_msgctl, msqid, cmd, buf) as k_int
+// See shmctl comment
+pub unsafe fn msgctl(msqid: k_int, cmd: k_int, buf: *mut msqid64_ds) -> k_int {
+    call!(__NR_msgctl, msqid, cmd | IPC_64, buf) as k_int
 }
 
 pub unsafe fn msgget(key: key_t, msgflg: k_int) -> k_int {
@@ -1025,7 +1026,7 @@ pub unsafe fn quotactl(cmd: k_uint, special: *const c_char, id: qid_t,
 }
 
 pub unsafe fn readahead(fd: k_int, offset: loff_t, count: size_t) -> ssize_t {
-    call!(__NR_readahead, fd, offset, count) as k_int
+    call!(__NR_readahead, fd, offset, count) as ssize_t
 }
 
 pub unsafe fn read(fd: k_uint, buf: *mut c_char, count: size_t) -> ssize_t {
@@ -1120,23 +1121,23 @@ pub unsafe fn rt_sigprocmask(how: k_int, nset: *mut sigset_t, oset: *mut sigset_
     call!(__NR_rt_sigprocmask, how, nset, oset, sigsetsize) as k_int
 }
 
-pub unsafe fn rt_sigqueueinfo(pid: pid_t, sig: k_int, uinfo: *mut siginfo_t) -> k_int {
-    call!(__NR_rt_sigqueueinfo, pid, sig, uinfo) as k_int
-}
+//pub unsafe fn rt_sigqueueinfo(pid: pid_t, sig: k_int, uinfo: *mut siginfo_t) -> k_int {
+//    call!(__NR_rt_sigqueueinfo, pid, sig, uinfo) as k_int
+//}
 
 pub unsafe fn rt_sigsuspend(unewset: *mut sigset_t, sigsetsize: size_t) -> k_int {
     call!(__NR_rt_sigsuspend, unewset, sigsetsize) as k_int
 }
 
-pub unsafe fn rt_sigtimedwait(uthese: *const sigset_t, uinfo: *mut siginfo_t,
-                              uts: *const timespec, sigsetsize: size_t) -> k_int {
-    call!(__NR_rt_sigtimedwait, uthese, uinfo, uts, sigsetsize) as k_int
-}
+//pub unsafe fn rt_sigtimedwait(uthese: *const sigset_t, uinfo: *mut siginfo_t,
+//                              uts: *const timespec, sigsetsize: size_t) -> k_int {
+//    call!(__NR_rt_sigtimedwait, uthese, uinfo, uts, sigsetsize) as k_int
+//}
 
-pub unsafe fn rt_tgsigqueueinfo(tgid: pid_t, pid: pid_t, sig: k_int,
-                                uinfo: *mut siginfo_t) -> k_int {
-    call!(__NR_rt_tgsigqueueinfo, tgid, pid, sig, uinfo) as k_int
-}
+//pub unsafe fn rt_tgsigqueueinfo(tgid: pid_t, pid: pid_t, sig: k_int,
+//                                uinfo: *mut siginfo_t) -> k_int {
+//    call!(__NR_rt_tgsigqueueinfo, tgid, pid, sig, uinfo) as k_int
+//}
 
 pub unsafe fn sched_getaffinity(pid: pid_t, len: k_uint,
                                 user_mask_ptr: *mut k_ulong) -> k_int {
@@ -1199,9 +1200,9 @@ pub unsafe fn select(n: k_int, inp: *mut fd_set, outp: *mut fd_set, exp: *mut fd
     call!(__NR_select, n, inp, outp, exp, tvp) as k_int
 }
 
-pub unsafe fn semctl(semid: k_int, semnum: k_int, cmd: k_int, arg: k_ulong) -> k_int {
-    call!(__NR_semctl, semid, semnum, cmd, arg) as k_int
-}
+//pub unsafe fn semctl(semid: k_int, semnum: k_int, cmd: k_int, arg: k_ulong) -> k_int {
+//    call!(__NR_semctl, semid, semnum, cmd, arg) as k_int
+//}
 
 pub unsafe fn semget(key: key_t, nsems: k_int, semflg: k_int) -> k_int {
     call!(__NR_semget, key, nsems, semflg) as k_int
@@ -1384,8 +1385,11 @@ pub unsafe fn shmat(shmid: k_int, shmaddr: *mut c_char, shmflg: k_int) -> *mut c
     call!(__NR_shmat, shmid, shmaddr, shmflg) as *mut c_void
 }
 
-pub unsafe fn shmctl(shmid: k_int, cmd: k_int, buf: *mut shmid_ds) -> k_int {
-    call!(__NR_shmctl, shmid, cmd, buf) as k_int
+// here the kernel defines shmid_ds instead of shmid64_ds. But shmid_ds is deprecated and
+// glibc and friends will always use shmid64_ds. We have to add the IPC_64 flag to tell
+// the kernel that we're using shmid64_ds.
+pub unsafe fn shmctl(shmid: k_int, cmd: k_int, buf: *mut shmid64_ds) -> k_int {
+    call!(__NR_shmctl, shmid, cmd | IPC_64, buf) as k_int
 }
 
 pub unsafe fn shmdt(shmaddr: *mut c_char) -> k_int {
@@ -1419,8 +1423,8 @@ pub unsafe fn signalfd(ufd: k_int, user_mask: *const sigset_t,
     call!(__NR_signalfd, ufd, user_mask, sizemask) as k_int
 }
 
-pub unsafe fn signal(sig: k_int, handler: __sighandler_t) -> sighandler_t {
-    call!(__NR_signal, sig, handler) as sighandler_t
+pub unsafe fn signal(sig: k_int, handler: usize) -> usize {
+    call!(__NR_signal, sig, handler) as usize
 }
 
 pub unsafe fn sigpending(set: *mut old_sigset_t) -> k_int {
@@ -1544,10 +1548,10 @@ pub unsafe fn tgkill(tgid: pid_t, pid: pid_t, sig: k_int) -> k_int {
     call!(__NR_tgkill, tgid, pid, sig) as k_int
 }
 
-pub unsafe fn timer_create(which_clock: clockid_t, timer_event_spec: *mut sigevent,
-                           created_timer_id: *mut timer_t) -> k_int {
-    call!(__NR_timer_create, which_clock, timer_event_spec, created_timer_id) as k_int
-}
+//pub unsafe fn timer_create(which_clock: clockid_t, timer_event_spec: *mut sigevent,
+//                           created_timer_id: *mut timer_t) -> k_int {
+//    call!(__NR_timer_create, which_clock, timer_event_spec, created_timer_id) as k_int
+//}
 
 pub unsafe fn timer_delete(timer_id: timer_t) -> k_int {
     call!(__NR_timer_delete, timer_id) as k_int
@@ -1663,19 +1667,19 @@ pub unsafe fn wait4(upid: pid_t, stat_addr: *mut k_int, options: k_int,
     call!(__NR_wait4, upid, stat_addr, options, ru) as pid_t
 }
 
-pub unsafe fn waitid(which: k_int, upid: pid_t, infop: *mut siginfo, options: k_int,
-                     ru: *mut rusage) -> k_int {
-    call!(__NR_waitid, which, upid, infop, options, ru) as k_int
-}
+//pub unsafe fn waitid(which: k_int, upid: pid_t, infop: *mut siginfo, options: k_int,
+//                     ru: *mut rusage) -> k_int {
+//    call!(__NR_waitid, which, upid, infop, options, ru) as k_int
+//}
 
 pub unsafe fn waitpid(pid: pid_t, stat_addr: *mut k_int, options: k_int) -> k_int {
     call!(__NR_waitpid, pid, stat_addr, options) as k_int
 }
 
 pub unsafe fn write(fd: k_uint, buf: *const c_char, count: size_t) -> ssize_t {
-    call!(__NR_write, fd, buf, count) as k_int
+    call!(__NR_write, fd, buf, count) as ssize_t
 }
 
 pub unsafe fn writev(fd: k_ulong, vec: *const iovec, vlen: k_ulong) -> ssize_t {
-    call!(__NR_writev, fd, vec, vlen) as k_int
+    call!(__NR_writev, fd, vec, vlen) as ssize_t
 }
