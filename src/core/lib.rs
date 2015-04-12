@@ -7,9 +7,8 @@
 #![feature(std_misc, io, into_cow, core)]
 #![allow(trivial_numeric_casts, trivial_casts)]
 
-extern crate linux_arch as arch;
-
-pub use arch::{cty};
+extern crate linux_cty as cty;
+extern crate linux_syscall as raw_syscall;
 
 // XXX: Maybe move some of these out? core takes a long time to compile right now.
 

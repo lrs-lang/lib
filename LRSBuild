@@ -1,5 +1,6 @@
-obj arch
-obj core       arch
+obj cty
+obj syscall    cty
+obj core       cty syscall
 obj dev        core
 obj fs         core
 obj time_base  core

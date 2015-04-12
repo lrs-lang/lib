@@ -4,26 +4,26 @@
 
 #![allow(non_camel_case_types, raw_pointer_derive)]
 
-pub use ::cty::gen::{
+pub use ::gen::{
     __s8, __u8, __s16, __u16, __s32, __u32, __s64, __u64,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     __kernel_ino_t, __kernel_mode_t, BYTES_PER_KERNEL_MODE_T, __kernel_pid_t,
     __kernel_ipc_pid_t, __kernel_uid_t, __kernel_gid_t, __kernel_suseconds_t,
     __kernel_daddr_t, __kernel_uid32_t, __kernel_gid32_t, 
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     __kernel_fsid_t,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     __kernel_off_t, __kernel_loff_t, __kernel_time_t, __kernel_clock_t, __kernel_timer_t,
     __kernel_clockid_t, __kernel_caddr_t, __kernel_uid16_t, __kernel_gid16_t,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     EPERM, ENOENT, ESRCH, EINTR, EIO, ENXIO, E2BIG, ENOEXEC, EBADF, ECHILD, EAGAIN,
     ENOMEM, EACCES, EFAULT, ENOTBLK, EBUSY, EEXIST, EXDEV, ENODEV, ENOTDIR, EISDIR,
     EINVAL, ENFILE, EMFILE, ENOTTY, ETXTBSY, EFBIG, ENOSPC, ESPIPE, EROFS, EMLINK, EPIPE,
@@ -42,42 +42,42 @@ pub use ::cty::gen::{
     ENOTRECOVERABLE, ERFKILL, EHWPOISON,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     __sighandler_t, __sigrestore_t,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     O_ACCMODE, O_RDONLY, O_WRONLY, O_RDWR, O_CREAT, O_EXCL, O_NOCTTY, O_TRUNC, O_APPEND,
     O_NONBLOCK, O_DSYNC, FASYNC, O_DIRECT, O_LARGEFILE, O_DIRECTORY, O_NOFOLLOW,
     O_NOATIME, O_CLOEXEC, __O_SYNC, O_SYNC, O_PATH, __O_TMPFILE, O_TMPFILE,
     O_TMPFILE_MASK, O_NDELAY,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     F_DUPFD, F_GETFD, F_SETFD, F_GETFL, F_SETFL, F_GETLK, F_SETLK, F_SETLKW, F_SETOWN,
     F_GETOWN, F_SETSIG, F_GETSIG, F_GETLK64, F_SETLK64, F_SETLKW64, F_SETOWN_EX,
     F_GETOWN_EX, F_GETOWNER_UIDS, F_OFD_GETLK, F_OFD_SETLK, F_OFD_SETLKW, F_OWNER_TID,
     F_OWNER_PID, F_OWNER_PGRP,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     f_owner_ex,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     FD_CLOEXEC, F_RDLCK, F_WRLCK, F_UNLCK, F_EXLCK, F_SHLCK, LOCK_SH, LOCK_EX, LOCK_NB,
     LOCK_UN, LOCK_MAND, LOCK_READ, LOCK_WRITE, LOCK_RW, F_LINUX_SPECIFIC_BASE,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     stat64, statfs
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     FIOSETOWN, SIOCSPGRP, FIOGETOWN, SIOCGPGRP, SIOCATMARK, SIOCGSTAMP, SIOCGSTAMPNS,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     SOL_SOCKET, SO_DEBUG, SO_REUSEADDR, SO_TYPE, SO_ERROR, SO_DONTROUTE, SO_BROADCAST,
     SO_SNDBUF, SO_RCVBUF, SO_SNDBUFFORCE, SO_RCVBUFFORCE, SO_KEEPALIVE, SO_OOBINLINE,
     SO_NO_CHECK, SO_PRIORITY, SO_LINGER, SO_BSDCOMPAT, SO_REUSEPORT, SO_PASSCRED,
@@ -91,31 +91,31 @@ pub use ::cty::gen::{
     SO_BUSY_POLL, SO_MAX_PACING_RATE, SO_BPF_EXTENSIONS,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     ipc64_perm,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     _NSIG, _NSIG_BPW, _NSIG_WORDS,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     old_sigset_t,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     _IOC_NRBITS, _IOC_TYPEBITS, _IOC_SIZEBITS, _IOC_DIRBITS, _IOC_NRMASK, _IOC_TYPEMASK,
     _IOC_SIZEMASK, _IOC_DIRMASK, _IOC_NRSHIFT, _IOC_TYPESHIFT, _IOC_SIZESHIFT,
     _IOC_DIRSHIFT, _IOC_NONE, _IOC_WRITE, _IOC_READ,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     _IOC, _IOC_TYPECHECK, _IO, _IOR, _IOW, _IOWR, _IOR_BAD, _IOW_BAD, _IOWR_BAD, _IOC_DIR,
     _IOC_TYPE, _IOC_NR, _IOC_SIZE, IOC_IN, IOC_OUT, IOC_INOUT, IOCSIZE_MASK,
     IOCSIZE_SHIFT,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     TCGETS, TCSETS, TCSETSW, TCSETSF, TCGETA, TCSETA, TCSETAW, TCSETAF, TCSBRK, TCXONC,
     TCFLSH, TIOCEXCL, TIOCNXCL, TIOCSCTTY, TIOCGPGRP, TIOCSPGRP, TIOCOUTQ, TIOCSTI,
     TIOCGWINSZ, TIOCSWINSZ, TIOCMGET, TIOCMBIS, TIOCMBIC, TIOCMSET, TIOCGSOFTCAR,
@@ -129,16 +129,16 @@ pub use ::cty::gen::{
     TIOCPKT_IOCTL, TIOCSER_TEMT,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     TCGETS2, TCSETS2, TCSETSW2, TCSETSF2, TIOCGPTN, TIOCSPTLCK, TIOCGDEV, TIOCSIG,
     TIOCGPKT, TIOCGPTLCK, TIOCGEXCL,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     cc_t, speed_t, tcflag_t, NCCS, termios, termios2, ktermios,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     VINTR, VQUIT, VERASE, VKILL, VEOF, VTIME, VMIN, VSWTC, VSTART, VSTOP, VSUSP, VEOL,
     VREPRINT, VDISCARD, VWERASE, VLNEXT, VEOL2, IGNBRK, BRKINT, IGNPAR, PARMRK, INPCK,
     ISTRIP, INLCR, IGNCR, ICRNL, IUCLC, IXON, IXANY, IXOFF, IMAXBEL, IUTF8, OPOST, OLCUC,
@@ -154,26 +154,26 @@ pub use ::cty::gen::{
     TCSADRAIN, TCSAFLUSH,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     winsize, NCC, termio, TIOCM_LE, TIOCM_DTR, TIOCM_RTS, TIOCM_ST, TIOCM_SR, TIOCM_CTS,
     TIOCM_CAR, TIOCM_RNG, TIOCM_DSR, TIOCM_CD, TIOCM_RI, TIOCM_OUT1, TIOCM_OUT2,
     TIOCM_LOOP,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     POLLIN, POLLPRI, POLLOUT, POLLERR, POLLHUP, POLLNVAL, POLLRDNORM, POLLRDBAND,
     POLLWRNORM, POLLWRBAND, POLLMSG, POLLREMOVE, POLLRDHUP, POLLFREE, POLL_BUSY_LOOP,
     pollfd,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     RLIMIT_CPU, RLIMIT_FSIZE, RLIMIT_DATA, RLIMIT_STACK, RLIMIT_CORE, RLIMIT_RSS,
     RLIMIT_NPROC, RLIMIT_NOFILE, RLIMIT_MEMLOCK, RLIMIT_AS, RLIMIT_LOCKS,
     RLIMIT_SIGPENDING, RLIMIT_MSGQUEUE, RLIMIT_NICE, RLIMIT_RTPRIO, RLIMIT_RTTIME,
     RLIM_NLIMITS, RLIM_INFINITY,
 };
 
-pub use ::cty::gen::{
+pub use ::gen::{
     shminfo64,
 };
 
@@ -410,7 +410,7 @@ impl Clone for sigaction { fn clone(&self) -> sigaction { *self } }
 pub struct sigaltstack {
 	pub ss_sp: *mut c_void,
 	pub ss_flags: c_int,
-	pub ss_size: ::cty::size_t,
+	pub ss_size: ::size_t,
 }
 
 pub type stack_t = sigaltstack;
@@ -785,7 +785,7 @@ pub const __NR_waitpid          : usize = GARBAGE_SYSCALL_NR;
 
 // bpf.h
 
-impl ::cty::bpf_insn {
+impl ::bpf_insn {
     pub fn dst_reg(self) -> u8 { self.reg & 0xF }
     pub fn set_dst_reg(&mut self, val: u8) { self.reg = (self.reg & 0xF0) | (val & 0x0F) }
 

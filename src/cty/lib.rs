@@ -2,7 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![allow(non_camel_case_types)]
+#![crate_name = "linux_cty"]
+#![crate_type = "lib"]
+#![feature(negate_unsigned)]
+#![allow(non_camel_case_types, raw_pointer_derive, overflowing_literals, non_snake_case,
+         non_upper_case_globals, dead_code)]
 
 pub use self::arch::*;
 
@@ -208,11 +212,11 @@ pub const AT_EMPTY_PATH       : c_int = 0x1000;
 
 // bpf_common.h
 
-fn BPF_CLASS (code: u8) -> u8 { code & 0x07 }
-fn BPF_SIZE  (code: u8) -> u8 { code & 0x18 }
-fn BPF_MODE  (code: u8) -> u8 { code & 0xe0 }
-fn BPF_OP    (code: u8) -> u8 { code & 0xf0 }
-fn BPF_SRC   (code: u8) -> u8 { code & 0x08 }
+pub fn BPF_CLASS (code: u8) -> u8 { code & 0x07 }
+pub fn BPF_SIZE  (code: u8) -> u8 { code & 0x18 }
+pub fn BPF_MODE  (code: u8) -> u8 { code & 0xe0 }
+pub fn BPF_OP    (code: u8) -> u8 { code & 0xf0 }
+pub fn BPF_SRC   (code: u8) -> u8 { code & 0x08 }
 
 pub const BPF_LD   : u8 = 0x00;
 pub const BPF_LDX  : u8 = 0x01;
@@ -1241,7 +1245,7 @@ pub struct perf_event_attr {
     pub sample_regs_intr: __u64,
 }
 
-impl ::cty::perf_event_attr {
+impl perf_event_attr {
     pub fn sample_period(&self) -> __u64 { self.__union_one }
     pub fn set_sample_period(&mut self, val: __u64) { self.__union_one = val }
 
@@ -1364,7 +1368,7 @@ pub struct perf_event_mmap_page {
 
 impl Clone for perf_event_mmap_page { fn clone(&self) -> perf_event_mmap_page { *self } }
 
-impl ::cty::perf_event_mmap_page {
+impl perf_event_mmap_page {
     pub fn capabilities(&self) -> __u64 { self.__union_one }
     pub fn set_capabilities(&mut self, val: __u64) { self.__union_one = val }
 
@@ -1435,7 +1439,7 @@ pub struct perf_mem_data_src {
     pub val: __u64,
 }
 
-impl ::cty::perf_mem_data_src {
+impl perf_mem_data_src {
     pub fn mem_op(&self)    -> __u64 { bf64_get(self.val, 0,              5) }
     pub fn mem_lvl(&self)   -> __u64 { bf64_get(self.val, 5,              14) }
     pub fn mem_snoop(&self) -> __u64 { bf64_get(self.val, 5 + 14,         5) }
@@ -1501,7 +1505,7 @@ pub struct perf_branch_entry {
     __bitfield_one: __u64,
 }
 
-impl ::cty::perf_branch_entry {
+impl perf_branch_entry {
     pub fn mispred   (&self) -> bool { bf64_get(self.__bitfield_one, 0, 1) != 0 }
     pub fn predicted (&self) -> bool { bf64_get(self.__bitfield_one, 1, 1) != 0 }
     pub fn in_tx     (&self) -> bool { bf64_get(self.__bitfield_one, 2, 1) != 0 }

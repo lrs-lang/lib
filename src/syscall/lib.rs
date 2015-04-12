@@ -2,7 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub use ::syscall::arch::{
+#![crate_name = "linux_syscall"]
+#![crate_type = "lib"]
+#![feature(asm)]
+#![allow(dead_code)]
+
+extern crate linux_cty as cty;
+
+pub use ::arch::{
     read, write, open, close, stat, fstat, lstat, poll, lseek, mmap, mprotect, munmap,
     brk, rt_sigprocmask, pread, pwrite, access, pipe, select, sched_yield, mremap, msync,
     mincore, madvise, shmget, shmat, shmctl, dup, dup2, pause, nanosleep, getitimer,

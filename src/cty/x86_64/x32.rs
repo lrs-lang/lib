@@ -4,7 +4,7 @@
 
 #![allow(non_camel_case_types, raw_pointer_derive)]
 
-pub use ::cty::gen::{
+pub use ::gen::{
     __kernel_old_uid_t, __kernel_old_gid_t, __kernel_old_dev_t,
 };
 
@@ -16,8 +16,8 @@ pub type c_ulong = u32;
 
 pub type user_size_t = c_uint;
 
-pub type __kernel_long_t  = ::cty::cty::c_longlong;
-pub type __kernel_ulong_t = ::cty::cty::c_ulonglong;
+pub type __kernel_long_t  = ::c_longlong;
+pub type __kernel_ulong_t = ::c_ulonglong;
 
 pub const __NR_rt_sigaction      : usize = 512;
 pub const __NR_rt_sigreturn      : usize = 513;

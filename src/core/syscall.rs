@@ -10,7 +10,7 @@ use cty::{c_int, mode_t, ssize_t, rlimit64, pid_t, uid_t, gid_t, stat, c_char,
           sigset_t, new_utsname, sysinfo, c_uint, c_ulong, umode_t, k_uint, loff_t,
           k_ulong};
 use ext::{SaturatingCast};
-use arch::syscall as r;
+use raw_syscall as r;
 
 // XXX: iovec _MUST_ be the same as &mut [u8]
 

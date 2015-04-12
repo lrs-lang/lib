@@ -2,11 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub use ::syscall::arch::abi::{
+pub use ::arch::abi::{
     syscall0, syscall1, syscall2, syscall3, syscall4, syscall5, syscall6, SCT,
 };
 
-pub use ::syscall::common::{
+pub use ::common::{
     read, write, open, close, poll, lseek, mprotect, munmap, brk, rt_sigprocmask, access,
     pipe, select, sched_yield, mremap, msync, mincore, madvise, shmget, shmat, shmctl,
     dup, dup2, pause, nanosleep, getitimer, alarm, setitimer, getpid, socket, connect,
@@ -66,7 +66,7 @@ mod abi;
 mod abi;
 
 mod common {
-    use ::syscall::arch::abi::{SCT};
+    use ::arch::abi::{SCT};
 
     #[inline(always)]
     pub unsafe fn syscall0(n: SCT) -> SCT {
@@ -147,56 +147,56 @@ mod common {
 // cross platform unification:
 
 pub unsafe fn stat(filename: *const c_char, statbuf: *mut stat) -> k_int {
-    ::syscall::common::newstat(filename, statbuf)
+    ::common::newstat(filename, statbuf)
 }
 
 pub unsafe fn fstat(fd: k_uint, statbuf: *mut stat) -> k_int {
-    ::syscall::common::newfstat(fd, statbuf)
+    ::common::newfstat(fd, statbuf)
 }
 
 pub unsafe fn lstat(filename: *const c_char, statbuf: *mut stat) -> k_int {
-    ::syscall::common::newlstat(filename, statbuf)
+    ::common::newlstat(filename, statbuf)
 }
 
 pub unsafe fn pread(fd: k_uint, buf: *mut c_char, count: size_t, pos: loff_t) -> ssize_t {
-    ::syscall::common::pread64(fd, buf, count, pos)
+    ::common::pread64(fd, buf, count, pos)
 }
 
 pub unsafe fn pwrite(fd: k_uint, buf: *const c_char, count: size_t,
                      pos: loff_t) -> ssize_t {
-    ::syscall::common::pwrite64(fd, buf, count, pos)
+    ::common::pwrite64(fd, buf, count, pos)
 }
 
 pub unsafe fn sendfile(out_fd: k_int, in_fd: k_int, offset: *mut loff_t,
                        count: size_t) -> ssize_t {
-    ::syscall::common::sendfile64(out_fd, in_fd, offset, count)
+    ::common::sendfile64(out_fd, in_fd, offset, count)
 }
 
 pub unsafe fn uname(name: *mut new_utsname) -> k_int {
-    ::syscall::common::newuname(name)
+    ::common::newuname(name)
 }
 
 pub unsafe fn getdents(fd: k_uint, dirent: *mut linux_dirent64, count: k_uint) -> k_int {
-    ::syscall::common::getdents64(fd, dirent, count)
+    ::common::getdents64(fd, dirent, count)
 }
 
 pub unsafe fn fadvise(fd: k_int, offset: loff_t, len: size_t, advice: k_int) -> k_int {
-    ::syscall::common::fadvise64(fd, offset, len, advice)
+    ::common::fadvise64(fd, offset, len, advice)
 }
 
 pub unsafe fn fstatat(dfd: k_int, filename: *const c_char, statbuf: *mut stat,
                       flag: k_int) -> k_int {
-    ::syscall::common::newfstatat(dfd, filename, statbuf, flag)
+    ::common::newfstatat(dfd, filename, statbuf, flag)
 }
 
 pub unsafe fn prlimit(pid: pid_t, resource: k_uint, new_rlim: *const rlimit64,
                       old_rlim: *mut rlimit64) -> k_int {
-    ::syscall::common::prlimit64(pid, resource, new_rlim, old_rlim)
+    ::common::prlimit64(pid, resource, new_rlim, old_rlim)
 }
 
 pub unsafe fn renameat(olddfd: k_int, oldname: *const c_char, newdfd: k_int,
                        newname: *const c_char, flags: k_uint) -> k_int {
-    ::syscall::common::renameat2(olddfd, oldname, newdfd, newname, flags)
+    ::common::renameat2(olddfd, oldname, newdfd, newname, flags)
 }
 
 

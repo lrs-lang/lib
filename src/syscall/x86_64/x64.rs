@@ -4,7 +4,7 @@
 
 use cty::{c_long};
 
-pub use ::syscall::arch::common::{
+pub use ::arch::common::{
     syscall0, syscall1, syscall2, syscall3, syscall4, syscall5, syscall6,
 };
 
