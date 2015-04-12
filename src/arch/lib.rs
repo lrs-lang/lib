@@ -5,7 +5,7 @@
 #![crate_name = "linux_arch"]
 #![crate_type = "lib"]
 #![feature(asm)]
-#![allow(trivial_numeric_casts, trivial_casts)]
+#![allow(trivial_numeric_casts, trivial_casts, non_upper_case_globals, dead_code)]
 
 pub mod cty;
-pub mod arch;
+pub mod syscall;

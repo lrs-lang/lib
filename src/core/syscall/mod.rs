@@ -5,10 +5,9 @@
 use std::{mem};
 
 use c_str::{CStr};
-use cty::{c_int, mode_t, ssize_t, off_t, rlimit, pid_t, uid_t, gid_t, stat, c_char,
-          size_t, SYSCALL_RLIM_INFINITY, RLIM_INFINITY, statfs, timespec, dev_t, c_void,
-          clockid_t, itimerspec, epoll_event, sigset_t, utsname, sysinfo, c_uint,
-          c_ulong};
+use cty::{c_int, mode_t, ssize_t, off_t, rlimit64, pid_t, uid_t, gid_t, stat, c_char,
+          size_t, statfs, timespec, dev_t, c_void, clockid_t, itimerspec, epoll_event,
+          sigset_t, new_utsname, sysinfo, c_uint, c_ulong};
 use ext::{SaturatingCast};
 
 pub use self::raw::*;
@@ -29,13 +28,13 @@ pub fn write(fd: c_int, buf: &[u8]) -> ssize_t {
 
 pub fn pread(fd: c_int, buf: &mut [u8], offset: off_t) -> ssize_t {
     unsafe {
-        __pread(fd, buf.as_mut_ptr() as *mut _, buf.len().saturating_cast(), offset)
+        __pread64(fd, buf.as_mut_ptr() as *mut _, buf.len().saturating_cast(), offset)
     }
 }
 
-pub fn pwrite(fd: c_int, buf: &[u8], offset: off_t) -> ssize_t {
+pub fn pwrite64(fd: c_int, buf: &[u8], offset: off_t) -> ssize_t {
     unsafe {
-        __pwrite(fd, buf.as_ptr() as *const _, buf.len().saturating_cast(), offset)
+        __pwrite64(fd, buf.as_ptr() as *const _, buf.len().saturating_cast(), offset)
     }
 }
 
@@ -91,44 +90,21 @@ pub fn fstatfs(fd: c_int, buf: &mut statfs) -> c_int {
     unsafe { __fstatfs(fd, buf) }
 }
 
-pub fn prlimit(pid: pid_t, res: c_int, new: Option<&rlimit>,
-               old: Option<&mut rlimit>) -> c_int {
-    macro_rules! fix {
-        ($val:expr) => {
-            if $val >= SYSCALL_RLIM_INFINITY { RLIM_INFINITY } else { $val }
-        }
-    };
-    let tmp;
-    let mut new = new;
-    if let Some(new_v) = new {
-        if SYSCALL_RLIM_INFINITY != RLIM_INFINITY {
-            tmp = rlimit {
-                rlim_cur: fix!(new_v.rlim_cur),
-                rlim_max: fix!(new_v.rlim_max),
-            };
-            new = Some(&tmp);
-        }
-    }
+pub fn prlimit64(pid: pid_t, res: c_int, new: Option<&rlimit64>,
+               old: Option<&mut rlimit64>) -> c_int {
     let new_p = new.map(|v| v as *const _).unwrap_or(0 as *const _);
     let old_p = old.as_ref().map(|v| *v as *mut _).unwrap_or(0 as *mut _);
-    let ret = unsafe { __prlimit(pid, res, new_p, old_p) };
-    if ret == 0 && SYSCALL_RLIM_INFINITY != RLIM_INFINITY {
-        if let Some(old_v) = old {
-            old_v.rlim_cur = fix!(old_v.rlim_cur);
-            old_v.rlim_max = fix!(old_v.rlim_max);
-        }
-    }
-    ret
+    unsafe { __prlimit64(pid, res, new_p, old_p) }
 }
 
-pub fn getdents(fd: c_int, buf: &mut [u8]) -> c_int {
+pub fn getdents64(fd: c_int, buf: &mut [u8]) -> c_int {
     unsafe {
-        __getdents(fd, buf.as_mut_ptr() as *mut _, buf.len().saturating_cast())
+        __getdents64(fd, buf.as_mut_ptr() as *mut _, buf.len().saturating_cast())
     }
 }
 
-pub fn fstatat(dir: c_int, file: &CStr, buf: &mut stat, flags: c_int) -> c_int {
-    unsafe { __fstatat(dir, file.as_ptr(), buf, flags) }
+pub fn newfstatat(dir: c_int, file: &CStr, buf: &mut stat, flags: c_int) -> c_int {
+    unsafe { __newfstatat(dir, file.as_ptr(), buf, flags) }
 }
 
 pub fn faccessat(dir: c_int, file: &CStr, mode: c_int) -> c_int {
@@ -294,7 +270,7 @@ pub fn sched_getaffinity(tid: pid_t, set: &mut [u8]) -> c_int {
     unsafe { __sched_getaffinity(tid, set.len().saturating_cast(), set.as_mut_ptr()) }
 }
 
-pub fn uname(buf: &mut utsname) -> c_int {
+pub fn uname(buf: &mut new_utsname) -> c_int {
     unsafe { __uname(buf) }
 }
 

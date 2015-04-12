@@ -4,6 +4,7 @@ obj dev        core
 obj fs         core
 obj time_base  core
 obj process    core
+obj socket     core
 obj sys        core time_base
 obj poll       core time_base
 obj file       core dev fs time_base
