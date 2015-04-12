@@ -45,7 +45,7 @@ pub type __kernel_uid16_t     = ::cty::c_ushort;
 pub type __kernel_gid16_t     = ::cty::c_ushort;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct __kernel_fsid_t {
     pub val: [::cty::c_int; 2],
 }
@@ -248,7 +248,7 @@ pub struct stat64 {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct statfs {
 	pub f_type:    ::cty::__statfs_word,
 	pub f_bsize:   ::cty::__statfs_word,

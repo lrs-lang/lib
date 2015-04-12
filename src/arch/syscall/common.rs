@@ -116,7 +116,7 @@ pub unsafe fn acct(name: *const c_char) -> k_int {
     call!(__NR_acct, name) as k_int
 }
 
-pub unsafe fn add_key(_type: *const c_char, _description: *const char,
+pub unsafe fn add_key(_type: *const c_char, _description: *const c_char,
                       _payload: *const c_void, plen: size_t,
                       ringid: key_serial_t) -> key_serial_t {
     call!(__NR_add_key, _type, _description, _payload, plen, ringid) as key_serial_t
@@ -255,7 +255,7 @@ pub unsafe fn eventfd(count: k_uint) -> k_int {
     call!(__NR_eventfd, count) as k_int
 }
 
-pub unsafe fn execveat(fd: k_int, filename: *const c_char, argv: *const *const char,
+pub unsafe fn execveat(fd: k_int, filename: *const c_char, argv: *const *const c_char,
                        envp: *const *const c_char, flags: k_int) -> k_int {
     call!(__NR_execveat, fd, filename, argv, envp, flags) as k_int
 }
@@ -564,7 +564,7 @@ pub unsafe fn getuid16() -> old_uid_t {
     call!(__NR_getuid16) as old_uid_t 
 }
 
-pub unsafe fn getxattr(pathname: *const c_char, name: *const char, value: *mut c_void,
+pub unsafe fn getxattr(pathname: *const c_char, name: *const c_char, value: *mut c_void,
                        size: size_t) -> ssize_t {
     call!(__NR_getxattr, pathname, name, value, size) as ssize_t
 }
@@ -662,7 +662,7 @@ pub unsafe fn lchown(filename: *const c_char, user: uid_t, group: gid_t) -> k_in
     call!(__NR_lchown, filename, user, group) as k_int
 }
 
-pub unsafe fn lgetxattr(pathname: *const c_char, name: *const char, value: *mut c_void,
+pub unsafe fn lgetxattr(pathname: *const c_char, name: *const c_char, value: *mut c_void,
                         size: size_t) -> ssize_t {
     call!(__NR_lgetxattr, pathname, name, value, size) as ssize_t
 }
@@ -672,7 +672,7 @@ pub unsafe fn linkat(olddfd: k_int, oldname: *const c_char, newdfd: k_int,
     call!(__NR_linkat, olddfd, oldname, newdfd, newname, flags) as k_int
 }
 
-pub unsafe fn link(oldname: *const c_char, newname: *const char) -> k_int {
+pub unsafe fn link(oldname: *const c_char, newname: *const c_char) -> k_int {
     call!(__NR_link, oldname, newname) as k_int
 }
 
@@ -680,11 +680,11 @@ pub unsafe fn listen(fd: k_int, backlog: k_int) -> k_int {
     call!(__NR_listen, fd, backlog) as k_int
 }
 
-pub unsafe fn listxattr(pathname: *const c_char, list: *mut char, size: size_t) -> ssize_t {
+pub unsafe fn listxattr(pathname: *const c_char, list: *mut c_char, size: size_t) -> ssize_t {
     call!(__NR_listxattr, pathname, list, size) as ssize_t
 }
 
-pub unsafe fn llistxattr(pathname: *const c_char, list: *mut char, size: size_t) -> ssize_t {
+pub unsafe fn llistxattr(pathname: *const c_char, list: *mut c_char, size: size_t) -> ssize_t {
     call!(__NR_llistxattr, pathname, list, size) as ssize_t
 }
 
@@ -697,7 +697,7 @@ pub unsafe fn lookup_dcookie(cookie64: u64, buf: *mut c_char, len: size_t) -> k_
     call!(__NR_lookup_dcookie, cookie64, buf, len) as k_int
 }
 
-pub unsafe fn lremovexattr(pathname: *const c_char, name: *const char) -> k_int {
+pub unsafe fn lremovexattr(pathname: *const c_char, name: *const c_char) -> k_int {
     call!(__NR_lremovexattr, pathname, name) as k_int
 }
 
@@ -705,7 +705,7 @@ pub unsafe fn lseek(fd: k_uint, offset: off_t, whence: k_uint) -> off_t {
     call!(__NR_lseek, fd, offset, whence) as off_t
 }
 
-pub unsafe fn lsetxattr(pathname: *const c_char, name: *const char,
+pub unsafe fn lsetxattr(pathname: *const c_char, name: *const c_char,
                         value: *const c_void, size: size_t, flags: k_int) -> k_int {
     call!(__NR_lsetxattr, pathname, name, value, size, flags) as k_int
 }
@@ -770,7 +770,7 @@ pub unsafe fn mmap_pgoff(addr: k_ulong, len: k_ulong, prot: k_ulong, flags: k_ul
     call!(__NR_mmap_pgoff, addr, len, prot, flags, fd, pgoff) as k_long
 }
 
-pub unsafe fn mount(dev_name: *mut c_char, dir_name: *mut char, ty: *mut char,
+pub unsafe fn mount(dev_name: *mut c_char, dir_name: *mut c_char, ty: *mut c_char,
                     flags: k_ulong, data: *mut c_void) -> k_int {
     call!(__NR_mount, dev_name, dir_name, ty, flags, data) as k_int
 }
@@ -959,7 +959,7 @@ pub unsafe fn pipe(fildes: *mut k_int) -> k_int {
     call!(__NR_pipe, fildes) as k_int
 }
 
-pub unsafe fn pivot_root(new_root: *const c_char, put_old: *const char) -> k_int {
+pub unsafe fn pivot_root(new_root: *const c_char, put_old: *const c_char) -> k_int {
     call!(__NR_pivot_root, new_root, put_old) as k_int
 }
 
@@ -1036,12 +1036,12 @@ pub unsafe fn read(fd: k_uint, buf: *mut c_char, count: size_t) -> ssize_t {
     call!(__NR_read, fd, buf, count) as ssize_t
 }
 
-pub unsafe fn readlinkat(dfd: k_int, pathname: *const c_char, buf: *mut char,
+pub unsafe fn readlinkat(dfd: k_int, pathname: *const c_char, buf: *mut c_char,
                          bufsiz: k_int) -> ssize_t {
     call!(__NR_readlinkat, dfd, pathname, buf, bufsiz) as ssize_t
 }
 
-pub unsafe fn readlink(path: *const c_char, buf: *mut char, bufsiz: k_int) -> ssize_t {
+pub unsafe fn readlink(path: *const c_char, buf: *mut c_char, bufsiz: k_int) -> ssize_t {
     call!(__NR_readlink, path, buf, bufsiz) as ssize_t
 }
 
@@ -1077,7 +1077,7 @@ pub unsafe fn remap_file_pages(start: k_ulong, size: k_ulong, prot: k_ulong,
     call!(__NR_remap_file_pages, start, size, prot, pgoff, flags) as k_int
 }
 
-pub unsafe fn removexattr(pathname: *const c_char, name: *const char) -> k_int {
+pub unsafe fn removexattr(pathname: *const c_char, name: *const c_char) -> k_int {
     call!(__NR_removexattr, pathname, name) as k_int
 }
 
@@ -1091,11 +1091,11 @@ pub unsafe fn renameat(olddfd: k_int, oldname: *const c_char, newdfd: k_int,
     call!(__NR_renameat, olddfd, oldname, newdfd, newname) as k_int
 }
 
-pub unsafe fn rename(oldname: *const c_char, newname: *const char) -> k_int {
+pub unsafe fn rename(oldname: *const c_char, newname: *const c_char) -> k_int {
     call!(__NR_rename, oldname, newname) as k_int
 }
 
-pub unsafe fn request_key(_type: *const c_char, _description: *const char,
+pub unsafe fn request_key(_type: *const c_char, _description: *const c_char,
                           _callout_info: *const c_char,
                           destringid: key_serial_t) -> key_serial_t {
     call!(__NR_request_key, _type, _description, _callout_info,
@@ -1375,7 +1375,7 @@ pub unsafe fn setuid(uid: uid_t) -> k_int {
     call!(__NR_setuid, uid) as k_int
 }
 
-pub unsafe fn setxattr(pathname: *const c_char, name: *const char, value: *const c_void,
+pub unsafe fn setxattr(pathname: *const c_char, name: *const c_char, value: *const c_void,
                        size: size_t, flags: k_int) -> k_int {
     call!(__NR_setxattr, pathname, name, value, size, flags) as k_int
 }
@@ -1505,7 +1505,7 @@ pub unsafe fn symlinkat(oldname: *const c_char, newdfd: k_int,
     call!(__NR_symlinkat, oldname, newdfd, newname) as k_int
 }
 
-pub unsafe fn symlink(oldname: *const c_char, newname: *const char) -> k_int {
+pub unsafe fn symlink(oldname: *const c_char, newname: *const c_char) -> k_int {
     call!(__NR_symlink, oldname, newname) as k_int
 }
 

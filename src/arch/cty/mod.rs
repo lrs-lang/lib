@@ -2468,3 +2468,94 @@ pub struct utimbuf {
     pub actime:  __kernel_time_t,
     pub modtime: __kernel_time_t,
 }
+
+// limits.h
+
+pub const NR_OPEN        : usize = 1024;
+pub const NGROUPS_MAX    : usize = 65536;
+pub const ARG_MAX        : usize = 131072;
+pub const LINK_MAX       : usize = 127;
+pub const MAX_CANON      : usize = 255;
+pub const MAX_INPUT      : usize = 255;
+pub const NAME_MAX       : usize = 255;
+pub const PATH_MAX       : usize = 4096;
+pub const PIPE_BUF       : usize = 4096;
+pub const XATTR_NAME_MAX : usize = 255;
+pub const XATTR_SIZE_MAX : usize = 65536;
+pub const XATTR_LIST_MAX : usize = 65536;
+pub const RTSIG_MAX      : usize = 32;
+
+// fs.h
+
+pub const INR_OPEN_CUR     : c_int = 1024;
+pub const INR_OPEN_MAX     : c_int = 4096;
+pub const BLOCK_SIZE_BITS  : c_int = 10;
+pub const BLOCK_SIZE       : c_int = 1 << BLOCK_SIZE_BITS;
+pub const SEEK_SET         : c_int = 0;
+pub const SEEK_CUR         : c_int = 1;
+pub const SEEK_END         : c_int = 2;
+pub const SEEK_DATA        : c_int = 3;
+pub const SEEK_HOLE        : c_int = 4;
+pub const SEEK_MAX         : c_int = SEEK_HOLE;
+pub const RENAME_NOREPLACE : c_int = 1 << 0;
+pub const RENAME_EXCHANGE  : c_int = 1 << 1;
+pub const RENAME_WHITEOUT  : c_int = 1 << 2;
+
+pub const NR_FILE        : c_ulong = 8192;
+pub const MS_RDONLY      : c_ulong = 1;
+pub const MS_NOSUID      : c_ulong = 2;
+pub const MS_NODEV       : c_ulong = 4;
+pub const MS_NOEXEC      : c_ulong = 8;
+pub const MS_SYNCHRONOUS : c_ulong = 16;
+pub const MS_REMOUNT     : c_ulong = 32;
+pub const MS_MANDLOCK    : c_ulong = 64;
+pub const MS_DIRSYNC     : c_ulong = 128;
+pub const MS_NOATIME     : c_ulong = 1024;
+pub const MS_NODIRATIME  : c_ulong = 2048;
+pub const MS_BIND        : c_ulong = 4096;
+pub const MS_MOVE        : c_ulong = 8192;
+pub const MS_REC         : c_ulong = 16384;
+pub const MS_VERBOSE     : c_ulong = 32768;
+pub const MS_SILENT      : c_ulong = 32768;
+pub const MS_POSIXACL    : c_ulong = 1 << 16;
+pub const MS_UNBINDABLE  : c_ulong = 1 << 17;
+pub const MS_PRIVATE     : c_ulong = 1 << 18;
+pub const MS_SLAVE       : c_ulong = 1 << 19;
+pub const MS_SHARED      : c_ulong = 1 << 20;
+pub const MS_RELATIME    : c_ulong = 1 << 21;
+pub const MS_KERNMOUNT   : c_ulong = 1 << 22;
+pub const MS_I_VERSION   : c_ulong = 1 << 23;
+pub const MS_STRICTATIME : c_ulong = 1 << 24;
+pub const MS_LAZYTIME    : c_ulong = 1 << 25;
+pub const MS_NOSEC       : c_ulong = 1 << 28;
+pub const MS_BORN        : c_ulong = 1 << 29;
+pub const MS_ACTIVE      : c_ulong = 1 << 30;
+pub const MS_NOUSER      : c_ulong = 1 << 31;
+
+pub const MS_RMT_MASK : c_ulong = MS_RDONLY|MS_SYNCHRONOUS|MS_MANDLOCK|MS_I_VERSION|
+                                    MS_LAZYTIME;
+
+pub const MS_MGC_VAL : c_ulong = 0xC0ED0000;
+pub const MS_MGC_MSK : c_ulong = 0xffff0000;
+
+pub const MNT_FORCE       : c_int = 0x00000001;
+pub const MNT_DETACH      : c_int = 0x00000002;
+pub const MNT_EXPIRE      : c_int = 0x00000004;
+pub const UMOUNT_NOFOLLOW : c_int = 0x00000008;
+pub const UMOUNT_UNUSED   : c_int = 0x80000000;
+
+// statfs.h
+
+pub const ST_RDONLY      : c_ulong = 0x0001;
+pub const ST_NOSUID      : c_ulong = 0x0002;
+pub const ST_NODEV       : c_ulong = 0x0004;
+pub const ST_NOEXEC      : c_ulong = 0x0008;
+pub const ST_SYNCHRONOUS : c_ulong = 0x0010;
+pub const ST_VALID       : c_ulong = 0x0020;
+pub const ST_MANDLOCK    : c_ulong = 0x0040;
+pub const ST_WRITE       : c_ulong = 0x0080;
+pub const ST_APPEND      : c_ulong = 0x0100;
+pub const ST_IMMUTABLE   : c_ulong = 0x0200;
+pub const ST_NOATIME     : c_ulong = 0x0400;
+pub const ST_NODIRATIME  : c_ulong = 0x0800;
+pub const ST_RELATIME    : c_ulong = 0x1000;

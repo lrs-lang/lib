@@ -186,5 +186,5 @@ impl UnmountFlags {
 pub fn unmount<P: AsLinuxPath>(dst: P, flags: UnmountFlags) -> Result {
     let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
     let dst = try!(dst.to_cstr(&mut buf));
-    rv!(syscall::umount2(&dst, flags.0))
+    rv!(syscall::umount(&dst, flags.0))
 }

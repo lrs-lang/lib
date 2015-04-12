@@ -5,7 +5,7 @@
 use std::fmt::{Debug, Formatter, Error};
 use std::{self, mem};
 
-use core::cty::{PATH_MAX, statfs};
+use core::cty::{PATH_MAX, statfs, c_ulong};
 use core::syscall::{statfs};
 use core::util::{retry};
 use core::ext::{AsLinuxPath};
@@ -36,7 +36,7 @@ impl FileSystemInfo {
 
     /// Returns the type of the filesystem.
     pub fn ty(&self) -> FileSystem {
-        FileSystem(self.0.f_type)
+        FileSystem(self.0.f_type as c_ulong)
     }
 
     /// Returns the block size of the filesystem.
@@ -81,7 +81,7 @@ impl FileSystemInfo {
 
     /// Returns the flags the filesystem is mounted with.
     pub fn mount_flags(&self) -> Flags {
-        Flags(self.0.f_frsize)
+        Flags(self.0.f_frsize as c_ulong)
     }
 }
 
