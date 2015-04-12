@@ -9,9 +9,12 @@ pub use ::cty::gen::{
 };
 
 pub const USER_POINTER_ALIGN : usize = 8;
+pub const BITS_PER_C_ULONG : usize = 64;
 
 pub type c_long  = i64;
 pub type c_ulong = u64;
+
+pub type user_size_t = c_ulong;
 
 pub type __kernel_old_uid_t = ::cty::c_ushort;
 pub type __kernel_old_gid_t = ::cty::c_ushort;

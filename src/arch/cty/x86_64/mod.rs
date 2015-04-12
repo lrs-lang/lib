@@ -96,7 +96,7 @@ pub use ::cty::gen::{
 };
 
 pub use ::cty::gen::{
-    _NSIG_BPW, _NSIG_WORDS,
+    _NSIG, _NSIG_BPW, _NSIG_WORDS,
 };
 
 pub use ::cty::gen::{
@@ -183,7 +183,11 @@ pub use self::abi::{
 };
 
 pub use self::abi::{
-    USER_POINTER_ALIGN,
+    USER_POINTER_ALIGN, BITS_PER_C_ULONG,
+};
+
+pub use self::abi::{
+    user_size_t,
 };
 
 pub use self::abi::{
@@ -233,6 +237,9 @@ pub const BYTES_PER_INT   : usize = 4;
 pub type __kernel_size_t    = __kernel_ulong_t;
 pub type __kernel_ssize_t   = __kernel_long_t;
 pub type __kernel_ptrdiff_t = __kernel_long_t;
+
+// We have to define this type because x32 doesn't use a compat layer.
+pub type timespec_tv_nsec_type = __kernel_long_t;
 
 // bitfield manipulation
 
@@ -333,10 +340,13 @@ pub struct epoll_event {
 
 // signal.h
 
-pub const _NSIG : usize = 32;
-pub const NSIG : usize = _NSIG;
+pub const NSIG : usize = 64;
 
-pub type sigset_t = c_ulong;
+#[repr(C, packed)]
+#[derive(Copy, Clone, Debug)]
+pub struct sigset_t {
+    pub sig: [c_ulong; _NSIG / BITS_PER_C_ULONG],
+}
 
 pub const SIGHUP    : c_int = 1;
 pub const SIGINT    : c_int = 2;
@@ -389,7 +399,7 @@ pub const SA_RESTORER  : c_int = 0x04000000;
 #[derive(Copy)]
 pub struct sigaction {
 	pub sa_handler: __sighandler_t,
-	pub sa_flags: c_ulong,
+	pub sa_flags: c_ulong, // this must be c_ulong because on x32 we usa a compat syscall
 	pub sa_restorer: __sigrestore_t,
 	pub sa_mask: sigset_t,
 }
@@ -422,9 +432,9 @@ pub const __NR_read                   : usize = 0;
 pub const __NR_write                  : usize = 1;
 pub const __NR_open                   : usize = 2;
 pub const __NR_close                  : usize = 3;
-pub const __NR_stat                   : usize = 4;
-pub const __NR_fstat                  : usize = 5;
-pub const __NR_lstat                  : usize = 6;
+pub const __NR_newstat                : usize = 4;
+pub const __NR_newfstat               : usize = 5;
+pub const __NR_newlstat               : usize = 6;
 pub const __NR_poll                   : usize = 7;
 pub const __NR_lseek                  : usize = 8;
 pub const __NR_mmap                   : usize = 9;
@@ -453,7 +463,7 @@ pub const __NR_getitimer              : usize = 36;
 pub const __NR_alarm                  : usize = 37;
 pub const __NR_setitimer              : usize = 38;
 pub const __NR_getpid                 : usize = 39;
-pub const __NR_sendfile               : usize = 40;
+pub const __NR_sendfile64             : usize = 40;
 pub const __NR_socket                 : usize = 41;
 pub const __NR_connect                : usize = 42;
 pub const __NR_accept                 : usize = 43;
@@ -470,7 +480,7 @@ pub const __NR_vfork                  : usize = 58;
 pub const __NR_exit                   : usize = 60;
 pub const __NR_wait4                  : usize = 61;
 pub const __NR_kill                   : usize = 62;
-pub const __NR_uname                  : usize = 63;
+pub const __NR_newuname               : usize = 63;
 pub const __NR_semget                 : usize = 64;
 pub const __NR_semop                  : usize = 65;
 pub const __NR_semctl                 : usize = 66;
@@ -566,7 +576,7 @@ pub const __NR_sync                   : usize = 162;
 pub const __NR_acct                   : usize = 163;
 pub const __NR_settimeofday           : usize = 164;
 pub const __NR_mount                  : usize = 165;
-pub const __NR_umount2                : usize = 166;
+pub const __NR_umount                 : usize = 166;
 pub const __NR_swapon                 : usize = 167;
 pub const __NR_swapoff                : usize = 168;
 pub const __NR_reboot                 : usize = 169;
@@ -697,7 +707,7 @@ pub const __NR_memfd_create           : usize = 319;
 pub const __NR_kexec_file_load        : usize = 320;
 pub const __NR_bpf                    : usize = 321;
 
-const GARBAGE_SYSCALL_NR : usize = !0;
+pub const GARBAGE_SYSCALL_NR : usize = !0;
 
 pub const __NR_bdflush          : usize = GARBAGE_SYSCALL_NR;
 pub const __NR_chown16          : usize = GARBAGE_SYSCALL_NR;
@@ -726,10 +736,10 @@ pub const __NR_lchown16         : usize = GARBAGE_SYSCALL_NR;
 pub const __NR_llseek           : usize = GARBAGE_SYSCALL_NR;
 pub const __NR_lstat64          : usize = GARBAGE_SYSCALL_NR;
 pub const __NR_mmap_pgoff       : usize = GARBAGE_SYSCALL_NR;
-pub const __NR_newfstat         : usize = GARBAGE_SYSCALL_NR;
-pub const __NR_newlstat         : usize = GARBAGE_SYSCALL_NR;
-pub const __NR_newstat          : usize = GARBAGE_SYSCALL_NR;
-pub const __NR_newuname         : usize = GARBAGE_SYSCALL_NR;
+pub const __NR_fstat            : usize = GARBAGE_SYSCALL_NR;
+pub const __NR_lstat            : usize = GARBAGE_SYSCALL_NR;
+pub const __NR_stat             : usize = GARBAGE_SYSCALL_NR;
+pub const __NR_uname            : usize = GARBAGE_SYSCALL_NR;
 pub const __NR_nfsservctl       : usize = GARBAGE_SYSCALL_NR;
 pub const __NR_nice             : usize = GARBAGE_SYSCALL_NR;
 pub const __NR_old_getrlimit    : usize = GARBAGE_SYSCALL_NR;
@@ -742,7 +752,7 @@ pub const __NR_pciconfig_read   : usize = GARBAGE_SYSCALL_NR;
 pub const __NR_pciconfig_write  : usize = GARBAGE_SYSCALL_NR;
 pub const __NR_query_module     : usize = GARBAGE_SYSCALL_NR;
 pub const __NR_recv             : usize = GARBAGE_SYSCALL_NR;
-pub const __NR_sendfile64       : usize = GARBAGE_SYSCALL_NR;
+pub const __NR_sendfile         : usize = GARBAGE_SYSCALL_NR;
 pub const __NR_send             : usize = GARBAGE_SYSCALL_NR;
 pub const __NR_setfsgid16       : usize = GARBAGE_SYSCALL_NR;
 pub const __NR_setfsuid16       : usize = GARBAGE_SYSCALL_NR;
@@ -768,7 +778,7 @@ pub const __NR_sync_file_range2 : usize = GARBAGE_SYSCALL_NR;
 pub const __NR__sysctl          : usize = GARBAGE_SYSCALL_NR;
 pub const __NR_sysctl           : usize = GARBAGE_SYSCALL_NR;
 pub const __NR_truncate64       : usize = GARBAGE_SYSCALL_NR;
-pub const __NR_umount           : usize = GARBAGE_SYSCALL_NR;
+pub const __NR_umount2          : usize = GARBAGE_SYSCALL_NR;
 pub const __NR_uselib           : usize = GARBAGE_SYSCALL_NR;
 pub const __NR_vserver          : usize = GARBAGE_SYSCALL_NR;
 pub const __NR_waitpid          : usize = GARBAGE_SYSCALL_NR;

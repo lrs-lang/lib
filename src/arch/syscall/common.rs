@@ -2,6 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// This file contains the kernel syscalls as they are defined in the kernel source with
+// some minor exceptions which are documented below.
+
 use cty::{
     bpf_attr, cap_user_data_t, cap_user_header_t, clockid_t, c_void, epoll_event, gid_t,
     key_serial_t, k_int, k_uint, k_ulong, loff_t, old_gid_t, old_uid_t, sigset_t, size_t,

@@ -92,9 +92,7 @@ pub type __wsum  = __u32;
 
 // time.h
 
-// The linux headers define the seconds field as `c_long`, but `c_long` is 32 bit in the
-// x32 ABI and `__kernel_long_t` is 64 bit. We use `__kernel_long_t` so that we don't have
-// to convert during syscalls.
+// TODO: Explain why the second type is not c_long.
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct timespec {
@@ -446,7 +444,7 @@ pub type key_perm_t   = u32;
 #[derive(Copy, Clone, Debug)]
 pub struct iovec {
     pub iov_base: *mut c_void,
-    pub iov_len: __kernel_size_t,
+    pub iov_len: user_size_t,
 }
 
 pub const UIO_FASTIOV : usize = 8;
@@ -489,9 +487,9 @@ pub struct user_msghdr {
     pub msg_name:       *mut c_void,
     pub msg_namelen:    k_int,
     pub msg_iov:        *mut iovec,
-    pub msg_iovlen:     __kernel_size_t,
+    pub msg_iovlen:     user_size_t,
     pub msg_control:    *mut c_void,
-    pub msg_controllen: __kernel_size_t,
+    pub msg_controllen: user_size_t,
     pub msg_flags:      k_uint,
 }
 
@@ -505,7 +503,7 @@ pub struct mmsghdr {
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct cmsghdr {
-    pub cmsg_len:   __kernel_size_t,
+    pub cmsg_len:   user_size_t,
     pub cmsg_level: k_int,
     pub cmsg_type:  k_int,
 }
@@ -861,9 +859,9 @@ pub const KEXEC_SEGMENT_MAX : c_int = 16;
 #[derive(Copy, Clone, Debug)]
 pub struct kexec_segment {
 	buf: *const c_void,
-	bufsz: size_t,
+	bufsz: user_size_t,
 	mem: *const c_void,
-	memsz: size_t,
+	memsz: user_size_t,
 }
 
 // straight from fs/readdir.c
@@ -1608,10 +1606,6 @@ pub struct robust_list {
 	pub next: *mut robust_list,
 }
 
-// Scary:
-/* NOTE: this structure is part of the syscall ABI, and must only be
- * changed if the change is first communicated with the glibc folks.
- */
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct robust_list_head {

@@ -7,58 +7,50 @@ pub use ::syscall::arch::abi::{
 };
 
 pub use ::syscall::common::{
-    accept4, accept, access, acct, add_key, adjtimex, alarm, bdflush, bind, bpf, brk,
-    capget, capset, chdir, chmod, chown16, chown, chroot, clock_adjtime, clock_getres,
-    clock_gettime, clock_nanosleep, clock_settime, close, connect, creat, delete_module,
-    dup2, dup3, dup, epoll_create1, epoll_create, epoll_ctl, epoll_pwait, epoll_wait,
-    eventfd2, eventfd, execveat, execve, exit, exit_group, faccessat, fadvise64_64,
-    fadvise64, fallocate, fanotify_init, fanotify_mark, fchdir, fchmodat, fchmod,
-    fchown16, fchownat, fchown, fcntl64, fcntl, fdatasync, fgetxattr, finit_module,
-    flistxattr, flock, fork, fremovexattr, fsetxattr, fstat64, fstatat64, fstat,
-    fstatfs64, fstatfs, fsync, ftruncate64, ftruncate, futex, futimesat, getcpu, getcwd,
-    getdents64, getdents, getegid, getegid16, geteuid, geteuid16, getgid, getgid16,
-    getgroups16, getgroups, gethostname, getitimer, get_mempolicy, getpeername, getpgid,
-    getpgrp, getpid, getppid, getpriority, getrandom, getresgid16, getresgid, getresuid16,
-    getresuid, getrlimit, get_robust_list, getrusage, getsid, getsockname, getsockopt,
-    gettid, gettimeofday, getuid, getuid16, getxattr, init_module, inotify_add_watch,
-    inotify_init, inotify_init1, inotify_rm_watch, io_cancel, ioctl, io_destroy,
-    io_getevents, ioprio_get, ioprio_set, io_setup, io_submit, ipc, kcmp, kexec_file_load,
-    kexec_load, keyctl, kill, lchown16, lchown, lgetxattr, linkat, link, listen,
-    listxattr, llistxattr, llseek, lookup_dcookie, lremovexattr, lseek, lsetxattr,
-    lstat64, lstat, madvise, mbind, memfd_create, migrate_pages, mincore, mkdirat, mkdir,
-    mknodat, mknod, mlockall, mlock, mount, move_pages, mprotect,
-    mq_getsetattr, mq_open, mq_timedreceive, mq_timedsend, mq_unlink, mremap,
-    msgctl, msgget, msgrcv, msgsnd, msync, munlockall, munlock, munmap, name_to_handle_at,
-    nanosleep, newfstatat, newfstat, newlstat, newstat, newuname, nice, old_getrlimit,
-    old_mmap, old_readdir, old_select, oldumount, olduname, openat, open_by_handle_at,
-    open, pause, pciconfig_read, pciconfig_write, perf_event_open, personality, pipe2,
-    pipe, pivot_root, poll, ppoll, prctl, pread64, preadv, prlimit64, process_vm_readv,
-    process_vm_writev, pselect6, ptrace, pwrite64, pwritev, quotactl, readahead, read,
-    readlinkat, readlink, readv, reboot, recv, recvfrom, recvmmsg, recvmsg,
-    remap_file_pages, removexattr, renameat2, renameat, rename, request_key,
-    restart_syscall, rmdir, rt_sigaction, rt_sigpending, rt_sigprocmask,
-    rt_sigsuspend, sched_getaffinity, sched_getattr,
-    sched_getparam, sched_get_priority_max, sched_get_priority_min, sched_getscheduler,
-    sched_rr_get_interval, sched_setaffinity, sched_setattr, sched_setparam,
-    sched_setscheduler, sched_yield, seccomp, select, semget, semop, semtimedop,
-    send, sendfile64, sendfile, sendmmsg, sendmsg, sendto, setdomainname, setfsgid16,
-    setfsgid, setfsuid16, setfsuid, setgid16, setgid, setgroups16, setgroups, sethostname,
-    setitimer, set_mempolicy, setns, setpgid, setpriority, setregid16, setregid,
-    setresgid16, setresgid, setresuid16, setresuid, setreuid16, setreuid, setrlimit,
-    set_robust_list, setsid, setsockopt, set_tid_address, settimeofday, setuid16, setuid,
-    setxattr, sgetmask, shmat, shmctl, shmdt, shmget, shutdown, sigaction, sigaltstack,
-    signalfd4, signalfd, signal, sigpending, sigprocmask, socketcall, socket, socketpair,
-    splice, ssetmask, stat64, stat, statfs64, statfs, stime, swapoff, swapon, symlinkat,
-    symlink, sync, sync_file_range2, sync_file_range, syncfs, sysctl, sysfs, sysinfo,
-    syslog, tee, tgkill, timer_delete, timerfd_create, timerfd_gettime,
-    timerfd_settime, timer_getoverrun, timer_gettime, timer_settime, times, time, tkill,
-    truncate64, truncate, umask, umount, uname, unlinkat, unlink, unshare, uselib, ustat,
-    utime, utimensat, utimes, vfork, vhangup, vmsplice, wait4, waitpid, write,
-    writev,
+    read, write, open, close, poll, lseek, mprotect, munmap, brk, rt_sigprocmask, access,
+    pipe, select, sched_yield, mremap, msync, mincore, madvise, shmget, shmat, shmctl,
+    dup, dup2, pause, nanosleep, getitimer, alarm, setitimer, getpid, socket, connect,
+    accept, sendto, shutdown, bind, listen, getsockname, getpeername, socketpair,
+    fork, vfork, exit, wait4, kill, semget, semop, shmdt, msgget, msgsnd, msgrcv,
+    msgctl, fcntl, flock, fsync, fdatasync, truncate, ftruncate, getcwd, chdir, fchdir,
+    rename, mkdir, rmdir, creat, link, unlink, symlink, readlink, chmod, fchmod, chown,
+    fchown, lchown, umask, gettimeofday, getrlimit, getrusage, sysinfo, times, getuid,
+    syslog, getgid, setuid, setgid, geteuid, getegid, setpgid, getppid, getpgrp, setsid,
+    setreuid, setregid, getgroups, setgroups, setresuid, getresuid, setresgid, getresgid,
+    getpgid, setfsuid, setfsgid, getsid, capget, capset, rt_sigsuspend, utime, mknod,
+    personality, ustat, statfs, fstatfs, sysfs, getpriority, setpriority, sched_setparam,
+    sched_getparam, sched_setscheduler, sched_getscheduler, sched_get_priority_max,
+    sched_get_priority_min, sched_rr_get_interval, mlock, munlock, mlockall, munlockall,
+    vhangup, pivot_root, prctl, adjtimex, setrlimit, chroot, sync,
+    acct, settimeofday, mount, umount, swapon, swapoff, reboot, sethostname,
+    setdomainname, init_module, delete_module, quotactl,
+    gettid, readahead, setxattr, lsetxattr, fsetxattr,
+    getxattr, lgetxattr, fgetxattr, listxattr, llistxattr, flistxattr, removexattr,
+    lremovexattr, fremovexattr, tkill, time, futex, sched_setaffinity, sched_getaffinity,
+    io_destroy, io_getevents, io_cancel, lookup_dcookie, epoll_create, remap_file_pages,
+    set_tid_address, restart_syscall, semtimedop, timer_settime, timer_gettime,
+    timer_getoverrun, timer_delete, clock_settime, clock_gettime, clock_getres,
+    clock_nanosleep, exit_group, epoll_wait, epoll_ctl, tgkill, utimes, mbind,
+    set_mempolicy, get_mempolicy, mq_open, mq_unlink, mq_timedsend, mq_timedreceive,
+    mq_getsetattr, add_key, request_key, keyctl, ioprio_set, ioprio_get, inotify_init,
+    inotify_add_watch, inotify_rm_watch, migrate_pages, openat, mkdirat, mknodat,
+    fchownat, futimesat, unlinkat, linkat, symlinkat, readlinkat, fchmodat, faccessat,
+    pselect6, ppoll, unshare, splice, tee, sync_file_range, utimensat, epoll_pwait,
+    signalfd, timerfd_create, eventfd, fallocate, timerfd_settime, timerfd_gettime,
+    accept4, signalfd4, eventfd2, epoll_create1, dup3, pipe2, inotify_init1,
+    perf_event_open, fanotify_init, fanotify_mark, name_to_handle_at, open_by_handle_at,
+    clock_adjtime, syncfs, setns, getcpu, kcmp, finit_module, sched_setattr,
+    sched_getattr, seccomp, getrandom, memfd_create, kexec_file_load, bpf, rt_sigaction,
+    ioctl, readv, writev, recvfrom, sendmsg, recvmsg, execve, ptrace,
+    rt_sigpending, sigaltstack,
+    kexec_load, set_robust_list, get_robust_list, vmsplice, move_pages, preadv,
+    pwritev, recvmmsg, sendmmsg, process_vm_readv, process_vm_writev,
+    setsockopt, getsockopt, io_setup, io_submit, execveat,
 };
 
 use cty::{
-    c_uint, k_int, k_long, k_ulong, user_desc,
+    c_uint, k_int, k_long, k_ulong, user_desc, c_char, k_uint, linux_dirent64, loff_t,
+    new_utsname, pid_t, rlimit64, size_t, ssize_t, stat,
 };
 
 use cty::{
@@ -150,6 +142,66 @@ mod common {
         ret
     }
 }
+
+
+// cross platform unification:
+
+pub unsafe fn stat(filename: *const c_char, statbuf: *mut stat) -> k_int {
+    ::syscall::common::newstat(filename, statbuf)
+}
+
+pub unsafe fn fstat(fd: k_uint, statbuf: *mut stat) -> k_int {
+    ::syscall::common::newfstat(fd, statbuf)
+}
+
+pub unsafe fn lstat(filename: *const c_char, statbuf: *mut stat) -> k_int {
+    ::syscall::common::newlstat(filename, statbuf)
+}
+
+pub unsafe fn pread(fd: k_uint, buf: *mut c_char, count: size_t, pos: loff_t) -> ssize_t {
+    ::syscall::common::pread64(fd, buf, count, pos)
+}
+
+pub unsafe fn pwrite(fd: k_uint, buf: *const c_char, count: size_t,
+                     pos: loff_t) -> ssize_t {
+    ::syscall::common::pwrite64(fd, buf, count, pos)
+}
+
+pub unsafe fn sendfile(out_fd: k_int, in_fd: k_int, offset: *mut loff_t,
+                       count: size_t) -> ssize_t {
+    ::syscall::common::sendfile64(out_fd, in_fd, offset, count)
+}
+
+pub unsafe fn uname(name: *mut new_utsname) -> k_int {
+    ::syscall::common::newuname(name)
+}
+
+pub unsafe fn getdents(fd: k_uint, dirent: *mut linux_dirent64, count: k_uint) -> k_int {
+    ::syscall::common::getdents64(fd, dirent, count)
+}
+
+pub unsafe fn fadvise(fd: k_int, offset: loff_t, len: size_t, advice: k_int) -> k_int {
+    ::syscall::common::fadvise64(fd, offset, len, advice)
+}
+
+pub unsafe fn fstatat(dfd: k_int, filename: *const c_char, statbuf: *mut stat,
+                      flag: k_int) -> k_int {
+    ::syscall::common::newfstatat(dfd, filename, statbuf, flag)
+}
+
+pub unsafe fn prlimit(pid: pid_t, resource: k_uint, new_rlim: *const rlimit64,
+                      old_rlim: *mut rlimit64) -> k_int {
+    ::syscall::common::prlimit64(pid, resource, new_rlim, old_rlim)
+}
+
+pub unsafe fn renameat(olddfd: k_int, oldname: *const c_char, newdfd: k_int,
+                       newname: *const c_char, flags: k_uint) -> k_int {
+    ::syscall::common::renameat2(olddfd, oldname, newdfd, newname, flags)
+}
+
+
+
+// x86_64 specific
 
 pub unsafe fn iopl(level: c_uint) -> k_int {
     call!(__NR_iopl, level) as k_int
