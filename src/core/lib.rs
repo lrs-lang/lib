@@ -4,7 +4,7 @@
 
 #![crate_name = "linux_core"]
 #![crate_type = "lib"]
-#![feature(std_misc, io, into_cow, core)]
+#![feature(std_misc, into_cow, core)]
 #![allow(trivial_numeric_casts, trivial_casts)]
 
 extern crate linux_cty;

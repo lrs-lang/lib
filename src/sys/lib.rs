@@ -20,7 +20,7 @@ use core::util::{retry, memchr};
 
 use time_base::{Time};
 
-use std::iter::{AdditiveIterator};
+// use std::iter::{AdditiveIterator};
 use std::{mem, fmt};
 
 /// Returns the number of CPU available to this thread.
@@ -28,7 +28,7 @@ pub fn cpu_count() -> usize {
     // XXX: Up to 512 CPUs which is the default maximum for ia64
     let mut buf = [0; 512 / 8];
     sched_getaffinity(0, &mut buf);
-    buf.iter().map(|b| b.count_ones()).sum() as usize
+    buf.iter().map(|b| b.count_ones()).sum::<u32>() as usize
 }
 
 /// Returns information about the system in form of strings.

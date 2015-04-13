@@ -4,6 +4,6 @@ use linux::{sys};
 
 fn main() {
     let mut numinfo = sys::NumInfo::new();
-    numinfo.update();
+    numinfo.update().unwrap();
     println!("{:?}", numinfo);
 }

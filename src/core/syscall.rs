@@ -193,9 +193,9 @@ pub fn fstatfs(fd: c_int, buf: &mut statfs) -> c_int {
 }
 
 pub fn prlimit(pid: pid_t, res: c_int, new: Option<&rlimit64>,
-               old: Option<&mut rlimit64>) -> c_int {
+               mut old: Option<&mut rlimit64>) -> c_int {
     let new_p = new.map(|v| v as *const _).unwrap_or(0 as *const _);
-    let old_p = old.as_ref().map(|v| *v as *mut _).unwrap_or(0 as *mut _);
+    let old_p = old.as_mut().map(|v| *v as *mut _).unwrap_or(0 as *mut _);
     unsafe { r::prlimit(pid, res as k_uint, new_p, old_p) }
 }
 

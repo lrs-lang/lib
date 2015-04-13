@@ -175,7 +175,7 @@ create! {
 
 impl From<Errno> for ::std::io::Error {
     fn from(e: Errno) -> ::std::io::Error {
-        ::std::io::Error::from_os_error(e.0)
+        ::std::io::Error::from_raw_os_error(e.0)
     }
 }
 

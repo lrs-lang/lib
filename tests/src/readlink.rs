@@ -4,7 +4,7 @@
 
 extern crate linux;
 
-use linux::file::{self, File};
+use linux::file::{File};
 
 fn main() {
     let file = File::open_read("testlink").unwrap();
