@@ -18,8 +18,8 @@ use std::io::{Write};
 
 use core::result::{Result};
 use core::errno::{self, Errno};
-use core::cty::{self, c_int, off_t, c_uint, AT_FDCWD, AT_EMPTY_PATH, AT_SYMLINK_NOFOLLOW,
-                F_OK, UTIME_NOW, UTIME_OMIT, timespec, RENAME_EXCHANGE, RENAME_NOREPLACE,
+use core::cty::{self, c_int, loff_t, c_uint, AT_FDCWD, AT_EMPTY_PATH, AT_SYMLINK_NOFOLLOW,
+                UTIME_NOW, UTIME_OMIT, timespec, RENAME_EXCHANGE, RENAME_NOREPLACE,
                 AT_REMOVEDIR, PATH_MAX, size_t, FALLOC_FL_KEEP_SIZE,
                 FALLOC_FL_PUNCH_HOLE, FALLOC_FL_COLLAPSE_RANGE, FALLOC_FL_ZERO_RANGE,
                 ssize_t, LOCK_SH, LOCK_EX, LOCK_NB, LOCK_UN};
@@ -28,7 +28,7 @@ use core::syscall::{openat, read, write, close, pread, lseek, pwrite, readv, wri
                     preadv, pwritev, ftruncate, fsync, fdatasync, syncfs, fadvise,
                     fstatfs, fcntl_dupfd_cloexec, fcntl_getfl, fcntl_setfl, fcntl_getfd,
                     fcntl_setfd, fstatat, faccessat, truncate, linkat, utimensat,
-                    renameat2, mkdirat, unlinkat, symlinkat, readlinkat, fchownat,
+                    renameat, mkdirat, unlinkat, symlinkat, readlinkat, fchownat,
                     fchmodat, fchmod, mknodat, readahead, fallocate, setxattr, lsetxattr,
                     fsetxattr, getxattr, lgetxattr, fgetxattr, removexattr, lremovexattr,
                     fremovexattr, listxattr, llistxattr, flistxattr, flock};
@@ -87,7 +87,7 @@ pub fn can_access<P: AsLinuxPath>(path: P, mode: AccessMode) -> Result<bool> {
 pub fn set_len<P: AsLinuxPath>(path: P, len: u64) -> Result {
     let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
     let path = try!(path.to_cstr(&mut buf));
-    try!(retry(|| truncate(&path, len as off_t)));
+    try!(retry(|| truncate(&path, len as loff_t)));
     Ok(())
 }
 
@@ -574,14 +574,14 @@ impl File {
     ///
     /// The return value and errors are the same as for `read` and `seek`.
     pub fn read_at(&self, buf: &mut [u8], off: i64) -> Result<usize> {
-        retry(|| pread(self.fd, buf, off as off_t)).map(|r| r as usize)
+        retry(|| pread(self.fd, buf, off as loff_t)).map(|r| r as usize)
     }
 
     /// Writes bytes to the offset from the buffer.
     ///
     /// The return value and errors are the same as for `write` and `seek`.
     pub fn write_at(&self, buf: &[u8], off: i64) -> Result<usize> {
-        retry(|| pwrite(self.fd, buf, off as off_t)).map(|r| r as usize)
+        retry(|| pwrite(self.fd, buf, off as loff_t)).map(|r| r as usize)
     }
 
     /// Reads bytes from the current read position into the buffers.
@@ -611,7 +611,7 @@ impl File {
     /// Returns the total number of bytes read.
     pub fn scatter_read_at(&self, bufs: &mut [&mut [u8]], off: i64) -> Result<usize> {
         assert!(bufs.len() < (!0 as c_uint / 2) as usize);
-        retry(|| preadv(self.fd, bufs, off as off_t)).map(|r| r as usize)
+        retry(|| preadv(self.fd, bufs, off as loff_t)).map(|r| r as usize)
     }
 
     /// Writes bytes to the offset from the buffers.
@@ -621,14 +621,14 @@ impl File {
     /// Returns the total number of bytes written.
     pub fn gather_write_at(&self, bufs: &[&[u8]], off: i64) -> Result<usize> {
         assert!(bufs.len() < (!0 as c_uint / 2) as usize);
-        retry(|| pwritev(self.fd, bufs, off as off_t)).map(|r| r as usize)
+        retry(|| pwritev(self.fd, bufs, off as loff_t)).map(|r| r as usize)
     }
 
     /// Changes the length of the file to the specified length.
     ///
     /// If the requested length is larger than the current length, a hole is created.
     pub fn set_len(&self, len: i64) -> Result {
-        retry(|| ftruncate(self.fd, len as off_t)).map(|_| ())
+        retry(|| ftruncate(self.fd, len as loff_t)).map(|_| ())
     }
 
     /// Flushes all data and metadata to the disk.
@@ -653,7 +653,7 @@ impl File {
             -1 => 0,
             _ => range.end - range.start,
         };
-        let ret = fadvise(self.fd, range.start as off_t, len as off_t, advice.to_c_int());
+        let ret = fadvise(self.fd, range.start as loff_t, len as loff_t, advice.to_c_int());
         rv!(ret)
     }
 
@@ -718,7 +718,7 @@ impl File {
     /// Initiates readahead of the specified range.
     pub fn readahead<R: BoundedUIntRange<u64>>(&self, range: R) -> Result {
         let range = range.to_range();
-        rv!(readahead(self.fd, range.start as off_t, (range.end - range.start) as size_t))
+        rv!(readahead(self.fd, range.start as loff_t, (range.end - range.start) as size_t))
     }
 
     /// Reserves the specified range in the file system.
@@ -727,15 +727,15 @@ impl File {
     /// of storage capacity.
     pub fn reserve<R: BoundedUIntRange<u64>>(&self, range: R) -> Result {
         let range = range.to_range();
-        rv!(fallocate(self.fd, FALLOC_FL_KEEP_SIZE, range.start as off_t,
-                      (range.end - range.start) as off_t))
+        rv!(fallocate(self.fd, FALLOC_FL_KEEP_SIZE, range.start as loff_t,
+                      (range.end - range.start) as loff_t))
     }
 
     /// Creates a hole in the specified range.
     pub fn create_hole<R: BoundedUIntRange<u64>>(&self, range: R) -> Result {
         let range = range.to_range();
         rv!(fallocate(self.fd, FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE,
-                      range.start as off_t, (range.end - range.start) as off_t))
+                      range.start as loff_t, (range.end - range.start) as loff_t))
     }
 
     /// Removes the specified range from the file and closes the gap.
@@ -745,8 +745,8 @@ impl File {
     /// end of the file. Use `set_len` for this purpose.
     pub fn collapse<R: BoundedUIntRange<u64>>(&self, range: R) -> Result {
         let range = range.to_range();
-        rv!(fallocate(self.fd, FALLOC_FL_COLLAPSE_RANGE, range.start as off_t,
-                      (range.end - range.start) as off_t))
+        rv!(fallocate(self.fd, FALLOC_FL_COLLAPSE_RANGE, range.start as loff_t,
+                      (range.end - range.start) as loff_t))
     }
     
     /// Zeroes the specified range in the file.
@@ -754,8 +754,8 @@ impl File {
     /// This can be more efficient than manually writing zeroes.
     pub fn zero<R: BoundedUIntRange<u64>>(&self, range: R) -> Result {
         let range = range.to_range();
-        rv!(fallocate(self.fd, FALLOC_FL_ZERO_RANGE, range.start as off_t,
-                      (range.end - range.start) as off_t))
+        rv!(fallocate(self.fd, FALLOC_FL_ZERO_RANGE, range.start as loff_t,
+                      (range.end - range.start) as loff_t))
     }
 
     /// Sets an attribute of this file.
@@ -895,7 +895,7 @@ impl File {
     pub fn rel_exists<P: AsLinuxPath>(&self, path: P) -> Result<bool> {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
         let path = try!(path.to_cstr(&mut buf));
-        let res = faccessat(self.fd, &path, F_OK);
+        let res = faccessat(self.fd, &path, 0);
         if res >= 0 {
             Ok(true)
         } else {
@@ -965,7 +965,7 @@ impl File {
         let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
         let one = try!(one.to_cstr(&mut buf1));
         let two = try!(two.to_cstr(&mut buf2));
-        rv!(renameat2(self.fd, &one, self.fd, &two, RENAME_EXCHANGE))
+        rv!(renameat(self.fd, &one, self.fd, &two, RENAME_EXCHANGE))
     }
 
     /// Renames `one` to `two`.
@@ -980,7 +980,7 @@ impl File {
         let one = try!(one.to_cstr(&mut buf1));
         let two = try!(two.to_cstr(&mut buf2));
         let flag = if replace { 0 } else { RENAME_NOREPLACE };
-        rv!(renameat2(self.fd, &one, self.fd, &two, flag))
+        rv!(renameat(self.fd, &one, self.fd, &two, flag))
     }
 
     /// Creates the directory `path`.
@@ -1188,23 +1188,23 @@ pub enum Seek {
 }
 
 impl Seek {
-    fn whence(self) -> c_int {
+    fn whence(self) -> c_uint {
         match self {
-            Seek::Start(..) => 0,
-            Seek::Cur(..)   => 1,
-            Seek::End(..)   => 2,
-            Seek::Data(..)  => 3,
-            Seek::Hole(..)  => 4,
+            Seek::Start(..) => cty::SEEK_SET,
+            Seek::Cur(..)   => cty::SEEK_CUR,
+            Seek::End(..)   => cty::SEEK_END,
+            Seek::Data(..)  => cty::SEEK_DATA,
+            Seek::Hole(..)  => cty::SEEK_HOLE,
         }
     }
 
-    fn offset(self) -> off_t {
+    fn offset(self) -> loff_t {
         match self {
-            Seek::Start(v) => v as off_t,
-            Seek::Cur(v)   => v as off_t,
-            Seek::End(v)   => v as off_t,
-            Seek::Data(v)  => v as off_t,
-            Seek::Hole(v)  => v as off_t,
+            Seek::Start(v) => v as loff_t,
+            Seek::Cur(v)   => v as loff_t,
+            Seek::End(v)   => v as loff_t,
+            Seek::Data(v)  => v as loff_t,
+            Seek::Hole(v)  => v as loff_t,
         }
     }
 }
@@ -1229,12 +1229,12 @@ pub enum Advice {
 impl Advice {
     fn to_c_int(self) -> c_int {
         match self {
-            Advice::Normal     => 0,
-            Advice::Random     => 1,
-            Advice::Sequential => 2,
-            Advice::Need       => 3,
-            Advice::DontNeed   => 4,
-            Advice::NoReuse    => 5,
+            Advice::Normal     => cty::POSIX_FADV_NORMAL,
+            Advice::Random     => cty::POSIX_FADV_RANDOM,
+            Advice::Sequential => cty::POSIX_FADV_SEQUENTIAL,
+            Advice::Need       => cty::POSIX_FADV_WILLNEED,
+            Advice::DontNeed   => cty::POSIX_FADV_DONTNEED,
+            Advice::NoReuse    => cty::POSIX_FADV_NOREUSE,
         }
     }
 }

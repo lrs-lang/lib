@@ -5,15 +5,15 @@
 use std::{fmt};
 
 use core::cty::{stat, S_IFMT, S_IFDIR, S_IFCHR, S_IFBLK, S_IFREG, S_IFIFO, S_IFLNK,
-                S_IFSOCK, mode_t};
-use core::alias::{InodeId, UserId, GroupId};
-use time_base::{Time, time_from_timespec};
+                S_IFSOCK, umode_t};
+use core::alias::{InodeId, UserId, GroupId, DeviceId};
+use time_base::{Time};
 use dev::{Device, DeviceType};
 use flags::{Mode};
 
 pub fn info_from_stat(s: stat) -> Info { Info(s) }
 
-pub fn file_type_from_mode(i: mode_t) -> Type {
+pub fn file_type_from_mode(i: umode_t) -> Type {
     match i & S_IFMT {
         S_IFIFO  => Type::FIFO,
         S_IFCHR  => Type::CharDevice,
@@ -26,7 +26,7 @@ pub fn file_type_from_mode(i: mode_t) -> Type {
     }
 }
 
-pub fn file_type_to_mode(t: Type) -> mode_t {
+pub fn file_type_to_mode(t: Type) -> umode_t {
     match t {
         Type::BlockDevice => S_IFBLK,
         Type::CharDevice  => S_IFCHR,
@@ -67,12 +67,12 @@ pub struct Info(stat);
 impl Info {
     /// The device on which the file is stored.
     pub fn device(&self) -> Device {
-        Device::from_id(self.0.st_dev, DeviceType::Block)
+        Device::from_id(self.0.st_dev as DeviceId, DeviceType::Block)
     }
 
     /// The inode of the file.
     pub fn inode(&self) -> InodeId {
-        self.0.st_ino
+        self.0.st_ino as InodeId
     }
 
     /// The number of hard links to the file.
@@ -82,25 +82,27 @@ impl Info {
 
     /// The mode of the file.
     pub fn mode(&self) -> Mode {
-        Mode::from_mode(self.0.st_mode)
+        Mode::from_mode(self.0.st_mode as umode_t)
     }
 
     /// The user id of the owner.
     pub fn user(&self) -> UserId {
-        self.0.st_uid
+        self.0.st_uid as UserId
     }
 
     /// The group id of the owner.
     pub fn group(&self) -> GroupId {
-        self.0.st_gid
+        self.0.st_gid as GroupId
     }
 
     /// If `self` is a device special file, then this functions returns the device it
     /// represents.
     pub fn special_file(&self) -> Option<Device> {
         match self.file_type() {
-            Type::BlockDevice => Some(Device::from_id(self.0.st_rdev, DeviceType::Block)),
-            Type::CharDevice => Some(Device::from_id(self.0.st_rdev, DeviceType::Character)),
+            Type::BlockDevice => Some(Device::from_id(self.0.st_rdev as DeviceId,
+                                                      DeviceType::Block)),
+            Type::CharDevice => Some(Device::from_id(self.0.st_rdev as DeviceId,
+                                                     DeviceType::Character)),
             _ => None,
         }
     }
@@ -122,22 +124,22 @@ impl Info {
 
     /// The last time this file was accessed.
     pub fn last_access(&self) -> Time {
-        time_from_timespec(self.0.st_atim)
+        Time { seconds: self.0.st_atime as i64, nanoseconds: self.0.st_atime_nsec as i64 }
     }
 
     /// The last time this file was modified.
     pub fn last_modification(&self) -> Time {
-        time_from_timespec(self.0.st_mtim)
+        Time { seconds: self.0.st_mtime as i64, nanoseconds: self.0.st_mtime_nsec as i64 }
     }
 
     /// The time this file was created.
     pub fn creation(&self) -> Time {
-        time_from_timespec(self.0.st_ctim)
+        Time { seconds: self.0.st_ctime as i64, nanoseconds: self.0.st_ctime_nsec as i64 }
     }
 
     /// The type of this file.
     pub fn file_type(&self) -> Type {
-        file_type_from_mode(self.0.st_mode)
+        file_type_from_mode(self.0.st_mode as umode_t)
     }
 }
 

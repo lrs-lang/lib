@@ -14,7 +14,7 @@ use std::{mem};
 use core::cty::{self, c_int, EPOLL_CLOEXEC, EPOLL_CTL_ADD, EPOLL_CTL_MOD, EPOLL_CTL_DEL,
                 epoll_event};
 use core::result::{Result};
-use core::syscall::{epoll_create1, epoll_ctl, epoll_pwait, close};
+use core::syscall::{epoll_create, epoll_ctl, epoll_pwait, close};
 use core::fd_container::{FDContainer};
 use core::util::{retry};
 use core::ext::{SaturatingCast};
@@ -32,13 +32,13 @@ impl Flags {
     }
 
     /// If set the poll will check for readability.
-    pub fn readable(&self)       -> bool { self.0 & cty::EPOLLIN      != 0 }
+    pub fn readable(&self)       -> bool { self.0 & cty::POLLIN      != 0 }
     /// If set the poll will check for writability.
-    pub fn writable(&self)       -> bool { self.0 & cty::EPOLLOUT     != 0 }
+    pub fn writable(&self)       -> bool { self.0 & cty::POLLOUT     != 0 }
     /// If set the poll checks that the peer has hung up his write end.
-    pub fn read_hang_up(&self)   -> bool { self.0 & cty::EPOLLRDHUP  != 0 }
+    pub fn read_hang_up(&self)   -> bool { self.0 & cty::POLLRDHUP  != 0 }
     /// If set the poll checks for priority data.
-    pub fn priority(&self)       -> bool { self.0 & cty::EPOLLPRI    != 0 }
+    pub fn priority(&self)       -> bool { self.0 & cty::POLLPRI    != 0 }
     /// If set the poll is edge triggered.
     pub fn edge_triggered(&self) -> bool { self.0 & cty::EPOLLET      != 0 }
     /// If set the fd will checked only once and then has to be re-enabled. 
@@ -47,10 +47,10 @@ impl Flags {
     /// before another call to `wait` is made.
     pub fn wake_up(&self)        -> bool { self.0 & cty::EPOLLWAKEUP  != 0 }
 
-    pub fn set_readable(&mut       self, val: bool) { self.set_bit(cty::EPOLLIN      , val) }
-    pub fn set_writable(&mut       self, val: bool) { self.set_bit(cty::EPOLLOUT     , val) }
-    pub fn set_read_hang_up(&mut   self, val: bool) { self.set_bit(cty::EPOLLRDHUP  , val) }
-    pub fn set_priority(&mut       self, val: bool) { self.set_bit(cty::EPOLLPRI    , val) }
+    pub fn set_readable(&mut       self, val: bool) { self.set_bit(cty::POLLIN      , val) }
+    pub fn set_writable(&mut       self, val: bool) { self.set_bit(cty::POLLOUT     , val) }
+    pub fn set_read_hang_up(&mut   self, val: bool) { self.set_bit(cty::POLLRDHUP  , val) }
+    pub fn set_priority(&mut       self, val: bool) { self.set_bit(cty::POLLPRI    , val) }
     pub fn set_edge_triggered(&mut self, val: bool) { self.set_bit(cty::EPOLLET      , val) }
     pub fn set_one_shot(&mut       self, val: bool) { self.set_bit(cty::EPOLLONESHOT , val) }
     pub fn set_wake_up(&mut        self, val: bool) { self.set_bit(cty::EPOLLWAKEUP  , val) }
@@ -76,22 +76,22 @@ pub struct Event {
 
 impl Event {
     /// If set the descriptor is readable.
-    pub fn readable(self) -> bool { self.data.events & cty::EPOLLIN != 0 }
+    pub fn readable(self) -> bool { self.data.events & cty::POLLIN != 0 }
 
     /// If set the descriptor is writable.
-    pub fn writable(self) -> bool { self.data.events & cty::EPOLLOUT != 0 }
+    pub fn writable(self) -> bool { self.data.events & cty::POLLOUT != 0 }
 
     /// If set the peer has hung up his write end.
-    pub fn read_hang_up(self) -> bool { self.data.events & cty::EPOLLRDHUP != 0 }
+    pub fn read_hang_up(self) -> bool { self.data.events & cty::POLLRDHUP != 0 }
 
     /// If set there is priority data.
-    pub fn priority(self) -> bool { self.data.events & cty::EPOLLPRI != 0 }
+    pub fn priority(self) -> bool { self.data.events & cty::POLLPRI != 0 }
 
     /// If set an error condition happened on the file descriptor.
-    pub fn error(self) -> bool { self.data.events & cty::EPOLLERR != 0 }
+    pub fn error(self) -> bool { self.data.events & cty::POLLERR != 0 }
 
     /// If set the file descriptor was hung up.
-    pub fn hang_up(self) -> bool { self.data.events & cty::EPOLLHUP != 0 }
+    pub fn hang_up(self) -> bool { self.data.events & cty::POLLHUP != 0 }
 
     /// Returns the associated file descriptor.
     pub fn fd(self) -> c_int { self.data.data as c_int }
@@ -107,7 +107,7 @@ pub struct Epoll {
 impl Epoll {
     /// Creates a new epoll instance.
     pub fn new() -> Result<Epoll> {
-        let fd = try!(rv!(epoll_create1(EPOLL_CLOEXEC), -> c_int));
+        let fd = try!(rv!(epoll_create(EPOLL_CLOEXEC), -> c_int));
         Ok(Epoll { fd: fd, owned: true })
     }
 

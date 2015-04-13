@@ -50,13 +50,6 @@ pub struct __kernel_fsid_t {
     pub val: [::c_int; 2],
 }
 
-#[repr(C)]
-#[derive(Copy, Clone, Debug)]
-pub struct epoll_event {
-	pub events: ::__u32,
-	pub data:   ::__u64,
-}
-
 // errno-base.h & errno.h
 
 pub const EPERM           : ::c_int = 1;
@@ -198,7 +191,7 @@ pub const EHWPOISON       : ::c_int = 133;
 pub const STAT_HAVE_NSEC: ::c_int = 1;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct stat {
 	pub st_dev:        ::c_ulong,
 	pub st_ino:        ::c_ulong,
@@ -223,7 +216,7 @@ pub struct stat {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct stat64 {
 	pub st_dev:        ::c_ulonglong,
 	pub st_ino:        ::c_ulonglong,
@@ -338,7 +331,7 @@ pub const MINSIGSTKSZ : usize = 2048;
 pub const SIGSTKSZ    : usize = 8192;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct sigset_t {
     pub sig: [::c_ulong; ::_NSIG_WORDS],
 }
@@ -346,7 +339,7 @@ pub struct sigset_t {
 pub type old_sigset_t = ::c_ulong;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct sigaltstack {
 	pub ss_sp: *mut ::c_void,
 	pub ss_flags: ::c_int,
@@ -449,44 +442,45 @@ pub const __O_TMPFILE     : ::c_int = 0o20000000;
 pub const O_TMPFILE       : ::c_int = __O_TMPFILE|O_DIRECTORY;
 pub const O_TMPFILE_MASK  : ::c_int = __O_TMPFILE|O_DIRECTORY|O_CREAT;
 pub const O_NDELAY        : ::c_int = O_NONBLOCK;
-pub const F_DUPFD         : ::c_int = 0;
-pub const F_GETFD         : ::c_int = 1;
-pub const F_SETFD         : ::c_int = 2;
-pub const F_GETFL         : ::c_int = 3;
-pub const F_SETFL         : ::c_int = 4;
-pub const F_GETLK         : ::c_int = 5;
-pub const F_SETLK         : ::c_int = 6;
-pub const F_SETLKW        : ::c_int = 7;
-pub const F_SETOWN        : ::c_int = 8;
-pub const F_GETOWN        : ::c_int = 9;
-pub const F_SETSIG        : ::c_int = 10;
-pub const F_GETSIG        : ::c_int = 11;
-pub const F_GETLK64       : ::c_int = 12;
-pub const F_SETLK64       : ::c_int = 13;
-pub const F_SETLKW64      : ::c_int = 14;
-pub const F_SETOWN_EX     : ::c_int = 15;
-pub const F_GETOWN_EX     : ::c_int = 16;
-pub const F_GETOWNER_UIDS : ::c_int = 17;
-pub const F_OFD_GETLK     : ::c_int = 36;
-pub const F_OFD_SETLK     : ::c_int = 37;
-pub const F_OFD_SETLKW    : ::c_int = 38;
-pub const F_OWNER_TID     : ::c_int = 0;
-pub const F_OWNER_PID     : ::c_int = 1;
-pub const F_OWNER_PGRP    : ::c_int = 2;
+pub const F_DUPFD         : ::c_uint = 0;
+pub const F_GETFD         : ::c_uint = 1;
+pub const F_SETFD         : ::c_uint = 2;
+pub const F_GETFL         : ::c_uint = 3;
+pub const F_SETFL         : ::c_uint = 4;
+pub const F_GETLK         : ::c_uint = 5;
+pub const F_SETLK         : ::c_uint = 6;
+pub const F_SETLKW        : ::c_uint = 7;
+pub const F_SETOWN        : ::c_uint = 8;
+pub const F_GETOWN        : ::c_uint = 9;
+pub const F_SETSIG        : ::c_uint = 10;
+pub const F_GETSIG        : ::c_uint = 11;
+pub const F_GETLK64       : ::c_uint = 12;
+pub const F_SETLK64       : ::c_uint = 13;
+pub const F_SETLKW64      : ::c_uint = 14;
+pub const F_SETOWN_EX     : ::c_uint = 15;
+pub const F_GETOWN_EX     : ::c_uint = 16;
+pub const F_GETOWNER_UIDS : ::c_uint = 17;
+pub const F_OFD_GETLK     : ::c_uint = 36;
+pub const F_OFD_SETLK     : ::c_uint = 37;
+pub const F_OFD_SETLKW    : ::c_uint = 38;
+pub const F_OWNER_TID     : ::c_uint = 0;
+pub const F_OWNER_PID     : ::c_uint = 1;
+pub const F_OWNER_PGRP    : ::c_uint = 2;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct f_owner_ex {
     pub type_: ::c_int,
     pub pid: ::__kernel_pid_t,
 }
 
-pub const FD_CLOEXEC            : ::c_int = 1;
-pub const F_RDLCK               : ::c_int = 0;
-pub const F_WRLCK               : ::c_int = 1;
-pub const F_UNLCK               : ::c_int = 2;
-pub const F_EXLCK               : ::c_int = 4;
-pub const F_SHLCK               : ::c_int = 8;
+pub const F_LINUX_SPECIFIC_BASE : ::c_uint = 1024;
+pub const FD_CLOEXEC            : ::c_uint = 1;
+pub const F_RDLCK               : ::c_uint = 0;
+pub const F_WRLCK               : ::c_uint = 1;
+pub const F_UNLCK               : ::c_uint = 2;
+pub const F_EXLCK               : ::c_uint = 4;
+pub const F_SHLCK               : ::c_uint = 8;
 pub const LOCK_SH               : ::c_int = 1;
 pub const LOCK_EX               : ::c_int = 2;
 pub const LOCK_NB               : ::c_int = 4;
@@ -495,12 +489,11 @@ pub const LOCK_MAND             : ::c_int = 32;
 pub const LOCK_READ             : ::c_int = 64;
 pub const LOCK_WRITE            : ::c_int = 128;
 pub const LOCK_RW               : ::c_int = 192;
-pub const F_LINUX_SPECIFIC_BASE : ::c_int = 1024;
 
 // ipcbuf.h
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct ipc64_perm {
     pub key:  ::__kernel_key_t,
     pub uid:  ::__kernel_uid32_t,
@@ -679,7 +672,7 @@ pub type tcflag_t = ::c_uint;
 pub const NCCS : usize = 19;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct termios {
 	pub c_iflag:    ::tcflag_t,
 	pub c_oflag:    ::tcflag_t,
@@ -690,7 +683,7 @@ pub struct termios {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct termios2 {
     pub c_iflag:    ::tcflag_t,
     pub c_oflag:    ::tcflag_t,
@@ -703,7 +696,7 @@ pub struct termios2 {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct ktermios {
     pub c_iflag:    ::tcflag_t,
     pub c_oflag:    ::tcflag_t,
@@ -867,7 +860,7 @@ pub const TCSAFLUSH : ::c_uint = 2;
 // termios.h
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct winsize {
     pub ws_row:    ::c_ushort,
     pub ws_col:    ::c_ushort,
@@ -878,7 +871,7 @@ pub struct winsize {
 pub const NCC : usize = 8;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct termio {
     pub c_iflag:   ::c_ushort,
     pub c_oflag:   ::c_ushort,
@@ -905,24 +898,24 @@ pub const TIOCM_LOOP : ::c_uint = 0x8000;
 
 // poll.h
 
-pub const POLLIN         : ::c_int = 0x0001;
-pub const POLLPRI        : ::c_int = 0x0002;
-pub const POLLOUT        : ::c_int = 0x0004;
-pub const POLLERR        : ::c_int = 0x0008;
-pub const POLLHUP        : ::c_int = 0x0010;
-pub const POLLNVAL       : ::c_int = 0x0020;
-pub const POLLRDNORM     : ::c_int = 0x0040;
-pub const POLLRDBAND     : ::c_int = 0x0080;
-pub const POLLWRNORM     : ::c_int = 0x0100;
-pub const POLLWRBAND     : ::c_int = 0x0200;
-pub const POLLMSG        : ::c_int = 0x0400;
-pub const POLLREMOVE     : ::c_int = 0x1000;
-pub const POLLRDHUP      : ::c_int = 0x2000;
-pub const POLLFREE       : ::c_int = 0x4000;
-pub const POLL_BUSY_LOOP : ::c_int = 0x8000;
+pub const POLLIN         : ::c_uint = 0x0001;
+pub const POLLPRI        : ::c_uint = 0x0002;
+pub const POLLOUT        : ::c_uint = 0x0004;
+pub const POLLERR        : ::c_uint = 0x0008;
+pub const POLLHUP        : ::c_uint = 0x0010;
+pub const POLLNVAL       : ::c_uint = 0x0020;
+pub const POLLRDNORM     : ::c_uint = 0x0040;
+pub const POLLRDBAND     : ::c_uint = 0x0080;
+pub const POLLWRNORM     : ::c_uint = 0x0100;
+pub const POLLWRBAND     : ::c_uint = 0x0200;
+pub const POLLMSG        : ::c_uint = 0x0400;
+pub const POLLREMOVE     : ::c_uint = 0x1000;
+pub const POLLRDHUP      : ::c_uint = 0x2000;
+pub const POLLFREE       : ::c_uint = 0x4000;
+pub const POLL_BUSY_LOOP : ::c_uint = 0x8000;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct pollfd {
     pub fd:      ::c_int,
     pub events:  ::c_short,
@@ -953,7 +946,7 @@ pub const RLIM_INFINITY     : ::c_ulong = !0;
 // shmbuf.h
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct shminfo64 {
     pub shmmax:    ::__kernel_ulong_t,
     pub shmmin:    ::__kernel_ulong_t,
@@ -965,3 +958,17 @@ pub struct shminfo64 {
     pub __unused3: ::__kernel_ulong_t,
     pub __unused4: ::__kernel_ulong_t,
 }
+
+// eventpoll.h
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct epoll_event {
+    pub events: ::__u32,
+    pub data:   ::__u64,
+}
+
+// fadvise.h
+
+pub const POSIX_FADV_DONTNEED : ::c_int = 4;
+pub const POSIX_FADV_NOREUSE  : ::c_int = 5;

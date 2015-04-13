@@ -5,17 +5,111 @@
 use std::{mem};
 
 use c_str::{CStr};
-use cty::{c_int, mode_t, ssize_t, rlimit64, pid_t, uid_t, gid_t, stat, c_char,
-          size_t, statfs, timespec, dev_t, c_void, clockid_t, itimerspec, epoll_event,
-          sigset_t, new_utsname, sysinfo, c_uint, c_ulong, umode_t, k_uint, loff_t,
-          k_ulong};
+use cty::{
+    c_int, ssize_t, rlimit64, pid_t, uid_t, gid_t, stat, c_char, size_t, statfs,
+    timespec, dev_t, c_void, clockid_t, itimerspec, epoll_event, sigset_t, new_utsname,
+    sysinfo, c_uint, c_ulong, umode_t, k_uint, loff_t, k_ulong, F_DUPFD_CLOEXEC, F_GETFL,
+    F_SETFL, F_GETFD, F_SETFD,
+};
 use ext::{SaturatingCast};
 use raw_syscall as r;
 
 // XXX: iovec _MUST_ be the same as &mut [u8]
 
-pub fn openat(dir: c_int, path: &CStr, flags: c_int, mode: mode_t) -> c_int {
-    unsafe { r::openat(dir, path.as_ptr(), flags, mode as umode_t) }
+pub fn openat(dir: c_int, path: &CStr, flags: c_int, mode: umode_t) -> c_int {
+    unsafe { r::openat(dir, path.as_ptr(), flags, mode) }
+}
+
+pub fn close(fd: c_int) -> c_int {
+    unsafe { r::close(fd as k_uint) }
+}
+
+pub fn lseek(fd: c_int, offset: loff_t, whence: c_uint) -> loff_t {
+    unsafe { r::lseek(fd as k_uint, offset, whence) }
+}
+
+pub fn fcntl_dupfd_cloexec(fd: c_int, arg: c_int) -> c_int {
+    unsafe { r::fcntl(fd as k_uint, F_DUPFD_CLOEXEC, arg as k_ulong) }
+}
+
+pub fn fcntl_getfl(fd: c_int) -> c_int {
+    unsafe { r::fcntl(fd as k_uint, F_GETFL, 0) }
+}
+
+pub fn fcntl_setfl(fd: c_int, arg: c_int) -> c_int {
+    unsafe { r::fcntl(fd as k_uint, F_SETFL, arg as k_ulong) }
+}
+
+pub fn fcntl_getfd(fd: c_int) -> c_int {
+    unsafe { r::fcntl(fd as k_uint, F_GETFD, 0) }
+}
+
+pub fn fcntl_setfd(fd: c_int, arg: c_int) -> c_int {
+    unsafe { r::fcntl(fd as k_uint, F_SETFD, arg as k_ulong) }
+}
+
+pub fn ftruncate(fd: c_int, offset: loff_t) -> c_int {
+    unsafe { r::ftruncate(fd as k_uint, offset as k_ulong) }
+}
+
+pub fn getpid() -> pid_t {
+    unsafe { r::getpid() }
+}
+
+pub fn getppid() -> pid_t {
+    unsafe { r::getppid() }
+}
+
+pub fn setresuid(ruid: uid_t, euid: uid_t, suid: uid_t) -> c_int {
+    unsafe { r::setresuid(ruid, euid, suid) }
+}
+
+pub fn setresgid(rgid: gid_t, egid: gid_t, sgid: gid_t) -> c_int {
+    unsafe { r::setresgid(rgid, egid, sgid) }
+}
+
+pub fn fsync(fd: c_int) -> c_int {
+    unsafe { r::fsync(fd as k_uint) }
+}
+
+pub fn fdatasync(fd: c_int) -> c_int {
+    unsafe { r::fdatasync(fd as k_uint) }
+}
+
+pub fn sync() {
+    unsafe { r::sync() }
+}
+
+pub fn syncfs(fd: c_int) -> c_int {
+    unsafe { r::syncfs(fd) }
+}
+
+pub fn fadvise(fd: c_int, offset: loff_t, len: loff_t, advise: c_int) -> c_int {
+    unsafe { r::fadvise(fd, offset, len as k_ulong, advise) }
+}
+
+pub fn fchmod(fd: c_int, mode: umode_t) -> c_int {
+    unsafe { r::fchmod(fd as k_uint, mode) }
+}
+
+pub fn fallocate(fd: c_int, mode: c_int, base: loff_t, len: loff_t) -> c_int {
+    unsafe { r::fallocate(fd, mode, base, len) }
+}
+
+pub fn timerfd_create(clock: c_int, flags: c_int) -> c_int {
+    unsafe { r::timerfd_create(clock, flags) }
+}
+
+pub fn epoll_create(flags: c_int) -> c_int {
+    unsafe { r::epoll_create1(flags) }
+}
+
+pub fn flock(fd: c_int, op: c_int) -> c_int {
+    unsafe { r::flock(fd as k_uint, op as k_uint) }
+}
+
+pub fn readahead(fd: c_int, offset: loff_t, count: size_t) -> ssize_t {
+    unsafe { r::readahead(fd, offset, count) }
 }
 
 pub fn read(fd: c_int, buf: &mut [u8]) -> ssize_t {
@@ -115,8 +209,8 @@ pub fn fstatat(dir: c_int, file: &CStr, buf: &mut stat, flags: c_int) -> c_int {
     unsafe { r::fstatat(dir, file.as_ptr(), buf, flags) }
 }
 
-pub fn faccessat(dir: c_int, file: &CStr, mode: c_int) -> c_int {
-    unsafe { r::faccessat(dir, file.as_ptr(), mode) }
+pub fn faccessat(dir: c_int, file: &CStr, mode: umode_t) -> c_int {
+    unsafe { r::faccessat(dir, file.as_ptr(), mode as c_int) }
 }
 
 pub fn truncate(file: &CStr, len: loff_t) -> c_int {
@@ -141,8 +235,8 @@ pub fn renameat(olddir: c_int, oldfile: &CStr, newdir: c_int, newfile: &CStr,
     }
 }
 
-pub fn mkdirat(dir: c_int, file: &CStr, mode: mode_t) -> c_int {
-    unsafe {  r::mkdirat(dir, file.as_ptr(), mode as umode_t) }
+pub fn mkdirat(dir: c_int, file: &CStr, mode: umode_t) -> c_int {
+    unsafe {  r::mkdirat(dir, file.as_ptr(), mode) }
 }
 
 pub fn unlinkat(dir: c_int, file: &CStr, flags: c_int) -> c_int {
@@ -163,12 +257,12 @@ pub fn fchownat(dir: c_int, path: &CStr, user: uid_t, group: gid_t,
     unsafe { r::fchownat(dir, path.as_ptr(), user, group, flags) }
 }
 
-pub fn fchmodat(dir: c_int, path: &CStr, mode: mode_t) -> c_int {
-    unsafe { r::fchmodat(dir, path.as_ptr(), mode as umode_t) }
+pub fn fchmodat(dir: c_int, path: &CStr, mode: umode_t) -> c_int {
+    unsafe { r::fchmodat(dir, path.as_ptr(), mode) }
 }
 
-pub fn mknodat(dir: c_int, path: &CStr, mode: mode_t, dev: dev_t) -> c_int {
-    unsafe { r::mknodat(dir, path.as_ptr(), mode as umode_t, dev) }
+pub fn mknodat(dir: c_int, path: &CStr, mode: umode_t, dev: dev_t) -> c_int {
+    unsafe { r::mknodat(dir, path.as_ptr(), mode, dev) }
 }
 
 pub fn setxattr(path: &CStr, name: &CStr, val: &[u8], flags: c_int) -> c_int {
@@ -317,8 +411,4 @@ pub fn sethostname(name: &[u8]) -> c_int {
 
 pub fn setdomainname(name: &[u8]) -> c_int {
     unsafe { r::setdomainname(name.as_ptr() as *mut c_char, name.len().saturating_cast()) }
-}
-
-pub fn sync() {
-    unsafe { r::sync() }
 }

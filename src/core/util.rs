@@ -7,7 +7,7 @@ use std::{mem};
 use cty::{c_int, };
 use errno::{Errno};
 use result::{Result};
-use ext::{SignedInt, Int};
+use ext::{SignedInt, Int, AsByteSlice};
 use c_str::{CStr};
 
 #[cfg(feature = "retry")]
@@ -37,7 +37,8 @@ pub fn retry<T: SignedInt, F: FnMut() -> T>(mut f: F) -> Result<T> {
     }
 }
 
-pub fn memchr(s: &[u8], c: u8) -> Option<usize> {
+pub fn memchr<T: AsByteSlice+?Sized>(s: &T, c: u8) -> Option<usize> {
+    let s = s.as_byte_slice();
     let mut idx = 0;
     while idx < s.len() {
         if s[idx] == c {

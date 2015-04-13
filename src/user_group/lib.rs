@@ -57,7 +57,7 @@ impl<'a> LineReader<'a> {
         loop {
             {
                 // Borrow checked doesn't understand that return ends the loop.
-                let cur = unsafe { mem::transmute(&buf[self.start..self.end]) };
+                let cur: &'static [u8] = unsafe { mem::transmute(&buf[self.start..self.end]) };
                 if let Some(pos) = memchr(cur, b'\n') {
                     self.start += pos + 1;
                     return &cur[..pos];

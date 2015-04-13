@@ -10,13 +10,13 @@
 extern crate linux_core as core;
 extern crate linux_time_base as time_base;
 
-use core::cty::{CPU_SET_SIZE, utsname, sysinfo, strlen, GRND_NONBLOCK, PATH_MAX};
+use core::cty::{new_utsname, sysinfo, GRND_NONBLOCK, PATH_MAX};
 use core::syscall::{sched_getaffinity, uname, sysinfo, getrandom, acct, sethostname,
                     setdomainname};
 use core::string::{LinuxStr, AsLinuxStr};
 use core::ext::{AsLinuxPath};
 use core::result::{Result};
-use core::util::{retry};
+use core::util::{retry, memchr};
 
 use time_base::{Time};
 
@@ -25,7 +25,8 @@ use std::{mem, fmt};
 
 /// Returns the number of CPU available to this thread.
 pub fn cpu_count() -> usize {
-    let mut buf = [0; CPU_SET_SIZE];
+    // XXX: Up to 512 CPUs which is the default maximum for ia64
+    let mut buf = [0; 512 / 8];
     sched_getaffinity(0, &mut buf);
     buf.iter().map(|b| b.count_ones()).sum() as usize
 }
@@ -33,7 +34,7 @@ pub fn cpu_count() -> usize {
 /// Returns information about the system in form of strings.
 #[derive(Copy, Clone)]
 pub struct StrInfo {
-    buf: utsname,
+    buf: new_utsname,
     sysname_len:    u8,
     nodename_len:   u8,
     release_len:    u8,
@@ -55,12 +56,12 @@ impl StrInfo {
     /// Retrieves information from the system and stores it in the Strinfo.
     pub fn update(&mut self) -> Result {
         try!(rv!(uname(&mut self.buf)));
-        self.sysname_len    = unsafe { strlen(self.buf.sysname.as_ptr())    as u8 };
-        self.nodename_len   = unsafe { strlen(self.buf.nodename.as_ptr())   as u8 };
-        self.release_len    = unsafe { strlen(self.buf.release.as_ptr())    as u8 };
-        self.version_len    = unsafe { strlen(self.buf.version.as_ptr())    as u8 };
-        self.machine_len    = unsafe { strlen(self.buf.machine.as_ptr())    as u8 };
-        self.domainname_len = unsafe { strlen(self.buf.domainname.as_ptr()) as u8 };
+        self.sysname_len    = memchr(&self.buf.sysname[..],    0).unwrap() as u8;
+        self.nodename_len   = memchr(&self.buf.nodename[..],   0).unwrap() as u8;
+        self.release_len    = memchr(&self.buf.release[..],    0).unwrap() as u8;
+        self.version_len    = memchr(&self.buf.version[..],    0).unwrap() as u8;
+        self.machine_len    = memchr(&self.buf.machine[..],    0).unwrap() as u8;
+        self.domainname_len = memchr(&self.buf.domainname[..], 0).unwrap() as u8;
         Ok(())
     }
 

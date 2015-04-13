@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::{self, ops};
+use std::{self, ops, mem};
 use std::borrow::{Cow};
 use std::convert::{AsRef};
 use std::path::{Path};
@@ -138,4 +138,20 @@ impl<T: Iterator> IteratorExt2 for T { }
 
 pub fn is_signed<T: Int>() -> bool {
     T::min_value() < T::zero()
+}
+
+pub trait AsByteSlice {
+    fn as_byte_slice(&self) -> &[u8];
+}
+
+impl AsByteSlice for [u8] {
+    fn as_byte_slice(&self) -> &[u8] { self }
+}
+
+impl AsByteSlice for [i8] {
+    fn as_byte_slice(&self) -> &[u8] { unsafe { mem::transmute(self) } }
+}
+
+impl<'a, T: AsByteSlice> AsByteSlice for &'a T {
+    fn as_byte_slice(&self) -> &[u8] { (*self).as_byte_slice() }
 }

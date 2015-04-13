@@ -4,13 +4,13 @@
 
 use std::{fmt, str};
 
-use core::cty::{self, c_int, mode_t, R_OK, W_OK, X_OK};
+use core::cty::{self, c_int, umode_t, S_IROTH, S_IWOTH, S_IXOTH};
 
 /// Flags for opening and modifying a file.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct Flags {
     flags: c_int,
-    mode: mode_t,
+    mode: umode_t,
 }
 
 impl Flags {
@@ -175,12 +175,12 @@ pub fn flags_to_int(f: Flags) -> c_int {
 /// The permissions of a file.
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Mode {
-    mode: mode_t,
+    mode: umode_t,
 }
 
 impl Mode {
     /// Create the permissions from an integer.
-    pub fn from_mode(mode: mode_t) -> Mode {
+    pub fn from_mode(mode: umode_t) -> Mode {
         Mode { mode: mode }
     }
 
@@ -332,12 +332,12 @@ impl Mode {
         self.set_bit(cty::S_IXOTH, val);
     }
 
-    fn set_bit(&mut self, bit: mode_t, val: bool) {
-        self.mode = (self.mode & !bit) | (bit * val as mode_t);
+    fn set_bit(&mut self, bit: umode_t, val: bool) {
+        self.mode = (self.mode & !bit) | (bit * val as umode_t);
     }
 }
 
-pub fn mode_to_int(m: Mode) -> mode_t {
+pub fn mode_to_int(m: Mode) -> umode_t {
     m.mode
 }
 
@@ -455,7 +455,7 @@ impl str::FromStr for Mode {
 /// permissions.
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct AccessMode {
-    mode: c_int,
+    mode: umode_t,
 }
 
 impl AccessMode {
@@ -466,36 +466,36 @@ impl AccessMode {
 
     /// Checks if the `readable` bit is set.
     pub fn is_readable(&self) -> bool {
-        self.mode & R_OK != 0
+        self.mode & S_IROTH != 0
     }
 
     /// Sets or unsets the `readable` flag.
     pub fn set_readable(&mut self, val: bool) {
-        self.set_bit(R_OK, val);
+        self.set_bit(S_IROTH, val);
     }
 
     /// Checks if the `writable` bit is set.
     pub fn is_writable(&self) -> bool {
-        self.mode & W_OK != 0
+        self.mode & S_IWOTH != 0
     }
 
     /// Sets or unsets the `writable` flag.
     pub fn set_writable(&mut self, val: bool) {
-        self.set_bit(W_OK, val);
+        self.set_bit(S_IWOTH, val);
     }
 
     /// Checks if the `executable` bit is set.
     pub fn is_executable(&self) -> bool {
-        self.mode & X_OK != 0
+        self.mode & S_IXOTH != 0
     }
 
     /// Sets or unsets the `executable` flag.
     pub fn set_executable(&mut self, val: bool) {
-        self.set_bit(X_OK, val);
+        self.set_bit(S_IXOTH, val);
     }
 
-    fn set_bit(&mut self, bit: c_int, val: bool) {
-        self.mode = (self.mode & !bit) | (bit * val as c_int);
+    fn set_bit(&mut self, bit: umode_t, val: bool) {
+        self.mode = (self.mode & !bit) | (bit * val as umode_t);
     }
 }
 
@@ -545,6 +545,6 @@ impl str::FromStr for AccessMode {
     }
 }
 
-pub fn access_mode_to_int(mode: AccessMode) -> c_int {
+pub fn access_mode_to_int(mode: AccessMode) -> umode_t {
     mode.mode
 }

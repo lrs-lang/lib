@@ -13,7 +13,7 @@ use std::path::{Path};
 use std::io::{Cursor};
 use std::ffi::{CStr};
 
-use core::cty::{linux_dirent64, MODE_TYPE_SHIFT, mode_t};
+use core::cty::{linux_dirent64, MODE_TYPE_SHIFT, umode_t};
 use core::ext::{AsLinuxPath};
 use core::string::{LinuxString, LinuxStr, AsLinuxStr};
 use core::result::{Result};
@@ -125,7 +125,7 @@ impl<'a> Iterator for Iter<'a> {
             let ent = &*(self.buf.get_ref()[pos..].as_ptr() as *const linux_dirent64);
             let ent_len = ent.d_reclen as usize;
             self.buf.set_position((pos + ent_len) as u64);
-            let ty = file_type_from_mode((ent.d_types as mode_t) << MODE_TYPE_SHIFT);
+            let ty = file_type_from_mode((ent.d_type as umode_t) << MODE_TYPE_SHIFT);
             let name = CStr::from_ptr(ent.d_name.as_ptr()).to_bytes();
             if name == b"." || name == b".." {
                 self.next()
@@ -178,7 +178,7 @@ fn walk_int<F>(path: &Path, f: &mut F)
             let ent_len = ent.d_reclen as usize;
             iter.buf.set_position((pos + ent_len) as u64);
             let name = CStr::from_ptr(ent.d_name.as_ptr()).to_bytes();
-            let ty = file_type_from_mode((ent.d_types as mode_t) << MODE_TYPE_SHIFT);
+            let ty = file_type_from_mode((ent.d_type as umode_t) << MODE_TYPE_SHIFT);
             WalkEntry {
                 inode: ent.d_ino,
                 ty:    ty,

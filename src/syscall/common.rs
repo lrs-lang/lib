@@ -11,7 +11,7 @@ use cty::{
     sockaddr, timespec, timex, uid_t, umode_t, c_char, aio_context_t, clock_t,
     fd_set, file_handle, getcpu_cache, iocb, io_event, iovec, itimerspec, itimerval,
     kexec_segment, key_t, k_long, linux_dirent, linux_dirent64, mmap_arg_struct,
-    mmsghdr, mode_t, mq_attr, mqd_t, msgbuf, msqid64_ds, new_utsname, off_t,
+    mmsghdr, mq_attr, mqd_t, msgbuf, msqid64_ds, new_utsname, off_t,
     __old_kernel_stat, old_linux_dirent, oldold_utsname, old_sigaction, old_sigset_t,
     old_utsname, perf_event_attr, pid_t, pollfd, qid_t, rlimit, rlimit64,
     robust_list_head, rusage, __s32, sched_attr, sched_param, sel_arg_struct, sembuf,
@@ -1607,8 +1607,8 @@ pub unsafe fn truncate(path: *const c_char, length: k_long) -> k_int {
     call!(__NR_truncate, path, length) as k_int
 }
 
-pub unsafe fn umask(mask: k_int) -> mode_t {
-    call!(__NR_umask, mask) as mode_t
+pub unsafe fn umask(mask: k_int) -> umode_t {
+    call!(__NR_umask, mask) as umode_t
 }
 
 pub unsafe fn umount(name: *mut c_char, flags: k_int) -> k_int {
