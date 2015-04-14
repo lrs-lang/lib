@@ -23,12 +23,28 @@ mod str;
 
 pub type Result = core::prelude::Result<(), error::Errno>;
 
-trait Debug {
+pub trait Debug {
     fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result;
 }
 
-trait Display {
+impl<'a, T: Debug+?Sized> Debug for &'a T {
+    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
+        (*self).fmt(w)
+    }
+}
+
+pub trait Display {
     fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result;
+}
+
+impl<'a, T: Display+?Sized> Display for &'a T {
+    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
+        (*self).fmt(w)
+    }
+}
+
+mod fmt {
+    pub use {Debug, Display};
 }
 
 fn main() {
@@ -36,6 +52,6 @@ fn main() {
         fn write(fd: i32, ptr: *const u8, len: u64);
     }
     let mut buf = [0; 200];
-    Display::fmt("hello wö\\r\"ld\n", &mut &mut buf[..]);
+    write!(&mut buf[..], "hello {:?}\n", "wörld");
     unsafe { write(1, buf.as_ptr(), 200); }
 }

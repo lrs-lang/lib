@@ -25,4 +25,15 @@ impl<T, E> Result<T, E> {
             Err(e) => Err(e),
         }
     }
+
+    pub fn is_ok(&self) -> bool {
+        match *self {
+            Ok(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_err(&self) -> bool {
+        !self.is_ok()
+    }
 }

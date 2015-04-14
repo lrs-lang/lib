@@ -47,6 +47,7 @@ pub trait Write {
             match self.write(buf) {
                 Err(error::Interrupted) => { },
                 e @ Err(_) => return e,
+                Ok(0) => return Ok(0),
                 Ok(n) => {
                     written += n;
                     buf = &buf[n..];

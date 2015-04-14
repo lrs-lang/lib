@@ -73,7 +73,7 @@ pub mod print {
 
 pub mod ext {
     pub use _syntax::ext::{
-        asm, base, build, cfg, concat, concat_idents, env, expand, format,
+        asm, base, build, cfg, concat, concat_idents, env, expand,
         log_syntax, mtwt, quote, source_util, trace_macros, tt, deriving,
     };
 }
@@ -103,4 +103,8 @@ pub fn plugin_registrar(reg: &mut Registry) {
     reg.register_syntax_extension(
         token::intern("derive_Eq"),
         Decorator(Box::new(lrs_ext::derive_eq)));
+
+    reg.register_macro(
+        "write",
+        lrs_ext::expand_format_args);
 }
