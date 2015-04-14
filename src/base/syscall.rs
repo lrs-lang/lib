@@ -9,9 +9,9 @@ use cty::{
     c_int, ssize_t, rlimit64, pid_t, uid_t, gid_t, stat, c_char, size_t, statfs,
     timespec, dev_t, c_void, clockid_t, itimerspec, epoll_event, sigset_t, new_utsname,
     sysinfo, c_uint, c_ulong, umode_t, k_uint, loff_t, k_ulong, F_DUPFD_CLOEXEC, F_GETFL,
-    F_SETFL, F_GETFD, F_SETFD,
+    F_SETFL, F_GETFD, F_SETFD, sockaddr, user_msghdr, mmsghdr,
 };
-use ext::{SaturatingCast};
+use ext::{SaturatingCast, AsBytes, AsMutBytes};
 use raw_syscall as r;
 
 // XXX: iovec _MUST_ be the same as &mut [u8]
@@ -411,4 +411,134 @@ pub fn sethostname(name: &[u8]) -> c_int {
 
 pub fn setdomainname(name: &[u8]) -> c_int {
     unsafe { r::setdomainname(name.as_ptr() as *mut c_char, name.len().saturating_cast()) }
+}
+
+pub fn socket(domain: c_int, ty: c_int, proto: c_int) -> c_int {
+    unsafe { r::socket(domain, ty, proto) }
+}
+
+pub fn connect<T: AsBytes+?Sized>(sockfd: c_int, addr: &T) -> c_int {
+    let bytes = addr.as_bytes();
+    unsafe {
+        r::connect(sockfd, bytes.as_ptr() as *mut sockaddr, bytes.len().saturating_cast())
+    }
+}
+
+pub fn accept4<T: AsMutBytes+?Sized>(sockfd: c_int, addr: Option<&mut T>,
+                                     addrlen: &mut usize, flags: c_int) -> c_int {
+    let bytes = addr.map(|a| a.as_mut_bytes()).unwrap_or(&mut []);
+    let mut len = bytes.len().saturating_cast();
+    let res = unsafe {
+        r::accept4(sockfd, bytes.as_mut_ptr() as *mut sockaddr, &mut len, flags)
+    };
+    *addrlen = len as usize;
+    res
+}
+
+pub fn recvfrom<T: AsMutBytes+?Sized>(sockfd: c_int, buf: &mut [u8], flags: c_int,
+                src_addr: Option<&mut T>, addrlen: &mut usize) -> ssize_t {
+    let bytes = src_addr.map(|a| a.as_mut_bytes()).unwrap_or(&mut []);
+    let mut len = bytes.len().saturating_cast();
+    let res = unsafe {
+        r::recvfrom(sockfd, buf.as_mut_ptr() as *mut c_void, buf.len().saturating_cast(),
+                    flags as k_uint, bytes.as_mut_ptr() as *mut sockaddr, &mut len)
+    };
+    *addrlen = len as usize;
+    res
+}
+
+pub fn recvmsg(sockfd: c_int, msg: &mut user_msghdr, flags: c_int) -> ssize_t {
+    unsafe { r::recvmsg(sockfd, msg, flags as k_uint) }
+}
+
+pub fn recvmmsg(sockfd: c_int, msgvec: &mut [mmsghdr], flags: c_uint,
+                timeout: Option<&mut timespec>) -> c_int {
+    let timeout = timeout.map(|t| t as *mut timespec).unwrap_or(0 as *mut timespec);
+    unsafe {
+        r::recvmmsg(sockfd, msgvec.as_mut_ptr(), msgvec.len().saturating_cast(), flags,
+                    timeout) as c_int
+    }
+}
+
+pub fn sendto<T: AsBytes+?Sized>(sockfd: c_int, buf: &[u8], flags: c_int,
+                                 dst_addr: Option<&T>) -> ssize_t {
+    let dst_addr = dst_addr.map(|a| a.as_bytes()).unwrap_or(&[]);
+    unsafe {
+        r::sendto(sockfd, buf.as_ptr() as *mut c_void, buf.len().saturating_cast(),
+                  flags as k_uint, dst_addr.as_ptr() as *mut sockaddr,
+                  dst_addr.len().saturating_cast())
+    }
+}
+
+pub fn sendmsg(sockfd: c_int, msg: &user_msghdr, flags: c_int) -> ssize_t {
+    unsafe { r::sendmsg(sockfd, msg as *const _ as *mut _, flags as k_uint) }
+}
+
+pub fn sendmmsg(sockfd: c_int, msgvec: &[mmsghdr], flags: c_uint) -> c_int {
+    unsafe {
+        r::sendmmsg(sockfd, msgvec.as_ptr() as *mut mmsghdr,
+                    msgvec.len().saturating_cast(), flags) as c_int
+    }
+}
+
+pub fn shutdown(sockfd: c_int, how: c_int) -> c_int {
+    unsafe { r::shutdown(sockfd, how) }
+}
+
+pub fn bind<T: AsBytes+?Sized>(sockfd: c_int, addr: &T) -> c_int {
+    let bytes = addr.as_bytes();
+    unsafe {
+        r::bind(sockfd, bytes.as_ptr() as *mut sockaddr, bytes.len().saturating_cast())
+    }
+}
+
+pub fn listen(sockfd: c_int, backlog: c_int) -> c_int {
+    unsafe { r::listen(sockfd, backlog) }
+}
+
+pub fn getsockname<T: AsMutBytes+?Sized>(sockfd: c_int, addr: &mut T,
+                                         addrlen: &mut usize) -> c_int {
+    let bytes = addr.as_mut_bytes();
+    let mut len = bytes.len().saturating_cast();
+    let res = unsafe {
+        r::getsockname(sockfd, bytes.as_mut_ptr() as *mut sockaddr, &mut len)
+    };
+    *addrlen = len as usize;
+    res
+}
+
+pub fn getpeername<T: AsMutBytes+?Sized>(sockfd: c_int, addr: &mut T,
+                                         addrlen: &mut usize) -> c_int {
+    let bytes = addr.as_mut_bytes();
+    let mut len = bytes.len().saturating_cast();
+    let res = unsafe {
+        r::getpeername(sockfd, bytes.as_mut_ptr() as *mut sockaddr, &mut len)
+    };
+    *addrlen = len as usize;
+    res
+}
+
+pub fn socketpair(domain: c_int, ty: c_int, proto: c_int, sv: &mut [c_int; 2]) -> c_int {
+    unsafe { r::socketpair(domain, ty, proto, sv.as_mut_ptr()) }
+}
+
+pub fn setsockopt<T: AsBytes+?Sized>(sockfd: c_int, level: c_int, optname: c_int,
+                                     optval: &T) -> c_int {
+    let bytes = optval.as_bytes();
+    unsafe {
+        r::setsockopt(sockfd, level, optname, bytes.as_ptr() as *mut c_char,
+                      bytes.len().saturating_cast())
+    }
+}
+
+pub fn getsockopt<T: AsMutBytes+?Sized>(sockfd: c_int, level: c_int, optname: c_int,
+                                        optval: &mut T, optlen: &mut usize) -> c_int {
+    let bytes = optval.as_mut_bytes();
+    let mut len = bytes.len().saturating_cast();
+    let res = unsafe {
+        r::getsockopt(sockfd, level, optname, bytes.as_mut_ptr() as *mut c_char,
+                      &mut len)
+    };
+    *optlen = len as usize;
+    res
 }

@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::{self, ops, mem};
+use std::{self, ops, mem, slice};
 use std::borrow::{Cow};
 use std::convert::{AsRef};
 use std::path::{Path};
@@ -140,18 +140,54 @@ pub fn is_signed<T: Int>() -> bool {
     T::min_value() < T::zero()
 }
 
-pub trait AsByteSlice {
-    fn as_byte_slice(&self) -> &[u8];
+pub trait AsBytes {
+    fn as_bytes(&self) -> &[u8];
 }
 
-impl AsByteSlice for [u8] {
-    fn as_byte_slice(&self) -> &[u8] { self }
+pub trait AsMutBytes {
+    fn as_mut_bytes(&mut self) -> &mut [u8];
 }
 
-impl AsByteSlice for [i8] {
-    fn as_byte_slice(&self) -> &[u8] { unsafe { mem::transmute(self) } }
+macro_rules! impl_as_bytes_for_int {
+    ($t:ty) => {
+        impl AsBytes for $t {
+            fn as_bytes(&self) -> &[u8] {
+                unsafe {
+                    slice::from_raw_parts(self as *const _ as *const _, mem::size_of::<$t>())
+                }
+            }
+        }
+        impl AsMutBytes for $t {
+            fn as_mut_bytes(&mut self) -> &mut [u8] {
+                unsafe {
+                    slice::from_raw_parts_mut(self as *mut _ as *mut _, mem::size_of::<$t>())
+                }
+            }
+        }
+    }
 }
 
-impl<'a, T: AsByteSlice> AsByteSlice for &'a T {
-    fn as_byte_slice(&self) -> &[u8] { (*self).as_byte_slice() }
+impl AsBytes for [u8] { fn as_bytes(&self) -> &[u8] { self } }
+impl AsBytes for [i8] { fn as_bytes(&self) -> &[u8] { unsafe { mem::transmute(self) } } }
+
+impl AsMutBytes for [u8] { fn as_mut_bytes(&mut self) -> &mut [u8] { self } }
+impl AsMutBytes for [i8] { fn as_mut_bytes(&mut self) -> &mut [u8] { unsafe { mem::transmute(self) } } }
+
+impl_as_bytes_for_int!(i8);
+impl_as_bytes_for_int!(u8);
+impl_as_bytes_for_int!(i16);
+impl_as_bytes_for_int!(u16);
+impl_as_bytes_for_int!(i32);
+impl_as_bytes_for_int!(u32);
+impl_as_bytes_for_int!(i64);
+impl_as_bytes_for_int!(u64);
+impl_as_bytes_for_int!(isize);
+impl_as_bytes_for_int!(usize);
+
+impl<'a, T: AsBytes> AsBytes for &'a T {
+    fn as_bytes(&self) -> &[u8] { (*self).as_bytes() }
+}
+
+impl<'a, T: AsMutBytes> AsMutBytes for &'a mut T {
+    fn as_mut_bytes(&mut self) -> &mut [u8] { (*self).as_mut_bytes() }
 }

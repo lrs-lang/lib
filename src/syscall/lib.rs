@@ -4,9 +4,12 @@
 
 #![crate_name = "linux_syscall"]
 #![crate_type = "lib"]
-#![feature(asm)]
+#![feature(asm, plugin, no_std)]
+#![plugin(linux_core_plugin)]
+#![no_std]
 #![allow(dead_code)]
 
+extern crate linux_core as core;
 extern crate linux_cty as cty;
 
 pub use ::arch::{

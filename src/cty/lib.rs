@@ -4,9 +4,13 @@
 
 #![crate_name = "linux_cty"]
 #![crate_type = "lib"]
-#![feature(negate_unsigned)]
+#![feature(negate_unsigned, plugin, no_std)]
+#![plugin(linux_core_plugin)]
+#![no_std]
 #![allow(non_camel_case_types, raw_pointer_derive, overflowing_literals, non_snake_case,
          non_upper_case_globals, dead_code)]
+
+extern crate linux_core as core;
 
 pub use self::arch::*;
 
@@ -75,7 +79,7 @@ pub type k_double    = c_double;
 pub const __FD_SETSIZE : usize = 1024;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct __kernel_fd_set {
     pub fds_bits: [c_ulong; __FD_SETSIZE / (8 * BYTES_PER_LONG)],
 }
@@ -98,21 +102,21 @@ pub type __wsum  = __u32;
 
 // TODO: Explain why the second type is not c_long.
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct timespec {
     pub tv_sec:  __kernel_time_t,
     pub tv_nsec: __kernel_long_t,
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct timeval {
     pub tv_sec: __kernel_time_t,
     pub tv_usec: __kernel_suseconds_t,
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct timezone {
     pub tz_minuteswest: c_int,
     pub tz_dsttime:     c_int,
@@ -123,14 +127,14 @@ pub const ITIMER_VIRTUAL : c_int = 1;
 pub const ITIMER_PROF    : c_int = 2;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct itimerspec {
     pub it_interval: timespec,
     pub it_value:    timespec,
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct itimerval {
     pub it_interval: timeval,
     pub it_value:    timeval,
@@ -152,7 +156,7 @@ pub const CLOCK_TAI                : clockid_t = 11;
 pub const TIMER_ABSTIME : c_int = 0x01;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct linux_dirent64 {
     pub d_ino:    u64,
     pub d_off:    i64,
@@ -164,7 +168,7 @@ pub struct linux_dirent64 {
 pub const SI_LOAD_SHIFT	: __kernel_ulong_t = 16;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct sysinfo {
     pub uptime:    __kernel_long_t,
     pub loads:     [__kernel_ulong_t; 3],
@@ -290,7 +294,7 @@ pub const __MAX_BPF_REG : u8 = 11;
 pub const MAX_BPF_REG : u8 = __MAX_BPF_REG;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct bpf_insn {
     pub code: __u8,
     // __u8 dst_reg:4;  /* dest register */
@@ -320,7 +324,7 @@ pub const BPF_EXIST   : c_int = 2;
 // XXX(WRONG) this needs an ((aligned(8))) attribute
 // "systems language"
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct bpf_attr {
     _dummy: [u64; 2],
 }
@@ -341,7 +345,7 @@ pub const _LINUX_CAPABILITY_VERSION_3 : c_int = 0x20080522;
 pub const _LINUX_CAPABILITY_U32S_3    : c_int = 2;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct __user_cap_header_struct {
     pub version: __u32,
     pub pid: c_int,
@@ -350,7 +354,7 @@ pub struct __user_cap_header_struct {
 pub type cap_user_header_t = *mut __user_cap_header_struct;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 struct __user_cap_data_struct {
     pub effective:   __u32,
     pub permitted:   __u32,
@@ -376,14 +380,14 @@ pub const VFS_CAP_U32             : c_int = VFS_CAP_U32_2;
 pub const VFS_CAP_REVISION        : c_int = VFS_CAP_REVISION_2;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct vfs_cap_data_array {
     pub permitted:   __le32,
     pub inheritable: __le32,
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct vfs_cap_data {
     pub magic_etc: __le32,
     pub data: [vfs_cap_data_array; VFS_CAP_U32 as usize],
@@ -445,7 +449,7 @@ pub type key_perm_t   = u32;
 // uio.h
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct iovec {
     pub iov_base: *mut c_void,
     pub iov_len: user_size_t,
@@ -469,24 +473,23 @@ pub struct __kernel_sockaddr_storage {
     pub ss_family: __kernel_sa_family_t,
     pub __data:    [c_char; _K_SS_MAXSIZE - BYTES_PER_SHORT],
 }
-impl Clone for __kernel_sockaddr_storage { fn clone(&self) -> __kernel_sockaddr_storage { *self } }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct sockaddr {
     pub sa_family: sa_family_t,
     pub sa_data: [k_char; 14],
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct linger {
     pub l_onoff: k_int,
     pub l_linger: k_int,
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct user_msghdr {
     pub msg_name:       *mut c_void,
     pub msg_namelen:    k_int,
@@ -498,14 +501,14 @@ pub struct user_msghdr {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct mmsghdr {
     pub msg_hdr: user_msghdr,
     pub msg_len: k_uint,
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct cmsghdr {
     pub cmsg_len:   user_size_t,
     pub cmsg_level: k_int,
@@ -517,7 +520,7 @@ pub const SCM_CREDENTIALS : c_int = 0x02;
 pub const SCM_SECURITY    : c_int = 0x03;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct ucred {
     pub pid: __u32,
     pub uid: __u32,
@@ -676,7 +679,7 @@ pub const IPX_TYPE : c_int = 1;
 // timex.h
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct timex {
     pub modes:     c_uint,
     pub offset:    __kernel_long_t,
@@ -772,7 +775,7 @@ pub const IOCB_CMD_PWRITEV : c_int = 8;
 pub const IOCB_FLAG_RESFD : c_int = 1 << 0;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct io_event {
     pub data: __u64,
     pub obj:  __u64,
@@ -782,7 +785,7 @@ pub struct io_event {
 
 #[cfg(target_endian = "little")]
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct iocb {
     pub aio_data:       __u64,
     pub aio_key:        __u32,
@@ -800,7 +803,7 @@ pub struct iocb {
 
 #[cfg(target_endian = "big")]
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct iocb {
     pub aio_data:       __u64,
     pub aio_reserved1:  __u32, // these two fields are
@@ -819,7 +822,7 @@ pub struct iocb {
 // fs.h
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct file_handle {
 	pub handle_bytes: __u32,
 	pub handle_type: k_int,
@@ -829,7 +832,7 @@ pub struct file_handle {
 // getcpu.h
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct getcpu_cache {
 	pub blob: [k_long; 128 / BYTES_PER_LONG],
 }
@@ -860,7 +863,7 @@ pub const KEXEC_ARCH_MIPS    : c_int =  8 << 16;
 pub const KEXEC_SEGMENT_MAX : c_int = 16;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct kexec_segment {
 	buf: *const c_void,
 	bufsz: user_size_t,
@@ -871,7 +874,7 @@ pub struct kexec_segment {
 // straight from fs/readdir.c
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct linux_dirent {
 	pub d_ino:    k_ulong,
 	pub d_off:    k_ulong,
@@ -880,7 +883,7 @@ pub struct linux_dirent {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct old_linux_dirent {
     pub d_ino:    k_ulong,
     pub d_offset: k_ulong,
@@ -891,7 +894,7 @@ pub struct old_linux_dirent {
 // straight from mm/mmap.c
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct mmap_arg_struct {
 	pub addr:   k_ulong,
 	pub len:    k_ulong,
@@ -907,7 +910,7 @@ pub const MQ_PRIO_MAX  : c_int = 32768;
 pub const MQ_BYTES_MAX : c_int = 819200;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct mq_attr {
     pub mq_flags:	__kernel_long_t,
     pub mq_maxmsg:	__kernel_long_t,
@@ -926,7 +929,7 @@ pub const NOTIFY_COOKIE_LEN : c_int = 32;
 pub const IPC_PRIVATE : __kernel_key_t = 0;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct ipc_perm {
     pub key:  __kernel_key_t,
     pub uid:  __kernel_uid_t,
@@ -953,7 +956,7 @@ pub const IPC_OLD : c_int = 0;
 pub const IPC_64  : c_int = 0x0100;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct ipc_kludge {
 	msgp: *mut msgbuf,
 	msgtyp: c_long, // XXX: Maybe use k_long here?
@@ -985,14 +988,14 @@ pub const MSG_EXCEPT  : c_int = 0o20000;
 pub const MSG_COPY    : c_int = 0o40000;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct msgbuf {
 	pub mtype: __kernel_long_t,
 	pub mtext: [c_char; 1],
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct msginfo {
 	msgpool: c_int,
 	msgmap:  c_int,
@@ -1019,7 +1022,7 @@ pub const __MSGSEG : c_int = (MSGPOOL * 1024) / MSGSSZ;
 pub const __OLD_UTS_LEN : usize = 8;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct oldold_utsname {
     pub sysname:  [c_char; 9],
     pub nodename: [c_char; 9],
@@ -1039,7 +1042,6 @@ pub struct old_utsname {
     pub version:  [c_char; 65],
     pub machine:  [c_char; 65],
 }
-impl Clone for old_utsname { fn clone(&self) -> old_utsname { *self } }
 
 #[repr(C)]
 #[derive(Copy)]
@@ -1051,7 +1053,6 @@ pub struct new_utsname {
     pub machine:    [c_char; __NEW_UTS_LEN + 1],
     pub domainname: [c_char; __NEW_UTS_LEN + 1],
 }
-impl Clone for new_utsname { fn clone(&self) -> new_utsname { *self } }
 
 // signal.h
 
@@ -1063,7 +1064,6 @@ pub struct old_sigaction {
 	pub sa_flags:    k_ulong,
 	pub sa_restorer: __sigrestore_t,
 }
-impl Clone for old_sigaction { fn clone(&self) -> old_sigaction { *self } }
 
 // perf_event.h
 
@@ -1184,7 +1184,7 @@ pub const PERF_ATTR_SIZE_VER3 : c_int = 96;
 pub const PERF_ATTR_SIZE_VER4 : c_int = 104;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct perf_event_attr {
     pub ty: __u32,
     pub size: __u32,
@@ -1366,8 +1366,6 @@ pub struct perf_event_mmap_page {
 	pub data_tail:   __u64,
 }
 
-impl Clone for perf_event_mmap_page { fn clone(&self) -> perf_event_mmap_page { *self } }
-
 impl perf_event_mmap_page {
     pub fn capabilities(&self) -> __u64 { self.__union_one }
     pub fn set_capabilities(&mut self, val: __u64) { self.__union_one = val }
@@ -1399,7 +1397,7 @@ pub const PERF_RECORD_MISC_EXACT_IP        : c_int = 1 << 14;
 pub const PERF_RECORD_MISC_EXT_RESERVED    : c_int = 1 << 15;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct perf_event_header {
     pub ty: __u32,
     pub mi: __u16,
@@ -1434,7 +1432,7 @@ pub const PERF_FLAG_PID_CGROUP  : c_ulong = 1 << 2;
 pub const PERF_FLAG_FD_CLOEXEC  : c_ulong = 1 << 3;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct perf_mem_data_src {
     pub val: __u64,
 }
@@ -1493,7 +1491,7 @@ pub const PERF_MEM_TLB_OS       : c_int = 0x40;
 pub const PERF_MEM_TLB_SHIFT    : c_int = 26;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct perf_branch_entry {
     pub from: __u64,
     pub to: __u64,
@@ -1529,7 +1527,7 @@ pub const RUSAGE_BOTH     : c_int = -2;
 pub const RUSAGE_THREAD   : c_int = 1;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct rusage {
     pub ru_utime:    timeval,
     pub ru_stime:    timeval,
@@ -1550,7 +1548,7 @@ pub struct rusage {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct rlimit {
     pub rlim_cur: __kernel_ulong_t,
     pub rlim_max: __kernel_ulong_t,
@@ -1559,7 +1557,7 @@ pub struct rlimit {
 pub const RLIM64_INFINITY: c_ulonglong = !0;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct rlimit64 {
     pub rlim_cur: __u64,
     pub rlim_max: __u64,
@@ -1605,13 +1603,13 @@ pub const FUTEX_WAIT_REQUEUE_PI_PRIVATE : c_int = FUTEX_WAIT_REQUEUE_PI | FUTEX_
 pub const FUTEX_CMP_REQUEUE_PI_PRIVATE  : c_int = FUTEX_CMP_REQUEUE_PI  | FUTEX_PRIVATE_FLAG;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct robust_list {
 	pub next: *mut robust_list,
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct robust_list_head {
     pub list: robust_list,
     pub futex_offset: c_long,
@@ -1644,13 +1642,13 @@ pub fn FUTEX_OP(op: c_int, oparg: c_int, cmp: c_int, cmparg: c_int) -> c_int {
 // sched.h
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct sched_param {
     pub sched_priority: k_int,
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct sched_attr {
     pub size:           u32,
     pub sched_policy:   u32,
@@ -1665,7 +1663,7 @@ pub struct sched_attr {
 // straight from select.c
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct sel_arg_struct {
     pub n: k_ulong,
     pub inp: *mut fd_set,
@@ -1688,7 +1686,7 @@ pub const SEM_STAT : c_int = 18;
 pub const SEM_INFO : c_int = 19;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct sembuf {
     pub sem_num: c_ushort,
     pub sem_op:  c_short,
@@ -1726,7 +1724,7 @@ pub const SHM_STAT   : c_int = 13;
 pub const SHM_INFO   : c_int = 14;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct shm_info {
     pub used_ids:       c_int,
     pub shm_tot:        __kernel_ulong_t,
@@ -1741,7 +1739,7 @@ pub struct shm_info {
 pub const CTL_MAXNAME : c_int = 10;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct __sysctl_args {
     pub name:        *mut c_int,
     pub nlen:        c_int,
@@ -2445,7 +2443,7 @@ pub const ABI_FAKE_UTSNAME                                     : c_int = 6;
 // tms.h
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct tms {
     pub tms_utime:  __kernel_clock_t,
     pub tms_stime:  __kernel_clock_t,
@@ -2456,7 +2454,7 @@ pub struct tms {
 // types.h
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct ustat {
     pub f_tfree:  __kernel_daddr_t,
     pub f_tinode: __kernel_ino_t,
@@ -2467,7 +2465,7 @@ pub struct ustat {
 // utime.h
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct utimbuf {
     pub actime:  __kernel_time_t,
     pub modtime: __kernel_time_t,
@@ -2585,7 +2583,7 @@ pub fn RNDZAPENTCNT   () -> c_uint { _IO(b'R' as c_uint, 0x04) }
 pub fn RNDCLEARPOOL   () -> c_uint { _IO(b'R' as c_uint, 0x06) }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct rand_pool_info {
     pub entropy_count: c_int,
     pub buf_size:      c_int,

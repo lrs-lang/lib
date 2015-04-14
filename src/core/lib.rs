@@ -4,24 +4,39 @@
 
 #![crate_name = "linux_core"]
 #![crate_type = "lib"]
-#![feature(std_misc, into_cow, core)]
-#![allow(trivial_numeric_casts, trivial_casts)]
-
-extern crate linux_cty;
-extern crate linux_syscall as raw_syscall;
-
-pub use linux_cty as cty;
-
-// XXX: Maybe move some of these out? core takes a long time to compile right now.
+#![feature(no_std, lang_items, intrinsics, asm, plugin)]
+#![plugin(linux_core_plugin)]
+#![no_std]
 
 #[macro_use]
 pub mod macros;
-pub mod syscall;
-pub mod ext;
-pub mod string;
-pub mod c_str;
-pub mod result;
-pub mod errno;
-pub mod util;
-pub mod alias;
-pub mod fd_container;
+
+pub mod clone;
+pub mod intrinsics;
+pub mod marker;
+pub mod mem;
+pub mod ptr;
+pub mod repr;
+pub mod str;
+pub mod slice;
+pub mod panicking;
+pub mod ops;
+pub mod num;
+pub mod iter;
+pub mod option;
+pub mod prelude;
+pub mod array;
+
+mod core {
+    pub use ::{marker, ops, clone, intrinsics};
+    pub use ::{iter, option};
+}
+
+#[link(name = "c")]
+extern { }
+
+#[lang = "start"]
+fn lang_start(main: *const u8, _argc: isize, _argv: *const *const u8) -> isize {
+    unsafe { mem::cast::<_, fn()>(main)(); }
+    0
+}

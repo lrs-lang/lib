@@ -1,14 +1,16 @@
-obj cty
-obj syscall    cty
-obj core       cty syscall
-obj dev        core
-obj fs         core
-obj time_base  core
-obj process    core
-obj socket     core
-obj sys        core time_base
-obj poll       core time_base
-obj file       core dev fs time_base
-obj time_ext   core time_base file
-obj dir        core file
-obj user_group core file
+obj core
+obj cty        core
+obj syscall    core cty
+obj alloc      syscall
+obj base       core cty syscall
+obj dev        base
+obj fs         base
+obj time_base  base
+obj process    base
+obj socket     base
+obj sys        base time_base
+obj poll       base time_base
+obj file       base dev fs time_base
+obj time_ext   base time_base file
+obj dir        base file
+obj user_group base file

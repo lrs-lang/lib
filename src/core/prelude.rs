@@ -2,10 +2,5 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-macro_rules! abort {
-    () => { unsafe { $crate::intrinsics::abort() } }
-}
-
-macro_rules! assert {
-    ($pred:expr) => { if !$pred { abort!() } }
-}
+pub use ::option::{Option};
+pub use ::option::Option::{Some, None};
