@@ -1,5 +1,8 @@
 obj core
 obj cty        core
+obj error      core cty
+obj io         core error
+obj fmt        core error io
 obj syscall    core cty
 obj alloc      syscall
 obj base       core cty syscall

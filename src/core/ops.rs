@@ -3,6 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use marker::{Sized};
+use option::{Option};
+use option::Option::{Some};
 
 #[lang = "drop"]
 pub trait Drop {
@@ -171,39 +173,30 @@ pub enum Ordering {
     Equal,
     /// The second value is larger than the firest.
     Greater,
-    /// There is no ordering between the two values.
-    None,
-}
-
-impl Ordering {
-    /// Checks if the result implies an ordering between the two values.
-    pub fn is_ordered(self) -> bool {
-        self != Ordering::None
-    }
 }
 
 #[lang = "ord"]
-pub trait Ord<Rhs: ?Sized = Self> : Eq {
-    fn cmp(&self, other: &Rhs) -> Ordering;
+pub trait PartialOrd<Rhs: ?Sized = Self> : Eq {
+    fn partial_cmp(&self, other: &Rhs) -> Option<Ordering>;
 
     fn lt(&self, other: &Rhs) -> bool {
-        self.cmp(other) == Ordering::Less
+        self.partial_cmp(other) == Some(Ordering::Less)
     }
 
     fn le(&self, other: &Rhs) -> bool {
-        match self.cmp(other) {
-            Ordering::Less | Ordering::Equal => true,
+        match self.partial_cmp(other) {
+            Some(Ordering::Less) | Some(Ordering::Equal) => true,
             _ => false,
         }
     }
 
     fn gt(&self, other: &Rhs) -> bool {
-        self.cmp(other) == Ordering::Greater
+        self.partial_cmp(other) == Some(Ordering::Greater)
     }
 
     fn ge(&self, other: &Rhs) -> bool {
-        match self.cmp(other) {
-            Ordering::Greater | Ordering::Equal => true,
+        match self.partial_cmp(other) {
+            Some(Ordering::Greater) | Some(Ordering::Equal) => true,
             _ => false,
         }
     }

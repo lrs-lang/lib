@@ -100,3 +100,5 @@ extern "rust-intrinsic" {
     pub fn copy<T>(src: *const T, dst: *mut T, count: usize);
     pub fn copy_nonoverlapping<T>(src: *const T, dst: *mut T, count: usize);
 }
+
+pub unsafe fn bswap8(x: u8) -> u8 { x }

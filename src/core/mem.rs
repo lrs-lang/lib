@@ -4,6 +4,8 @@
 
 use intrinsics::{self};
 use ptr::{self};
+use marker::{Copy};
+use cmp::{self};
 
 pub use intrinsics::{
     uninit,
@@ -15,6 +17,12 @@ pub unsafe fn zeroed<T>() -> T { intrinsics::init() }
 
 pub unsafe fn copy_as<T, U>(src: &T) -> U {
     ptr::read(src as *const T as *const U)
+}
+
+pub fn copy<T: Copy>(dst: &mut [T], src: &[T]) -> usize {
+    let min = cmp::min(dst.len(), src.len());
+    unsafe { ptr::memcpy(dst.as_mut_ptr(), src.as_ptr(), min); }
+    min
 }
 
 pub fn swap<T>(one: &mut T, two: &mut T) {
