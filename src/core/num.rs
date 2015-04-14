@@ -299,8 +299,14 @@ int_impls!(i32   ; as_i=i32   ; as_u=u32   ; 32 ; "i32"   ; signed=true  ; ctpop
 int_impls!(u32   ; as_i=i32   ; as_u=u32   ; 32 ; "u32"   ; signed=false ; ctpop32 ; pop_ty=u32 ; ctlz32 ; cttz32 ; bswap32 ; );
 int_impls!(i64   ; as_i=i64   ; as_u=u64   ; 64 ; "i64"   ; signed=true  ; ctpop64 ; pop_ty=u64 ; ctlz64 ; cttz64 ; bswap64 ; );
 int_impls!(u64   ; as_i=i64   ; as_u=u64   ; 64 ; "u64"   ; signed=false ; ctpop64 ; pop_ty=u64 ; ctlz64 ; cttz64 ; bswap64 ; );
+#[cfg(target_pointer_width = "64")]
 int_impls!(isize ; as_i=isize ; as_u=usize ; 64 ; "isize" ; signed=true  ; ctpop64 ; pop_ty=u64 ; ctlz64 ; cttz64 ; bswap64 ; );
+#[cfg(target_pointer_width = "64")]
 int_impls!(usize ; as_i=isize ; as_u=usize ; 64 ; "usize" ; signed=false ; ctpop64 ; pop_ty=u64 ; ctlz64 ; cttz64 ; bswap64 ; );
+#[cfg(target_pointer_width = "32")]
+int_impls!(isize ; as_i=isize ; as_u=usize ; 32 ; "isize" ; signed=true  ; ctpop32 ; pop_ty=u32 ; ctlz32 ; cttz32 ; bswap32 ; );
+#[cfg(target_pointer_width = "32")]
+int_impls!(usize ; as_i=isize ; as_u=usize ; 32 ; "usize" ; signed=false ; ctpop32 ; pop_ty=u32 ; ctlz32 ; cttz32 ; bswap32 ; );
 
 macro_rules! signed_int_modules {
     ($($t:ident $width:expr)+) => {

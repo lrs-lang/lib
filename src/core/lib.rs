@@ -29,6 +29,7 @@ pub mod repr;
 pub mod result;
 pub mod slice;
 pub mod str;
+pub mod char;
 
 mod core {
     pub use ::{marker, ops, clone, intrinsics};

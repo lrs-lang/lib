@@ -76,3 +76,15 @@ impl<'a> Write for &'a mut [u8] {
         Ok(n)
     }
 }
+
+impl<'a, T: Read> Read for &'a mut T {
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+        (*self).read(buf)
+    }
+}
+
+impl<'a, T: Write> Write for &'a mut T {
+    fn write(&mut self, buf: &[u8]) -> Result<usize> {
+        (*self).write(buf)
+    }
+}

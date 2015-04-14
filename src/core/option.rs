@@ -3,6 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use mem::{self};
+use ops::{FnOnce};
+use self::Option::{None, Some};
 
 #[derive(Copy, Eq)]
 pub enum Option<T> {
@@ -13,5 +15,12 @@ pub enum Option<T> {
 impl<T> Option<T> {
     pub fn take(&mut self) -> Option<T> {
         mem::replace(self, Option::None)
+    }
+
+    pub fn map<U, F: FnOnce(T) -> U>(self, f: F) -> Option<U> {
+        match self {
+            Some(v) => Some(f(v)),
+            None => None,
+        }
     }
 }

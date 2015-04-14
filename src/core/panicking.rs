@@ -18,3 +18,10 @@ fn panic_bounds_check(_: &(&'static str, u32), _: usize, _: usize) -> ! {
 pub fn panic(_: &(&'static str, &'static str, u32)) -> ! {
     abort!();
 }
+
+#[lang="eh_personality"]
+#[no_mangle]
+#[allow(private_no_mangle_fns)]
+extern fn rust_eh_personality() {
+    abort!();
+}
