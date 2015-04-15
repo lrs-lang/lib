@@ -10,6 +10,7 @@
 #![allow(trivial_numeric_casts, trivial_casts)]
 
 extern crate linux_core as core;
+extern crate linux_error as error;
 extern crate linux_cty;
 extern crate linux_syscall as raw_syscall;
 
@@ -19,12 +20,12 @@ pub use linux_cty as cty;
 
 #[macro_use]
 pub mod macros;
-pub mod syscall;
-pub mod ext;
-pub mod string;
-pub mod c_str;
+// pub mod syscall;
+// pub mod ext;
+// pub mod string;
+// pub mod c_str;
 pub mod result;
-pub mod errno;
+// pub mod errno;
 pub mod util;
-pub mod alias;
-pub mod fd_container;
+// pub mod alias;
+// pub mod fd_container;

@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #![crate_name = "linux_fmt"]
-// #![crate_type = "lib"]
+#![crate_type = "lib"]
 #![feature(plugin, no_std)]
 #![plugin(linux_core_plugin)]
 #![no_std]
@@ -29,7 +29,13 @@ pub trait Debug {
 
 impl<'a, T: Debug+?Sized> Debug for &'a T {
     fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
-        (*self).fmt(w)
+        (**self).fmt(w)
+    }
+}
+
+impl<'a, T: Debug+?Sized> Debug for &'a mut T {
+    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
+        (**self).fmt(w)
     }
 }
 
@@ -39,7 +45,13 @@ pub trait Display {
 
 impl<'a, T: Display+?Sized> Display for &'a T {
     fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
-        (*self).fmt(w)
+        (**self).fmt(w)
+    }
+}
+
+impl<'a, T: Display+?Sized> Display for &'a mut T {
+    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
+        (**self).fmt(w)
     }
 }
 
@@ -47,11 +59,25 @@ mod fmt {
     pub use {Debug, Display};
 }
 
-fn main() {
-    extern {
-        fn write(fd: i32, ptr: *const u8, len: u64);
+impl<T: Debug> Debug for [T] {
+    fn fmt<W: Write+?Sized>(&self, mut w: &mut W) -> Result {
+        try!(write!(w, "["));
+        if self.len() > 0 {
+            for el in &self[..self.len() - 1] {
+                try!(write!(w, "{:?}, ", el));
+            }
+            try!(write!(w, "{:?}", &self[self.len() - 1]));
+        }
+        write!(w, "]");
+        Ok(())
     }
-    let mut buf = [0; 200];
-    write!(&mut buf[..], "hello {:?}\n", "wörld");
-    unsafe { write(1, buf.as_ptr(), 200); }
 }
+
+//fn main() {
+//    extern {
+//        fn write(fd: i32, ptr: *const u8, len: u64);
+//    }
+//    let mut buf = [0; 200];
+//    write!(&mut buf[..], "hello {:?}\n", "wörld");
+//    unsafe { write(1, buf.as_ptr(), 200); }
+//}

@@ -13,25 +13,25 @@ pub trait Drop {
 
 #[lang = "add"]
 pub trait Add<RHS=Self> {
-    type Output;
+    type Output = Self;
     fn add(self, rhs: RHS) -> Self::Output;
 }
 
 #[lang = "sub"]
 pub trait Sub<RHS=Self> {
-    type Output;
+    type Output = Self;
     fn sub(self, rhs: RHS) -> Self::Output;
 }
 
 #[lang = "mul"]
 pub trait Mul<RHS=Self> {
-    type Output;
+    type Output = Self;
     fn mul(self, rhs: RHS) -> Self::Output;
 }
 
 #[lang = "div"]
 pub trait Div<RHS=Self> {
-    type Output;
+    type Output = Self;
     fn div(self, rhs: RHS) -> Self::Output;
 }
 
@@ -43,43 +43,43 @@ pub trait Rem<RHS=Self> {
 
 #[lang = "neg"]
 pub trait Neg {
-    type Output;
+    type Output = Self;
     fn neg(self) -> Self::Output;
 }
 
 #[lang = "not"]
 pub trait Not {
-    type Output;
+    type Output = Self;
     fn not(self) -> Self::Output;
 }
 
 #[lang = "bitand"]
-pub trait BitAnd<RHS=Self> {
-    type Output;
+pub trait BitAnd<RHS = Self> {
+    type Output = Self;
     fn bitand(self, rhs: RHS) -> Self::Output;
 }
 
 #[lang = "bitor"]
-pub trait BitOr<RHS=Self> {
-    type Output;
+pub trait BitOr<RHS = Self> {
+    type Output = Self;
     fn bitor(self, rhs: RHS) -> Self::Output;
 }
 
 #[lang = "bitxor"]
-pub trait BitXor<RHS=Self> {
-    type Output;
+pub trait BitXor<RHS = Self> {
+    type Output = Self;
     fn bitxor(self, rhs: RHS) -> Self::Output;
 }
 
 #[lang = "shl"]
 pub trait Shl<RHS> {
-    type Output;
+    type Output = Self;
     fn shl(self, rhs: RHS) -> Self::Output;
 }
 
 #[lang = "shr"]
 pub trait Shr<RHS> {
-    type Output;
+    type Output = Self;
     fn shr(self, rhs: RHS) -> Self::Output;
 }
 

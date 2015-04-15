@@ -8,6 +8,8 @@ use clone::{Clone};
 #[lang = "sized"]
 pub trait Sized { }
 
+impl Sized for .. { }
+
 #[lang = "copy"]
 pub trait Copy { }
 

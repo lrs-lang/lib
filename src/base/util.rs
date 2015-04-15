@@ -2,10 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::{mem};
+use core::{mem};
 
 use cty::{c_int, };
-use errno::{Errno};
+use error::{Errno};
 use result::{Result};
 use ext::{SignedInt, Int, AsBytes};
 use c_str::{CStr};

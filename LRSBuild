@@ -2,7 +2,9 @@ obj core
 obj cty        core
 obj error      core cty
 obj io         core error
+obj stdio      core error io
 obj fmt        core error io
+obj sort       core stdio fmt
 obj syscall    core cty
 obj alloc      syscall
 obj base       core cty syscall

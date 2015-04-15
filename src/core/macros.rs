@@ -21,3 +21,13 @@ macro_rules! try {
         }
     }
 }
+
+#[macro_export]
+macro_rules! println {
+    ($fmt:expr) => {
+        write!(Stdout, concat!($fmt, "\n"))
+    };
+    ($fmt:expr, $($arg:tt)*) => {
+        write!(Stdout, concat!($fmt, "\n"), $($arg)*)
+    };
+}

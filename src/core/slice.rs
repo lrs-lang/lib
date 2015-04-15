@@ -9,7 +9,7 @@ use option::{Option};
 use option::Option::{None, Some};
 use iter::{Iterator};
 
-pub unsafe fn from_raw_parts<'a, T>(ptr: *const T, len: usize) -> &'a mut [T] {
+pub unsafe fn from_ptr<'a, T>(ptr: *const T, len: usize) -> &'a mut [T] {
     mem::cast(Slice { ptr: ptr, len: len })
 }
 
@@ -36,14 +36,14 @@ impl<T> Index<usize> for [T] {
     type Output = T;
 
     fn index(&self, index: usize) -> &T {
-        if index > self.len() { abort!(); }
+        if index >= self.len() { abort!(); }
         unsafe { &*self.as_ptr().add(index) }
     }
 }
 
 impl<T> IndexMut<usize> for [T] {
     fn index_mut(&mut self, index: usize) -> &mut T {
-        if index > self.len() { abort!(); }
+        if index >= self.len() { abort!(); }
         unsafe { &mut *self.as_mut_ptr().add(index) }
     }
 }
@@ -56,7 +56,7 @@ impl<T> Index<Range<usize>> for [T] {
         assert!(index.end <= self.len());
         let len = index.end - index.start;
         let start = unsafe { self.as_ptr().add(index.start) };
-        unsafe { from_raw_parts(start, len) }
+        unsafe { from_ptr(start, len) }
     }
 }
 

@@ -7,15 +7,17 @@ extern fn stack_exhausted() {
     abort!();
 }
 
-#[inline(always)]
+// #[inline(always)]
 #[lang = "panic_bounds_check"]
 fn panic_bounds_check(_: &(&'static str, u32), _: usize, _: usize) -> ! {
+    unsafe { ::intrinsics::breakpoint(); }
     abort!();
 }
 
-#[inline(always)]
+// #[inline(always)]
 #[lang = "panic"]
 pub fn panic(_: &(&'static str, &'static str, u32)) -> ! {
+    unsafe { ::intrinsics::breakpoint(); }
     abort!();
 }
 

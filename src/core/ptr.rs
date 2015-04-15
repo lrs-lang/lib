@@ -4,7 +4,9 @@
 
 use intrinsics::{self};
 use mem::{self};
-use ops::{Eq};
+use ops::{Eq, PartialOrd, Ordering};
+use cmp::{Ord};
+use option::{Option};
 
 pub unsafe fn read<T>(src: *const T) -> T {
     let mut tmp: T = mem::uninit();
@@ -28,7 +30,7 @@ impl<T> *const T {
     }
 
     pub unsafe fn offset(self, val: isize) -> *const T {
-        intrinsics::offset(self, val as isize)
+        intrinsics::offset(self, val)
     }
 
     pub unsafe fn add(self, val: usize) -> *const T {
@@ -46,6 +48,18 @@ impl<T> Eq for *const T {
     }
 }
 
+impl<T> PartialOrd for *const T {
+    fn partial_cmp(&self, other: &*const T) -> Option<Ordering> {
+        (*self as usize).partial_cmp(&(*other as usize))
+    }
+}
+
+impl<T> Ord for *const T {
+    fn cmp(&self, other: &*const T) -> Ordering {
+        (*self as usize).cmp(&(*other as usize))
+    }
+}
+
 #[lang = "mut_ptr"]
 impl<T> *mut T {
     pub fn is_null(self) -> bool {
@@ -53,7 +67,7 @@ impl<T> *mut T {
     }
 
     pub unsafe fn offset(self, val: isize) -> *mut T {
-        intrinsics::offset(self, val as isize) as *mut T
+        intrinsics::offset(self, val) as *mut T
     }
 
     pub unsafe fn add(self, val: usize) -> *mut T {
@@ -68,5 +82,17 @@ impl<T> *mut T {
 impl<T> Eq for *mut T {
     fn eq(&self, other: &*mut T) -> bool {
         *self as usize == *other as usize
+    }
+}
+
+impl<T> PartialOrd for *mut T {
+    fn partial_cmp(&self, other: &*mut T) -> Option<Ordering> {
+        (*self as usize).partial_cmp(&(*other as usize))
+    }
+}
+
+impl<T> Ord for *mut T {
+    fn cmp(&self, other: &*mut T) -> Ordering {
+        (*self as usize).cmp(&(*other as usize))
     }
 }
