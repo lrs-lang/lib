@@ -345,11 +345,13 @@ impl<'a, 'b> Context<'a, 'b> {
             parse::NextArgument(ref arg) => arg,
         };
 
-        // Debug/Display
+        // Debug/Display/...
 
         let trait_name = match arg.format.ty {
             ""  => "Display",
             "?" => "Debug",
+            "x" => "LowerHex",
+            "X" => "UpperHex",
             x => {
                 self.ecx.span_err(self.fmtsp, &format!("unknown format trait `{}`", x));
                 "Dummy"

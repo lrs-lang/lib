@@ -3,57 +3,54 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #![crate_name = "linux_fmt"]
-#![crate_type = "lib"]
+// #![crate_type = "lib"]
 #![feature(plugin, no_std)]
 #![plugin(linux_core_plugin)]
 #![no_std]
 
 #[macro_use]
 extern crate linux_core as core;
-extern crate linux_error as error;
+extern crate linux_ty_one as ty_one;
 extern crate linux_io as io;
+// extern crate linux_stdio as stdio;
 
 #[prelude_import] use core::prelude::*;
 use io::{Write};
 
-pub use num::{format_u64};
+pub use impls::num::{format_u64};
 
-mod num;
-mod str;
-
-pub type Result = core::prelude::Result<(), error::Errno>;
-
-pub trait Debug {
-    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result;
+mod impls {
+    pub mod num;
+    pub mod str;
+    pub mod byte_str;
 }
 
-impl<'a, T: Debug+?Sized> Debug for &'a T {
-    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
-        (**self).fmt(w)
+pub type Result = core::prelude::Result<(), ty_one::error::Errno>;
+
+macro_rules! fmt_var {
+    ($name:ident) => {
+        pub trait $name {
+            fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result;
+        }
+
+        impl<'a, T: $name+?Sized> $name for &'a T {
+            fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
+                (**self).fmt(w)
+            }
+        }
+
+        impl<'a, T: $name+?Sized> $name for &'a mut T {
+            fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
+                (**self).fmt(w)
+            }
+        }
     }
 }
 
-impl<'a, T: Debug+?Sized> Debug for &'a mut T {
-    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
-        (**self).fmt(w)
-    }
-}
-
-pub trait Display {
-    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result;
-}
-
-impl<'a, T: Display+?Sized> Display for &'a T {
-    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
-        (**self).fmt(w)
-    }
-}
-
-impl<'a, T: Display+?Sized> Display for &'a mut T {
-    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
-        (**self).fmt(w)
-    }
-}
+fmt_var!(LowerHex);
+fmt_var!(UpperHex);
+fmt_var!(Debug);
+fmt_var!(Display);
 
 mod fmt {
     pub use {Debug, Display};
@@ -74,10 +71,8 @@ impl<T: Debug> Debug for [T] {
 }
 
 //fn main() {
-//    extern {
-//        fn write(fd: i32, ptr: *const u8, len: u64);
-//    }
-//    let mut buf = [0; 200];
-//    write!(&mut buf[..], "hello {:?}\n", "wörld");
-//    unsafe { write(1, buf.as_ptr(), 200); }
+//    use ty_one::byte_str::{AsByteStr};
+//    use stdio::{Stdout};
+//    let bs = b"al\xFFien".as_byte_str();
+//    println!("ayy {:?} lmao", bs);
 //}

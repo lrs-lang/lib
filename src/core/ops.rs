@@ -138,22 +138,6 @@ impl<'a, T> DerefMut for &'a mut T {
     fn deref_mut(&mut self) -> &mut T { *self }
 }
 
-#[lang = "fn"]
-pub trait Fn<Args> : FnMut<Args> {
-    extern "rust-call" fn call(&self, args: Args) -> Self::Output;
-}
-
-#[lang = "fn_mut"]
-pub trait FnMut<Args> : FnOnce<Args> {
-    extern "rust-call" fn call_mut(&mut self, args: Args) -> Self::Output;
-}
-
-#[lang = "fn_once"]
-pub trait FnOnce<Args> {
-    type Output;
-    extern "rust-call" fn call_once(self, args: Args) -> Self::Output;
-}
-
 #[lang = "eq"]
 pub trait Eq<Rhs: ?Sized = Self> {
     fn eq(&self, other: &Rhs) -> bool;
@@ -199,5 +183,56 @@ pub trait PartialOrd<Rhs: ?Sized = Self> : Eq {
             Some(Ordering::Greater) | Some(Ordering::Equal) => true,
             _ => false,
         }
+    }
+}
+
+#[lang = "fn"]
+#[rustc_paren_sugar]
+pub trait Fn<Args> : FnMut<Args> {
+    extern "rust-call" fn call(&self, args: Args) -> Self::Output;
+}
+
+#[lang = "fn_mut"]
+#[rustc_paren_sugar]
+pub trait FnMut<Args> : FnOnce<Args> {
+    extern "rust-call" fn call_mut(&mut self, args: Args) -> Self::Output;
+}
+
+#[lang = "fn_once"]
+#[rustc_paren_sugar]
+pub trait FnOnce<Args> {
+    type Output;
+    extern "rust-call" fn call_once(self, args: Args) -> Self::Output;
+}
+
+impl<'a, Args, F: Fn<Args>+?Sized> Fn<Args> for &'a F {
+    extern "rust-call" fn call(&self, args: Args) -> F::Output {
+        (**self).call(args)
+    }
+}
+
+impl<'a, Args, F: Fn<Args>+?Sized> FnMut<Args> for &'a F {
+    extern "rust-call" fn call_mut(&mut self, args: Args) -> F::Output {
+        (**self).call(args)
+    }
+}
+
+impl<'a, Args, F: Fn<Args>+?Sized> FnOnce<Args> for &'a F {
+    type Output = F::Output;
+    extern "rust-call" fn call_once(self, args: Args) -> F::Output {
+        (*self).call(args)
+    }
+}
+
+impl<'a, Args, F: FnMut<Args>+?Sized> FnMut<Args> for &'a mut F {
+    extern "rust-call" fn call_mut(&mut self, args: Args) -> F::Output {
+        (*self).call_mut(args)
+    }
+}
+
+impl<'a, Args, F: FnMut<Args>+?Sized> FnOnce<Args> for &'a mut F {
+    type Output = F::Output;
+    extern "rust-call" fn call_once(self, args: Args) -> F::Output {
+        (*self).call_mut(args)
     }
 }

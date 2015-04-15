@@ -10,17 +10,16 @@
 #![allow(non_upper_case_globals)]
 
 extern crate linux_core as core;
+extern crate linux_ty_one as ty_one;
 extern crate linux_cty as cty;
 
 use core::prelude::*;
-use cty::{c_int};
 
-#[derive(Copy, Eq)]
-pub struct Errno(pub c_int);
+pub use ty_one::error::{Error};
 
 macro_rules! create {
     ($($name:ident = ($val:expr, $str:expr),)*) => {
-        $(pub const $name: Errno = Errno($val);)*
+        $(pub const $name: Errno = Errno($val as i32);)*
 
         impl Errno {
             pub fn desc(self) -> &'static str {
@@ -172,6 +171,4 @@ create! {
     IrrecoverableState      = (cty::ENOTRECOVERABLE , "State not recoverable"),
     RFKill                  = (cty::ERFKILL         , "Operation not possible due to RF-kill"),
     HardwarePoison          = (cty::EHWPOISON       , "Memory page has hardware error"),
-
-    RustError               = (5000, "lrs custom error"),
 }

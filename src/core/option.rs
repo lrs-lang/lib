@@ -20,7 +20,21 @@ impl<T> Option<T> {
     pub fn map<U, F: FnOnce(T) -> U>(self, f: F) -> Option<U> {
         match self {
             Some(v) => Some(f(v)),
-            None => None,
+            _ => None,
+        }
+    }
+
+    pub fn unwrap_or(self, val: T) -> T {
+        match self {
+            Some(v) => v,
+            _ => val,
+        }
+    }
+
+    pub fn as_mut(&mut self) -> Option<&mut T> {
+        match *self {
+            Some(ref mut v) => Some(v),
+            _ => None,
         }
     }
 }

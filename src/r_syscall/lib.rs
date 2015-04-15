@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_syscall"]
+#![crate_name = "linux_r_syscall"]
 #![crate_type = "lib"]
 #![feature(asm, plugin, no_std)]
 #![plugin(linux_core_plugin)]

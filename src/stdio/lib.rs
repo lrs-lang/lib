@@ -10,10 +10,11 @@
 
 #[macro_use]
 extern crate linux_core as core;
-extern crate linux_error as error;
+extern crate linux_ty_one as ty_one;
 extern crate linux_io as io;
 
 use core::prelude::*;
+use ty_one::error::{UNKNOWN};
 
 pub struct Stdout;
 
@@ -24,7 +25,7 @@ impl io::Write for Stdout {
         }
         let res = unsafe { write(1, buf.as_ptr(), buf.len() as u64) };
         if res < 0 {
-            Err(error::RustError)
+            Err(UNKNOWN)
         } else {
             Ok(res as usize)
         }

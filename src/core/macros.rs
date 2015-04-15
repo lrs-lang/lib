@@ -31,3 +31,10 @@ macro_rules! println {
         write!(Stdout, concat!($fmt, "\n"), $($arg)*)
     };
 }
+
+#[macro_export]
+macro_rules! matches {
+    ($pat:pat = $val:expr) => {
+        match val { $pat => true, _ => false, }
+    }
+}

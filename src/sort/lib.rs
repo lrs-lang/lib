@@ -11,26 +11,33 @@
 #[macro_use]
 extern crate linux_core as core;
 
+use core::prelude::*;
+
 use core::{mem, slice};
+use core::ops::{Ordering};
 use core::cmp::{Ord};
 use core::ops::Ordering::{Greater};
 
 pub fn sort<T: Ord>(slice: &mut [T]) {
+    sort_by(slice, |one, two| one.cmp(two));
+}
+
+pub fn sort_by<T, F: FnMut(&T, &T) -> Ordering>(slice: &mut [T], mut f: F) {
     if slice.len() < 2 {
         return;
     }
-    unsafe { sort_int(slice); }
+    unsafe { sort_by_int(slice, &mut f); }
 }
 
-unsafe fn sort_int<T: Ord>(slice: &mut [T]) {
+unsafe fn sort_by_int<T, F: FnMut(&T, &T) -> Ordering>(slice: &mut [T], f: &mut F) {
     let pivot = &mut slice[0] as *mut T;
     let mut start = pivot;
     let mut end = pivot.add(slice.len() - 1);
     while start < end {
-        while start <= end && (*start).cmp(&*pivot) != Greater {
+        while start <= end && f(&*start, &*pivot) != Greater {
             start = start.offset(1);
         }
-        while start < end && (*end).cmp(&*pivot) == Greater {
+        while start < end && f(&*end, &*pivot) == Greater {
             end = end.offset(-1);
         }
         if start < end {
@@ -44,6 +51,6 @@ unsafe fn sort_int<T: Ord>(slice: &mut [T]) {
         mem::swap(&mut *pivot, &mut *start);
     }
     let start_len = (start as usize - pivot as usize) / mem::size_of::<T>();
-    sort(slice::from_ptr(pivot, start_len));
-    sort(slice::from_ptr(start.offset(1), slice.len() - start_len - 1));
+    sort_by(slice::from_ptr(pivot, start_len), &mut *f);
+    sort_by(slice::from_ptr(start.offset(1), slice.len() - start_len - 1), &mut *f);
 }

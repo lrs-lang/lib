@@ -19,9 +19,18 @@ impl str {
         unsafe { mem::cast(self) }
     }
 
-    //pub fn chars<'a>(&'a self) -> Chars<'a> {
-    //    Chars { data: self.as_bytes() }
-    //}
+    pub fn len(&self) -> usize {
+        self.as_bytes().len()
+    }
+
+    pub fn from_bytes(b: &[u8]) -> Option<&str> {
+        let longest = longest_sequence(b);
+        if longest.len() == b.len() {
+            Some(longest)
+        } else {
+            None
+        }
+    }
 
     pub fn chars_width<'a>(&'a self) -> CharsWidth<'a> {
         CharsWidth { data: self.as_bytes() }
@@ -86,4 +95,32 @@ unsafe fn bytes_to_char(b: &[u8]) -> char {
         val = (val << 6) | (byte & 0b0011_1111) as u32;
     }
     mem::cast(val)
+}
+
+/// Returns the longest initial sequence of valid UTF-8 in the buffer.
+pub fn longest_sequence(b: &[u8]) -> &str {
+    let mut idx = 0;
+    while idx < b.len() {
+        let width = UTF8_CHAR_WIDTH[b[idx] as usize] as usize;
+        if width == 1 { idx += 1; continue; }
+        if width == 0 || idx + width > b.len() { break; }
+        if width == 3 {
+            match (b[idx], b[idx+1], b[idx+2]) {
+                (0xE0,        0xA0...0xBF, 0x80...0xBF) => { },
+                (0xE1...0xEC, 0x80...0xBF, 0x80...0xBF) => { },
+                (0xED,        0x80...0x9F, 0x80...0xBF) => { },
+                _ => break,
+            }
+        }
+        if width == 4 {
+            match (b[idx], b[idx+1], b[idx+2], b[idx+3]) {
+                (0xF0,        0x90...0xBF, 0x80...0xBF, 0x80...0xBF) => { },
+                (0xF1...0xF3, 0x80...0xBF, 0x80...0xBF, 0x80...0xBF) => { },
+                (0xF4,        0x80...0x8F, 0x80...0xBF, 0x80...0xBF) => { },
+                _ => break,
+            }
+        }
+        idx += width;
+    }
+    unsafe { mem::cast(&b[..idx]) }
 }

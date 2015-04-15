@@ -4,8 +4,8 @@
 
 #[prelude_import] use core::prelude::*;
 use io::{Write};
-use core::{num};
-use {Debug, Display, Result};
+use core::{num, cmp};
+use {Debug, Display, UpperHex, LowerHex, Result};
 
 impl Debug for i8    { fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result { Debug::fmt(&(*self as i64), w) } }
 impl Debug for i16   { fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result { Debug::fmt(&(*self as i64), w) } }
@@ -86,3 +86,39 @@ impl Display for u16   { fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result { D
 impl Display for u32   { fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result { Debug::fmt(self, w) } }
 impl Display for u64   { fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result { Debug::fmt(self, w) } }
 impl Display for usize { fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result { Debug::fmt(self, w) } }
+
+fn hex_fmt<W: Write+?Sized>(val: u64, w: &mut W, base: u8) -> Result {
+    let mut buf = [0; 16];
+    let width = cmp::max(64 - val.leading_zeros() + 3, 4) / 4;
+    for i in 0..width {
+        let rem = (val % 16) as u8;
+        buf[width - i - 1] = match rem {
+            0...9 => b'0' + rem,
+            _ => base + rem - 10,
+        };
+    }
+    try!(w.write_all(&buf[..width]));
+    Ok(())
+}
+
+impl LowerHex for u64 {
+    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
+        hex_fmt(*self, w, b'a')
+    }
+}
+
+impl UpperHex for u64 {
+    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
+        hex_fmt(*self, w, b'A')
+    }
+}
+
+impl LowerHex for u8    { fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result { LowerHex::fmt(&(*self as u64), w) } }
+impl LowerHex for u16   { fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result { LowerHex::fmt(&(*self as u64), w) } }
+impl LowerHex for u32   { fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result { LowerHex::fmt(&(*self as u64), w) } }
+impl LowerHex for usize { fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result { LowerHex::fmt(&(*self as u64), w) } }
+
+impl UpperHex for u8    { fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result { UpperHex::fmt(&(*self as u64), w) } }
+impl UpperHex for u16   { fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result { UpperHex::fmt(&(*self as u64), w) } }
+impl UpperHex for u32   { fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result { UpperHex::fmt(&(*self as u64), w) } }
+impl UpperHex for usize { fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result { UpperHex::fmt(&(*self as u64), w) } }

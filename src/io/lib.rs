@@ -9,12 +9,12 @@
 #![no_std]
 
 extern crate linux_core as core;
-extern crate linux_error as error;
+extern crate linux_ty_one as ty_one;
 
 #[prelude_import]
 use core::prelude::*;
 use core::{mem};
-use error::{Errno};
+use ty_one::error::{Errno};
 
 pub type Result<T> = core::result::Result<T, Errno>;
 
@@ -25,7 +25,6 @@ pub trait Read {
         let mut read = 0;
         while buf.len() > 0 {
             match self.read(buf) {
-                Err(error::Interrupted) => { },
                 e @ Err(_) => return e,
                 Ok(0) => break,
                 Ok(n) => {
@@ -45,7 +44,6 @@ pub trait Write {
         let mut written = 0;
         while buf.len() > 0 {
             match self.write(buf) {
-                Err(error::Interrupted) => { },
                 e @ Err(_) => return e,
                 Ok(0) => return Ok(0),
                 Ok(n) => {

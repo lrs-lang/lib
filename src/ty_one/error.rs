@@ -2,12 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub use marker::{Sized, Copy};
+#[derive(Copy, Eq)]
+pub struct Errno(pub i32);
 
-pub use option::{Option};
-pub use option::Option::{Some, None};
-
-pub use result::{Result};
-pub use result::Result::{Ok, Err};
-
-pub use ops::{Fn, FnOnce, FnMut};
+pub const UNKNOWN: Errno = Errno(-1);

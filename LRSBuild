@@ -1,13 +1,16 @@
 obj core
+obj sort       core
+obj ty_one     core
+obj io         core ty_one
+obj c_stdio    core ty_one io
+obj fmt        core ty_one io
 obj cty        core
 obj error      core cty
-obj io         core error
-obj stdio      core error io
-obj fmt        core error io
-obj sort       core stdio fmt
-obj syscall    core cty
-obj alloc      syscall
-obj base       core cty syscall
+obj r_syscall  core cty
+obj w_syscall  core ty_one r_syscall cty
+obj alloc      r_syscall
+obj base       core cty r_syscall
+
 obj dev        base
 obj fs         base
 obj time_base  base
