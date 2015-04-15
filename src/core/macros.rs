@@ -3,8 +3,13 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[macro_export]
+macro_rules! linux_shim {
+    () => { mod linux { pub use ::core::linux::*; } }
+}
+
+#[macro_export]
 macro_rules! abort {
-    () => { unsafe { $crate::intrinsics::abort() } }
+    () => { unsafe { ::linux::intrinsics::abort() } }
 }
 
 #[macro_export]
@@ -16,8 +21,8 @@ macro_rules! assert {
 macro_rules! try {
     ($val:expr) => {
         match $val {
-            $crate::result::Result::Ok(v) => v,
-            $crate::result::Result::Err(e) => return $crate::result::Result::Err(e),
+            ::linux::result::Result::Ok(v) => v,
+            ::linux::result::Result::Err(e) => return ::linux::result::Result::Err(e),
         }
     }
 }

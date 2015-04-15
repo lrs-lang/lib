@@ -10,7 +10,7 @@ use ptr::{P};
 
 pub fn derive_copy(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Item,
                        push: &mut FnMut(P<Item>)) {
-    let path = Path::new(vec!("core", "marker", "Copy"));
+    let path = Path::new(vec!("linux", "marker", "Copy"));
 
     let trait_def = TraitDef {
         span: span,

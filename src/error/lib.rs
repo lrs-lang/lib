@@ -15,21 +15,26 @@ extern crate linux_cty as cty;
 
 use core::prelude::*;
 
-pub use ty_one::error::{Error};
+pub use ty_one::error::{Errno};
 
 macro_rules! create {
     ($($name:ident = ($val:expr, $str:expr),)*) => {
         $(pub const $name: Errno = Errno($val as i32);)*
 
-        impl Errno {
-            pub fn desc(self) -> &'static str {
+        pub trait ErrnoExt {
+            fn desc(self) -> &'static str;
+            fn name(self) -> Option<&'static str>;
+        }
+
+        impl ErrnoExt for Errno {
+            fn desc(self) -> &'static str {
                 match self {
                     $($name => $str,)*
                     _ => "Unknown error",
                 }
             }
 
-            pub fn name(self) -> Option<&'static str> {
+            fn name(self) -> Option<&'static str> {
                 match self {
                     $($name => Some(stringify!($name)),)*
                     _ => None,

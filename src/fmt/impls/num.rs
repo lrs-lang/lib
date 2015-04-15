@@ -3,9 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use core::prelude::*;
+#[prelude_import] use ty_one::prelude::*;
 use io::{Write};
 use core::{num, cmp};
-use {Debug, Display, UpperHex, LowerHex, Result};
+use {Debug, Display, UpperHex, LowerHex};
 
 impl Debug for i8    { fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result { Debug::fmt(&(*self as i64), w) } }
 impl Debug for i16   { fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result { Debug::fmt(&(*self as i64), w) } }

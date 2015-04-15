@@ -14,6 +14,8 @@ extern crate linux_core as core;
 
 pub use self::arch::*;
 
+mod linux { pub use ::core::linux::*; }
+
 mod gen;
 
 #[cfg(target_arch = "x86_64")]

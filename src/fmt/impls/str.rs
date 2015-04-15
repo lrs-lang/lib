@@ -3,8 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use core::prelude::*;
+#[prelude_import] use ty_one::prelude::*;
 use io::{Write};
-use {Debug, Display, Result};
+use {Debug, Display};
 
 fn debug_char_no_quotes<W: Write+?Sized>(c: char, w: &mut W, esc_double: bool,
                                          esc_single: bool) -> Result {

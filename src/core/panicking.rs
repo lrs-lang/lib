@@ -27,3 +27,9 @@ pub fn panic(_: &(&'static str, &'static str, u32)) -> ! {
 extern fn rust_eh_personality() {
     abort!();
 }
+
+#[no_mangle]
+#[allow(non_snake_case)]
+pub extern fn _Unwind_Resume() {
+    abort!();
+}

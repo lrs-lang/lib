@@ -11,12 +11,12 @@
 extern crate linux_core as core;
 extern crate linux_ty_one as ty_one;
 
-#[prelude_import]
-use core::prelude::*;
+#[prelude_import] use core::prelude::*;
+#[prelude_import] use ty_one::prelude::*;
 use core::{mem};
 use ty_one::error::{Errno};
 
-pub type Result<T> = core::result::Result<T, Errno>;
+pub type Result<T> = ty_one::result::Result<T, Errno>;
 
 pub trait Read {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize>;

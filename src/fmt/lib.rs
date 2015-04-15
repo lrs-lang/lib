@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #![crate_name = "linux_fmt"]
-// #![crate_type = "lib"]
+#![crate_type = "lib"]
 #![feature(plugin, no_std)]
 #![plugin(linux_core_plugin)]
 #![no_std]
@@ -12,20 +12,23 @@
 extern crate linux_core as core;
 extern crate linux_ty_one as ty_one;
 extern crate linux_io as io;
-// extern crate linux_stdio as stdio;
 
 #[prelude_import] use core::prelude::*;
+#[prelude_import] use ty_one::prelude::*;
 use io::{Write};
 
 pub use impls::num::{format_u64};
+
+pub mod linux {
+    pub use ::ty_one::linux::*;
+    pub mod fmt { pub use {LowerHex, UpperHex, Debug, Display}; }
+}
 
 mod impls {
     pub mod num;
     pub mod str;
     pub mod byte_str;
 }
-
-pub type Result = core::prelude::Result<(), ty_one::error::Errno>;
 
 macro_rules! fmt_var {
     ($name:ident) => {

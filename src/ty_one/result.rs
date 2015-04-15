@@ -2,14 +2,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use core::prelude::*;
 use self::Result::{Ok, Err};
-use ops::{FnOnce};
+use error::{Errno};
 
-#[derive(Copy, Eq)]
-pub enum Result<T, E> {
+#[derive(Eq)]
+pub enum Result<T=(), E=Errno> {
     Ok(T),
     Err(E),
 }
+
+impl<T: Copy, E: Copy> Copy for Result<T, E> { }
 
 impl<T, E> Result<T, E> {
     pub fn unwrap(self) -> T {

@@ -26,14 +26,16 @@ pub mod panicking;
 pub mod prelude;
 pub mod ptr;
 pub mod repr;
-pub mod result;
 pub mod slice;
 pub mod str;
 pub mod char;
 
+pub mod linux {
+    pub use ::{marker, ops, clone, intrinsics, option};
+}
+
 mod core {
-    pub use ::{marker, ops, clone, intrinsics};
-    pub use ::{iter, option};
+    pub use ::{iter, option, intrinsics};
 }
 
 #[link(name = "c")]

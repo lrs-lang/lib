@@ -25,7 +25,7 @@ fn cs_clone(
     let ctor_path;
     let all_fields;
     let fn_path = vec![
-        cx.ident_of_std("core"),
+        cx.ident_of("linux"),
         cx.ident_of("clone"),
         cx.ident_of("Clone"),
         cx.ident_of("clone"),
@@ -91,7 +91,7 @@ pub fn derive_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Item,
     let trait_def = TraitDef {
         span: span,
         attributes: Vec::new(),
-        path: path_std!(cx, core::clone::Clone),
+        path: path_std!(cx, linux::clone::Clone),
         additional_bounds: Vec::new(),
         generics: LifetimeBounds::empty(),
         methods: vec!(
@@ -121,7 +121,7 @@ pub fn derive_clone_for_copy(cx: &mut ExtCtxt, span: Span, _mitem: &MetaItem,
         _ => cx.bug("expected ItemStruct or ItemEnum in #[derive(Copy)]")
     };
 
-    let copy_path = path_std!(cx, core::marker::Copy)
+    let copy_path = path_std!(cx, linux::marker::Copy)
                         .to_path(cx, span, item.ident, generics);
 
     // Create generics with additional Copy bound
@@ -164,7 +164,7 @@ pub fn derive_clone_for_copy(cx: &mut ExtCtxt, span: Span, _mitem: &MetaItem,
 
     let impl_item = quote_item!(cx,
         #[automatically_derived]
-        impl $generics_with_bounds ::core::clone::Clone for $ty $generics_without_bounds $where_clause {
+        impl $generics_with_bounds ::linux::clone::Clone for $ty $generics_without_bounds $where_clause {
             fn clone(&self) -> $ty $generics_without_bounds { *self }
         }
     ).unwrap();

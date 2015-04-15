@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_stdio"]
+#![crate_name = "linux_c_stdio"]
 #![crate_type = "lib"]
 #![feature(plugin, no_std)]
 #![plugin(linux_core_plugin)]
@@ -13,7 +13,7 @@ extern crate linux_core as core;
 extern crate linux_ty_one as ty_one;
 extern crate linux_io as io;
 
-use core::prelude::*;
+#[prelude_import] use ty_one::prelude::*;
 use ty_one::error::{UNKNOWN};
 
 pub struct Stdout;

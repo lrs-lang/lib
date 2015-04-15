@@ -2,10 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import]
-use core::prelude::*;
+#[prelude_import] use core::prelude::*;
+#[prelude_import] use ty_one::prelude::*;
 use core::str::{longest_sequence};
-use {Debug, UpperHex, Result};
+use {Debug, UpperHex};
 use io::{Write};
 use ty_one::byte_str::{ByteStr};
 use impls::str::{debug_str_no_quotes};

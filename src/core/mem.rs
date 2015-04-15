@@ -44,3 +44,11 @@ pub fn replace<T>(dst: &mut T, val: T) -> T {
 pub fn size_of<T>() -> usize {
     unsafe { intrinsics::size_of::<T>() }
 }
+
+pub fn align_of<T>() -> usize {
+    unsafe { intrinsics::min_align_of::<T>() }
+}
+
+pub fn needs_drop<T>() -> bool {
+    unsafe { intrinsics::needs_drop::<T>() }
+}

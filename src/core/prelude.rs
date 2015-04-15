@@ -7,7 +7,4 @@ pub use marker::{Sized, Copy};
 pub use option::{Option};
 pub use option::Option::{Some, None};
 
-pub use result::{Result};
-pub use result::Result::{Ok, Err};
-
-pub use ops::{Fn, FnOnce, FnMut};
+pub use ops::{Fn, FnOnce, FnMut, Drop};

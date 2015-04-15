@@ -75,7 +75,7 @@ pub fn derive_eq(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Item,
     let trait_def = TraitDef {
         span: span,
         attributes: Vec::new(),
-        path: path_std!(cx, core::ops::Eq),
+        path: path_std!(cx, linux::ops::Eq),
         additional_bounds: Vec::new(),
         generics: LifetimeBounds::empty(),
         methods: vec!(

@@ -5,10 +5,11 @@ obj io         core ty_one
 obj c_stdio    core ty_one io
 obj fmt        core ty_one io
 obj cty        core
-obj error      core cty
+obj error      core ty_one cty
 obj r_syscall  core cty
 obj w_syscall  core ty_one r_syscall cty
-obj alloc      r_syscall
+obj alloc      core
+obj vec        core ty_one alloc error fmt io c_stdio
 obj base       core cty r_syscall
 
 obj dev        base

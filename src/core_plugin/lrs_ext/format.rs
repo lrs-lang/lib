@@ -361,7 +361,8 @@ impl<'a, 'b> Context<'a, 'b> {
         // ::fmt::Debug::fmt(arg, writer)
 
         let call = {
-            let path = vec!(self.ecx.ident_of("fmt"),
+            let path = vec!(self.ecx.ident_of("linux"),
+                            self.ecx.ident_of("fmt"),
                             self.ecx.ident_of(trait_name),
                             self.ecx.ident_of("fmt"));
 
@@ -427,7 +428,7 @@ impl<'a, 'b> Context<'a, 'b> {
     /// to
     fn into_expr(mut self) -> P<ast::Expr> {
         if self.pieces.len() == 0 {
-            let path = vec!(self.ecx.ident_of("core"),
+            let path = vec!(self.ecx.ident_of("linux"),
                             self.ecx.ident_of("option"),
                             self.ecx.ident_of("Option"),
                             self.ecx.ident_of("Ok"));

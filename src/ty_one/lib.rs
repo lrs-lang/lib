@@ -11,6 +11,11 @@
 #[macro_use]
 extern crate linux_core as core;
 
+pub mod linux {
+    pub use ::core::linux::*;
+    pub use {result};
+}
+
 pub mod error;
 pub mod c_str;
 pub mod parse;
@@ -18,3 +23,9 @@ pub mod cow;
 pub mod byte_str;
 pub mod saturating_cast;
 pub mod as_bytes;
+pub mod result;
+
+pub mod prelude {
+    pub use result::{Result};
+    pub use result::Result::{Ok, Err};
+}
