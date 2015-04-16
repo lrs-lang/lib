@@ -17,6 +17,7 @@ pub mod clone;
 pub mod cmp;
 pub mod intrinsics;
 pub mod iter;
+pub mod cell;
 pub mod marker;
 pub mod mem;
 pub mod num;
@@ -31,7 +32,7 @@ pub mod str;
 pub mod char;
 
 pub mod linux {
-    pub use ::{marker, ops, clone, intrinsics, option};
+    pub use ::{marker, ops, clone, intrinsics, option, mem};
 }
 
 mod core {

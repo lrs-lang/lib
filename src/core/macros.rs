@@ -43,3 +43,22 @@ macro_rules! matches {
         match val { $pat => true, _ => false, }
     }
 }
+
+#[macro_export]
+macro_rules! vec {
+    ($elem:expr; $n:expr) => {
+        ::linux::vec::Vec::from_elem($elem, $n)
+    };
+    ($($x:expr),*) => {
+        {
+            let base = [$($x),*];
+            let mut vec = ::linux::vec::Vec::with_capacity(base.len()).unwrap();
+            unsafe {
+                vec.unsafe_push_all(&base[..]);
+                ::linux::mem::forget(base);
+            }
+            vec
+        }
+    };
+    ($($x:expr,)*) => { vec!($($x),*) };
+}

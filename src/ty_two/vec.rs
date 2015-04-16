@@ -2,23 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_vec"]
-// #![crate_type = "lib"]
-#![feature(plugin, no_std)]
-#![plugin(linux_core_plugin)]
-#![no_std]
-
-#[macro_use]
-extern crate linux_core as core;
-extern crate linux_ty_one as ty_one;
-extern crate linux_error as error;
-extern crate linux_alloc as alloc;
-extern crate linux_fmt as fmt;
-extern crate linux_io as io;
-
-extern crate linux_c_stdio as stdio;
-
-use core::prelude::*;
+#[prelude_import] use core::prelude::*;
 use core::{mem, ptr, cmp, slice};
 use core::ops::{Deref, DerefMut};
 use core::iter::{IntoIterator};
@@ -26,8 +10,7 @@ use fmt::{Debug};
 use io::{Write};
 use ty_one::result::{Result};
 use ty_one::result::Result::{Ok, Err};
-
-mod linux { pub use ::fmt::linux::*; }
+use {alloc, error};
 
 pub struct Vec<T> {
     ptr: *mut T,
@@ -90,9 +73,13 @@ impl<T> Vec<T> {
     }
 
     pub fn push_all(&mut self, vals: &[T]) where T: Copy {
+        unsafe { self.unsafe_push_all(vals); }
+    }
+
+    pub unsafe fn unsafe_push_all(&mut self, vals: &[T]) {
         self.reserve(vals.len()).unwrap();
-        let tail = unsafe { slice::from_ptr(self.ptr.add(self.len), vals.len()) };
-        mem::copy(tail, vals);
+        let tail = slice::from_ptr(self.ptr.add(self.len), vals.len());
+        mem::unsafe_copy(tail, vals);
         self.len += vals.len();
     }
 
@@ -110,6 +97,10 @@ impl<T> Vec<T> {
                 unsafe { Some(ptr::read(self.ptr.add(n))) }
             },
         }
+    }
+
+    pub unsafe fn set_len(&mut self, len: usize) {
+        self.len = len;
     }
 }
 
@@ -143,12 +134,4 @@ impl<T: Debug> Debug for Vec<T> {
     fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
         self.deref().fmt(w)
     }
-}
-
-fn main() {
-    use stdio::{Stdout};
-    // let mut vec = Vec::new();
-    // vec.push("hurr");
-    // vec.push("durr");
-    println!("{}", "hurr");
 }

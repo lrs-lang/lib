@@ -18,6 +18,10 @@ pub trait Sync { }
 
 impl Sync for .. { }
 
+pub trait Send { }
+
+impl Send for .. { }
+
 #[lang = "phantom_data"]
 pub struct PhantomData<T: ?Sized>;
 

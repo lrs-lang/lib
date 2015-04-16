@@ -429,8 +429,8 @@ impl<'a, 'b> Context<'a, 'b> {
     fn into_expr(mut self) -> P<ast::Expr> {
         if self.pieces.len() == 0 {
             let path = vec!(self.ecx.ident_of("linux"),
-                            self.ecx.ident_of("option"),
-                            self.ecx.ident_of("Option"),
+                            self.ecx.ident_of("result"),
+                            self.ecx.ident_of("Result"),
                             self.ecx.ident_of("Ok"));
             let unit =  self.ecx.expr_tuple(self.fmtsp, vec!());
 

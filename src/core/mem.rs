@@ -19,9 +19,19 @@ pub unsafe fn copy_as<T, U>(src: &T) -> U {
     ptr::read(src as *const T as *const U)
 }
 
+pub unsafe fn forget<T>(val: T) {
+    intrinsics::forget(val);
+}
+
+pub fn drop<T>(_: T) { }
+
 pub fn copy<T: Copy>(dst: &mut [T], src: &[T]) -> usize {
+    unsafe { unsafe_copy(dst, src) }
+}
+
+pub unsafe fn unsafe_copy<T>(dst: &mut [T], src: &[T]) -> usize {
     let min = cmp::min(dst.len(), src.len());
-    unsafe { ptr::memcpy(dst.as_mut_ptr(), src.as_ptr(), min); }
+    ptr::memcpy(dst.as_mut_ptr(), src.as_ptr(), min);
     min
 }
 
