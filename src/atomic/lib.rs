@@ -12,6 +12,7 @@
 extern crate linux_core as core;
 
 use core::{mem, intrinsics};
+use core::cell::{Cell};
 
 pub mod linux {
     pub use ::core::linux::*;
@@ -34,11 +35,13 @@ pub fn fence_seqcst() {
 }
 
 macro_rules! impl_atomic {
-    ($name:ident, $raw:ident, $signed:expr) => {
+    ($name:ident, $init:ident, $raw:ident, $signed:expr) => {
+        pub const $init: $name = $name { val: Cell { data: 0 } };
+
         #[repr(C)]
         #[derive(Copy)]
         pub struct $name {
-            val: core::cell::Cell<$raw>,
+            val: Cell<$raw>,
         }
 
         impl $name {
@@ -345,13 +348,13 @@ macro_rules! impl_atomic {
     }
 }
 
-impl_atomic!(AtomicU8,    u8,    false);
-impl_atomic!(AtomicU16,   u16,   false);
-impl_atomic!(AtomicU32,   u32,   false);
-impl_atomic!(AtomicU64,   u64,   false);
-impl_atomic!(AtomicUsize, usize, false);
-impl_atomic!(AtomicI8,    i8,    true);
-impl_atomic!(AtomicI16,   i16,   true);
-impl_atomic!(AtomicI32,   i32,   true);
-impl_atomic!(AtomicI64,   i64,   true);
-impl_atomic!(AtomicIsize, isize, true);
+impl_atomic!(AtomicU8,    ATOMIC_U8_INIT,    u8,    false);
+impl_atomic!(AtomicU16,   ATOMIC_U16_INIT,   u16,   false);
+impl_atomic!(AtomicU32,   ATOMIC_U32_INIT,   u32,   false);
+impl_atomic!(AtomicU64,   ATOMIC_U64_INIT,   u64,   false);
+impl_atomic!(AtomicUsize, ATOMIC_USIZE_INIT, usize, false);
+impl_atomic!(AtomicI8,    ATOMIC_I8_INIT,    i8,    true);
+impl_atomic!(AtomicI16,   ATOMIC_I16_INIT,   i16,   true);
+impl_atomic!(AtomicI32,   ATOMIC_I32_INIT,   i32,   true);
+impl_atomic!(AtomicI64,   ATOMIC_I64_INIT,   i64,   true);
+impl_atomic!(AtomicIsize, ATOMIC_ISIZE_INIT, isize, true);

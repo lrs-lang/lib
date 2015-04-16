@@ -20,6 +20,7 @@ pub use linux_w_syscall as syscall;
 pub mod atomic {
     pub use ::linux_atomic::*;
     pub type AtomicCInt = AtomicI32;
+    pub const ATOMIC_CINT_INIT: AtomicCInt = ATOMIC_I32_INIT;
 }
 
 #[cfg(any(target_arch = "x86_64", target_arch = "x86"))]

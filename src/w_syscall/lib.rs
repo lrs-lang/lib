@@ -23,7 +23,7 @@ use cty::{
     c_int, ssize_t, rlimit64, pid_t, uid_t, gid_t, stat, c_char, size_t, statfs,
     timespec, dev_t, c_void, clockid_t, itimerspec, epoll_event, sigset_t, new_utsname,
     sysinfo, c_uint, c_ulong, umode_t, k_uint, loff_t, k_ulong, F_DUPFD_CLOEXEC, F_GETFL,
-    F_SETFL, F_GETFD, F_SETFD, sockaddr, user_msghdr, mmsghdr,
+    F_SETFL, F_GETFD, F_SETFD, sockaddr, user_msghdr, mmsghdr, FUTEX_WAIT, FUTEX_WAKE,
 };
 
 // We have to implement this here because ty_one doesn't know about c_char.
@@ -565,4 +565,20 @@ pub fn getsockopt<T: AsMutBytes+?Sized>(sockfd: c_int, level: c_int, optname: c_
     };
     *optlen = len as usize;
     res
+}
+
+pub fn futex_wait(addr: &mut c_int, val: c_int, timeout: Option<&timespec>) -> c_int {
+    let timeout = timeout.map(|t| t as *const _ as *mut _).unwrap_or(0 as *mut _);
+    unsafe {
+        r::futex(addr as *mut _ as *mut c_uint, FUTEX_WAIT, val as c_uint, timeout,
+                 0 as *mut _, 0)
+    }
+}
+
+pub fn futex_wake(addr: &mut c_int, num: usize) -> c_int {
+    let num: c_int = num.saturating_cast();
+    unsafe {
+        r::futex(addr as *mut _ as *mut c_uint, FUTEX_WAKE, num as c_uint, 0 as *mut _,
+                 0 as *mut _, 0)
+    }
 }

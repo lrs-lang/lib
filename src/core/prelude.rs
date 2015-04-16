@@ -2,9 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub use marker::{Sized, Copy, Send};
+pub use marker::{Sized, Copy, Send, Sync, PhantomData};
 
 pub use option::{Option};
 pub use option::Option::{Some, None};
 
 pub use ops::{Fn, FnOnce, FnMut, Drop};
+
+pub use mem::{drop};
