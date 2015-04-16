@@ -27,4 +27,6 @@ pub mod linux {
 
 pub mod vec;
 pub mod rc;
+pub mod arc;
 pub mod mutex;
+pub mod channel;

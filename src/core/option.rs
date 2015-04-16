@@ -24,6 +24,13 @@ impl<T> Option<T> {
         }
     }
 
+    pub fn unwrap(self) -> T {
+        match self {
+            Some(v) => v,
+            _ => abort!(),
+        }
+    }
+
     pub fn unwrap_or(self, val: T) -> T {
         match self {
             Some(v) => v,

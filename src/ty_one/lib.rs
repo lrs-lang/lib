@@ -24,8 +24,10 @@ pub mod byte_str;
 pub mod saturating_cast;
 pub mod as_bytes;
 pub mod result;
+pub mod num;
 
 pub mod prelude {
     pub use result::{Result};
     pub use result::Result::{Ok, Err};
+    pub use num::{UnsignedInt};
 }

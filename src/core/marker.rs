@@ -14,9 +14,9 @@ impl Sized for .. { }
 pub trait Copy { }
 
 #[lang = "sync"]
-pub trait Sync { }
+pub unsafe trait Sync { }
 
-impl Sync for .. { }
+unsafe impl Sync for .. { }
 
 pub trait Send { }
 

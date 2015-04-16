@@ -7,62 +7,58 @@
 use core::ops::{Deref};
 use core::{mem, ptr};
 use core::clone::{Clone};
+use arch::atomic::{AtomicUsize};
 use io::{Write};
 use fmt::{Debug};
 use {alloc};
 
-struct Inner<T> {
-    count: usize,
+struct Inner<T: Send+Sync> {
+    count: AtomicUsize,
     val: T,
 }
 
-pub struct Rc<T> {
+pub struct Arc<T: Send+Sync> {
     data: *mut Inner<T>,
 }
 
-impl<T> Rc<T> {
-    pub fn new(val: T) -> Result<Rc<T>, T> {
+impl<T: Send+Sync> Arc<T> {
+    pub fn new(val: T) -> Result<Arc<T>, T> {
         unsafe {
             let data_ptr = alloc::allocate_typed::<Inner<T>>();
             if data_ptr.is_null() {
                 return Err(val);
             }
             let mut data = &mut *data_ptr;
-            data.count = 1;
+            data.count.store(1);
             ptr::write(&mut data.val, val);
-            Ok(Rc { data: data_ptr })
+            Ok(Arc { data: data_ptr })
         }
     }
 
     pub fn as_mut(&mut self) -> Option<&mut T> {
         let data = unsafe { &mut *self.data };
-        match data.count {
+        match data.count.load_seqcst() {
             1 => Some(&mut data.val),
             _ => None,
         }
     }
 }
 
-impl<T> !Send for Rc<T> { }
-
-impl<T> Drop for Rc<T> {
+impl<T: Send+Sync> Drop for Arc<T> {
     fn drop(&mut self) {
         unsafe {
             let data = &mut *self.data;
-            data.count -= 1;
-            if data.count == 0 {
+            if data.count.sub_seqcst(1) == 1 {
                 if mem::needs_drop::<T>() {
                     ptr::read(&data.val);
                 }
-                let size = mem::size_of::<Inner<T>>();
-                let align = mem::align_of::<Inner<T>>();
-                alloc::free(self.data as *mut u8, size, align);
+                alloc::free_typed(self.data);
             }
         }
     }
 }
 
-impl<T> Deref for Rc<T> {
+impl<T: Send+Sync> Deref for Arc<T> {
     type Target = T;
 
     fn deref(&self) -> &T {
@@ -70,18 +66,18 @@ impl<T> Deref for Rc<T> {
     }
 }
 
-impl<T> Clone for Rc<T> {
-    fn clone(&self) -> Rc<T> {
+impl<T: Send+Sync> Clone for Arc<T> {
+    fn clone(&self) -> Arc<T> {
         unsafe {
             let data = &mut *self.data;
-            data.count += 1;
-            Rc { data: self.data }
+            data.count.add_seqcst(1);
+            Arc { data: self.data }
         }
     }
 }
 
-impl<T: Debug> Debug for Rc<T> {
+impl<T: Send+Sync+Debug> Debug for Arc<T> {
     fn fmt<W: Write+?Sized>(&self, mut w: &mut W) -> Result {
-        write!(w, "Rc {{ data: {:?} }}", self.deref())
+        write!(w, "Arc {{ data: {:?} }}", self.deref())
     }
 }

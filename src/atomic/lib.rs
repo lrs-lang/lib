@@ -45,6 +45,10 @@ macro_rules! impl_atomic {
         }
 
         impl $name {
+            pub fn new(val: $raw) -> $name {
+                $name { val: Cell { data: val } }
+            }
+
             pub unsafe fn wrap(val: &mut $raw) -> &$name {
                 mem::cast(val)
             }

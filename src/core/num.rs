@@ -25,6 +25,10 @@ macro_rules! int_impls {
         $ctlz:ident;
         $cttz:ident;
         $bswap:ident;
+        size_t=$size_t:ident;
+        $checked_add:ident;
+        $checked_sub:ident;
+        $checked_mul:ident;
      ) => {
         #[lang = $as_str]
         impl $t {
@@ -38,6 +42,33 @@ macro_rules! int_impls {
 
             pub fn wrapping_mul(self, other: $t) -> $t {
                 unsafe { intrinsics::overflowing_mul(self, other) }
+            }
+
+            pub fn checked_add(self, other: $t) -> Option<$t> {
+                unsafe {
+                    match intrinsics::$checked_add(self as $size_t, other as $size_t) {
+                        (val, true) => Some(val as $t),
+                        _ => None,
+                    }
+                }
+            }
+
+            pub fn checked_sub(self, other: $t) -> Option<$t> {
+                unsafe {
+                    match intrinsics::$checked_sub(self as $size_t, other as $size_t) {
+                        (val, true) => Some(val as $t),
+                        _ => None,
+                    }
+                }
+            }
+
+            pub fn checked_mul(self, other: $t) -> Option<$t> {
+                unsafe {
+                    match intrinsics::$checked_mul(self as $size_t, other as $size_t) {
+                        (val, true) => Some(val as $t),
+                        _ => None,
+                    }
+                }
             }
 
             pub fn signed(self) -> bool {
@@ -291,22 +322,22 @@ macro_rules! int_impls {
     }
 }
 
-int_impls!(i8    ; as_i=i8    ; as_u=u8    ; 8  ; "i8"    ; signed=true  ; ctpop8  ; pop_ty=u8  ; ctlz8  ; cttz8  ; bswap8  ; );
-int_impls!(u8    ; as_i=i8    ; as_u=u8    ; 8  ; "u8"    ; signed=false ; ctpop8  ; pop_ty=u8  ; ctlz8  ; cttz8  ; bswap8  ; );
-int_impls!(i16   ; as_i=i16   ; as_u=u16   ; 16 ; "i16"   ; signed=true  ; ctpop16 ; pop_ty=u16 ; ctlz16 ; cttz16 ; bswap16 ; );
-int_impls!(u16   ; as_i=i16   ; as_u=u16   ; 16 ; "u16"   ; signed=false ; ctpop16 ; pop_ty=u16 ; ctlz16 ; cttz16 ; bswap16 ; );
-int_impls!(i32   ; as_i=i32   ; as_u=u32   ; 32 ; "i32"   ; signed=true  ; ctpop32 ; pop_ty=u32 ; ctlz32 ; cttz32 ; bswap32 ; );
-int_impls!(u32   ; as_i=i32   ; as_u=u32   ; 32 ; "u32"   ; signed=false ; ctpop32 ; pop_ty=u32 ; ctlz32 ; cttz32 ; bswap32 ; );
-int_impls!(i64   ; as_i=i64   ; as_u=u64   ; 64 ; "i64"   ; signed=true  ; ctpop64 ; pop_ty=u64 ; ctlz64 ; cttz64 ; bswap64 ; );
-int_impls!(u64   ; as_i=i64   ; as_u=u64   ; 64 ; "u64"   ; signed=false ; ctpop64 ; pop_ty=u64 ; ctlz64 ; cttz64 ; bswap64 ; );
+int_impls!(i8    ; as_i=i8    ; as_u=u8    ; 8  ; "i8"    ; signed=true  ; ctpop8  ; pop_ty=u8  ; ctlz8  ; cttz8  ; bswap8  ; size_t=i8  ; i8_add_with_overflow  ; i8_sub_with_overflow   ; i8_mul_with_overflow ; );
+int_impls!(u8    ; as_i=i8    ; as_u=u8    ; 8  ; "u8"    ; signed=false ; ctpop8  ; pop_ty=u8  ; ctlz8  ; cttz8  ; bswap8  ; size_t=u8  ; u8_add_with_overflow  ; u8_sub_with_overflow   ; u8_mul_with_overflow ; );
+int_impls!(i16   ; as_i=i16   ; as_u=u16   ; 16 ; "i16"   ; signed=true  ; ctpop16 ; pop_ty=u16 ; ctlz16 ; cttz16 ; bswap16 ; size_t=i16 ; i16_add_with_overflow ; i16_sub_with_overflow  ; i16_mul_with_overflow; );
+int_impls!(u16   ; as_i=i16   ; as_u=u16   ; 16 ; "u16"   ; signed=false ; ctpop16 ; pop_ty=u16 ; ctlz16 ; cttz16 ; bswap16 ; size_t=u16 ; u16_add_with_overflow ; u16_sub_with_overflow  ; u16_mul_with_overflow; );
+int_impls!(i32   ; as_i=i32   ; as_u=u32   ; 32 ; "i32"   ; signed=true  ; ctpop32 ; pop_ty=u32 ; ctlz32 ; cttz32 ; bswap32 ; size_t=i32 ; i32_add_with_overflow ; i32_sub_with_overflow  ; i32_mul_with_overflow; );
+int_impls!(u32   ; as_i=i32   ; as_u=u32   ; 32 ; "u32"   ; signed=false ; ctpop32 ; pop_ty=u32 ; ctlz32 ; cttz32 ; bswap32 ; size_t=u32 ; u32_add_with_overflow ; u32_sub_with_overflow  ; u32_mul_with_overflow; );
+int_impls!(i64   ; as_i=i64   ; as_u=u64   ; 64 ; "i64"   ; signed=true  ; ctpop64 ; pop_ty=u64 ; ctlz64 ; cttz64 ; bswap64 ; size_t=i64 ; i64_add_with_overflow ; i64_sub_with_overflow  ; i64_mul_with_overflow; );
+int_impls!(u64   ; as_i=i64   ; as_u=u64   ; 64 ; "u64"   ; signed=false ; ctpop64 ; pop_ty=u64 ; ctlz64 ; cttz64 ; bswap64 ; size_t=u64 ; u64_add_with_overflow ; u64_sub_with_overflow  ; u64_mul_with_overflow; );
 #[cfg(target_pointer_width = "64")]
-int_impls!(isize ; as_i=isize ; as_u=usize ; 64 ; "isize" ; signed=true  ; ctpop64 ; pop_ty=u64 ; ctlz64 ; cttz64 ; bswap64 ; );
+int_impls!(isize ; as_i=isize ; as_u=usize ; 64 ; "isize" ; signed=true  ; ctpop64 ; pop_ty=u64 ; ctlz64 ; cttz64 ; bswap64 ; size_t=i64 ; i64_add_with_overflow ; i64_sub_with_overflow  ; i64_mul_with_overflow; );
 #[cfg(target_pointer_width = "64")]
-int_impls!(usize ; as_i=isize ; as_u=usize ; 64 ; "usize" ; signed=false ; ctpop64 ; pop_ty=u64 ; ctlz64 ; cttz64 ; bswap64 ; );
+int_impls!(usize ; as_i=isize ; as_u=usize ; 64 ; "usize" ; signed=false ; ctpop64 ; pop_ty=u64 ; ctlz64 ; cttz64 ; bswap64 ; size_t=u64 ; u64_add_with_overflow ; u64_sub_with_overflow  ; u64_mul_with_overflow; );
 #[cfg(target_pointer_width = "32")]
-int_impls!(isize ; as_i=isize ; as_u=usize ; 32 ; "isize" ; signed=true  ; ctpop32 ; pop_ty=u32 ; ctlz32 ; cttz32 ; bswap32 ; );
+int_impls!(isize ; as_i=isize ; as_u=usize ; 32 ; "isize" ; signed=true  ; ctpop32 ; pop_ty=u32 ; ctlz32 ; cttz32 ; bswap32 ; size_t=i32 ; i32_add_with_overflow ; i32_sub_with_overflow  ; i32_mul_with_overflow; );
 #[cfg(target_pointer_width = "32")]
-int_impls!(usize ; as_i=isize ; as_u=usize ; 32 ; "usize" ; signed=false ; ctpop32 ; pop_ty=u32 ; ctlz32 ; cttz32 ; bswap32 ; );
+int_impls!(usize ; as_i=isize ; as_u=usize ; 32 ; "usize" ; signed=false ; ctpop32 ; pop_ty=u32 ; ctlz32 ; cttz32 ; bswap32 ; size_t=u32 ; u32_add_with_overflow ; u32_sub_with_overflow  ; u32_mul_with_overflow; );
 
 macro_rules! signed_int_modules {
     ($($t:ident $width:expr)+) => {

@@ -23,10 +23,18 @@ pub unsafe fn allocate(size: usize, alignment: usize) -> *mut u8 {
     realloc(0 as *mut u8, size)
 }
 
+pub unsafe fn allocate_typed<T>() -> *mut T {
+    realloc(0 as *mut u8, core::mem::size_of::<T>()) as *mut T
+}
+
 pub unsafe fn free(ptr: *mut u8, size: usize, alignment: usize) {
     let _ = size;
     let _ = alignment;
     realloc(ptr, 0);
+}
+
+pub unsafe fn free_typed<T>(ptr: *mut T) {
+    realloc(ptr as *mut u8, 0);
 }
 
 pub unsafe fn reallocate(ptr: *mut u8, oldsize: usize, newsize: usize,
