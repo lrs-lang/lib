@@ -35,6 +35,14 @@ impl<T> Rc<T> {
             Ok(Rc { data: data_ptr })
         }
     }
+
+    pub fn as_mut(&mut self) -> Option<&mut T> {
+        let data = unsafe { &mut *self.data };
+        match data.count {
+            1 => Some(&mut data.val),
+            _ => None,
+        }
+    }
 }
 
 impl<T> !Send for Rc<T> { }

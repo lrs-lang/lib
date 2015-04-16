@@ -19,8 +19,8 @@ pub unsafe fn copy_as<T, U>(src: &T) -> U {
     ptr::read(src as *const T as *const U)
 }
 
-pub unsafe fn forget<T>(val: T) {
-    intrinsics::forget(val);
+pub fn forget<T>(val: T) {
+    unsafe { intrinsics::forget(val); }
 }
 
 pub fn drop<T>(_: T) { }

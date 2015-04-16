@@ -13,11 +13,18 @@ extern crate linux_core as core;
 extern crate linux_arch as arch;
 
 #[prelude_import] use core::prelude::*;
+use core::{mem};
 use arch::atomic::{AtomicCInt, ATOMIC_CINT_INIT};
 use arch::syscall::{futex_wait, futex_wake};
 use arch::cty::{c_int};
 
+pub use condvar::{Condvar};
+
+mod condvar;
+
 pub const INIT: Lock = Lock { val: ATOMIC_CINT_INIT };
+
+pub static DUMMY: Lock = INIT;
 
 const UNLOCKED: c_int = 0;
 const LOCKED:   c_int = 1;
@@ -45,6 +52,10 @@ impl Lock {
             LOCKED   => LockStatus::Locked,
             _        => LockStatus::Waiting,
         }
+    }
+
+    pub unsafe fn as_static(&self) -> &'static Lock {
+        mem::cast(self)
     }
 
     pub fn try_lock(&'static self) -> Option<LockGuard> {
