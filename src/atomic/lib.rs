@@ -17,6 +17,22 @@ pub mod linux {
     pub use ::core::linux::*;
 }
 
+pub fn fence_release() {
+    unsafe { intrinsics::atomic_fence_rel(); }
+}
+
+pub fn fence_acquire() {
+    unsafe { intrinsics::atomic_fence_acq(); }
+}
+
+pub fn fence_acquire_release() {
+    unsafe { intrinsics::atomic_fence_acqrel(); }
+}
+
+pub fn fence_seqcst() {
+    unsafe { intrinsics::atomic_fence(); }
+}
+
 macro_rules! impl_atomic {
     ($name:ident, $raw:ident, $signed:expr) => {
         #[repr(C)]

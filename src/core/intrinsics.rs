@@ -181,6 +181,11 @@ extern "rust-intrinsic" {
     pub fn atomic_umax_rel     <T>(dst: *mut T, src: T) -> T;
     pub fn atomic_umax_acqrel  <T>(dst: *mut T, src: T) -> T;
     pub fn atomic_umax_relaxed <T>(dst: *mut T, src: T) -> T;
+
+    pub fn atomic_fence();
+    pub fn atomic_fence_acq();
+    pub fn atomic_fence_rel();
+    pub fn atomic_fence_acqrel();
 }
 
 pub unsafe fn bswap8(x: u8) -> u8 { x }

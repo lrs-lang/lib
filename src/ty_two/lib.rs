@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_rc"]
+#![crate_name = "linux_ty_two"]
 #![crate_type = "lib"]
 #![feature(plugin, no_std, optin_builtin_traits)]
 #![plugin(linux_core_plugin)]
@@ -15,8 +15,6 @@ extern crate linux_error as error;
 extern crate linux_alloc as alloc;
 extern crate linux_fmt as fmt;
 extern crate linux_io as io;
-
-// extern crate linux_c_stdio as stdio;
 
 pub mod linux {
     pub use ::fmt::linux::*;
