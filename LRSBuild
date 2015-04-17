@@ -13,8 +13,9 @@ obj w_syscall  core cty ty_one r_syscall
 obj arch       core cty w_syscall atomic
 obj lock       core ty_one arch io fmt
 obj alloc      core
-obj ty_two     core ty_one arch lock io fmt error alloc
-obj base       core cty r_syscall
+obj ty_two     core ty_one arch lock io fmt alloc
+
+obj base       core ty_one arch
 
 obj dev        base
 obj fs         base

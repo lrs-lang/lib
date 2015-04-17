@@ -12,7 +12,8 @@ use core::cell::{Cell};
 use core::{ptr, mem};
 use lock::{Lock, LockGuard, RawCondvar, LOCK_INIT, RAW_CONDVAR_INIT};
 
-pub struct RingBuf<T> {
+/// A queue.
+pub struct Queue<T> {
     // The buffer we store the massages in.
     buf: *mut Cell<T>,
     // One less than the capacity of the channel. Note that the capacity is a power of
@@ -43,8 +44,9 @@ pub struct RingBuf<T> {
     sleep_lock: Lock,
 }
 
-impl<T> RingBuf<T> {
-    pub fn new(cap: usize) -> Result<RingBuf<T>> {
+impl<T> Queue<T> {
+    /// Creates a new queue with capacity at least `cap`.
+    pub fn new(cap: usize) -> Result<Queue<T>> {
         let cap = match cap.checked_next_power_of_two() {
             Some(c) => c,
             _ => return Err(error::NoMemory),
@@ -56,7 +58,7 @@ impl<T> RingBuf<T> {
         if buf.is_null() {
             return Err(error::NoMemory);
         }
-        Ok(RingBuf {
+        Ok(Queue {
             buf: buf,
             cap_mask: cap - 1,
 
@@ -134,10 +136,12 @@ impl<T> RingBuf<T> {
         None
     }
 
+    /// Tries to add an element to the queue. Returns the element if the queue is full.
     pub fn push(&self, val: T) -> Option<T> {
         self.push_int(val, None)
     }
 
+    /// Blocks until it can add the element to the queue.
     pub fn push_wait(&self, mut val: T) {
         val = match self.push_int(val, None) {
             Some(v) => v,
@@ -215,10 +219,12 @@ impl<T> RingBuf<T> {
         Some(val)
     }
 
+    /// Removes an element to the queue. Returns None if the queue is empty.
     pub fn pop(&self) -> Option<T> {
         self.pop_int(None)
     }
 
+    /// Blocks until there is an element in the queue.
     pub fn pop_wait(&self) -> T {
         let mut rv = self.pop_int(None);
 
@@ -239,10 +245,10 @@ impl<T> RingBuf<T> {
     }
 }
 
-unsafe impl<T: Send> Send for RingBuf<T> { }
-unsafe impl<T: Send> Sync for RingBuf<T> { }
+unsafe impl<T: Send> Send for Queue<T> { }
+unsafe impl<T: Send> Sync for Queue<T> { }
 
-impl<T> Drop for RingBuf<T> {
+impl<T> Drop for Queue<T> {
     fn drop(&mut self) {
         unsafe {
             if mem::needs_drop::<T>() {

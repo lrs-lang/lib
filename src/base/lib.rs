@@ -4,28 +4,18 @@
 
 #![crate_name = "linux_base"]
 #![crate_type = "lib"]
-#![feature(std_misc, into_cow, core, plugin, no_std)]
+#![feature(plugin, no_std)]
 #![plugin(linux_core_plugin)]
 #![no_std]
-#![allow(trivial_numeric_casts, trivial_casts)]
+// #![allow(trivial_numeric_casts, trivial_casts)]
 
+#[macro_use]
 extern crate linux_core as core;
-extern crate linux_error as error;
-extern crate linux_cty;
-extern crate linux_syscall as raw_syscall;
-
-pub use linux_cty as cty;
-
-// XXX: Maybe move some of these out? core takes a long time to compile right now.
+extern crate linux_ty_one as ty_one;
+extern crate linux_arch as arch;
 
 #[macro_use]
 pub mod macros;
-// pub mod syscall;
-// pub mod ext;
-// pub mod string;
-// pub mod c_str;
-pub mod result;
-// pub mod errno;
 pub mod util;
-// pub mod alias;
-// pub mod fd_container;
+pub mod alias;
+pub mod fd_container;

@@ -3,15 +3,14 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use core::prelude::*;
+#[prelude_import] use ty_one::prelude::*;
 use core::{mem, ptr, cmp, slice};
 use core::ops::{Deref, DerefMut};
 use core::iter::{IntoIterator};
 use fmt::{Debug};
 use io::{Write};
-use ty_one::result::{Result};
-use ty_one::result::Result::{Ok, Err};
+use ty_one::{error};
 use alloc::{allocate_array, reallocate_array, free_array, empty_ptr};
-use {error};
 
 pub struct Vec<T> {
     ptr: *mut T,

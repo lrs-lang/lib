@@ -13,6 +13,7 @@ extern crate linux_core as core;
 
 #[prelude_import] use core::prelude::*;
 pub use arch::{nos};
+pub use arch::{c_int};
 
 mod linux {
     pub use ::core::linux::*;
@@ -25,11 +26,11 @@ mod gen;
 mod arch;
 
 #[derive(Copy, Eq)]
-pub struct Errno(pub arch::c_int);
+pub struct Errno(pub c_int);
 
 macro_rules! create {
     ($($name:ident = ($val:expr, $str:expr),)*) => {
-        $(pub const $name: Errno = Errno($val as arch::c_int);)*
+        $(pub const $name: Errno = Errno($val as c_int);)*
 
         impl Errno {
             pub fn desc(self) -> &'static str {

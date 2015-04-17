@@ -136,6 +136,10 @@ macro_rules! int_impls {
             pub fn swap(self) -> $t {
                 unsafe { intrinsics::$bswap(self as $pop_ty) as $t }
             }
+
+            pub fn div_rem(self, other: $t) -> ($t, $t) {
+                (self / other, self % other)
+            }
         }
 
         impl Eq for $t {

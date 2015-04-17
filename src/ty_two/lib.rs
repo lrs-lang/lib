@@ -15,7 +15,6 @@ extern crate linux_arch as arch;
 extern crate linux_lock as lock;
 extern crate linux_io as io;
 extern crate linux_fmt as fmt;
-extern crate linux_error as error;
 extern crate linux_alloc as alloc;
 
 pub mod linux {
@@ -29,4 +28,4 @@ pub mod vec;
 pub mod rc;
 pub mod arc;
 pub mod cow;
-pub mod ring_buf;
+pub mod queue;

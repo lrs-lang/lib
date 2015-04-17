@@ -23,6 +23,10 @@ pub unsafe fn memcpy<T>(dst: *mut T, src: *const T, n: usize) {
     intrinsics::copy_nonoverlapping(src, dst, n);
 }
 
+pub unsafe fn memmove<T>(dst: *mut T, src: *const T, n: usize) {
+    intrinsics::copy(src, dst, n);
+}
+
 #[lang = "const_ptr"]
 impl<T> *const T {
     pub fn is_null(self) -> bool {
