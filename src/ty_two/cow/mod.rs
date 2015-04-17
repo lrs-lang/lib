@@ -5,6 +5,10 @@
 #[prelude_import] use core::prelude::*;
 use core::ops::{Deref};
 
+mod impls {
+    mod slice;
+}
+
 pub trait AsRef<Target: ?Sized> {
     fn as_ref(&self) -> &Target;
 }

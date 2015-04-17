@@ -41,6 +41,7 @@ pub fn spin() {
     atomic::fence_seqcst();
 }
 
+// TODO: Write platform dependent functions.
 pub fn memchr(s: &[u8], c: u8) -> Option<usize> {
     for idx in 0..s.len() {
         if s[idx] == c {

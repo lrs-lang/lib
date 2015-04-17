@@ -3,6 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use ops::{Eq};
+use ops::{PartialOrd, Ordering};
+use cmp::{Ord};
+use option::{Option};
 
 #[lang = "char"]
 impl char {
@@ -33,4 +36,16 @@ impl char {
 
 impl Eq for char {
     fn eq(&self, other: &char) -> bool { *self as u32 == *other as u32 }
+}
+
+impl PartialOrd for char {
+    fn partial_cmp(&self, other: &char) -> Option<Ordering> {
+        (*self as u32).partial_cmp(&(*other as u32))
+    }
+}
+
+impl Ord for char {
+    fn cmp(&self, other: &char) -> Ordering {
+        (*self as u32).cmp(&(*other as u32))
+    }
 }

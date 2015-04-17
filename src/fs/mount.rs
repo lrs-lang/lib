@@ -1,12 +1,12 @@
-use core::cty::{c_ulong, c_int, MS_RDONLY, MS_NOSUID, MS_NODEV, MS_NOEXEC, MS_SYNCHRONOUS,
+use base::cty::{c_ulong, c_int, MS_RDONLY, MS_NOSUID, MS_NODEV, MS_NOEXEC, MS_SYNCHRONOUS,
                 MS_REMOUNT, MS_MANDLOCK, MS_DIRSYNC, MS_NOATIME, MS_NODIRATIME,
                 MS_BIND, MS_MOVE, MS_REC, MS_SILENT, MS_POSIXACL, MS_UNBINDABLE,
                 MS_PRIVATE, MS_SLAVE, MS_SHARED, MS_STRICTATIME, PATH_MAX, MNT_FORCE,
                 MNT_DETACH, MNT_EXPIRE, UMOUNT_NOFOLLOW,};
-use core::syscall::{self};
-use core::string::{AsLinuxStr};
-use core::ext::{AsLinuxPath};
-use core::result::{Result};
+use base::syscall::{self};
+use base::string::{AsByteStr};
+use base::ext::{AsLinuxPath};
+use base::result::{Result};
 
 use std::{mem};
 

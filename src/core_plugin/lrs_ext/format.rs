@@ -322,7 +322,8 @@ impl<'a, 'b> Context<'a, 'b> {
         // ::fmt::Debug::fmt(arg, writer)
 
         let call = {
-            let path = vec!(self.ecx.ident_of("fmt"),
+            let path = vec!(self.ecx.ident_of("linux"),
+                            self.ecx.ident_of("fmt"),
                             self.ecx.ident_of("Display"),
                             self.ecx.ident_of("fmt"));
 

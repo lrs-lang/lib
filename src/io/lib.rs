@@ -14,7 +14,7 @@ extern crate linux_ty_one as ty_one;
 #[prelude_import] use core::prelude::*;
 #[prelude_import] use ty_one::prelude::*;
 use core::{mem};
-use ty_one::error::{Errno};
+use ty_one::error::{Errno, DeviceFull};
 
 pub type Result<T> = ty_one::result::Result<T, Errno>;
 
@@ -45,7 +45,7 @@ pub trait Write {
         while buf.len() > 0 {
             match self.write(buf) {
                 e @ Err(_) => return e,
-                Ok(0) => return Ok(0),
+                Ok(0) => return Err(DeviceFull),
                 Ok(n) => {
                     written += n;
                     buf = &buf[n..];

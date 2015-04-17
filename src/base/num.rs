@@ -2,10 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use linux_arch::{cty};
-
-pub type UserId    = cty::uid_t;
-pub type GroupId   = cty::gid_t;
-pub type DeviceId  = cty::dev_t;
-pub type InodeId   = cty::ino_t;
-pub type ProcessId = cty::pid_t;
+pub use linux_core::num::{
+    i8, u8, i16, u16, i32, u32, i64, u64, isize, usize,
+};

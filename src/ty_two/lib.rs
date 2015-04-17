@@ -25,7 +25,18 @@ pub mod linux {
 }
 
 pub mod vec;
+pub mod string;
+pub mod c_string;
+pub mod byte_string;
 pub mod rc;
 pub mod arc;
 pub mod cow;
 pub mod queue;
+pub mod iter_ext;
+pub mod io_ext;
+
+pub mod prelude {
+    pub use string::{String};
+    pub use vec::{Vec};
+    pub use cow::{ToOwned};
+}

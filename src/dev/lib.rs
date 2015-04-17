@@ -4,22 +4,27 @@
 
 #![crate_name = "linux_dev"]
 #![crate_type = "lib"]
+#![feature(plugin, no_std)]
+#![plugin(linux_core_plugin)]
+#![no_std]
 #![allow(trivial_numeric_casts)]
 
-extern crate linux_core as core;
+#[macro_use]
+extern crate linux_base as base;
+#[prelude_import] use base::prelude::*;
+mod linux { pub use base::linux::*; }
+mod core { pub use base::core::*; }
 
 // Device Id <-> Device Name mapping
 //
 // Source: http://www.lanana.org/docs/device-list/devices-2.6+.txt
 
-use std::io::{Write};
-use std::{fmt};
-
-use core::string::{LinuxString};
-use core::alias::{DeviceId};
+use base::io::{Write};
+use base::{fmt, error, mem};
+use base::alias::{DeviceId};
 
 /// The type of a device special file.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub enum DeviceType {
     /// A character device.
     Character,
@@ -28,7 +33,7 @@ pub enum DeviceType {
 }
 
 /// A device special file.
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct Device(DeviceId, DeviceType);
 
 impl Device {
@@ -76,52 +81,72 @@ impl Device {
     /// let device = Device::from_major_minor(8, 1, DeviceType::Block);
     /// assert_eq!(device.to_path(), "/dev/sda1");
     /// ```
-    pub fn to_path(self) -> LinuxString {
-        path_from_device(self)
+    pub fn to_path(self, buf: &mut [u8]) -> Result<&mut [u8]> {
+        path_from_device(self, buf)
     }
 }
 
+// This impl is not that great because it has to allocate and can even panic.
 impl fmt::Debug for Device {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "{:?}", self.to_path())
+    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
+        let mut buf = [0; 128];
+        fmt::Debug::fmt(path_from_device_int(*self, &mut buf), w)
     }
 }
 
-fn path_from_device(d: Device) -> LinuxString {
-    match d.1 {
-        DeviceType::Character => path_from_char_device(d),
-        DeviceType::Block     => path_from_block_device(d),
+
+fn path_from_device(d: Device, user_buf: &mut [u8]) -> Result<&mut [u8]> {
+    let mut buf = [0; 128];
+    let res = path_from_device_int(d, &mut buf);
+    if user_buf.len() < res.len() {
+        Err(error::NoMemory)
+    } else {
+        mem::copy(user_buf, res);
+        Ok(&mut user_buf[..res.len()])
     }
 }
 
-fn path_from_char_device(d: Device) -> LinuxString {
-    let mut base = b"/dev/".to_vec();
+fn path_from_device_int(d: Device, buf: &mut [u8]) -> &[u8] {
+    let res = match d.1 {
+        DeviceType::Character => path_from_char_device(d, buf),
+        DeviceType::Block     => path_from_block_device(d, buf),
+    };
+    match res {
+        0 => &b"[invalid]"[..],
+        1 => &b"[unnamed]"[..],
+        n => &buf[..n],
+    }
+}
+
+fn path_from_char_device(d: Device, mut buf: &mut [u8]) -> usize {
+    let old_len = buf.len();
+    buf.write(b"/dev/");
     macro_rules! p {
-        ($fmt:expr) => {{ let _ = write!(&mut base, $fmt); }};
-        ($fmt:expr, $($var:tt)*) => {{ let _ = write!(&mut base, $fmt, $($var)*); }}
+        ($str:expr) => {{ buf.write($str); }};
+        ($fmt:expr, $($var:tt)*) => {{ write!(buf, $fmt, $($var)*); }}
     };
     macro_rules! invalid {
-        () => { base = b"[Invalid]".to_vec() }
+        () => { return 0; }
     };
     let major = d.major();
     let minor = d.minor() as u8;
     macro_rules! or_invalid {
-        ($fmt:expr) => { if minor == 0 { p!($fmt) } else { invalid!() } }
+        ($str:expr) => { if minor == 0 { p!($str) } else { invalid!() } }
     };
     match major {
-        0 => base = b"[Unnamed]".to_vec(),
+        0 => return 1,
         1 => match minor {
-            1  => p!("mem"),
-            2  => p!("kmem"),
-            3  => p!("null"),
-            4  => p!("port"),
-            5  => p!("zero"),
-            6  => p!("core"),
-            7  => p!("full"),
-            8  => p!("random"),
-            9  => p!("urandom"),
-            10 => p!("aio"),
-            11 => p!("kmsg"),
+            1  => p!(b"mem"),
+            2  => p!(b"kmem"),
+            3  => p!(b"null"),
+            4  => p!(b"port"),
+            5  => p!(b"zero"),
+            6  => p!(b"core"),
+            7  => p!(b"full"),
+            8  => p!(b"random"),
+            9  => p!(b"urandom"),
+            10 => p!(b"aio"),
+            11 => p!(b"kmsg"),
             _ => invalid!(),
         },
         2 => p!("pty{}{}", ptty_id_to_letter(minor), minor & 0xF),
@@ -131,9 +156,9 @@ fn path_from_char_device(d: Device) -> LinuxString {
             _ => p!("ttyS{}", minor - 64),
         },
         5 => match minor {
-            0 => p!("tty"),
-            1 => p!("console"),
-            2 => p!("ptmx"),
+            0 => p!(b"tty"),
+            1 => p!(b"console"),
+            2 => p!(b"ptmx"),
             3 ... 63 => invalid!(),
             _ => p!("cua{}", minor - 64),
         },
@@ -161,162 +186,162 @@ fn path_from_char_device(d: Device) -> LinuxString {
             p!("{}st{}{}", prefix, minor % 32, postfix)
         }
         10 => match minor {
-            0   => p!("logibm"),
-            1   => p!("psaux"),
-            2   => p!("inportbm"),
-            3   => p!("atibm"),
-            4   => p!("jbm"),
-            5   => p!("atarimouse"),
-            6   => p!("sunmouse"),
-            7   => p!("amigamouse1"),
-            8   => p!("smouse"),
-            9   => p!("pc110pad"),
-            10  => p!("adbmouse"),
-            11  => p!("vrtpanel"),
-            13  => p!("vpcmouse"),
-            14  => p!("touchscreenUcb1x00"),
-            15  => p!("touchscreenMk712"),
-            128 => p!("beep"),
-            129 => p!("modreq"),
-            130 => p!("watchdog"),
-            131 => p!("temperature"),
-            132 => p!("hwtrap"),
-            133 => p!("exttrp"),
-            134 => p!("apm_bios"),
-            135 => p!("rtc"),
-            139 => p!("openprom"),
-            140 => p!("relay8"),
-            141 => p!("relay16"),
-            142 => p!("msr"),
-            143 => p!("pciconf"),
-            144 => p!("nvram"),
-            145 => p!("hfmodem"),
-            146 => p!("graphics"),
-            147 => p!("opengl"),
-            148 => p!("gfx"),
-            149 => p!("inputMouse"),
-            150 => p!("inputKeyboard"),
-            151 => p!("led"),
-            152 => p!("kpoll"),
-            153 => p!("mergemem"),
-            154 => p!("pmu"),
-            155 => p!("isictl"),
-            156 => p!("lcd"),
-            157 => p!("ac"),
-            158 => p!("nwbutton"),
-            159 => p!("nwdebug"),
-            160 => p!("nwflash"),
-            161 => p!("userdma"),
-            162 => p!("smbus"),
-            163 => p!("lik"),
-            164 => p!("ipmo"),
-            165 => p!("vmmon"),
-            166 => p!("i2oCtl"),
-            167 => p!("specialix_sxctl"),
-            168 => p!("tcldrv"),
-            169 => p!("specialix_rioctl"),
-            170 => p!("thinkpadThinkpad"),
-            171 => p!("srripc"),
-            172 => p!("usemaclone"),
-            173 => p!("ipmikcs"),
-            174 => p!("uctrl"),
-            175 => p!("agpgart"),
-            176 => p!("gtrsc"),
-            177 => p!("cbm"),
-            178 => p!("jsflash"),
-            179 => p!("xsvc"),
-            180 => p!("vrbuttons"),
-            181 => p!("toshiba"),
-            182 => p!("perfctr"),
-            183 => p!("hwrng"),
-            184 => p!("cpuMicrocode"),
-            186 => p!("atomicps"),
-            187 => p!("irnet"),
-            188 => p!("smbusbios"),
-            189 => p!("ussp_ctl"),
-            190 => p!("crash"),
-            191 => p!("pcl181"),
-            192 => p!("nas_xbus"),
-            193 => p!("d7s"),
-            194 => p!("zkshim"),
-            195 => p!("elographicsE2201"),
-            198 => p!("sexec"),
-            199 => p!("scannersCuecat"),
-            200 => p!("netTun"),
-            201 => p!("buttonGulpb"),
-            202 => p!("emdCtl"),
-            204 => p!("videoEm8300"),
-            205 => p!("videoEm8300_mv"),
-            206 => p!("videoEm8300_ma"),
-            207 => p!("videoEm8300_sp"),
-            208 => p!("compaqCpqphpc"),
-            209 => p!("compaqCpqrid"),
-            210 => p!("impiBt"),
-            211 => p!("impiSmic"),
-            212 => p!("watchdogs0"),
-            213 => p!("watchdogs1"),
-            214 => p!("watchdogs2"),
-            215 => p!("watchdogs3"),
-            216 => p!("fujitsuApanel"),
-            217 => p!("niNatmotn"),
-            218 => p!("kchuid"),
-            219 => p!("modemsMwave"),
-            220 => p!("mptctl"),
-            221 => p!("mvistaHssdsi"),
-            222 => p!("mvistaHasi"),
-            223 => p!("inputUinput"),
-            224 => p!("tpm"),
-            225 => p!("pps"),
-            226 => p!("systrace"),
-            227 => p!("mcelog"),
-            228 => p!("hpet"),
-            229 => p!("fuse"),
-            230 => p!("midishare"),
+            0   => p!(b"logibm"),
+            1   => p!(b"psaux"),
+            2   => p!(b"inportbm"),
+            3   => p!(b"atibm"),
+            4   => p!(b"jbm"),
+            5   => p!(b"atarimouse"),
+            6   => p!(b"sunmouse"),
+            7   => p!(b"amigamouse1"),
+            8   => p!(b"smouse"),
+            9   => p!(b"pc110pad"),
+            10  => p!(b"adbmouse"),
+            11  => p!(b"vrtpanel"),
+            13  => p!(b"vpcmouse"),
+            14  => p!(b"touchscreenUcb1x00"),
+            15  => p!(b"touchscreenMk712"),
+            128 => p!(b"beep"),
+            129 => p!(b"modreq"),
+            130 => p!(b"watchdog"),
+            131 => p!(b"temperature"),
+            132 => p!(b"hwtrap"),
+            133 => p!(b"exttrp"),
+            134 => p!(b"apm_bios"),
+            135 => p!(b"rtc"),
+            139 => p!(b"openprom"),
+            140 => p!(b"relay8"),
+            141 => p!(b"relay16"),
+            142 => p!(b"msr"),
+            143 => p!(b"pciconf"),
+            144 => p!(b"nvram"),
+            145 => p!(b"hfmodem"),
+            146 => p!(b"graphics"),
+            147 => p!(b"opengl"),
+            148 => p!(b"gfx"),
+            149 => p!(b"inputMouse"),
+            150 => p!(b"inputKeyboard"),
+            151 => p!(b"led"),
+            152 => p!(b"kpoll"),
+            153 => p!(b"mergemem"),
+            154 => p!(b"pmu"),
+            155 => p!(b"isictl"),
+            156 => p!(b"lcd"),
+            157 => p!(b"ac"),
+            158 => p!(b"nwbutton"),
+            159 => p!(b"nwdebug"),
+            160 => p!(b"nwflash"),
+            161 => p!(b"userdma"),
+            162 => p!(b"smbus"),
+            163 => p!(b"lik"),
+            164 => p!(b"ipmo"),
+            165 => p!(b"vmmon"),
+            166 => p!(b"i2oCtl"),
+            167 => p!(b"specialix_sxctl"),
+            168 => p!(b"tcldrv"),
+            169 => p!(b"specialix_rioctl"),
+            170 => p!(b"thinkpadThinkpad"),
+            171 => p!(b"srripc"),
+            172 => p!(b"usemaclone"),
+            173 => p!(b"ipmikcs"),
+            174 => p!(b"uctrl"),
+            175 => p!(b"agpgart"),
+            176 => p!(b"gtrsc"),
+            177 => p!(b"cbm"),
+            178 => p!(b"jsflash"),
+            179 => p!(b"xsvc"),
+            180 => p!(b"vrbuttons"),
+            181 => p!(b"toshiba"),
+            182 => p!(b"perfctr"),
+            183 => p!(b"hwrng"),
+            184 => p!(b"cpuMicrocode"),
+            186 => p!(b"atomicps"),
+            187 => p!(b"irnet"),
+            188 => p!(b"smbusbios"),
+            189 => p!(b"ussp_ctl"),
+            190 => p!(b"crash"),
+            191 => p!(b"pcl181"),
+            192 => p!(b"nas_xbus"),
+            193 => p!(b"d7s"),
+            194 => p!(b"zkshim"),
+            195 => p!(b"elographicsE2201"),
+            198 => p!(b"sexec"),
+            199 => p!(b"scannersCuecat"),
+            200 => p!(b"netTun"),
+            201 => p!(b"buttonGulpb"),
+            202 => p!(b"emdCtl"),
+            204 => p!(b"videoEm8300"),
+            205 => p!(b"videoEm8300_mv"),
+            206 => p!(b"videoEm8300_ma"),
+            207 => p!(b"videoEm8300_sp"),
+            208 => p!(b"compaqCpqphpc"),
+            209 => p!(b"compaqCpqrid"),
+            210 => p!(b"impiBt"),
+            211 => p!(b"impiSmic"),
+            212 => p!(b"watchdogs0"),
+            213 => p!(b"watchdogs1"),
+            214 => p!(b"watchdogs2"),
+            215 => p!(b"watchdogs3"),
+            216 => p!(b"fujitsuApanel"),
+            217 => p!(b"niNatmotn"),
+            218 => p!(b"kchuid"),
+            219 => p!(b"modemsMwave"),
+            220 => p!(b"mptctl"),
+            221 => p!(b"mvistaHssdsi"),
+            222 => p!(b"mvistaHasi"),
+            223 => p!(b"inputUinput"),
+            224 => p!(b"tpm"),
+            225 => p!(b"pps"),
+            226 => p!(b"systrace"),
+            227 => p!(b"mcelog"),
+            228 => p!(b"hpet"),
+            229 => p!(b"fuse"),
+            230 => p!(b"midishare"),
             _ => invalid!(),
         },
-        11 => or_invalid!("kbd"),
+        11 => or_invalid!(b"kbd"),
         12 => match minor {
-            2 => p!("ntpqic11"),
-            3 => p!("tpqic11"),
-            4 => p!("ntpqic24"),
-            5 => p!("tpqic24"),
-            6 => p!("ntpqic120"),
-            7 => p!("tpqic120"),
-            8 => p!("ntpqic150"),
-            9 => p!("tpqic150"),
+            2 => p!(b"ntpqic11"),
+            3 => p!(b"tpqic11"),
+            4 => p!(b"ntpqic24"),
+            5 => p!(b"tpqic24"),
+            6 => p!(b"ntpqic120"),
+            7 => p!(b"tpqic120"),
+            8 => p!(b"ntpqic150"),
+            9 => p!(b"tpqic150"),
             _ => invalid!(),
         },
         13 => match (minor / 32, minor % 32) {
             (0, r)  => p!("input/js{}",    r),
-            (1, 31) => p!("input/mice"),
+            (1, 31) => p!(b"input/mice"),
             (1, r)  => p!("input/mouse{}", r),
             (2, r)  => p!("input/event{}", r),
             _ => invalid!(),
         },
         14 => match minor {
-            0  => p!("mixer"),
-            1  => p!("sequencer"),
-            2  => p!("midi00"),
-            3  => p!("dsp"),
-            4  => p!("audio"),
-            6  => p!("sndstat"),
-            7  => p!("audioctl"),
-            8  => p!("sequencer2"),
-            16 => p!("mixer1"),
-            17 => p!("patmgr0"),
-            18 => p!("midi01"),
-            19 => p!("dsp1"),
-            20 => p!("audio1"),
-            33 => p!("patmgr1"),
-            34 => p!("midi02"),
-            50 => p!("midi03"),
+            0  => p!(b"mixer"),
+            1  => p!(b"sequencer"),
+            2  => p!(b"midi00"),
+            3  => p!(b"dsp"),
+            4  => p!(b"audio"),
+            6  => p!(b"sndstat"),
+            7  => p!(b"audioctl"),
+            8  => p!(b"sequencer2"),
+            16 => p!(b"mixer1"),
+            17 => p!(b"patmgr0"),
+            18 => p!(b"midi01"),
+            19 => p!(b"dsp1"),
+            20 => p!(b"audio1"),
+            33 => p!(b"patmgr1"),
+            34 => p!(b"midi02"),
+            50 => p!(b"midi03"),
             _ => invalid!(),
         },
         15 => match minor / 128 {
             0 => p!("js{}", minor % 128),
             _ => p!("djs{}", minor % 128),
         },
-        16 => or_invalid!("gs4500"),
+        16 => or_invalid!(b"gs4500"),
         17 => p!("ttyH{}", minor),
         18 => p!("cuh{}",  minor),
         19 => p!("ttyC{}", minor),
@@ -326,7 +351,7 @@ fn path_from_char_device(d: Device) -> LinuxString {
         23 => p!("cud{}",  minor),
         24 => p!("ttyE{}", minor),
         25 => p!("cue{}",  minor),
-        26 => or_invalid!("wvisfgrab"),
+        26 => or_invalid!(b"wvisfgrab"),
         27 => {
             let prefix = if minor % 8 > 3 { "n" } else { "" };
             match minor / 16 {
@@ -338,23 +363,23 @@ fn path_from_char_device(d: Device) -> LinuxString {
         28 => p!("staliomem{}", minor),
         29 => p!("fb{}", minor),
         30 => match minor {
-            0  => p!("socksys"),
-            1  => p!("spx"),
-            32 => p!("inet/ip"),
-            33 => p!("inet/icmp"),
-            34 => p!("inet/ggp"),
-            35 => p!("inet/ipip"),
-            36 => p!("inet/tcp"),
-            37 => p!("inet/egp"),
-            38 => p!("inet/pup"),
-            39 => p!("inet/udp"),
-            40 => p!("inet/idp"),
-            41 => p!("inet/rawip"),
+            0  => p!(b"socksys"),
+            1  => p!(b"spx"),
+            32 => p!(b"inet/ip"),
+            33 => p!(b"inet/icmp"),
+            34 => p!(b"inet/ggp"),
+            35 => p!(b"inet/ipip"),
+            36 => p!(b"inet/tcp"),
+            37 => p!(b"inet/egp"),
+            38 => p!(b"inet/pup"),
+            39 => p!(b"inet/udp"),
+            40 => p!(b"inet/idp"),
+            41 => p!(b"inet/rawip"),
             _  => invalid!(),
         },
         31 => match minor {
-            0 => p!("mpu401data"),
-            1 => p!("mpu401stat"),
+            0 => p!(b"mpu401data"),
+            1 => p!(b"mpu401stat"),
             _ => invalid!(),
         },
         32 => p!("ttyX{}", minor),
@@ -367,9 +392,9 @@ fn path_from_char_device(d: Device) -> LinuxString {
             _ => invalid!(),
         },
         36 => match minor {
-            0 => p!("route"),
-            1 => p!("skip"),
-            2 => p!("fwmonitor"),
+            0 => p!(b"route"),
+            1 => p!(b"skip"),
+            2 => p!(b"fwmonitor"),
             _ => p!("tap{}", minor - 16),
         },
         37 => match minor / 128 {
@@ -386,13 +411,13 @@ fn path_from_char_device(d: Device) -> LinuxString {
                 _ => invalid!(),
             }
         }
-        40 => or_invalid!("mmetfgrab"),
-        41 => or_invalid!("yamm"),
+        40 => or_invalid!(b"mmetfgrab"),
+        41 => or_invalid!(b"yamm"),
         43 => p!("ttyI{}", minor),
         44 => p!("cui{}", minor),
         45 => {
             if minor == 255 {
-                p!("isdninfo")
+                p!(b"isdninfo")
             } else {
                 match minor / 64 {
                     0 => p!("isdn{}",     minor % 64),
@@ -414,12 +439,12 @@ fn path_from_char_device(d: Device) -> LinuxString {
             _ => invalid!(),
         },
         54 => p!("holter{}", minor),
-        55 => or_invalid!("dsp56k"),
-        56 => or_invalid!("adb"),
+        55 => or_invalid!(b"dsp56k"),
+        56 => or_invalid!(b"adb"),
         57 => p!("ttyP{}", minor),
         58 => p!("cup{}", minor),
-        59 => or_invalid!("firewall"),
-        64 => or_invalid!("enskip"),
+        59 => or_invalid!(b"firewall"),
+        64 => or_invalid!(b"enskip"),
         65 => match minor / 64 {
             0 => p!("plink{}",   minor % 64),
             1 => p!("rplink{}",  minor % 64),
@@ -427,20 +452,20 @@ fn path_from_char_device(d: Device) -> LinuxString {
             _ => p!("rplink{}d", minor % 64),
         },
         66 => p!("yppcpci{}", minor),
-        67 => p!("cfs0"),
+        67 => p!(b"cfs0"),
         68 => match minor {
-            0 => p!("capi20"),
+            0 => p!(b"capi20"),
             _ => p!("capi20.{}", minor)
         },
-        69 => or_invalid!("ma16"),
+        69 => or_invalid!(b"ma16"),
         70 => match minor {
-            0   => p!("apscfg"),
-            1   => p!("apsauth"),
-            2   => p!("apslog"),
-            3   => p!("apsdbg"),
-            64  => p!("apsisdn"),
-            65  => p!("apsasync"),
-            128 => p!("apsmon"),
+            0   => p!(b"apscfg"),
+            1   => p!(b"apsauth"),
+            2   => p!(b"apslog"),
+            3   => p!(b"apsdbg"),
+            64  => p!(b"apsisdn"),
+            65  => p!(b"apsasync"),
+            128 => p!(b"apsmon"),
             _ => invalid!(),
         },
         71 => p!("ttyF{}", minor),
@@ -452,10 +477,10 @@ fn path_from_char_device(d: Device) -> LinuxString {
         74 => p!("SCI/{}", minor),
         75 => p!("ttyW{}", minor),
         76 => p!("cuw{}", minor),
-        77 => or_invalid!("qng"),
+        77 => or_invalid!(b"qng"),
         78 => p!("ttyM{}", minor),
         79 => p!("cum{}", minor),
-        80 => or_invalid!("at200"),
+        80 => or_invalid!(b"at200"),
         81 => match minor {
             0 ... 63 => p!("video{}", minor),
             64 ... 127 => p!("radio{}", minor - 64),
@@ -467,7 +492,7 @@ fn path_from_char_device(d: Device) -> LinuxString {
         83 => p!("mga_vid{}", minor),
         84 => p!("ihcp{}", minor),
         85 => match minor {
-            0 => p!("shimq"),
+            0 => p!(b"shimq"),
             _ => p!("qcntl{}", minor),
         },
         86 => p!("sch{}", minor),
@@ -485,10 +510,10 @@ fn path_from_char_device(d: Device) -> LinuxString {
         },
         94 => p!("dcxx{}", minor),
         95 => match minor {
-            0 => p!("ipl"),
-            1 => p!("ipnat"),
-            2 => p!("ipstate"),
-            3 => p!("ipauth"),
+            0 => p!(b"ipl"),
+            1 => p!(b"ipnat"),
+            2 => p!(b"ipstate"),
+            3 => p!(b"ipauth"),
             _ => invalid!(),
         },
         96 => match minor / 128 {
@@ -500,15 +525,15 @@ fn path_from_char_device(d: Device) -> LinuxString {
         99 => p!("paraport{}", minor),
         100 => p!("phone{}", minor),
         101 => match minor {
-            0 => p!("mdspstat"),
+            0 => p!(b"mdspstat"),
             _ => p!("mdsp{}", minor),
         },
         102 => p!("tlk{}", minor),
         103 => p!("nnpfs{}", minor),
         105 => p!("ttyV{}", minor),
         106 => p!("cuv{}", minor),
-        107 => or_invalid!("3dfx"),
-        108 => or_invalid!("ppp"),
+        107 => or_invalid!(b"3dfx"),
+        108 => or_invalid!(b"ppp"),
         110 => p!("srnd{}", minor),
         111 => p!("av{}", minor),
         112 => p!("ttyM{}", minor),
@@ -524,7 +549,7 @@ fn path_from_char_device(d: Device) -> LinuxString {
         },
         117 => p!("cosa{}c{}", minor / 16, minor % 16),
         118 => match minor {
-            0 => p!("ica"),
+            0 => p!(b"ica"),
             _ => p!("ica{}", minor - 1),
         },
         119 => p!("vnet{}", minor),
@@ -549,9 +574,9 @@ fn path_from_char_device(d: Device) -> LinuxString {
         150 => p!("rtf{}", minor),
         151 => p!("dpti{}", minor),
         152 => match minor {
-            0 => p!("etherd/ctl"),
-            1 => p!("etherd/err"),
-            2 => p!("etherd/raw"),
+            0 => p!(b"etherd/ctl"),
+            1 => p!(b"etherd/err"),
+            2 => p!(b"etherd/raw"),
             _ => invalid!(),
         },
         153 => p!("spi{}", minor),
@@ -566,7 +591,7 @@ fn path_from_char_device(d: Device) -> LinuxString {
             _ => p!("irlpt{}", minor - 16),
         },
         162 => match minor {
-            0 => p!("rawctl"),
+            0 => p!(b"rawctl"),
             _ => p!("raw/raw{}", minor),
         },
         164 => match minor {
@@ -584,7 +609,7 @@ fn path_from_char_device(d: Device) -> LinuxString {
         170 => p!("megarac{}", minor),
         172 => match minor {
             0 ... 127 => p!("ttyMX{}", minor),
-            128 => p!("moxactl"),
+            128 => p!(b"moxactl"),
             _ => invalid!(),
         },
         173 => match minor {
@@ -608,9 +633,9 @@ fn path_from_char_device(d: Device) -> LinuxString {
             2 => p!("usb/ez{}", minor % 16),
             3 => p!("usb/scanner{}", minor % 16),
             _ => match minor {
-                64 => p!("usb/rio500"),
-                65 => p!("usb/usblcd"),
-                66 => p!("usb/cpad0"),
+                64 => p!(b"usb/rio500"),
+                65 => p!(b"usb/usblcd"),
+                66 => p!(b"usb/cpad0"),
                 _ => invalid!(),
             },
         },
@@ -625,11 +650,11 @@ fn path_from_char_device(d: Device) -> LinuxString {
         189 => p!("cuusb{}", minor),
         190 => p!("kctt{}", minor),
         192 => match minor {
-            0 => p!("profile"),
+            0 => p!(b"profile"),
             _ => p!("profile{}", minor - 1),
         },
         193 => match minor {
-            0 => p!("trace"),
+            0 => p!(b"trace"),
             _ => p!("trace{}", minor - 1),
         },
         194 => match minor % 16 {
@@ -642,82 +667,82 @@ fn path_from_char_device(d: Device) -> LinuxString {
             _ => invalid!(),
         },
         195 => match minor {
-            255 => p!("nvidiactl"),
+            255 => p!(b"nvidiactl"),
             _ => p!("nvidia{}", minor),
         },
         196 => p!("tor/{}", minor),
         197 => match minor {
             0 ... 127 => p!("tnf/t{}", minor),
-            128 => p!("tnf/status"),
-            130 => p!("tnf/trace"),
+            128 => p!(b"tnf/status"),
+            130 => p!(b"tnf/trace"),
             _ => invalid!(),
         },
         198 => p!("tpmp2/{}", minor),
         200 => match minor {
-            0 => p!("vx/config"),
-            1 => p!("vx/trace"),
-            2 => p!("vx/iod"),
-            3 => p!("vx/info"),
-            4 => p!("vx/task"),
-            5 => p!("vx/taskmon"),
+            0 => p!(b"vx/config"),
+            1 => p!(b"vx/trace"),
+            2 => p!(b"vx/iod"),
+            3 => p!(b"vx/info"),
+            4 => p!(b"vx/task"),
+            5 => p!(b"vx/taskmon"),
             _ => invalid!(),
         },
         202 => p!("cpu/{}/msr", minor),
         203 => p!("cpu/{}/cpuid", minor),
         204 => match minor {
-            0  => p!("ttyLU0"),
-            1  => p!("ttyLU1"),
-            2  => p!("ttyLU2"),
-            3  => p!("ttyLU3"),
-            4  => p!("ttyFB0"),
-            5  => p!("ttySA0"),
-            6  => p!("ttySA1"),
-            7  => p!("ttySA2"),
-            8  => p!("ttySC0"),
-            9  => p!("ttySC1"),
-            10 => p!("ttySC2"),
-            11 => p!("ttySC3"),
-            12 => p!("ttyFW0"),
-            13 => p!("ttyFW1"),
-            14 => p!("ttyFW2"),
-            15 => p!("ttyFW3"),
+            0  => p!(b"ttyLU0"),
+            1  => p!(b"ttyLU1"),
+            2  => p!(b"ttyLU2"),
+            3  => p!(b"ttyLU3"),
+            4  => p!(b"ttyFB0"),
+            5  => p!(b"ttySA0"),
+            6  => p!(b"ttySA1"),
+            7  => p!(b"ttySA2"),
+            8  => p!(b"ttySC0"),
+            9  => p!(b"ttySC1"),
+            10 => p!(b"ttySC2"),
+            11 => p!(b"ttySC3"),
+            12 => p!(b"ttyFW0"),
+            13 => p!(b"ttyFW1"),
+            14 => p!(b"ttyFW2"),
+            15 => p!(b"ttyFW3"),
             16 ... 31 => p!("ttyAM{}", minor - 16),
             32 ... 39 => p!("ttyDB{}", minor - 32),
-            40 => p!("ttySG0"),
-            41 => p!("ttySMX0"),
-            42 => p!("ttySMX1"),
-            43 => p!("ttySMX2"),
-            44 => p!("ttyMM0"),
-            45 => p!("ttyMM1"),
+            40 => p!(b"ttySG0"),
+            41 => p!(b"ttySMX0"),
+            42 => p!(b"ttySMX1"),
+            43 => p!(b"ttySMX2"),
+            44 => p!(b"ttyMM0"),
+            45 => p!(b"ttyMM1"),
             46 ... 49 => p!("ttyCPM{}", minor - 46), // the documentation isn't clear here
             50 ... 81 => p!("ttyIOC4{}", minor - 50),
             _ => invalid!(),
         },
         205 => match minor {
-            0  => p!("culu0"),
-            1  => p!("culu1"),
-            2  => p!("culu2"),
-            3  => p!("culu3"),
-            4  => p!("cufb0"),
-            5  => p!("cusa0"),
-            6  => p!("cusa1"),
-            7  => p!("cusa2"),
-            8  => p!("cusc0"),
-            9  => p!("cusc1"),
-            10 => p!("cusc2"),
-            11 => p!("cusc3"),
-            12 => p!("cufw0"),
-            13 => p!("cufw1"),
-            14 => p!("cufw2"),
-            15 => p!("cufw3"),
+            0  => p!(b"culu0"),
+            1  => p!(b"culu1"),
+            2  => p!(b"culu2"),
+            3  => p!(b"culu3"),
+            4  => p!(b"cufb0"),
+            5  => p!(b"cusa0"),
+            6  => p!(b"cusa1"),
+            7  => p!(b"cusa2"),
+            8  => p!(b"cusc0"),
+            9  => p!(b"cusc1"),
+            10 => p!(b"cusc2"),
+            11 => p!(b"cusc3"),
+            12 => p!(b"cufw0"),
+            13 => p!(b"cufw1"),
+            14 => p!(b"cufw2"),
+            15 => p!(b"cufw3"),
             16 ... 31 => p!("cuam{}", minor - 16),
             32 ... 39 => p!("cudb{}", minor - 32),
-            40 => p!("cusg0"),
-            41 => p!("cusmX0"),
-            42 => p!("cusmX1"),
-            43 => p!("cusmX2"),
-            44 => p!("cumm0"),
-            45 => p!("cumm1"),
+            40 => p!(b"cusg0"),
+            41 => p!(b"cusmX0"),
+            42 => p!(b"cusmX1"),
+            43 => p!(b"cusmX2"),
+            44 => p!(b"cumm0"),
+            45 => p!(b"cumm1"),
             46 ... 49 => p!("cucpm{}", minor - 46), // the documentation isn't clear here
             50 ... 81 => p!("cuioc4{}", minor - 50),
             _ => invalid!(),
@@ -733,18 +758,18 @@ fn path_from_char_device(d: Device) -> LinuxString {
             _ => p!("nosst{}a", minor % 32),
         },
         207 => match minor {
-            0  => p!("cpqhealth/cpqw"),
-            1  => p!("cpqhealth/crom"),
-            2  => p!("cpqhealth/cdt"),
-            3  => p!("cpqhealth/cevt"),
-            4  => p!("cpqhealth/casr"),
-            5  => p!("cpqhealth/cecc"),
-            6  => p!("cpqhealth/cmca"),
-            7  => p!("cpqhealth/ccsm"),
-            8  => p!("cpqhealth/cnmi"),
-            9  => p!("cpqhealth/css"),
-            10 => p!("cpqhealth/cram"),
-            11 => p!("cpqhealth/cpci"),
+            0  => p!(b"cpqhealth/cpqw"),
+            1  => p!(b"cpqhealth/crom"),
+            2  => p!(b"cpqhealth/cdt"),
+            3  => p!(b"cpqhealth/cevt"),
+            4  => p!(b"cpqhealth/casr"),
+            5  => p!(b"cpqhealth/cecc"),
+            6  => p!(b"cpqhealth/cmca"),
+            7  => p!(b"cpqhealth/ccsm"),
+            8  => p!(b"cpqhealth/cnmi"),
+            9  => p!(b"cpqhealth/css"),
+            10 => p!(b"cpqhealth/cram"),
+            11 => p!(b"cpqhealth/cpci"),
             _ => invalid!(),
         },
         208 => p!("ttyU{}", minor),
@@ -783,15 +808,15 @@ fn path_from_char_device(d: Device) -> LinuxString {
             _ => p!("myricom/gmp{}", minor / 2),
         },
         221 => match minor {
-		    0 => p!("bus/vme/m0"),
-		    1 => p!("bus/vme/m1"),
-		    2 => p!("bus/vme/m2"),
-		    3 => p!("bus/vme/m3"),
-		    4 => p!("bus/vme/s0"),
-		    5 => p!("bus/vme/s1"),
-		    6 => p!("bus/vme/s2"),
-		    7 => p!("bus/vme/s3"),
-		    8 => p!("bus/vme/ctl"),
+		    0 => p!(b"bus/vme/m0"),
+		    1 => p!(b"bus/vme/m1"),
+		    2 => p!(b"bus/vme/m2"),
+		    3 => p!(b"bus/vme/m3"),
+		    4 => p!(b"bus/vme/s0"),
+		    5 => p!(b"bus/vme/s1"),
+		    6 => p!(b"bus/vme/s2"),
+		    7 => p!(b"bus/vme/s3"),
+		    8 => p!(b"bus/vme/ctl"),
             _ => invalid!(),
         },
         224 => p!("ttyY{}", minor),
@@ -802,7 +827,7 @@ fn path_from_char_device(d: Device) -> LinuxString {
             _ => p!("3270/tty{}", minor),
         },
         228 => match minor {
-            0 => p!("3270/tub"),
+            0 => p!(b"3270/tub"),
             _ => p!("3270/tub{}", minor),
         },
         229 => p!("iseries/vtty{}", minor),
@@ -820,64 +845,65 @@ fn path_from_char_device(d: Device) -> LinuxString {
         231 => p!("infiniband/umad{}", minor),
         _ => invalid!(),
     }
-    LinuxString::from_vec(base)
+    old_len - buf.len()
 }
 
-fn path_from_block_device(d: Device) -> LinuxString {
-    let mut base = b"/dev/".to_vec();
+fn path_from_block_device(d: Device, mut buf: &mut [u8]) -> usize {
+    let old_len = buf.len();
+    buf.write(b"/dev/");
     macro_rules! p {
-        ($fmt:expr) => {{ let _ = write!(&mut base, $fmt); }};
-        ($fmt:expr, $($var:tt)*) => {{ let _ = write!(&mut base, $fmt, $($var)*); }}
+        ($str:expr) => {{ buf.write($str); }};
+        ($fmt:expr, $($var:tt)*) => {{ write!(buf, $fmt, $($var)*); }}
+    };
+    macro_rules! invalid {
+        () => { return 0; }
     };
     let major = d.major();
     let minor = d.minor() as u8;
-    macro_rules! invalid {
-        () => {{ base.truncate(0); let _ = write!(&mut base, "{:x}:{:x}", major, minor); }}
-    };
     macro_rules! or_invalid {
-        ($fmt:expr) => { if minor == 0 { p!($fmt) } else { invalid!() } }
+        ($str:expr) => { if minor == 0 { p!($str) } else { invalid!() } }
     };
     match major {
-        0 => base = b"[Unnamed]".to_vec(),
+        0 => return 1,
         1 => p!("ram{}", minor),
         2 => {
             let base = if minor < 128 { 0 } else { 4 };
             let rest = minor % 128;
-            p!("fd");
+            p!(b"fd");
             p!("{}", base + minor % 4);
             match rest / 4 {
-                0  => p!(""),
-                1  => p!("d360"),
-                2  => p!("h1200"),
-                3  => p!("u360"),
-                4  => p!("u720"),
-                5  => p!("h360"),
-                6  => p!("h720"),
-                7  => p!("u1440"),
-                8  => p!("u2880"),
-                9  => p!("CompaQ"),
-                10 => p!("h1440"),
-                11 => p!("u1680"),
-                12 => p!("h410"),
-                13 => p!("u820"),
-                14 => p!("h1476"),
-                15 => p!("u1722"),
-                16 => p!("h420"),
-                17 => p!("u830"),
-                18 => p!("h1494"),
-                19 => p!("u1743"),
-                20 => p!("h880"),
-                21 => p!("u1040"),
-                22 => p!("u1120"),
-                23 => p!("h1600"),
-                24 => p!("u1760"),
-                25 => p!("u1920"),
-                26 => p!("u3200"),
-                27 => p!("u3520"),
-                28 => p!("u3840"),
-                29 => p!("u1840"),
-                30 => p!("u800"),
-                _  => p!("u1600"),
+                0  => p!(b""),
+                1  => p!(b"d360"),
+                2  => p!(b"h1200"),
+                3  => p!(b"u360"),
+                4  => p!(b"u720"),
+                5  => p!(b"h360"),
+                6  => p!(b"h720"),
+                7  => p!(b"u1440"),
+                8  => p!(b"u2880"),
+                9  => p!(b"CompaQ"),
+                10 => p!(b"h1440"),
+                11 => p!(b"u1680"),
+                12 => p!(b"h410"),
+                13 => p!(b"u820"),
+                14 => p!(b"h1476"),
+                15 => p!(b"u1722"),
+                16 => p!(b"h420"),
+                17 => p!(b"u830"),
+                18 => p!(b"h1494"),
+                19 => p!(b"u1743"),
+                20 => p!(b"h880"),
+                21 => p!(b"u1040"),
+                22 => p!(b"u1120"),
+                23 => p!(b"h1600"),
+                24 => p!(b"u1760"),
+                25 => p!(b"u1920"),
+                26 => p!(b"u3200"),
+                27 => p!(b"u3520"),
+                28 => p!(b"u3840"),
+                29 => p!(b"u1840"),
+                30 => p!(b"u800"),
+                _  => p!(b"u1600"),
             }
         },
         3 => {
@@ -887,7 +913,7 @@ fn path_from_block_device(d: Device) -> LinuxString {
                 n => p!("hd{}{}", letter, n),
             }
         },
-        4 => p!("root"),
+        4 => p!(b"root"),
         7 => p!("loop{}", minor),
         8 => {
             let letter = (b'a' + (minor / 16)) as char;
@@ -913,15 +939,15 @@ fn path_from_block_device(d: Device) -> LinuxString {
                 n => p!("dos_hd{}{}", letter, n),
             }
         },
-        15 => or_invalid!("sonycd"),
-        16 => or_invalid!("gscd"),
-        17 => or_invalid!("optcd"),
-        18 => or_invalid!("sjcd"),
+        15 => or_invalid!(b"sonycd"),
+        16 => or_invalid!(b"gscd"),
+        17 => or_invalid!(b"optcd"),
+        18 => or_invalid!(b"sjcd"),
         19 => match minor / 128 {
             0 => p!("double{}", minor % 128),
             _ => p!("cdouble{}", minor % 128),
         },
-        20 => or_invalid!("hitcd"),
+        20 => or_invalid!(b"hitcd"),
         21 => {
             let letter = (b'a' + (minor / 64)) as char;
             match minor % 64 {
@@ -936,14 +962,14 @@ fn path_from_block_device(d: Device) -> LinuxString {
                 n => p!("hd{}{}", letter, n),
             }
         },
-        23 => or_invalid!("mcd"),
-        24 => or_invalid!("cdu535"),
+        23 => or_invalid!(b"mcd"),
+        24 => or_invalid!(b"cdu535"),
         25 ... 28 => match minor {
             0 ... 4 => p!("sbpcd{}", minor as u32 + major - 25),
             _ => invalid!(),
         },
-        29 => or_invalid!("aztcd"),
-        30 => or_invalid!("cm205cd"),
+        29 => or_invalid!(b"aztcd"),
+        30 => or_invalid!(b"cm205cd"),
         31 => match minor / 8 {
             0 => p!("rom{}", minor % 8),
             1 => p!("rrom{}", minor % 8),
@@ -951,7 +977,7 @@ fn path_from_block_device(d: Device) -> LinuxString {
             3 => p!("rflash{}", minor % 8),
             _ => invalid!(),
         },
-        32 => or_invalid!("cm206cd"),
+        32 => or_invalid!(b"cm206cd"),
         33 => {
             let letter = (b'e' + (minor / 64)) as char;
             match minor % 64 {
@@ -966,7 +992,7 @@ fn path_from_block_device(d: Device) -> LinuxString {
                 n => p!("hd{}{}", letter, n),
             }
         },
-        35 => or_invalid!("slram"),
+        35 => or_invalid!(b"slram"),
         36 => {
             let letter = (b'a' + (minor / 64)) as char;
             match minor % 64 {
@@ -974,13 +1000,13 @@ fn path_from_block_device(d: Device) -> LinuxString {
                 n => p!("ed{}{}", letter, n),
             }
         },
-        37 => or_invalid!("z2ram"),
+        37 => or_invalid!(b"z2ram"),
         40 => match minor {
-            0 => p!("eza"),
+            0 => p!(b"eza"),
             1 ... 63 => p!("eza{}", minor),
             _ => invalid!(),
         },
-        41 => or_invalid!("bpcd"),
+        41 => or_invalid!(b"bpcd"),
         43 => p!("nb{}", minor),
         44 => {
             let letter = (b'a' + (minor / 16)) as char;
@@ -1018,7 +1044,7 @@ fn path_from_block_device(d: Device) -> LinuxString {
         },
         59 => p!("pda{}", minor),
         64 => match minor {
-            0 => p!("scramdisk/master"),
+            0 => p!(b"scramdisk/master"),
             _ => p!("scramdisk/{}", minor)
         },
         65 ... 71 => {
@@ -1099,7 +1125,7 @@ fn path_from_block_device(d: Device) -> LinuxString {
                 n => p!("ubd{}{}", letter, n),
             }
         },
-        99 => or_invalid!("jsfd"),
+        99 => or_invalid!(b"jsfd"),
         101 => {
             match minor % 16 {
                 0 => p!("amiraid/ar{}", minor / 16),
@@ -1113,7 +1139,7 @@ fn path_from_block_device(d: Device) -> LinuxString {
                 n => p!("cbd/{}{}", letter, n),
             }
         },
-        103 => or_invalid!("audit"),
+        103 => or_invalid!(b"audit"),
         104 ... 111 => match minor % 16 {
             0 => p!("cciss/c{}d{}",    major - 104, minor / 16),
             n => p!("cciss/c{}d{}p{}", major - 104, minor / 16,  n),
@@ -1200,7 +1226,7 @@ fn path_from_block_device(d: Device) -> LinuxString {
         254 => p!("dm-{}", minor), // not in the documentation
         _ => invalid!(),
     }
-    LinuxString::from_vec(base)
+    old_len - buf.len()
 }
 
 fn ptty_id_to_letter(n: u8) -> char {

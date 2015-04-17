@@ -28,6 +28,7 @@ mod impls {
     pub mod num;
     pub mod str;
     pub mod byte_str;
+    pub mod c_str;
 }
 
 macro_rules! fmt_var {

@@ -4,12 +4,18 @@
 
 #![crate_name = "linux_fs"]
 #![crate_type = "lib"]
+#![feature(plugin, no_std)]
+#![plugin(linux_core_plugin)]
+#![no_std]
 #![allow(trivial_numeric_casts)]
 
 #[macro_use]
-extern crate linux_core as core;
+extern crate linux_base as base;
+#[prelude_import] use base::prelude::*;
+mod linux { pub use base::linux::*; }
+mod core { pub use base::core::*; }
 
-use core::syscall::{sync};
+use base::syscall::{sync};
 
 pub mod info;
 pub mod mount;

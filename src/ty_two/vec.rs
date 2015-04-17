@@ -79,10 +79,19 @@ impl<T> Vec<T> {
     }
 
     pub unsafe fn unsafe_push_all(&mut self, vals: &[T]) {
-        self.reserve(vals.len()).unwrap();
+        self.try_unsafe_push_all(vals).unwrap();
+    }
+
+    pub fn try_push_all(&mut self, vals: &[T]) -> Result where T: Copy {
+        unsafe { self.try_unsafe_push_all(vals) }
+    }
+
+    pub unsafe fn try_unsafe_push_all(&mut self, vals: &[T]) -> Result {
+        try!(self.reserve(vals.len()));
         let tail = slice::from_ptr(self.ptr.add(self.len), vals.len());
         mem::unsafe_copy(tail, vals);
         self.len += vals.len();
+        Ok(())
     }
 
     pub fn extend<I: IntoIterator<Item=T>>(&mut self, iter: I) {

@@ -7,6 +7,6 @@ pub use marker::{Sized, Copy, Send, Sync, NoSend, NoSync, PhantomData};
 pub use option::{Option};
 pub use option::Option::{Some, None};
 
-pub use ops::{Fn, FnOnce, FnMut, Drop};
+pub use ops::{Fn, FnOnce, FnMut, Drop, Deref, DerefMut};
 
 pub use mem::{drop};

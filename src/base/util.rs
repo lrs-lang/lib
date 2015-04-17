@@ -2,11 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import] use core::prelude::*;
-#[prelude_import] use ty_one::prelude::*;
+#[prelude_import] use linux_core::prelude::*;
+#[prelude_import] use linux_ty_one::prelude::*;
 
-use ty_one::error::{Errno, c_int};
-use ty_one::num::{SignedInt, Int};
+use linux_ty_one::error::{Errno, c_int};
+use linux_ty_one::num::{SignedInt, Int};
 
 #[cfg(feature = "retry")]
 pub fn retry<T: SignedInt, F: FnMut() -> T>(mut f: F) -> Result<T> {
