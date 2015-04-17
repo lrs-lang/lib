@@ -44,4 +44,15 @@ impl<T> Option<T> {
             _ => None,
         }
     }
+
+    pub fn is_some(&self) -> bool {
+        match *self {
+            Some(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_none(&self) -> bool {
+        !self.is_some()
+    }
 }

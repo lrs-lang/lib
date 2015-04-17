@@ -1,16 +1,17 @@
 obj core
 obj sort       core
 obj atomic     core
-obj ty_one     core
-obj cty        core
+obj error      core
+obj ty_one     core error
+obj io         core ty_one
+obj fmt        core ty_one io
+obj c_stdio    core ty_one io
+
+obj cty        core error
 obj r_syscall  core cty
 obj w_syscall  core cty ty_one r_syscall
 obj arch       core cty w_syscall atomic
-obj lock       core arch
-obj io         core ty_one
-obj c_stdio    core ty_one io
-obj fmt        core ty_one io
-obj error      core ty_one cty
+obj lock       core ty_one arch io fmt
 obj alloc      core
 obj ty_two     core ty_one arch lock io fmt error alloc
 obj base       core cty r_syscall

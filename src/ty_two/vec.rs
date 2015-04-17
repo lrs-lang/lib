@@ -10,7 +10,8 @@ use fmt::{Debug};
 use io::{Write};
 use ty_one::result::{Result};
 use ty_one::result::Result::{Ok, Err};
-use {alloc, error};
+use alloc::{allocate_array, reallocate_array, free_array, empty_ptr};
+use {error};
 
 pub struct Vec<T> {
     ptr: *mut T,
@@ -20,16 +21,14 @@ pub struct Vec<T> {
 
 impl<T> Vec<T> {
     pub fn new() -> Vec<T> {
-        Vec { ptr: 0 as *mut T, len: 0, cap: 0 }
+        Vec { ptr: empty_ptr(), len: 0, cap: 0 }
     }
 
     pub fn with_capacity(cap: usize) -> Result<Vec<T>> {
-        let size = cap * mem::size_of::<T>();
-        if size == 0 {
-            return Ok(Vec { ptr: 0 as *mut T, len: 0, cap: cap });
+        if cap == 0 || mem::size_of::<T>() == 0 {
+            return Ok(Vec { ptr: empty_ptr(), len: 0, cap: cap });
         }
-        let align = mem::align_of::<T>();
-        let ptr = unsafe { alloc::allocate(size, align) as *mut T };
+        let ptr = unsafe { allocate_array(cap) };
         if ptr.is_null() {
             return Err(error::NoMemory);
         }
@@ -48,18 +47,22 @@ impl<T> Vec<T> {
         if self.cap - self.len >= n {
             return Ok(());
         }
-        let to_reserve = cmp::max(n, self.cap / 2 + 1);
-        let old_size = self.cap * mem::size_of::<T>();
-        let new_size = (self.len + to_reserve) * mem::size_of::<T>();
-        let align = mem::align_of::<T>();
-        let ptr = unsafe {
-            alloc::reallocate(self.ptr as *mut u8, old_size, new_size, align) as *mut T
+        if mem::size_of::<T>() == 0 {
+            self.cap = self.len + n;
+            return Ok(());
+        }
+
+        let new_cap = self.len + cmp::max(n, self.cap / 2 + 1);
+        let ptr = if self.ptr == empty_ptr() {
+            unsafe { allocate_array(new_cap) }
+        } else {
+            unsafe { reallocate_array(self.ptr, self.cap, new_cap) }
         };
         if ptr.is_null() {
             Err(error::NoMemory)
         } else {
             self.ptr = ptr;
-            self.cap = self.len + to_reserve;
+            self.cap = new_cap;
             Ok(())
         }
     }
@@ -92,9 +95,9 @@ impl<T> Vec<T> {
     pub fn pop(&mut self) -> Option<T> {
         match self.len {
             0 => None,
-            n => {
+            _ => {
                 self.len -= 1;
-                unsafe { Some(ptr::read(self.ptr.add(n))) }
+                unsafe { Some(ptr::read(self.ptr.add(self.len))) }
             },
         }
     }
@@ -108,11 +111,13 @@ impl<T> Drop for Vec<T> {
     fn drop(&mut self) {
         unsafe {
             if mem::needs_drop::<T>() {
-                for i in 0..self.len() {
+                for i in 0..self.len {
                     ptr::read(self.ptr.add(i));
                 }
             }
-            alloc::free(self.ptr as *mut u8, self.len, self.cap);
+            if self.ptr != empty_ptr() {
+                free_array(self.ptr, self.cap);
+            }
         }
     }
 }

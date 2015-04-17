@@ -11,6 +11,8 @@
 #[macro_use]
 extern crate linux_core as core;
 
+#[prelude_import] use core::prelude::*;
+
 use core::{mem, intrinsics};
 use core::cell::{Cell};
 
@@ -43,6 +45,9 @@ macro_rules! impl_atomic {
         pub struct $name {
             val: Cell<$raw>,
         }
+
+        unsafe impl Sync for $name { }
+        unsafe impl Send for $name { }
 
         impl $name {
             pub fn new(val: $raw) -> $name {

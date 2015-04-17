@@ -189,3 +189,9 @@ extern "rust-intrinsic" {
 }
 
 pub unsafe fn bswap8(x: u8) -> u8 { x }
+
+#[no_mangle]
+#[inline]
+pub fn linux_abort() -> ! {
+    unsafe { abort() }
+}

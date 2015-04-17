@@ -9,7 +9,7 @@ macro_rules! linux_shim {
 
 #[macro_export]
 macro_rules! abort {
-    () => { unsafe { ::linux::intrinsics::abort() } }
+    () => { ::linux::intrinsics::linux_abort() }
 }
 
 #[macro_export]

@@ -124,6 +124,9 @@ impl<'a, T> Deref for &'a T {
     fn deref(&self) -> &T { *self }
 }
 
+// TODO: This is wrong. DerefMut should not depend on Deref. E.g. Mutex can implement
+// DerefMut but not Deref. We could change it here but method resolution in the compiler
+// doesn't work in that case. Change it once we fork the compiler.
 #[lang = "deref_mut"]
 pub trait DerefMut: Deref {
     fn deref_mut<'a>(&'a mut self) -> &'a mut Self::Target;

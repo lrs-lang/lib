@@ -28,5 +28,5 @@ pub mod linux {
 pub mod vec;
 pub mod rc;
 pub mod arc;
-pub mod mutex;
-pub mod channel;
+pub mod cow;
+pub mod ring_buf;

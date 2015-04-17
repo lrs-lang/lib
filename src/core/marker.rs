@@ -18,9 +18,23 @@ pub unsafe trait Sync { }
 
 unsafe impl Sync for .. { }
 
-pub trait Send { }
+impl<T> !Sync for *const T { }
+impl<T> !Sync for *mut T { }
 
-impl Send for .. { }
+pub struct NoSync;
+
+impl !Sync for NoSync { }
+
+pub unsafe trait Send { }
+
+unsafe impl Send for .. { }
+
+impl<T> !Send for *const T { }
+impl<T> !Send for *mut T { }
+
+pub struct NoSend;
+
+impl !Send for NoSend { }
 
 #[lang = "phantom_data"]
 pub struct PhantomData<T: ?Sized>;

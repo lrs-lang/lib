@@ -24,7 +24,7 @@ pub struct Arc<T: Send+Sync> {
 impl<T: Send+Sync> Arc<T> {
     pub fn new(val: T) -> Result<Arc<T>, T> {
         unsafe {
-            let data_ptr = alloc::allocate_typed::<Inner<T>>();
+            let data_ptr = alloc::allocate::<Inner<T>>();
             if data_ptr.is_null() {
                 return Err(val);
             }
@@ -52,7 +52,7 @@ impl<T: Send+Sync> Drop for Arc<T> {
                 if mem::needs_drop::<T>() {
                     ptr::read(&data.val);
                 }
-                alloc::free_typed(self.data);
+                alloc::free(self.data);
             }
         }
     }

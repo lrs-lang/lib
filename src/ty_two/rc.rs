@@ -7,12 +7,13 @@
 use core::ops::{Deref};
 use core::{mem, ptr};
 use core::clone::{Clone};
+use ty_one::copy_cell::{CopyCell};
 use io::{Write};
 use fmt::{Debug};
-use {alloc};
+use alloc::{allocate, free};
 
 struct Inner<T> {
-    count: usize,
+    count: CopyCell<usize>,
     val: T,
 }
 
@@ -23,12 +24,12 @@ pub struct Rc<T> {
 impl<T> Rc<T> {
     pub fn new(val: T) -> Result<Rc<T>, T> {
         unsafe {
-            let data_ptr = alloc::allocate_typed::<Inner<T>>();
+            let data_ptr = allocate::<Inner<T>>();
             if data_ptr.is_null() {
                 return Err(val);
             }
             let mut data = &mut *data_ptr;
-            data.count = 1;
+            data.count.set(1);
             ptr::write(&mut data.val, val);
             Ok(Rc { data: data_ptr })
         }
@@ -36,7 +37,7 @@ impl<T> Rc<T> {
 
     pub fn as_mut(&mut self) -> Option<&mut T> {
         let data = unsafe { &mut *self.data };
-        match data.count {
+        match data.count.get() {
             1 => Some(&mut data.val),
             _ => None,
         }
@@ -49,14 +50,13 @@ impl<T> Drop for Rc<T> {
     fn drop(&mut self) {
         unsafe {
             let data = &mut *self.data;
-            data.count -= 1;
-            if data.count == 0 {
+            let count = data.count.get();
+            data.count.set(count - 1);
+            if count == 1 {
                 if mem::needs_drop::<T>() {
                     ptr::read(&data.val);
                 }
-                let size = mem::size_of::<Inner<T>>();
-                let align = mem::align_of::<Inner<T>>();
-                alloc::free(self.data as *mut u8, size, align);
+                free(self.data);
             }
         }
     }
@@ -74,7 +74,7 @@ impl<T> Clone for Rc<T> {
     fn clone(&self) -> Rc<T> {
         unsafe {
             let data = &mut *self.data;
-            data.count += 1;
+            data.count.set(data.count.get() + 1);
             Rc { data: self.data }
         }
     }
