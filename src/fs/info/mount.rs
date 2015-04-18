@@ -2,9 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::fmt::{Debug, Formatter, Error};
-
-use core::cty::{ST_RDONLY, ST_NOSUID, ST_NODEV, ST_NOEXEC, ST_SYNCHRONOUS, ST_MANDLOCK,
+use base::fmt::{Debug};
+use base::io::{Write};
+use base::cty::{ST_RDONLY, ST_NOSUID, ST_NODEV, ST_NOEXEC, ST_SYNCHRONOUS, ST_MANDLOCK,
                 ST_NOATIME, ST_NODIRATIME, ST_RELATIME, c_ulong};
 
 /// Mount flags of a filesystem.
@@ -33,22 +33,22 @@ impl Flags {
 }
 
 impl Debug for Flags {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+    fn fmt<W: Write+?Sized>(&self, mut w: &mut W) -> Result {
         let mut first = true;
         let mut add = |s| {
-            if !first { try!(f.write_str(",")); }
+            if !first { try!(w.write(b",")); }
             first = false;
-            f.write_str(s)
+            w.write(s)
         };
-        if self.read_only()                   { try!(add("ReadOnly"))   }
-        if self.no_set_id()                   { try!(add("NoSetId"))    }
-        if self.no_dev()                      { try!(add("NoDev"))      }
-        if self.no_exec()                     { try!(add("NoExec"))     }
-        if self.synchronous()                 { try!(add("Sync"))       }
-        if self.mandatory_locking()           { try!(add("ManLock"))    }
-        if self.no_access_time_update()       { try!(add("NoATime"))    }
-        if self.no_dir_access_time_update()   { try!(add("NoDirATime")) }
-        if self.relative_access_time_update() { try!(add("RelATime"))   }
+        if self.read_only()                   { try!(add(b"ReadOnly"))   }
+        if self.no_set_id()                   { try!(add(b"NoSetId"))    }
+        if self.no_dev()                      { try!(add(b"NoDev"))      }
+        if self.no_exec()                     { try!(add(b"NoExec"))     }
+        if self.synchronous()                 { try!(add(b"Sync"))       }
+        if self.mandatory_locking()           { try!(add(b"ManLock"))    }
+        if self.no_access_time_update()       { try!(add(b"NoATime"))    }
+        if self.no_dir_access_time_update()   { try!(add(b"NoDirATime")) }
+        if self.relative_access_time_update() { try!(add(b"RelATime"))   }
         Ok(())
     }
 }

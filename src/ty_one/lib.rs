@@ -10,7 +10,8 @@
 
 #[macro_use]
 extern crate linux_core as core;
-extern crate linux_error;
+extern crate linux_cty_base as cty_base;
+extern crate linux_arch_fns as arch_fns;
 
 pub mod linux {
     pub use ::core::linux::*;
@@ -22,10 +23,11 @@ pub mod c_str;
 pub mod parse;
 pub mod byte_str;
 pub mod saturating_cast;
-pub mod as_bytes;
+pub mod bytes;
 pub mod result;
 pub mod ref_cell;
 pub mod copy_cell;
+pub mod path;
 pub mod num;
 
 pub mod prelude {

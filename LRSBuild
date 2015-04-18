@@ -1,12 +1,13 @@
 obj core
+obj arch_fns   core
+obj cty_base   core
 obj sort       core
 obj atomic     core
-obj error      core
-obj ty_one     core error
+obj ty_one     core cty_base arch_fns
 obj io         core ty_one
 obj fmt        core ty_one io
 
-obj cty        core error
+obj cty        core cty_base
 obj r_syscall  core cty
 obj w_syscall  core cty ty_one r_syscall
 obj arch       core cty w_syscall atomic

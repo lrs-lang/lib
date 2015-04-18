@@ -11,10 +11,10 @@
          non_upper_case_globals, dead_code)]
 
 extern crate linux_core as core;
-extern crate linux_error as error;
+extern crate linux_cty_base as cty_base;
 
 pub use self::arch::*;
-pub use error::nos::*;
+pub use cty_base::errno::*;
 
 mod linux { pub use ::core::linux::*; }
 

@@ -1,3 +1,7 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 use base::cty::{c_ulong, c_int, MS_RDONLY, MS_NOSUID, MS_NODEV, MS_NOEXEC, MS_SYNCHRONOUS,
                 MS_REMOUNT, MS_MANDLOCK, MS_DIRSYNC, MS_NOATIME, MS_NODIRATIME,
                 MS_BIND, MS_MOVE, MS_REC, MS_SILENT, MS_POSIXACL, MS_UNBINDABLE,
@@ -5,10 +9,8 @@ use base::cty::{c_ulong, c_int, MS_RDONLY, MS_NOSUID, MS_NODEV, MS_NOEXEC, MS_SY
                 MNT_DETACH, MNT_EXPIRE, UMOUNT_NOFOLLOW,};
 use base::syscall::{self};
 use base::string::{AsByteStr};
-use base::ext::{AsLinuxPath};
 use base::result::{Result};
-
-use std::{mem};
+use base::{mem};
 
 /// Flags used when mounting a filesystem.
 pub struct MountFlags(c_ulong);
@@ -127,10 +129,10 @@ pub fn mount<P, Q, R, S>(src: P, dst: Q, ty: R, flags: MountFlags, data: S) -> R
           R: AsLinuxStr,
           S: AsLinuxStr
 {
-    let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
-    let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
-    let mut buf3: [u8; 256] = unsafe { mem::uninitialized() };
-    let mut buf4: [u8; 256] = unsafe { mem::uninitialized() };
+    let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf3: [u8; 256] = unsafe { mem::uninit() };
+    let mut buf4: [u8; 256] = unsafe { mem::uninit() };
     let src = try!(src.to_cstr(&mut buf1));
     let dst = try!(dst.to_cstr(&mut buf2));
     let ty = try!(ty.to_cstr(&mut buf3));
@@ -184,7 +186,7 @@ impl UnmountFlags {
 
 /// Unmounts the device mounted at `dst` with the flags `flags`.
 pub fn unmount<P: AsLinuxPath>(dst: P, flags: UnmountFlags) -> Result {
-    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
+    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let dst = try!(dst.to_cstr(&mut buf));
     rv!(syscall::umount(&dst, flags.0))
 }

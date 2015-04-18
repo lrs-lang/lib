@@ -13,11 +13,13 @@ extern crate linux_core as core;
 extern crate linux_cty;
 extern crate linux_w_syscall;
 extern crate linux_atomic;
+extern crate linux_arch_fns;
 
 #[prelude_import] use core::prelude::*;
 
 pub use linux_cty as cty;
 pub use linux_w_syscall as syscall;
+pub use linux_arch_fns::{memchr, memrchr, strlen};
 
 use core::{num};
 
@@ -39,23 +41,4 @@ pub fn spin() {
 #[cfg(not(any(target_arch = "x86_64", target_arch = "x86")))]
 pub fn spin() {
     atomic::fence_seqcst();
-}
-
-// TODO: Write platform dependent functions.
-pub fn memchr(s: &[u8], c: u8) -> Option<usize> {
-    for idx in 0..s.len() {
-        if s[idx] == c {
-            return Some(idx);
-        }
-    }
-    None
-}
-
-pub unsafe fn strlen(ptr: *const u8) -> usize {
-    for idx in 0..num::isize::MAX {
-        if *ptr.offset(idx) == 0 {
-            return idx as usize;
-        }
-    }
-    abort!();
 }

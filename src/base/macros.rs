@@ -6,16 +6,16 @@
 macro_rules! rv {
     ($x:expr) => {
         if $x < 0 {
-            Err(::core::errno::Errno(-$x as ::core::cty::c_int))
+            ::base::result::Result::Err(::base::error::Errno(-$x as ::base::cty::c_int))
         } else {
-            Ok(())
+            ::base::result::Result::Ok(())
         }
     };
     ($x:expr, -> $t:ty) => {
         if $x < 0 {
-            Err(::core::errno::Errno(-$x as ::core::cty::c_int))
+            ::base::result::Result::Err(::base::error::Errno(-$x as ::base::cty::c_int))
         } else {
-            Ok($x as $t)
+            ::base::result::Result::Ok($x as $t)
         }
     };
 }

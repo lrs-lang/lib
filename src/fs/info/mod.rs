@@ -2,14 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::fmt::{Debug, Formatter, Error};
-use std::{self, mem};
-
-use core::cty::{PATH_MAX, statfs, c_ulong};
-use core::syscall::{statfs};
-use core::util::{retry};
-use core::ext::{AsLinuxPath};
-use core::result::{Result};
+use base::fmt::{Debug};
+use base::io::{Write};
+use base::{mem};
+use base::cty::{PATH_MAX, statfs, c_ulong};
+use base::syscall::{statfs};
+use base::util::{retry};
+use base::result::{Result};
 
 use self::mount::{Flags};
 use self::types::{FileSystem};
@@ -27,7 +26,7 @@ pub struct FileSystemInfo(statfs);
 
 impl FileSystemInfo {
     /// Returns information about the filesystem located at the path.
-    pub fn from_path<P: AsLinuxPath>(path: P) -> Result<FileSystemInfo> {
+    pub fn from_path<P: AsByteStr>(path: P) -> Result<FileSystemInfo> {
         let mut path_buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
         let path = try!(path.to_cstr(&mut path_buf));
         let mut buf = unsafe { mem::zeroed() };
@@ -86,7 +85,7 @@ impl FileSystemInfo {
 }
 
 impl Debug for FileSystemInfo {
-    fn fmt(&self, f: &mut Formatter) -> std::result::Result<(), Error> {
+    fn fmt(&self, f: &mut Formatter) -> Result {
         write!(f, "Flags {{ ty: {:?}, block_size: {}, blocks: {}, free_blocks: {}, \
                            available_blocks: {}, files: {}, free_files: {}, \
                            max_name_len: {}, fragment_size: {}, mount_flags: {:?} }}",

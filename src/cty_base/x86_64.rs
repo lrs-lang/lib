@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub mod nos {
+pub mod errno {
     pub use ::gen::{
         EPERM, ENOENT, ESRCH, EINTR, EIO, ENXIO, E2BIG, ENOEXEC, EBADF, ECHILD, EAGAIN,
         ENOMEM, EACCES, EFAULT, ENOTBLK, EBUSY, EEXIST, EXDEV, ENODEV, ENOTDIR, EISDIR,
@@ -23,4 +23,8 @@ pub mod nos {
     };
 }
 
-pub type c_int = i32;
+pub mod types {
+    // These will not be reused by cty and have to be kept in sync manually.
+    pub type c_int = i32;
+    pub type c_char = i8;
+}
