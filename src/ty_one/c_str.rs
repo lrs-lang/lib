@@ -6,6 +6,7 @@
 #[prelude_import] use prelude::*;
 use core::ops::{Index};
 use core::{mem};
+use cty_base::types::{c_char};
 use bytes::{AsBytes, AsMutBytes, ToBytes};
 use byte_str::{ByteStr, AsByteStr};
 use {error};
@@ -20,6 +21,14 @@ impl CStr {
     pub fn empty() -> &'static CStr {
         static EMPTY: [u8; 1] = [0];
         unsafe { mem::cast(&EMPTY[..]) }
+    }
+
+    pub fn as_ptr(&self) -> *const c_char {
+        self.data.as_ptr() as *const c_char
+    }
+
+    pub fn as_mut_ptr(&mut self) -> *mut c_char {
+        self.data.as_mut_ptr() as *mut c_char
     }
 
     pub unsafe fn from_bytes_unchecked(bytes: &[u8]) -> &CStr {

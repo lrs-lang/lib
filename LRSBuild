@@ -11,6 +11,7 @@ obj cty        core cty_base
 obj r_syscall  core cty
 obj w_syscall  core cty ty_one r_syscall
 obj arch       core cty w_syscall atomic
+
 obj lock       core ty_one arch io fmt
 obj alloc      core
 obj ty_two     core ty_one arch lock io fmt alloc
