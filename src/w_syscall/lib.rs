@@ -18,25 +18,13 @@ use core::prelude::*;
 use core::{mem};
 use ty_one::c_str::{CStr};
 use ty_one::saturating_cast::{SaturatingCast};
-use ty_one::as_bytes::{AsBytes, AsMutBytes};
+use ty_one::bytes::{AsBytes, AsMutBytes};
 use cty::{
     c_int, ssize_t, rlimit64, pid_t, uid_t, gid_t, stat, c_char, size_t, statfs,
     timespec, dev_t, c_void, clockid_t, itimerspec, epoll_event, sigset_t, new_utsname,
     sysinfo, c_uint, c_ulong, umode_t, k_uint, loff_t, k_ulong, F_DUPFD_CLOEXEC, F_GETFL,
     F_SETFL, F_GETFD, F_SETFD, sockaddr, user_msghdr, mmsghdr, FUTEX_WAIT, FUTEX_WAKE,
 };
-
-// We have to implement this here because ty_one doesn't know about c_char.
-
-trait CStrExt {
-    fn as_ptr(&self) -> *const c_char;
-}
-
-impl CStrExt for CStr {
-    fn as_ptr(&self) -> *const c_char {
-        self.as_bytes_with_null().as_ptr() as *const c_char
-    }
-}
 
 // XXX: iovec _MUST_ be the same as &mut [u8]
 

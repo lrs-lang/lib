@@ -2,8 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub use linux_ty_one::c_str::{CStr};
-pub use linux_ty_one::byte_str::{ByteStr, AsByteStr, AsByteStrMut};
+pub use linux_ty_one::c_str::{CStr, AsCStr, AsMutCStr, ToCStr};
+pub use linux_ty_one::byte_str::{ByteStr, AsByteStr, AsMutByteStr};
 pub use linux_ty_two::string::{String};
 pub use linux_ty_two::c_string::{CString};
 pub use linux_ty_two::byte_string::{ByteString};

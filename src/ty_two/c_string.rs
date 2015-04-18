@@ -6,8 +6,10 @@
 #[prelude_import] use ty_one::prelude::*;
 use core::{mem};
 use ty_one::c_str::{CStr};
+use ty_one::bytes::{AsBytes};
 use io::{Write};
 use fmt::{Debug};
+use rmo::{AsRef, AsMut, ToOwned};
 use vec::{Vec};
 
 pub struct CString {
@@ -24,5 +26,24 @@ impl Deref for CString {
 impl Debug for CString {
     fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
         Debug::fmt(self.deref(), w)
+    }
+}
+
+impl AsRef<CStr> for CString {
+    fn as_ref(&self) -> &CStr {
+        unsafe { CStr::from_bytes_unchecked(&self.data[..]) }
+    }
+}
+
+impl AsMut<CStr> for CString {
+    fn as_mut(&mut self) -> &mut CStr {
+        unsafe { CStr::from_bytes_unchecked_mut(&mut self.data[..]) }
+    }
+}
+
+impl ToOwned for CStr {
+    type Owned = CString;
+    fn to_owned(&self) -> Result<CString> {
+        Ok(CString { data: try!(self.as_bytes().to_owned()) })
     }
 }

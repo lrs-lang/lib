@@ -121,6 +121,11 @@ pub trait AsByteStr {
     fn as_byte_str(&self) -> &ByteStr;
 }
 
+/// A trait for converting to a mutably borrowed linux string.
+pub trait AsMutByteStr: AsByteStr {
+    fn as_mut_byte_str(&mut self) -> &mut ByteStr;
+}
+
 impl AsByteStr for ByteStr { fn as_byte_str(&self) -> &ByteStr { self } }
 impl AsByteStr for [i8]    { fn as_byte_str(&self) -> &ByteStr { unsafe { mem::cast(self) } } }
 impl AsByteStr for [u8]    { fn as_byte_str(&self) -> &ByteStr { unsafe { mem::cast(self) } } }
@@ -128,11 +133,6 @@ impl AsByteStr for str     { fn as_byte_str(&self) -> &ByteStr { unsafe { mem::c
 
 impl<'a, T: AsByteStr+?Sized> AsByteStr for &'a T {
     fn as_byte_str(&self) -> &ByteStr { (*self).as_byte_str() }
-}
-
-/// A trait for converting to a mutably borrowed linux string.
-pub trait AsMutByteStr: AsByteStr {
-    fn as_mut_byte_str(&mut self) -> &mut ByteStr;
 }
 
 impl AsMutByteStr for ByteStr { fn as_mut_byte_str(&mut self) -> &mut ByteStr { self   } }

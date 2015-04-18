@@ -124,10 +124,7 @@ impl MountFlags {
 ///
 /// The contents of the `data` field depend on the filesystem type.
 pub fn mount<P, Q, R, S>(src: P, dst: Q, ty: R, flags: MountFlags, data: S) -> Result
-    where P: AsLinuxPath,
-          Q: AsLinuxPath,
-          R: AsLinuxStr,
-          S: AsLinuxStr
+    where P: AsCStr, Q: AsCStr, R: AsCStr, S: AsCStr
 {
     let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninit() };
@@ -185,7 +182,9 @@ impl UnmountFlags {
 }
 
 /// Unmounts the device mounted at `dst` with the flags `flags`.
-pub fn unmount<P: AsLinuxPath>(dst: P, flags: UnmountFlags) -> Result {
+pub fn unmount<P>(dst: P, flags: UnmountFlags) -> Result
+    where P: AsCStr,
+{
     let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let dst = try!(dst.to_cstr(&mut buf));
     rv!(syscall::umount(&dst, flags.0))

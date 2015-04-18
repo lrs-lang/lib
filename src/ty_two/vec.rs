@@ -9,8 +9,13 @@ use core::ops::{Deref, DerefMut};
 use core::iter::{IntoIterator};
 use fmt::{Debug};
 use io::{Write};
-use ty_one::{error};
 use alloc::{allocate_array, reallocate_array, free_array, empty_ptr};
+
+use ty_one::{error};
+use ty_one::bytes::{AsBytes, AsMutBytes};
+use ty_one::byte_str::{ByteStr, AsByteStr, AsMutByteStr};
+use ty_one::c_str::{CStr, AsCStr, AsMutCStr, ToCStr};
+use ty_one::path::{Path, AsMutPath, AsPath};
 
 pub struct Vec<T> {
     ptr: *mut T,
@@ -146,5 +151,64 @@ impl<T> DerefMut for Vec<T> {
 impl<T: Debug> Debug for Vec<T> {
     fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
         self.deref().fmt(w)
+    }
+}
+
+// Maybe these aren't really needed. We can just let the user manually deref.
+
+impl AsBytes for Vec<u8> {
+    fn as_bytes(&self) -> &[u8] {
+        self.deref()
+    }
+}
+impl AsMutBytes for Vec<u8> {
+    fn as_mut_bytes(&mut self) -> &mut [u8] {
+        self.deref_mut()
+    }
+}
+
+impl AsByteStr for Vec<u8> {
+    fn as_byte_str(&self) -> &ByteStr {
+        self.deref().as_byte_str()
+    }
+}
+impl AsMutByteStr for Vec<u8> {
+    fn as_mut_byte_str(&mut self) -> &mut ByteStr {
+        self.deref_mut().as_mut_byte_str()
+    }
+}
+
+impl AsCStr for Vec<u8> {
+    fn as_cstr(&self) -> Result<&CStr> {
+        self.deref().as_cstr()
+    }
+}
+impl AsMutCStr for Vec<u8> {
+    fn as_mut_cstr(&mut self) -> Result<&mut CStr> {
+        self.deref_mut().as_mut_cstr()
+    }
+}
+impl ToCStr for Vec<u8> {
+    fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
+        self.deref().to_cstr(buf)
+    }
+
+    fn to_or_as_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<&'a CStr> {
+        self.deref().to_or_as_cstr(buf)
+    }
+
+    fn to_or_as_mut_cstr<'a>(&'a mut self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
+        self.deref_mut().to_or_as_mut_cstr(buf)
+    }
+}
+
+impl AsPath for Vec<u8> {
+    fn as_path(&self) -> Result<&Path> {
+        self.deref().as_path()
+    }
+}
+impl AsMutPath for Vec<u8> {
+    fn as_mut_path(&mut self) -> Result<&mut Path> {
+        self.deref_mut().as_mut_path()
     }
 }

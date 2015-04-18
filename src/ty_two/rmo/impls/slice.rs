@@ -5,10 +5,10 @@
 #[prelude_import] use core::prelude::*;
 #[prelude_import] use ty_one::prelude::*;
 use vec::{Vec};
-use cow::{ToOwned};
+use rmo::{ToOwned};
 
 impl<T: Copy> ToOwned for [T] {
-    type Owned = Result<Vec<T>>;
+    type Owned = Vec<T>;
     fn to_owned(&self) -> Result<Vec<T>> {
         let mut vec = try!(Vec::with_capacity(self.len()));
         vec.push_all(self);

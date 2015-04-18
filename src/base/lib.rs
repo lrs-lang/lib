@@ -22,7 +22,7 @@ extern crate linux_arch;
 
 pub use linux_core::{clone, intrinsics, marker, mem, ops, option, ptr, repr, slice, str,
                      char};
-pub use linux_ty_one::{error, result, parse};
+pub use linux_ty_one::{error, result, parse, path};
 pub use linux_ty_two::{vec};
 pub use linux_arch::{cty, syscall, atomic};
 pub use linux_sort as sort;

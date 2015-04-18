@@ -15,13 +15,9 @@ extern crate linux_w_syscall;
 extern crate linux_atomic;
 extern crate linux_arch_fns;
 
-#[prelude_import] use core::prelude::*;
-
 pub use linux_cty as cty;
 pub use linux_w_syscall as syscall;
 pub use linux_arch_fns::{memchr, memrchr, strlen};
-
-use core::{num};
 
 mod linux {
     pub use core::linux::*;

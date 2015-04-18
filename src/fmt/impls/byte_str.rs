@@ -8,6 +8,7 @@ use core::str::{longest_sequence};
 use {Debug, UpperHex};
 use io::{Write};
 use ty_one::byte_str::{ByteStr};
+use ty_one::bytes::{AsBytes};
 use impls::str::{debug_str_no_quotes};
 
 impl Debug for ByteStr {
