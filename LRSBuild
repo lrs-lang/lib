@@ -31,3 +31,4 @@ obj poll       base time_base
 obj file       base dev fs time_base
 obj time_ext   base time_base file
 obj dir        base file
+obj user_group base file

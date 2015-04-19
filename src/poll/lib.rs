@@ -22,6 +22,7 @@ use base::syscall::{epoll_create, epoll_ctl, epoll_pwait, close};
 use base::fd_container::{FDContainer};
 use base::util::{retry};
 use base::num::{SaturatingCast};
+use base::fmt::{Debug, Write};
 
 use time_base::{Time};
 
@@ -99,6 +100,12 @@ impl Event {
 
     /// Returns the associated file descriptor.
     pub fn fd(self) -> c_int { self.data.data as c_int }
+}
+
+impl Debug for Event {
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
+        w.write(b"Event").ignore_ok()
+    }
 }
 
 /// An epoll instance.

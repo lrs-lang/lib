@@ -7,6 +7,7 @@ use base::syscall::{getresuid, getresgid, setresuid, setresgid, setgroups, getgr
 use base::result::{Result};
 use base::error::{self};
 use base::alias::{UserId, GroupId};
+use base::fmt::{Debug, Write};
 
 /// User ids of a process.
 #[derive(Copy, Eq)]
@@ -37,6 +38,13 @@ impl UserIds {
     }
 }
 
+impl Debug for UserIds {
+    fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
+        write!(w, "UserIds {{ real: {}, effective: {}, saved {} }}",
+               self.real, self.effective, self.saved)
+    }
+}
+
 /// Group ids of a process.
 #[derive(Copy, Eq)]
 pub struct GroupIds {
@@ -63,6 +71,13 @@ impl GroupIds {
     /// Sets the group ids of this process.
     pub fn set(&self) -> Result {
         rv!(setresgid(self.real, self.effective, self.saved))
+    }
+}
+
+impl Debug for GroupIds {
+    fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
+        write!(w, "GroupIds {{ real: {}, effective: {}, saved {} }}",
+               self.real, self.effective, self.saved)
     }
 }
 

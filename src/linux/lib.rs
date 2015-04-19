@@ -25,13 +25,13 @@ extern crate linux_dev;
 extern crate linux_file;
 // extern crate linux_user_group;
 // extern crate linux_core;
-// extern crate linux_sys;
+extern crate linux_sys;
 extern crate linux_time_base;
 extern crate linux_time_ext;
 extern crate linux_dir;
 extern crate linux_fs;
-// extern crate linux_process;
-// extern crate linux_poll;
+extern crate linux_process;
+extern crate linux_poll;
 
 pub use linux_core as core;
 pub use linux_core::{intrinsics};
@@ -44,13 +44,13 @@ pub mod stdio;
 pub mod result;
 pub mod dir;
 pub mod fs;
-//pub mod process;
+pub mod process;
 //pub mod string;
 pub mod time;
 pub mod vec;
 //pub mod path;
-//pub mod poll;
-//pub mod sys;
+pub mod poll;
+pub mod sys;
 //pub mod fd;
 
 pub mod prelude {

@@ -27,6 +27,7 @@ mod impls {
     pub mod num;
     pub mod str;
     pub mod byte_str;
+    pub mod path;
     pub mod c_str;
     pub mod option;
     pub mod result;

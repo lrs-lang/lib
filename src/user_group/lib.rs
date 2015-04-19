@@ -4,15 +4,21 @@
 
 #![crate_name = "linux_user_group"]
 #![crate_type = "lib"]
+#![feature(plugin, no_std, negate_unsigned)]
+#![plugin(linux_core_plugin)]
+#![no_std]
 
-extern crate linux_core as core;
+#[macro_use] extern crate linux_base as base;
+#[prelude_import] use base::prelude::*;
+mod linux { pub use base::linux::*; }
+mod core { pub use base::core::*; }
+
 extern crate linux_file as file;
 
-use std::{mem};
-
-use core::result::{Result};
-use core::errno::{self};
-use core::util::{memchr, memmove};
+use base::{mem};
+use base::result::{Result};
+use base::errno::{self};
+use base::util::{memchr, memmove};
 
 use file::{File};
 

@@ -6,6 +6,7 @@
 use rmo::{ToOwned, AsRef, AsMut};
 use ty_one::path::{Path, AsPath, AsMutPath};
 use vec::{Vec};
+use fmt::{Debug, Write};
 
 pub struct PathBuf {
     data: Vec<u8>,
@@ -39,5 +40,11 @@ impl AsPath for PathBuf {
 impl AsMutPath for PathBuf {
     fn as_mut_path(&mut self) -> Result<&mut Path> {
         unsafe { Ok(Path::from_bytes_unchecked_mut(&mut self.data)) }
+    }
+}
+
+impl Debug for PathBuf {
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
+        self.as_ref().fmt(w)
     }
 }
