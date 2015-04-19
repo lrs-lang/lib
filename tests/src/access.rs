@@ -7,16 +7,13 @@
 #![no_std]
 
 #[macro_use] extern crate linux;
+mod core { pub use linux::core::*; }
+#[prelude_import] use linux::prelude::*;
 
-use linux::time::*;
+use linux::parse::{Parse};
+use linux::file::{can_access};
 
 fn main() {
-    let clock = Real;
-    let now = clock.get_time().unwrap();
-
-    let zone = Zone::local().unwrap();
-
-    let exp = zone.expand(now);
-
-    println!("{:?}", exp);
+    assert!(can_access("Makefile", "rw-".parse().unwrap()) == Ok(true));
+    assert!(can_access("Makefile", "--x".parse().unwrap()) == Ok(false));
 }

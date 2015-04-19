@@ -12,11 +12,12 @@
 
 extern crate linux_core as core;
 extern crate linux_cty_base as cty_base;
+extern crate linux_ty_zero as ty_zero;
 
 pub use self::arch::*;
 pub use cty_base::errno::*;
 
-mod linux { pub use ::core::linux::*; }
+mod linux { pub use ::ty_zero::linux::*; }
 
 mod gen;
 

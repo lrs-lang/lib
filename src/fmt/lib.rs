@@ -13,7 +13,6 @@ extern crate linux_core as core;
 extern crate linux_ty_one as ty_one;
 extern crate linux_io as io;
 
-#[prelude_import] use core::prelude::*;
 #[prelude_import] use ty_one::prelude::*;
 
 pub use io::{Write};

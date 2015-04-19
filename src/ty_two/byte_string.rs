@@ -2,10 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import] use core::prelude::*;
 #[prelude_import] use ty_one::prelude::*;
 use core::{mem};
 use ty_one::byte_str::{ByteStr};
+use ty_one::clone::{Clone};
 use io::{Write};
 use fmt::{Debug};
 use vec::{Vec};
@@ -56,5 +56,11 @@ impl ToOwned for ByteStr {
     type Owned = ByteString;
     fn to_owned(&self) -> Result<ByteString> {
         self.as_ref().to_owned().map(|o| ByteString { data: o })
+    }
+}
+
+impl Clone for ByteString {
+    fn clone(&self) -> Result<ByteString> {
+        self.data.clone().map(|o| ByteString { data: o })
     }
 }

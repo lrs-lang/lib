@@ -17,6 +17,12 @@ impl Parse for [u8] { fn parse<P: Parsable>(&self) -> Result<P> { P::parse_bytes
 impl Parse for [i8] { fn parse<P: Parsable>(&self) -> Result<P> { self.as_ref().parse() } }
 impl Parse for str  { fn parse<P: Parsable>(&self) -> Result<P> { self.as_ref().parse() } }
 
+impl<'a, T: Parse+?Sized> Parse for &'a T {
+    fn parse<P: Parsable>(&self) -> Result<P> {
+        (**self).parse()
+    }
+}
+
 pub trait Parsable : Sized {
     fn parse_bytes_init(bytes: &[u8]) -> Result<(Self, usize)>;
     fn parse_bytes(bytes: &[u8]) -> Result<Self> {

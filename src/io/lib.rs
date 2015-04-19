@@ -11,7 +11,6 @@
 extern crate linux_core as core;
 extern crate linux_ty_one as ty_one;
 
-#[prelude_import] use core::prelude::*;
 #[prelude_import] use ty_one::prelude::*;
 use core::{mem};
 use ty_one::error::{Errno, DeviceFull};

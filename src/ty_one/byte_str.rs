@@ -18,12 +18,10 @@ pub struct ByteStr {
     data: [u8],
 }
 
-impl Deref for ByteStr {
-    type Target = [u8];
-    fn deref(&self) -> &[u8] { &self.data }
-}
-impl DerefMut for ByteStr {
-    fn deref_mut(&mut self) -> &mut [u8] { &mut self.data }
+impl ByteStr {
+    pub fn len(&self) -> usize {
+        self.data.len()
+    }
 }
 
 impl Index<usize> for ByteStr {

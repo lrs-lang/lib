@@ -7,16 +7,12 @@
 #![no_std]
 
 #[macro_use] extern crate linux;
+mod core { pub use linux::core::*; }
+#[prelude_import] use linux::prelude::*;
 
-use linux::time::*;
+use linux::{file};
 
 fn main() {
-    let clock = Real;
-    let now = clock.get_time().unwrap();
-
-    let zone = Zone::local().unwrap();
-
-    let exp = zone.expand(now);
-
-    println!("{:?}", exp);
+    assert!(file::exists("Makefile") == Ok(true));
+    assert!(file::exists("doesnotexist") == Ok(false));
 }

@@ -4,7 +4,7 @@
 
 use mem::{self};
 use repr::{Slice, Repr};
-use ops::{Eq, Index, IndexMut, Range, RangeTo, RangeFrom, RangeFull};
+use ops::{Eq, Index, IndexMut, Range, RangeTo, RangeFrom, RangeFull, FnMut, Ordering};
 use option::{Option};
 use option::Option::{None, Some};
 use iter::{Iterator};
@@ -29,6 +29,44 @@ impl<T> [T] {
 
     pub fn iter<'a>(&'a self) -> Items<'a, T> {
         Items { slice: self }
+    }
+
+    pub fn find<F>(&self, mut f: F) -> Option<usize>
+        where F: FnMut(&T) -> bool
+    {
+        for i in 0..self.len() {
+            if f(&self[i]) {
+                return Some(i);
+            }
+        }
+        None
+    }
+
+    pub fn find_reverse<F>(&self, mut f: F) -> Option<usize>
+        where F: FnMut(&T) -> bool
+    {
+        for i in 0..self.len() {
+            if f(&self[self.len() - i - 1]) {
+                return Some(self.len() - i - 1);
+            }
+        }
+        None
+    }
+
+    pub fn find_binary<F>(&self, mut f: F) -> (Option<usize>, usize)
+        where F: FnMut(&T) -> Ordering,
+    {
+        let mut left = 0;
+        let mut right = self.len();
+        while left < right {
+            let pos = (left + right) / 2;
+            match f(&self[pos]) {
+                Ordering::Equal => return (Some(pos), pos),
+                Ordering::Less => left = pos + 1,
+                Ordering::Greater => right = pos,
+            }
+        }
+        (None, left)
     }
 }
 

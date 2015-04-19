@@ -13,31 +13,41 @@
 pub mod macros;
 
 pub mod array;
-pub mod clone;
+pub mod bool;
+pub mod cell;
+pub mod char;
 pub mod cmp;
 pub mod intrinsics;
 pub mod iter;
-pub mod cell;
 pub mod marker;
+pub mod tuple;
 pub mod mem;
 pub mod num;
 pub mod ops;
 pub mod option;
 pub mod panicking;
-pub mod prelude;
 pub mod ptr;
 pub mod repr;
 pub mod slice;
 pub mod str;
-pub mod char;
-pub mod bool;
 
 pub mod linux {
-    pub use ::{marker, ops, clone, intrinsics, option, mem};
+    pub use ::{marker, ops, intrinsics, option, mem};
 }
 
 mod core {
     pub use ::{iter, option, intrinsics};
+}
+
+pub mod prelude {
+    pub use marker::{Sized, Copy, Send, Sync, NoSend, NoSync, PhantomData};
+
+    pub use option::{Option};
+    pub use option::Option::{Some, None};
+
+    pub use ops::{Fn, FnOnce, FnMut, Drop, Deref, DerefMut};
+
+    pub use mem::{drop};
 }
 
 #[link(name = "c")]

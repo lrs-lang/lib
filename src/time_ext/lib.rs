@@ -4,28 +4,33 @@
 
 #![crate_name = "linux_time_ext"]
 #![crate_type = "lib"]
+#![feature(plugin, no_std, negate_unsigned)]
+#![plugin(linux_core_plugin)]
+#![no_std]
 
-#![feature(collections)]
+#[macro_use] extern crate linux_base as base;
+#[prelude_import] use base::prelude::*;
+mod linux { pub use base::linux::*; }
+mod core { pub use base::core::*; }
 
 extern crate linux_file as file;
 extern crate linux_time_base as time_base;
-extern crate linux_core as core;
 
 pub use time_base::{Time};
 
-use std::io::{Read};
-use std::{fmt};
+use base::rmo::{AsRef};
+use base::fmt::{Debug, Write};
+use base::path::{AsPath};
+use base::result::{Result};
 
 use file::{File};
 
-use core::string::{AsLinuxStr};
-use core::result::{Result};
 
 mod parse;
 mod convert;
 
 /// A weekday.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub enum Weekday {
     Monday,
     Tuesday,
@@ -37,7 +42,7 @@ pub enum Weekday {
 }
 
 /// An expanded date.
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct DateTime {
     /// The offset from UTC in seconds.
     pub offset:      i64,
@@ -56,19 +61,19 @@ pub struct DateTime {
     pub summer_time: bool,
 }
 
-impl fmt::Debug for DateTime {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+impl Debug for DateTime {
+    fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
         let offset_minutes = self.offset / 60;
         let offset_hours = offset_minutes / 60;
         let offset_minutes = offset_minutes % 60;
-        write!(fmt, "{}-{:02}-{:02}T{:02}:{:02}:{:02}+{:02}:{:02}", self.year, self.month,
+        write!(w, "{}-{:02}-{:02}T{:02}:{:02}:{:02}+{:02}:{:02}", self.year, self.month,
                self.day, self.hour, self.minute, self.second, offset_hours,
                offset_minutes)
     }
 }
 
 /// A time zone.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Eq)]
 pub struct Zone {
     /// (UTC offset, summer time) (at least one exists in every zone)
     states: Vec<(i64, bool)>,
@@ -91,20 +96,26 @@ impl Zone {
     ///
     /// For example: "Europe/Berlin", "Asia/Tokyo". The full list of name can be found on
     /// wikipedia.
-    pub fn load<S: AsLinuxStr>(zone: S) -> Result<Zone> {
-        let mut base = b"/usr/share/zoneinfo/".to_vec();
-        base.push_all(zone.as_linux_str().as_slice());
-        Zone::load_from(&base)
+    pub fn load<S>(zone: S) -> Result<Zone>
+        where S: AsPath,
+    {
+        const PREFIX: &'static [u8] = b"/usr/share/zoneinfo/";
+        let path = try!(zone.as_path());
+        let mut vec = try!(Vec::with_capacity(PREFIX.len() + path.len() + 1));
+        vec.push_all(PREFIX);
+        vec.push_all(path.as_ref());
+        vec.push(0);
+        Zone::load_from(&vec)
     }
 
     /// Loads the UTC time zone.
     pub fn utc() -> Result<Zone> {
-        Zone::load_from(b"/usr/share/zoneinfo/UTC")
+        Zone::load_from(b"/usr/share/zoneinfo/UTC\0")
     }
 
     /// Loads the local time zone.
     pub fn local() -> Result<Zone> {
-        Zone::load_from(b"/etc/localtime")
+        Zone::load_from(b"/etc/localtime\0")
     }
 
     /// Expands a time since the epoch to a `DateTime` in the given time zone.

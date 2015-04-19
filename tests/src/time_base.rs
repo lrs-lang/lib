@@ -2,5 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub use linux_core::cmp::*;
-pub use linux_core::ops::{Ordering};
+#![feature(plugin, no_std)]
+#![plugin(linux_core_plugin)]
+#![no_std]
+
+#[macro_use] extern crate linux;
+
+fn main() {
+    println!("{}", -100000);
+}

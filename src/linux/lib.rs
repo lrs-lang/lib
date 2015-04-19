@@ -17,7 +17,7 @@
 #![no_std]
 
 #[macro_use]
-#[macro_reexport(abort, assert, try, println, matches, vec)]
+#[macro_reexport(abort, assert, try, println, matches, vec, format)]
 extern crate linux_core;
 extern crate linux_base;
 
@@ -26,27 +26,34 @@ extern crate linux_file;
 // extern crate linux_user_group;
 // extern crate linux_core;
 // extern crate linux_sys;
-// extern crate linux_time_base;
-// extern crate linux_time_ext;
-// extern crate linux_dir;
-// extern crate linux_fs;
+extern crate linux_time_base;
+extern crate linux_time_ext;
+extern crate linux_dir;
+extern crate linux_fs;
 // extern crate linux_process;
 // extern crate linux_poll;
 
+pub use linux_core as core;
 pub use linux_core::{intrinsics};
-pub use linux_base::{fmt};
+pub use linux_base::{fmt, rmo, path, string, ops, parse};
 pub mod file;
 pub mod stdio;
 //pub mod user;
 //pub mod group;
 //pub mod errno;
-//pub mod result;
-//pub mod dir;
-//pub mod fs;
+pub mod result;
+pub mod dir;
+pub mod fs;
 //pub mod process;
 //pub mod string;
-//pub mod time;
+pub mod time;
+pub mod vec;
 //pub mod path;
 //pub mod poll;
 //pub mod sys;
 //pub mod fd;
+
+pub mod prelude {
+    pub use linux_base::prelude::*;
+    pub use linux_base::parse::{Parse};
+}

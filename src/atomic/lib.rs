@@ -10,6 +10,7 @@
 
 #[macro_use]
 extern crate linux_core as core;
+extern crate linux_ty_zero as ty_zero;
 
 #[prelude_import] use core::prelude::*;
 
@@ -17,7 +18,7 @@ use core::{mem, intrinsics};
 use core::cell::{Cell};
 
 pub mod linux {
-    pub use ::core::linux::*;
+    pub use ::ty_zero::linux::*;
 }
 
 pub fn fence_release() {
@@ -41,10 +42,11 @@ macro_rules! impl_atomic {
         pub const $init: $name = $name { val: Cell { data: 0 } };
 
         #[repr(C)]
-        #[derive(Copy)]
         pub struct $name {
             val: Cell<$raw>,
         }
+
+        impl Copy for $name { }
 
         unsafe impl Sync for $name { }
         unsafe impl Send for $name { }

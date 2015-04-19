@@ -5,13 +5,13 @@
 #[prelude_import] use core::prelude::*;
 #[prelude_import] use prelude::*;
 use core::ops::{Index};
-use core::{mem};
+use core::{mem, slice};
 use cty_base::types::{c_char};
 use rmo::{AsRef, AsMut};
 use bytes::{ToBytes};
 use byte_str::{ByteStr, AsByteStr};
 use {error};
-use arch_fns::{all_bytes, memchr};
+use arch_fns::{all_bytes, memchr, strlen};
 use path::{AsPath, AsMutPath, Path};
 
 pub struct CStr {
@@ -19,6 +19,10 @@ pub struct CStr {
 }
 
 impl CStr {
+    pub unsafe fn from_ptr(ptr: *const c_char) -> &'static CStr {
+        mem::cast(slice::from_ptr(ptr, strlen(ptr as *const _)))
+    }
+
     pub fn empty() -> &'static CStr {
         static EMPTY: [u8; 1] = [0];
         unsafe { mem::cast(&EMPTY[..]) }
@@ -45,12 +49,12 @@ impl CStr {
     }
 }
 
-impl Deref for CStr {
-    type Target = ByteStr;
-    fn deref(&self) -> &ByteStr {
-        self.as_byte_str()
-    }
-}
+//impl Deref for CStr {
+//    type Target = ByteStr;
+//    fn deref(&self) -> &ByteStr {
+//        self.as_byte_str()
+//    }
+//}
 
 impl Index<usize> for CStr {
     type Output = u8;

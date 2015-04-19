@@ -37,7 +37,9 @@ pub mod string;
 pub mod vec;
 
 pub mod prelude {
+    pub use ty_one::prelude::*;
     pub use string::{String};
     pub use vec::{Vec};
     pub use rmo::{ToOwned};
+    pub use io_ext::{ReadExt};
 }

@@ -2,7 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use clone::{Clone};
 use marker::{Copy};
 use mem::{self};
 
@@ -13,10 +12,6 @@ pub struct Slice<T> {
 }
 
 impl<T> Copy for Slice<T> {}
-
-impl<T> Clone for Slice<T> {
-    fn clone(&self) -> Slice<T> { *self }
-}
 
 #[repr(C)]
 pub struct TraitObject {

@@ -8,7 +8,7 @@ use vec::{Vec};
 
 pub const BUF_READ_STEP_SIZE: usize = 4096;
 
-pub trait BufRead : Read {
+pub trait ReadExt : Read {
     fn read_to_end(&mut self, buf: &mut Vec<u8>) -> Result<usize> {
         let mut len = 0;
         loop {
@@ -28,3 +28,5 @@ pub trait BufRead : Read {
         Ok(len)
     }
 }
+
+impl<T: Read> ReadExt for T { }

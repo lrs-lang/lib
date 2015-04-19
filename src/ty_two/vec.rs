@@ -2,10 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import] use core::prelude::*;
 #[prelude_import] use ty_one::prelude::*;
 use core::{mem, ptr, cmp, slice};
-use core::ops::{Deref, DerefMut};
+use ty_one::clone::{Clone};
+use core::ops::{Eq, Deref, DerefMut};
 use core::iter::{IntoIterator};
 use fmt::{Debug};
 use io::{Write};
@@ -115,6 +115,16 @@ impl<T> Vec<T> {
         }
     }
 
+    pub fn truncate(&mut self, len: usize) {
+        assert!(len <= self.len);
+        if mem::needs_drop::<T>() {
+            for i in len..self.len {
+                unsafe { ptr::read(self.ptr.add(i)); }
+            }
+        }
+        self.len = len;
+    }
+
     pub unsafe fn set_len(&mut self, len: usize) {
         self.len = len;
     }
@@ -135,6 +145,15 @@ impl<T> Drop for Vec<T> {
     }
 }
 
+impl<T: Eq> Eq for Vec<T> {
+    fn eq(&self, other: &Vec<T>) -> bool {
+        self.deref().eq(other.deref())
+    }
+    fn ne(&self, other: &Vec<T>) -> bool {
+        self.deref().ne(other.deref())
+    }
+}
+
 impl<T> Deref for Vec<T> {
     type Target = [T];
     fn deref(&self) -> &[T] {
@@ -151,6 +170,16 @@ impl<T> DerefMut for Vec<T> {
 impl<T: Debug> Debug for Vec<T> {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
         self.deref().fmt(w)
+    }
+}
+
+impl<T: Clone> Clone for Vec<T> {
+    fn clone(&self) -> Result<Vec<T>> {
+        let mut vec = try!(Vec::with_capacity(self.len()));
+        for i in 0..self.len() {
+            vec.push(try!(self[i].clone()));
+        }
+        Ok(vec)
     }
 }
 
@@ -210,5 +239,19 @@ impl AsPath for Vec<u8> {
 impl AsMutPath for Vec<u8> {
     fn as_mut_path(&mut self) -> Result<&mut Path> {
         self.deref_mut().as_mut_path()
+    }
+}
+
+impl Write for Vec<u8> {
+    fn write(&mut self, buf: &[u8]) -> Result<usize> {
+        try!(self.reserve(buf.len()));
+        let len = self.len();
+        unsafe { self.set_len(len + buf.len()); }
+        mem::copy(&mut self[len..], buf);
+        Ok(buf.len())
+    }
+
+    fn write_all(&mut self, buf: &[u8]) -> Result<usize> {
+        self.write(buf)
     }
 }

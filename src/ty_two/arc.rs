@@ -2,11 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import] use core::prelude::*;
 #[prelude_import] use ty_one::prelude::*;
 use core::ops::{Deref};
 use core::{mem, ptr};
-use core::clone::{Clone};
+use ty_one::clone::{Clone};
 use arch::atomic::{AtomicUsize};
 use io::{Write};
 use fmt::{Debug};
@@ -67,11 +66,11 @@ impl<T: Send+Sync> Deref for Arc<T> {
 }
 
 impl<T: Send+Sync> Clone for Arc<T> {
-    fn clone(&self) -> Arc<T> {
+    fn clone(&self) -> Result<Arc<T>> {
         unsafe {
             let data = &mut *self.data;
             data.count.add_seqcst(1);
-            Arc { data: self.data }
+            Ok(Arc { data: self.data })
         }
     }
 }

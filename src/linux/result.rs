@@ -4,4 +4,4 @@
 
 //! Typedef for shorter return types.
 
-pub use linux_core::result::{Result};
+pub use linux_base::result::{Result};

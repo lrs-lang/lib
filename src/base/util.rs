@@ -2,7 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import] use linux_core::prelude::*;
 #[prelude_import] use linux_ty_one::prelude::*;
 
 use linux_ty_one::error::{Errno, c_int};

@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use marker::{Sized};
+use marker::{Copy, Sized};
 use option::{Option};
 use option::Option::{Some};
 
@@ -152,7 +152,7 @@ impl<'a, T: Eq+?Sized> Eq for &'a T {
 }
 
 /// Result of a comparison of two values.
-#[derive(Copy, Eq)]
+#[derive(Eq)]
 pub enum Ordering {
     /// The first value is smaller than the second.
     Less,
@@ -161,6 +161,7 @@ pub enum Ordering {
     /// The second value is larger than the firest.
     Greater,
 }
+impl Copy for Ordering { }
 
 #[lang = "ord"]
 pub trait PartialOrd<Rhs: ?Sized = Self> : Eq {

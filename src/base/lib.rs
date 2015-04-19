@@ -10,7 +10,7 @@
 // #![allow(trivial_numeric_casts, trivial_casts)]
 
 #[macro_use]
-#[macro_reexport(abort, assert, try, println, matches, vec)]
+#[macro_reexport(abort, assert, try, println, matches, vec, format)]
 extern crate linux_core;
 extern crate linux_sort;
 extern crate linux_io;
@@ -21,9 +21,9 @@ extern crate linux_ty_two;
 extern crate linux_arch_fns;
 extern crate linux_arch;
 
-pub use linux_core::{clone, intrinsics, marker, mem, ops, option, ptr, repr, slice, str,
+pub use linux_core::{intrinsics, marker, mem, ops, option, ptr, repr, slice, str,
                      char};
-pub use linux_ty_one::{error, result, parse, bytes, range};
+pub use linux_ty_one::{clone, error, result, parse, bytes, range};
 pub use linux_ty_two::{vec, rmo};
 pub use linux_arch::{cty, syscall, atomic};
 pub use linux_sort as sort;
@@ -39,6 +39,7 @@ pub mod raw_stdio;
 pub mod num;
 pub mod string;
 pub mod cell;
+pub mod cmp;
 pub mod sync;
 pub mod io;
 pub mod iter;
@@ -49,12 +50,10 @@ pub mod linux {
 }
 
 pub mod core {
-    pub use {intrinsics};
+    pub use {intrinsics, option, iter};
 }
 
 pub mod prelude {
-    pub use linux_core::prelude::*;
-    pub use linux_ty_one::prelude::*;
     pub use linux_ty_two::prelude::*;
     pub use iter::*;
 }

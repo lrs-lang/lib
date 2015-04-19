@@ -3,7 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use ops::{Eq};
-use clone::{Clone};
 
 #[lang = "sized"]
 pub trait Sized { }
@@ -40,5 +39,4 @@ impl !Send for NoSend { }
 pub struct PhantomData<T: ?Sized>;
 
 impl<T> Copy for PhantomData<T> { }
-impl<T> Clone for PhantomData<T> { fn clone(&self) -> PhantomData<T> { *self } }
 impl<T> Eq for PhantomData<T> { fn eq(&self, _: &PhantomData<T>) -> bool { true } }

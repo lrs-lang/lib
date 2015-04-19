@@ -5,4 +5,5 @@
 pub use linux_core::num::{
     i8, u8, i16, u16, i32, u32, i64, u64, isize, usize,
 };
+pub use linux_ty_one::num::*;
 pub use linux_ty_one::saturating_cast::{SaturatingCast};

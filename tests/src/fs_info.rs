@@ -7,16 +7,12 @@
 #![no_std]
 
 #[macro_use] extern crate linux;
-
-use linux::time::*;
+mod core { pub use linux::core::*; }
+#[prelude_import] use linux::prelude::*;
 
 fn main() {
-    let clock = Real;
-    let now = clock.get_time().unwrap();
-
-    let zone = Zone::local().unwrap();
-
-    let exp = zone.expand(now);
-
-    println!("{:?}", exp);
+    let info = linux::fs::FileSystemInfo::from_path("/sys");
+    //let file = linux::file::File::open_read("/").unwrap();
+    //let info = file.fs_info();
+    println!("{:?}", info);
 }

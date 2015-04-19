@@ -2,10 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::cmp::{Ordering};
-use {std};
+#[prelude_import] use base::prelude::*;
+use base::ops::{Ordering};
+use base::cmp::{Ord};
+use base::{num};
 
-use core::util::{div_rem};
 use super::{Zone, DateTime, Weekday, Time};
 
 const SECS_PER_MIN:         i64 = 60;
@@ -46,28 +47,28 @@ fn leap_years_to(year: i64) -> i64 {
 
 pub fn explode(zone: &Zone, time: i64) -> DateTime {
     let state = if zone.transitions.len() == 0 || time < zone.transitions[0].0 {
-        match zone.states.iter().find(|s| !s.1) {
-            Some(s) => *s,
+        match zone.states.find(|s| !s.1) {
+            Some(i) => zone.states[i],
             _ => zone.states[0],
         }
     } else {
-        match zone.transitions.binary_search_by(|t| t.0.cmp(&time)) {
-            Ok(n) => zone.states[zone.transitions[n].1],
-            Err(n) => zone.states[zone.transitions[n - 1].1],
+        match zone.transitions.find_binary(|t| t.0.cmp(&time)) {
+            (Some(n), _) => zone.states[zone.transitions[n].1],
+            (_, n) => zone.states[zone.transitions[n - 1].1],
         }
     };
 
     let mut is_leap_second = false;
-    let leap_seconds = match zone.leap_seconds.iter().rev().find(|l| time >= l.0) {
-        Some(l) => {
-            is_leap_second = time == l.0;
-            l.1
+    let leap_seconds = match zone.leap_seconds.find_reverse(|l| time >= l.0) {
+        Some(i) => {
+            is_leap_second = time == zone.leap_seconds[i].0;
+            zone.leap_seconds[i].1
         },
         _ => 0,
     };
 
     let mut year = EPOCH_YEAR;
-    let (mut days, mut secs) = div_rem(time, SECS_PER_DAY);
+    let (mut days, mut secs) = time.div_rem(SECS_PER_DAY);
 
     while days < 0 || days >= DAYS_PER_YEAR[is_leap(year)] {
         let next_year = year + match days / DAYS_PER_LEAP_YEAR {
@@ -82,7 +83,7 @@ pub fn explode(zone: &Zone, time: i64) -> DateTime {
     }
 
     secs += state.0 - leap_seconds;
-    let (div_secs, mut secs) = div_rem(secs, SECS_PER_DAY);
+    let (div_secs, mut secs) = secs.div_rem(SECS_PER_DAY);
     days += div_secs;
     if secs < 0 {
         days -= 1;
@@ -112,8 +113,8 @@ pub fn explode(zone: &Zone, time: i64) -> DateTime {
         _ => Weekday::Sunday,
     };
 
-    let (hour, secs) = div_rem(secs, SECS_PER_HOUR);
-    let (min, mut secs) = div_rem(secs, SECS_PER_MIN);
+    let (hour, secs) = secs.div_rem(SECS_PER_HOUR);
+    let (min, mut secs) = secs.div_rem(SECS_PER_MIN);
     secs += is_leap_second as i64;
 
     let mut day_in_month = days;
@@ -151,18 +152,18 @@ pub fn compact(zone: &Zone, mut date: DateTime) -> (DateTime, Time) {
             if n + 1 < zone.transitions.len() {
                 (zone.states[idx], time, zone.transitions[n + 1].0)
             } else {
-                (zone.states[idx], time, std::i64::MAX)
+                (zone.states[idx], time, num::i64::MAX)
             }
         },
         None => {
-            let state = match zone.states.iter().find(|s| !s.1) {
-                Some(s) => *s,
+            let state = match zone.states.find(|s| !s.1) {
+                Some(i) => zone.states[i],
                 _ => zone.states[0],
             };
             if zone.transitions.len() > 0 {
-                (state, std::i64::MIN, zone.transitions[0].0)
+                (state, num::i64::MIN, zone.transitions[0].0)
             } else {
-                (state, std::i64::MIN, std::i64::MAX)
+                (state, num::i64::MIN, num::i64::MAX)
             }
         },
     };
@@ -194,10 +195,10 @@ fn find_transition(zone: &Zone, date: &DateTime) -> Option<usize> {
     } else {
         // Find n such that n is the greatest transition index that expands to a DateTime
         // smaller or equal the normalized DateTime.
-        match zone.transitions.binary_search_by(|t| dt_cmp(&explode(zone, t.0), &date)) {
-            Ok(n) => Some(n),
-            Err(0) => None,
-            Err(n) => Some(n - 1),
+        match zone.transitions.find_binary(|t| dt_cmp(&explode(zone, t.0), &date)) {
+            (Some(n), _) => Some(n),
+            (_, 0) => None,
+            (_, n) => Some(n - 1),
         }
     }
 }
@@ -220,28 +221,28 @@ fn dt_cmp(one: &DateTime, two: &DateTime) -> Ordering {
 
 /// Normalizes `second`, `minute`, `hour`, `day`, `month`, and `year`.
 fn normalize(date: &mut DateTime) {
-    let (mut min, mut sec) = div_rem(date.second as i64, SECS_PER_MIN);
+    let (mut min, mut sec) = (date.second as i64).div_rem(SECS_PER_MIN);
     if sec < 0 {
         min -= 1;
         sec += SECS_PER_MIN;
     }
     date.second = sec as i8;
 
-    let (mut hour, mut min) = div_rem(date.minute as i64 + min, MINS_PER_HOUR);
+    let (mut hour, mut min) = (date.minute as i64 + min).div_rem(MINS_PER_HOUR);
     if min < 0 {
         hour -= 1;
         min += MINS_PER_HOUR;
     }
     date.minute = min as i8;
 
-    let (mut days, mut hour) = div_rem(date.hour as i64 + hour, HOURS_PER_DAY);
+    let (mut days, mut hour) = (date.hour as i64 + hour).div_rem(HOURS_PER_DAY);
     if hour < 0 {
         days -= 1;
         hour += HOURS_PER_DAY;
     }
     date.hour = hour as i8;
 
-    let (mut years, mut month) = div_rem(date.month as i64 - 1, MONTHS_PER_YEAR);
+    let (mut years, mut month) = (date.month as i64 - 1).div_rem(MONTHS_PER_YEAR);
     if month < 0 {
         years -= 1;
         month += MONTHS_PER_YEAR;

@@ -2,23 +2,20 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::io::{BufRead, Read};
-use std::num::{Int};
-use std::{mem};
+#[prelude_import] use base::prelude::*;
+use base::io::{Read};
+use base::{mem, error, cmp};
 
 use super::{Zone};
-
-use core::result::{Result};
-use core::errno::{self};
 
 macro_rules! rd {
     ($ip:expr, $t:ty, $sz:expr) => {
         if $ip.len() < $sz {
-            Err(errno::InvalidSequence)
+            Err(error::InvalidSequence)
         } else {
             let mut v = [0; $sz];
             let _ = $ip.read(&mut v);
-            unsafe { Ok(Int::from_be(mem::transmute::<_, $t>(v))) }
+            unsafe { Ok(mem::cast::<_, $t>(v).from_be()) }
         }
     }
 }
@@ -52,10 +49,10 @@ impl TReader for T64Reader {
 
 pub fn parse(ip: &mut &[u8]) -> Result<Zone> {
     if ip.len() < 5 {
-        return Err(errno::InvalidSequence);
+        return Err(error::InvalidSequence);
     }
     if &ip[..4] != b"TZif" {
-        return Err(errno::InvalidSequence);
+        return Err(error::InvalidSequence);
     }
     let version = match ip[4] {
         0 => 1,
@@ -69,8 +66,13 @@ pub fn parse(ip: &mut &[u8]) -> Result<Zone> {
     }
 }
 
+fn consume(buf: &mut &[u8], n: usize) {
+    let min = cmp::min(buf.len(), n);
+    *buf = &buf[min..];
+}
+
 fn parse_<T: TReader>(ip: &mut &[u8]) -> Result<Zone> {
-    ip.consume(20);
+    consume(ip, 20);
 
     let is_utc_indicators = try!(read_i32(ip)) as usize;
     let is_std_indicators = try!(read_i32(ip)) as usize;
@@ -80,7 +82,7 @@ fn parse_<T: TReader>(ip: &mut &[u8]) -> Result<Zone> {
     let abbr_bytes        = try!(read_i32(ip)) as usize;
 
     if num_states == 0 {
-        return Err(errno::InvalidSequence);
+        return Err(error::InvalidSequence);
     }
 
     let mut transitions  = vec!();
@@ -94,24 +96,24 @@ fn parse_<T: TReader>(ip: &mut &[u8]) -> Result<Zone> {
     for i in 0..num_transitions {
         let state = try!(read_u8(ip)) as usize;
         if state >= num_states {
-            return Err(errno::InvalidSequence);
+            return Err(error::InvalidSequence);
         }
         transitions[i].1 = state;
     }
 
     for _ in 0..num_states {
         states.push((try!(read_i32(ip)) as i64, try!(read_u8(ip)) != 0));
-        ip.consume(1);
+        consume(ip, 1);
     }
 
-    ip.consume(abbr_bytes);
+    consume(ip, abbr_bytes);
 
     for _ in 0..num_leap_seconds {
         leap_seconds.push((try!(T::read_seconds(ip)), try!(read_i32(ip)) as i64));
     }
 
-    ip.consume(is_std_indicators);
-    ip.consume(is_utc_indicators);
+    consume(ip, is_std_indicators);
+    consume(ip, is_utc_indicators);
 
     Ok(Zone {
         transitions:  transitions,
@@ -121,7 +123,7 @@ fn parse_<T: TReader>(ip: &mut &[u8]) -> Result<Zone> {
 }
 
 fn discard<T: TReader>(ip: &mut &[u8]) -> Result {
-    ip.consume(20);
+    consume(ip, 20);
 
     let is_utc_indicators = try!(read_i32(ip)) as usize;
     let is_std_indicators = try!(read_i32(ip)) as usize;
@@ -138,6 +140,6 @@ fn discard<T: TReader>(ip: &mut &[u8]) -> Result {
                 + is_utc_indicators * 1
                 + is_std_indicators * 1;
 
-    ip.consume(bytes);
+    consume(ip, bytes);
     Ok(())
 }

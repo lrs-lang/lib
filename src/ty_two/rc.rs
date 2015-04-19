@@ -2,11 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import] use core::prelude::*;
 #[prelude_import] use ty_one::prelude::*;
 use core::ops::{Deref};
 use core::{mem, ptr};
-use core::clone::{Clone};
+use ty_one::clone::{Clone};
 use ty_one::copy_cell::{CopyCell};
 use io::{Write};
 use fmt::{Debug};
@@ -71,11 +70,11 @@ impl<T> Deref for Rc<T> {
 }
 
 impl<T> Clone for Rc<T> {
-    fn clone(&self) -> Rc<T> {
+    fn clone(&self) -> Result<Rc<T>> {
         unsafe {
             let data = &mut *self.data;
             data.count.set(data.count.get() + 1);
-            Rc { data: self.data }
+            Ok(Rc { data: self.data })
         }
     }
 }

@@ -107,4 +107,8 @@ pub fn plugin_registrar(reg: &mut Registry) {
     reg.register_macro(
         "write",
         lrs_ext::expand_format_args);
+
+    reg.register_macro(
+        "derive_Clone_for",
+        lrs_ext::derive_copy_clone_for);
 }

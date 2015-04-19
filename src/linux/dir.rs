@@ -5,4 +5,4 @@
 //! Operations for reading the entries in a directory and walking through a directory
 //! tree.
 
-pub use linux_dir::{Entry, Iter, WalkEntry, WalkOp, DEFAULT_BUF_SIZE, iter, walk};
+pub use linux_dir::{Entry, Iter, DEFAULT_BUF_SIZE, iter};

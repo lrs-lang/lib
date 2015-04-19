@@ -159,6 +159,22 @@ macro_rules! int_impls {
                 unsafe { intrinsics::$bswap(self as $pop_ty) as $t }
             }
 
+            #[cfg(target_endian = "little")]
+            pub fn from_be(self) -> $t {
+                unsafe { intrinsics::$bswap(self as $pop_ty) as $t }
+            }
+
+            #[cfg(target_endian = "big")]
+            pub fn from_be(self) -> $t { self }
+
+            #[cfg(target_endian = "little")]
+            pub fn from_le(self) -> $t { self }
+
+            #[cfg(target_endian = "big")]
+            pub fn from_le(self) -> $t {
+                unsafe { intrinsics::$bswap(self as $pop_ty) as $t }
+            }
+
             pub fn div_rem(self, other: $t) -> ($t, $t) {
                 (self / other, self % other)
             }

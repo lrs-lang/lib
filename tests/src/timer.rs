@@ -8,15 +8,13 @@
 
 #[macro_use] extern crate linux;
 
-use linux::time::*;
+use linux::time::{self, Time};
 
 fn main() {
-    let clock = Real;
-    let now = clock.get_time().unwrap();
+    let timer = time::Real.timer().unwrap();
+    timer.interval_in(Time::seconds(1), Time::seconds(5)).unwrap();
 
-    let zone = Zone::local().unwrap();
+    time::Real.sleep_for(Time::seconds(10)).unwrap();
 
-    let exp = zone.expand(now);
-
-    println!("{:?}", exp);
+    println!("{:?}", timer.ticks().unwrap());
 }

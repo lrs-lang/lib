@@ -38,6 +38,15 @@ macro_rules! println {
 }
 
 #[macro_export]
+macro_rules! format {
+    ($fmt:expr, $($arg:tt)*) => {{
+        let mut vec = Vec::new();
+        write!(vec, $fmt, $($arg)*);
+        ::linux::string::ByteString::from_vec(vec)
+    }};
+}
+
+#[macro_export]
 macro_rules! matches {
     ($pat:pat = $val:expr) => {
         match val { $pat => true, _ => false, }

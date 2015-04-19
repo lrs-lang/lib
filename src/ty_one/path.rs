@@ -46,6 +46,10 @@ impl Path {
         unsafe { &mut *(self.dir() as *const _ as *mut _) }
     }
 
+    pub fn len(&self) -> usize {
+        self.data.len()
+    }
+
     pub unsafe fn from_bytes_unchecked(bytes: &[u8]) -> &Path {
         mem::cast(bytes)
     }
@@ -55,19 +59,19 @@ impl Path {
     }
 }
 
-impl Deref for Path {
-    type Target = ByteStr;
-    fn deref(&self) -> &ByteStr {
-        self.as_byte_str()
-    }
-}
-
-impl Index<usize> for Path {
-    type Output = u8;
-    fn index(&self, idx: usize) -> &u8 {
-        &self.data[idx]
-    }
-}
+//impl Deref for Path {
+//    type Target = ByteStr;
+//    fn deref(&self) -> &ByteStr {
+//        unsafe { mem::cast(self) }
+//    }
+//}
+//
+//impl Index<usize> for Path {
+//    type Output = u8;
+//    fn index(&self, idx: usize) -> &u8 {
+//        &self.data[idx]
+//    }
+//}
 
 impl Index<RangeFull> for Path {
     type Output = Path;
@@ -146,6 +150,10 @@ pub trait AsPath {
 
 pub trait AsMutPath {
     fn as_mut_path(&mut self) -> Result<&mut Path>;
+}
+
+impl<'a, T: AsPath+?Sized> AsPath for &'a T {
+    fn as_path(&self) -> Result<&Path> { (**self).as_path() }
 }
 
 impl AsPath for [u8] {

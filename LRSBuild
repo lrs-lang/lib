@@ -1,13 +1,16 @@
 obj core
-obj arch_fns   core
-obj cty_base   core
 obj sort       core
-obj atomic     core
-obj ty_one     core cty_base arch_fns
+obj arch_fns   core
+
+obj cty_base   core
+obj ty_zero    core cty_base
+
+obj ty_one     core cty_base ty_zero arch_fns
 obj io         core ty_one
 obj fmt        core ty_one io
 
-obj cty        core cty_base
+obj atomic     core ty_zero
+obj cty        core ty_zero cty_base
 obj r_syscall  core cty
 obj w_syscall  core cty ty_one r_syscall
 obj arch       core cty w_syscall atomic
@@ -28,4 +31,3 @@ obj poll       base time_base
 obj file       base dev fs time_base
 obj time_ext   base time_base file
 obj dir        base file
-obj user_group base file
