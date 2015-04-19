@@ -12,31 +12,41 @@
 
 #![crate_name = "linux"]
 #![crate_type = "lib"]
-#![allow(trivial_numeric_casts)]
+#![feature(plugin, no_std, macro_reexport)]
+#![plugin(linux_core_plugin)]
+#![no_std]
+
+#[macro_use]
+#[macro_reexport(abort, assert, try, println, matches, vec)]
+extern crate linux_core;
+extern crate linux_base;
 
 extern crate linux_dev;
 extern crate linux_file;
-extern crate linux_user_group;
-extern crate linux_core;
-extern crate linux_sys;
-extern crate linux_time_base;
-extern crate linux_time_ext;
-extern crate linux_dir;
-extern crate linux_fs;
-extern crate linux_process;
-extern crate linux_poll;
+// extern crate linux_user_group;
+// extern crate linux_core;
+// extern crate linux_sys;
+// extern crate linux_time_base;
+// extern crate linux_time_ext;
+// extern crate linux_dir;
+// extern crate linux_fs;
+// extern crate linux_process;
+// extern crate linux_poll;
 
+pub use linux_core::{intrinsics};
+pub use linux_base::{fmt};
 pub mod file;
-pub mod user;
-pub mod group;
-pub mod errno;
-pub mod result;
-pub mod dir;
-pub mod fs;
-pub mod process;
-pub mod string;
-pub mod time;
-pub mod path;
-pub mod poll;
-pub mod sys;
-pub mod fd;
+pub mod stdio;
+//pub mod user;
+//pub mod group;
+//pub mod errno;
+//pub mod result;
+//pub mod dir;
+//pub mod fs;
+//pub mod process;
+//pub mod string;
+//pub mod time;
+//pub mod path;
+//pub mod poll;
+//pub mod sys;
+//pub mod fd;

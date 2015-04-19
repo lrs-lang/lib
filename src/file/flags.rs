@@ -2,12 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::{fmt, str};
-
-use core::cty::{self, c_int, umode_t, S_IROTH, S_IWOTH, S_IXOTH};
+#[prelude_import] use base::prelude::*;
+use base::fmt::{Debug, Display, Write};
+use base::{error};
+use base::parse::{Parsable};
+use base::cty::{self, c_int, umode_t, S_IROTH, S_IWOTH, S_IXOTH};
 
 /// Flags for opening and modifying a file.
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct Flags {
     flags: c_int,
     mode: umode_t,
@@ -173,7 +175,7 @@ pub fn flags_to_int(f: Flags) -> c_int {
 }
 
 /// The permissions of a file.
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct Mode {
     mode: umode_t,
 }
@@ -341,61 +343,58 @@ pub fn mode_to_int(m: Mode) -> umode_t {
     m.mode
 }
 
-impl fmt::Debug for Mode {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+impl Debug for Mode {
+    fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
         macro_rules! w {
-            ($cond:expr, $c:expr) => { try!(if $cond { fmt.write_str($c) } else { fmt.write_str("-") }) }
+            ($cond:expr, $c:expr) => { try!(if $cond { w.write_str($c) } else { w.write_str("-") }) }
         };
         w!(self.is_owner_readable(), "r");
         w!(self.is_owner_writable(), "w");
         match (self.is_owner_executable(), self.is_set_user_id()) {
-            (true,  true)  => try!(fmt.write_str("s")),
-            (true,  false) => try!(fmt.write_str("x")),
-            (false, _)     => try!(fmt.write_str("-")),
+            (true,  true)  => try!(w.write_str("s").ignore_ok()),
+            (true,  false) => try!(w.write_str("x").ignore_ok()),
+            (false, _)     => try!(w.write_str("-").ignore_ok()),
         }
         w!(self.is_group_readable(), "r");
         w!(self.is_group_writable(), "w");
         match (self.is_group_executable(), self.is_set_group_id()) {
-            (true,  true)  => try!(fmt.write_str("s")),
-            (true,  false) => try!(fmt.write_str("x")),
-            (false, _)     => try!(fmt.write_str("-")),
+            (true,  true)  => try!(w.write_str("s").ignore_ok()),
+            (true,  false) => try!(w.write_str("x").ignore_ok()),
+            (false, _)     => try!(w.write_str("-").ignore_ok()),
         }
         w!(self.is_world_readable(), "r");
         w!(self.is_world_writable(), "w");
         match (self.is_world_executable(), self.is_sticky()) {
-            (true,  true)  => try!(fmt.write_str("t")),
-            (true,  false) => try!(fmt.write_str("x")),
-            (false, true)  => try!(fmt.write_str("T")),
-            (false, false) => try!(fmt.write_str("-")),
+            (true,  true)  => try!(w.write_str("t").ignore_ok()),
+            (true,  false) => try!(w.write_str("x").ignore_ok()),
+            (false, true)  => try!(w.write_str("T").ignore_ok()),
+            (false, false) => try!(w.write_str("-").ignore_ok()),
         }
         Ok(())
     }
 }
 
-impl fmt::Display for Mode {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        <Mode as fmt::Debug>::fmt(self, fmt)
+impl Display for Mode {
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
+        Debug::fmt(self, w)
     }
 }
 
-impl str::FromStr for Mode {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Mode, ()> {
-        if s.len() != 9 {
-            return Err(());
+impl Parsable for Mode {
+    fn parse_bytes_init(s: &[u8]) -> Result<(Mode, usize)> {
+        if s.len() < 9 {
+            return Err(error::InvalidSequence);
         }
-        let s = s.as_bytes();
         let mut mode = Mode::empty();
         match s[0] {
             b'r' => mode.set_owner_readable(true),
             b'-' => { },
-            _ => return Err(()),
+            _ => return Err(error::InvalidSequence),
         }
         match s[1] {
             b'w' => mode.set_owner_writable(true),
             b'-' => { },
-            _ => return Err(()),
+            _ => return Err(error::InvalidSequence),
         }
         match s[2] {
             b's' => {
@@ -404,17 +403,17 @@ impl str::FromStr for Mode {
             },
             b'x' => mode.set_owner_executable(true),
             b'-' => { },
-            _ => return Err(()),
+            _ => return Err(error::InvalidSequence),
         }
         match s[3] {
             b'r' => mode.set_group_readable(true),
             b'-' => { },
-            _ => return Err(()),
+            _ => return Err(error::InvalidSequence),
         }
         match s[4] {
             b'w' => mode.set_group_writable(true),
             b'-' => { },
-            _ => return Err(()),
+            _ => return Err(error::InvalidSequence),
         }
         match s[5] {
             b's' => {
@@ -423,17 +422,17 @@ impl str::FromStr for Mode {
             },
             b'x' => mode.set_group_executable(true),
             b'-' => { },
-            _ => return Err(()),
+            _ => return Err(error::InvalidSequence),
         }
         match s[6] {
             b'r' => mode.set_world_readable(true),
             b'-' => { },
-            _ => return Err(()),
+            _ => return Err(error::InvalidSequence),
         }
         match s[7] {
             b'w' => mode.set_world_writable(true),
             b'-' => { },
-            _ => return Err(()),
+            _ => return Err(error::InvalidSequence),
         }
         match s[8] {
             b't' => {
@@ -443,9 +442,9 @@ impl str::FromStr for Mode {
             b'x' => mode.set_world_executable(true),
             b'T' => mode.set_sticky(true),
             b'-' => { },
-            _ => return Err(()),
+            _ => return Err(error::InvalidSequence),
         }
-        Ok(mode)
+        Ok((mode, 9))
     }
 }
 
@@ -453,7 +452,7 @@ impl str::FromStr for Mode {
 ///
 /// This type is used to check whether a file can be accessed with a certain set of
 /// permissions.
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct AccessMode {
     mode: umode_t,
 }
@@ -499,10 +498,10 @@ impl AccessMode {
     }
 }
 
-impl fmt::Debug for AccessMode {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+impl Debug for AccessMode {
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
         macro_rules! w {
-            ($cond:expr, $c:expr) => { try!(if $cond { fmt.write_str($c) } else { fmt.write_str("-") }) }
+            ($cond:expr, $c:expr) => { try!(if $cond { w.write_str($c) } else { w.write_str("-") }) }
         };
         w!(self.is_readable(), "r");
         w!(self.is_writable(), "w");
@@ -511,37 +510,34 @@ impl fmt::Debug for AccessMode {
     }
 }
 
-impl fmt::Display for AccessMode {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        <AccessMode as fmt::Debug>::fmt(self, fmt)
+impl Display for AccessMode {
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
+        Debug::fmt(self, w)
     }
 }
 
-impl str::FromStr for AccessMode {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<AccessMode, ()> {
-        if s.len() != 3 {
-            return Err(());
+impl Parsable for AccessMode {
+    fn parse_bytes_init(s: &[u8]) -> Result<(AccessMode, usize)> {
+        if s.len() < 3 {
+            return Err(error::InvalidSequence);
         }
-        let s = s.as_bytes();
         let mut mode = AccessMode::empty();
         match s[0] {
             b'r' => mode.set_readable(true),
             b'-' => { },
-            _ => return Err(()),
+            _ => return Err(error::InvalidSequence),
         }
         match s[1] {
             b'w' => mode.set_writable(true),
             b'-' => { },
-            _ => return Err(()),
+            _ => return Err(error::InvalidSequence),
         }
         match s[2] {
             b'x' => mode.set_executable(true),
             b'-' => { },
-            _ => return Err(()),
+            _ => return Err(error::InvalidSequence),
         }
-        Ok(mode)
+        Ok((mode, 3))
     }
 }
 

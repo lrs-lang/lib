@@ -2,11 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-extern crate linux;
+use core::ops::{Range};
 
-use linux::file::{File};
+pub trait BoundedRange<T> {
+    fn to_range(self) -> Range<T>;
+}
 
-fn main() {
-    let file = File::open_read("testlink").unwrap();
-    println!("{:?}", file.filename());
+impl<T> BoundedRange<T> for Range<T> {
+    fn to_range(self) -> Range<T> { self }
 }

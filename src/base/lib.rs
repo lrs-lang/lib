@@ -18,12 +18,13 @@ extern crate linux_fmt;
 extern crate linux_ty_one;
 extern crate linux_lock;
 extern crate linux_ty_two;
+extern crate linux_arch_fns;
 extern crate linux_arch;
 
 pub use linux_core::{clone, intrinsics, marker, mem, ops, option, ptr, repr, slice, str,
                      char};
-pub use linux_ty_one::{error, result, parse, path};
-pub use linux_ty_two::{vec};
+pub use linux_ty_one::{error, result, parse, bytes, range};
+pub use linux_ty_two::{vec, rmo};
 pub use linux_arch::{cty, syscall, atomic};
 pub use linux_sort as sort;
 pub use linux_fmt as fmt;
@@ -40,9 +41,11 @@ pub mod string;
 pub mod cell;
 pub mod sync;
 pub mod io;
+pub mod iter;
+pub mod path;
 
 pub mod linux {
-    pub use {fmt, clone, result, marker, ops};
+    pub use {fmt, clone, result, marker, ops, intrinsics, mem, vec};
 }
 
 pub mod core {
@@ -53,4 +56,5 @@ pub mod prelude {
     pub use linux_core::prelude::*;
     pub use linux_ty_one::prelude::*;
     pub use linux_ty_two::prelude::*;
+    pub use iter::*;
 }

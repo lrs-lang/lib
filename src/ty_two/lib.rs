@@ -24,16 +24,17 @@ pub mod linux {
     }
 }
 
-pub mod vec;
-pub mod string;
-pub mod c_string;
-pub mod byte_string;
-pub mod rc;
 pub mod arc;
-pub mod rmo;
-pub mod queue;
-pub mod iter_ext;
+pub mod byte_string;
+pub mod c_string;
 pub mod io_ext;
+pub mod iter_ext;
+pub mod path_buf;
+pub mod queue;
+pub mod rc;
+pub mod rmo;
+pub mod string;
+pub mod vec;
 
 pub mod prelude {
     pub use string::{String};

@@ -4,20 +4,20 @@
 
 #![allow(non_upper_case_globals)]
 
-use std::{mem};
-
-use core::cty::{clockid_t, c_int, TIMER_ABSTIME, TFD_NONBLOCK, TFD_CLOEXEC};
-use core::syscall::{clock_gettime, clock_settime, clock_getres, clock_nanosleep,
+#[prelude_import] use base::prelude::*;
+use base::{mem};
+use base::cty::{clockid_t, c_int, TIMER_ABSTIME, TFD_NONBLOCK, TFD_CLOEXEC};
+use base::syscall::{clock_gettime, clock_settime, clock_getres, clock_nanosleep,
                     timerfd_create};
-use core::result::{Result};
-use core::util::{retry};
-use core::fd_container::{FDContainer};
+use base::result::{Result};
+use base::util::{retry};
+use base::fd_container::{FDContainer};
 
 use super::{Time, time_from_timespec, time_to_timespec};
 use timer::{Timer};
 
 /// A clock that can be used to measure time.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct Clock(clockid_t);
 
 /// Real ("wall time") clock that measures the time since 1970-01-01T00:00:00+00:00.

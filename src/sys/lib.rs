@@ -4,35 +4,40 @@
 
 #![crate_name = "linux_sys"]
 #![crate_type = "lib"]
-#![feature(core)]
+#![feature(plugin, no_std)]
+#![plugin(linux_core_plugin)]
+#![no_std]
 
-#[macro_use]
-extern crate linux_core as core;
+#[macro_use] extern crate linux_base as base;
+#[prelude_import] use base::prelude::*;
+mod linux { pub use base::linux::*; }
+mod core { pub use base::core::*; }
+
 extern crate linux_time_base as time_base;
 
-use core::cty::{new_utsname, sysinfo, GRND_NONBLOCK, PATH_MAX};
-use core::syscall::{sched_getaffinity, uname, sysinfo, getrandom, acct, sethostname,
+use base::{mem, fmt};
+use base::ops::{Eq};
+use base::io::{Write};
+use base::cty::{new_utsname, sysinfo, GRND_NONBLOCK, PATH_MAX};
+use base::syscall::{sched_getaffinity, uname, sysinfo, getrandom, acct, sethostname,
                     setdomainname};
-use core::string::{LinuxStr, AsLinuxStr};
-use core::ext::{AsLinuxPath};
-use core::result::{Result};
-use core::util::{retry, memchr};
+use base::string::{ToCString, AsByteStr, AsCStr, ByteStr};
+use base::rmo::{AsRef};
+use base::result::{Result};
+use base::util::{retry};
 
 use time_base::{Time};
-
-// use std::iter::{AdditiveIterator};
-use std::{mem, fmt};
 
 /// Returns the number of CPU available to this thread.
 pub fn cpu_count() -> usize {
     // XXX: Up to 512 CPUs which is the default maximum for ia64
     let mut buf = [0; 512 / 8];
     sched_getaffinity(0, &mut buf);
-    buf.iter().map(|b| b.count_ones()).sum::<u32>() as usize
+    buf.iter().map(|b| b.count_ones()).sum().unwrap() as usize
 }
 
 /// Returns information about the system in form of strings.
-#[derive(Copy, Clone)]
+#[derive(Copy)]
 pub struct StrInfo {
     buf: new_utsname,
     sysname_len:    u8,
@@ -56,47 +61,47 @@ impl StrInfo {
     /// Retrieves information from the system and stores it in the Strinfo.
     pub fn update(&mut self) -> Result {
         try!(rv!(uname(&mut self.buf)));
-        self.sysname_len    = memchr(&self.buf.sysname[..],    0).unwrap() as u8;
-        self.nodename_len   = memchr(&self.buf.nodename[..],   0).unwrap() as u8;
-        self.release_len    = memchr(&self.buf.release[..],    0).unwrap() as u8;
-        self.version_len    = memchr(&self.buf.version[..],    0).unwrap() as u8;
-        self.machine_len    = memchr(&self.buf.machine[..],    0).unwrap() as u8;
-        self.domainname_len = memchr(&self.buf.domainname[..], 0).unwrap() as u8;
+        self.sysname_len    = self.buf.sysname.as_cstr().unwrap().len()    as u8;
+        self.nodename_len   = self.buf.nodename.as_cstr().unwrap().len()   as u8;
+        self.release_len    = self.buf.release.as_cstr().unwrap().len()    as u8;
+        self.version_len    = self.buf.version.as_cstr().unwrap().len()    as u8;
+        self.machine_len    = self.buf.machine.as_cstr().unwrap().len()    as u8;
+        self.domainname_len = self.buf.domainname.as_cstr().unwrap().len() as u8;
         Ok(())
     }
 
     /// The name of the system.
-    pub fn system_name(&self) -> &LinuxStr {
-        self.buf.sysname[..self.sysname_len as usize].as_linux_str()
+    pub fn system_name(&self) -> &ByteStr {
+        self.buf.sysname[..self.sysname_len as usize].as_byte_str()
     }
 
     /// The hostname.
-    pub fn host_name(&self) -> &LinuxStr {
-        self.buf.nodename[..self.nodename_len as usize].as_linux_str()
+    pub fn host_name(&self) -> &ByteStr {
+        self.buf.nodename[..self.nodename_len as usize].as_byte_str()
     }
 
     /// The kernel release.
-    pub fn release(&self) -> &LinuxStr {
-        self.buf.release[..self.release_len as usize].as_linux_str()
+    pub fn release(&self) -> &ByteStr {
+        self.buf.release[..self.release_len as usize].as_byte_str()
     }
 
     /// The kernel version.
-    pub fn version(&self) -> &LinuxStr {
-        self.buf.version[..self.version_len as usize].as_linux_str()
+    pub fn version(&self) -> &ByteStr {
+        self.buf.version[..self.version_len as usize].as_byte_str()
     }
 
     /// The machine.
-    pub fn machine(&self) -> &LinuxStr {
-        self.buf.machine[..self.machine_len as usize].as_linux_str()
+    pub fn machine(&self) -> &ByteStr {
+        self.buf.machine[..self.machine_len as usize].as_byte_str()
     }
 
     /// The domain name.
-    pub fn domain_name(&self) -> &LinuxStr {
-        self.buf.domainname[..self.domainname_len as usize].as_linux_str()
+    pub fn domain_name(&self) -> &ByteStr {
+        self.buf.domainname[..self.domainname_len as usize].as_byte_str()
     }
 }
 
-impl PartialEq for StrInfo {
+impl Eq for StrInfo {
     fn eq(&self, other: &StrInfo) -> bool {
            self.system_name() == other.system_name()
         && self.host_name()   == other.host_name()
@@ -116,11 +121,9 @@ impl PartialEq for StrInfo {
     }
 }
 
-impl Eq for StrInfo { }
-
 impl fmt::Debug for StrInfo {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "StrInfo {{ system_name: {:?}, host_name: {:?}, release: {:?}, \
+    fn fmt<W: Write+?Sized>(&self, mut w: &mut W) -> Result {
+        write!(w, "StrInfo {{ system_name: {:?}, host_name: {:?}, release: {:?}, \
                                 version: {:?}, machine: {:?}, domain_name: {:?} }}",
                self.system_name(), self.host_name(), self.release(), self.version(),
                self.machine(), self.domain_name())
@@ -130,7 +133,7 @@ impl fmt::Debug for StrInfo {
 /// Returns information about the system in form of numbers.
 ///
 /// Someone should find out what the undocumented fields mean.
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct NumInfo {
     data: sysinfo,
 }
@@ -214,8 +217,8 @@ impl NumInfo {
 }
 
 impl fmt::Debug for NumInfo {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "NumInfo {{ \
+    fn fmt<W: Write+?Sized>(&self, mut w: &mut W) -> Result {
+        write!(w, "NumInfo {{ \
                         uptime: {:?}, \
                         load_average_one: {}, \
                         load_average_five: {}, \
@@ -251,18 +254,24 @@ pub fn get_random_non_blocking(buf: &mut [u8]) -> Result<&mut [u8]> {
 }
 
 /// Enables process accounting.
-pub fn enable_accounting<P: AsLinuxPath>(path: P) -> Result {
-    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
-    let path = try!(path.to_cstr(&mut buf));
+pub fn enable_accounting<P>(path: P) -> Result
+    where P: ToCString,
+{
+    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+    let path = try!(path.rmo_cstr(&mut buf));
     rv!(acct(&path))
 }
 
 /// Sets the hostname of the system
-pub fn set_host_name<P: AsLinuxStr>(name: P) -> Result {
-    rv!(sethostname(name.as_linux_str().as_slice()))
+pub fn set_host_name<P>(name: P) -> Result
+    where P: AsRef<[u8]>,
+{
+    rv!(sethostname(name.as_ref()))
 }
 
 /// Sets the domain name of the system
-pub fn set_domain_name<P: AsLinuxStr>(name: P) -> Result {
-    rv!(setdomainname(name.as_linux_str().as_slice()))
+pub fn set_domain_name<P>(name: P) -> Result
+    where P: AsRef<[u8]>,
+{
+    rv!(setdomainname(name.as_ref()))
 }

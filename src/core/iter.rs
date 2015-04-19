@@ -3,12 +3,17 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use option::{Option};
-use marker::{PhantomData};
+use marker::{Sized, PhantomData};
 
 #[lang = "iterator"]
 pub trait Iterator {
     type Item;
     fn next(&mut self) -> Option<Self::Item>;
+}
+
+impl<'a, T: Iterator+?Sized> Iterator for &'a mut T {
+    type Item = T::Item;
+    fn next(&mut self) -> Option<T::Item> { (**self).next() }
 }
 
 #[derive(Copy, Eq)]

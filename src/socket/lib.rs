@@ -4,5 +4,11 @@
 
 #![crate_name = "linux_socket"]
 #![crate_type = "lib"]
+#![feature(plugin, no_std)]
+#![plugin(linux_core_plugin)]
+#![no_std]
 
-
+#[macro_use]
+extern crate linux_base as base;
+mod linux { pub use base::linux::*; }
+mod core { pub use base::core::*; }

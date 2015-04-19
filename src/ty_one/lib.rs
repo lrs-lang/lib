@@ -18,17 +18,20 @@ pub mod linux {
     pub use {result};
 }
 
-pub mod error;
-pub mod c_str;
-pub mod parse;
-pub mod byte_str;
-pub mod saturating_cast;
 pub mod bytes;
-pub mod result;
-pub mod ref_cell;
+pub mod byte_str;
 pub mod copy_cell;
-pub mod path;
+pub mod c_str;
+pub mod error;
+pub mod iter_ext;
 pub mod num;
+pub mod parse;
+pub mod path;
+pub mod range;
+pub mod ref_cell;
+pub mod result;
+pub mod rmo;
+pub mod saturating_cast;
 
 pub mod prelude {
     pub use result::{Result};

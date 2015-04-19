@@ -3,14 +3,11 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use ty_one::prelude::*;
-use ty_one::c_str::{CStr};
-use {Debug};
-use io::{Write};
-use ty_one::byte_str::{AsByteStr};
+use ty_one::error::{Errno};
+use {Write, Debug};
 
-impl Debug for CStr {
-    fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
-        Debug::fmt(self.as_byte_str(), w)
+impl Debug for Errno {
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
+        w.write_str(self.name()).ignore_ok()
     }
 }
-

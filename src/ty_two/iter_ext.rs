@@ -5,11 +5,11 @@
 use core::iter::{Iterator};
 use vec::{Vec};
 
-pub trait IteratorExt : Iterator {
+pub trait IteratorExt2 : Iterator {
     fn collect(self) -> Vec<Self::Item>;
 }
 
-impl<T: Iterator> IteratorExt for T {
+impl<T: Iterator> IteratorExt2 for T {
     fn collect(self) -> Vec<Self::Item> {
         let mut vec = Vec::new();
         vec.extend(self);

@@ -2,11 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::{fmt};
-
-use core::cty::{stat, S_IFMT, S_IFDIR, S_IFCHR, S_IFBLK, S_IFREG, S_IFIFO, S_IFLNK,
+#[prelude_import] use base::prelude::*;
+use base::fmt::{Debug, Write};
+use base::cty::{stat, S_IFMT, S_IFDIR, S_IFCHR, S_IFBLK, S_IFREG, S_IFIFO, S_IFLNK,
                 S_IFSOCK, umode_t};
-use core::alias::{InodeId, UserId, GroupId, DeviceId};
+use base::alias::{InodeId, UserId, GroupId, DeviceId};
 use time_base::{Time};
 use dev::{Device, DeviceType};
 use flags::{Mode};
@@ -40,7 +40,7 @@ pub fn file_type_to_mode(t: Type) -> umode_t {
 }
 
 /// Type of a directory entry.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub enum Type {
     /// A block device.
     BlockDevice,
@@ -60,8 +60,24 @@ pub enum Type {
     Unknown,
 }
 
+impl Debug for Type {
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
+        let s: &[u8] = match *self {
+            Type::BlockDevice => b"BlockDevice",
+            Type::CharDevice  => b"CharDevice",
+            Type::Directory   => b"Directory",
+            Type::FIFO        => b"FIFO",
+            Type::SymLink     => b"SymLink",
+            Type::File        => b"File",
+            Type::Socket      => b"Socket",
+            Type::Unknown     => b"Unknown",
+        };
+        w.write_all(s).ignore_ok()
+    }
+}
+
 /// Information about a file.
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct Info(stat);
 
 impl Info {
@@ -143,9 +159,9 @@ impl Info {
     }
 }
 
-impl fmt::Debug for Info {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "Info {{ device: {:?}, inode: {}, nr_hard_links: {}, mode: {:?}, \
+impl Debug for Info {
+    fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
+        write!(w, "Info {{ device: {:?}, inode: {}, nr_hard_links: {}, mode: {:?}, \
                      user: {}, group: {}, special_file: {:?}, size: {}, blocks: {}, \
                      preferred_write_size: {}, last_access: {:?}, \
                      last_modification: {:?}, creation: {:?}, file_type: {:?} }}",

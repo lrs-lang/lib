@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#[prelude_import] use base::prelude::*;
 use base::fmt::{Debug};
 use base::io::{Write};
 use base::{mem};
@@ -9,6 +10,7 @@ use base::cty::{PATH_MAX, statfs, c_ulong};
 use base::syscall::{statfs};
 use base::util::{retry};
 use base::result::{Result};
+use base::string::{ToCString};
 
 use self::mount::{Flags};
 use self::types::{FileSystem};
@@ -21,14 +23,16 @@ pub fn from_statfs(s: statfs) -> FileSystemInfo {
 }
 
 /// Filesystem information.
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct FileSystemInfo(statfs);
 
 impl FileSystemInfo {
     /// Returns information about the filesystem located at the path.
-    pub fn from_path<P: AsByteStr>(path: P) -> Result<FileSystemInfo> {
-        let mut path_buf: [u8; PATH_MAX] = unsafe { mem::uninitialized() };
-        let path = try!(path.to_cstr(&mut path_buf));
+    pub fn from_path<P>(path: P) -> Result<FileSystemInfo>
+        where P: ToCString,
+    {
+        let mut path_buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let path = try!(path.rmo_cstr(&mut path_buf));
         let mut buf = unsafe { mem::zeroed() };
         retry(|| statfs(&path, &mut buf)).map(|_| FileSystemInfo(buf))
     }
@@ -85,8 +89,8 @@ impl FileSystemInfo {
 }
 
 impl Debug for FileSystemInfo {
-    fn fmt(&self, f: &mut Formatter) -> Result {
-        write!(f, "Flags {{ ty: {:?}, block_size: {}, blocks: {}, free_blocks: {}, \
+    fn fmt<W: Write+?Sized>(&self, mut w: &mut W) -> Result {
+        write!(w, "Flags {{ ty: {:?}, block_size: {}, blocks: {}, free_blocks: {}, \
                            available_blocks: {}, files: {}, free_files: {}, \
                            max_name_len: {}, fragment_size: {}, mount_flags: {:?} }}",
                    self.ty(), self.block_size(), self.blocks(), self.free_blocks(),

@@ -4,19 +4,12 @@
 
 #[prelude_import] use core::prelude::*;
 #[prelude_import] use ty_one::prelude::*;
+pub use ty_one::rmo::{AsRef, AsMut};
 use ty_one::error::{Errno};
 use core::ops::{Deref};
 
 mod impls {
     mod slice;
-}
-
-pub trait AsRef<Target: ?Sized> {
-    fn as_ref(&self) -> &Target;
-}
-
-pub trait AsMut<Target: ?Sized> {
-    fn as_mut(&mut self) -> &mut Target;
 }
 
 pub trait ToOwned {

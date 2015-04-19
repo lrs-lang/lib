@@ -47,7 +47,7 @@ macro_rules! int_impls {
             pub fn checked_add(self, other: $t) -> Option<$t> {
                 unsafe {
                     match intrinsics::$checked_add(self as $size_t, other as $size_t) {
-                        (val, true) => Some(val as $t),
+                        (val, false) => Some(val as $t),
                         _ => None,
                     }
                 }
@@ -56,7 +56,7 @@ macro_rules! int_impls {
             pub fn checked_sub(self, other: $t) -> Option<$t> {
                 unsafe {
                     match intrinsics::$checked_sub(self as $size_t, other as $size_t) {
-                        (val, true) => Some(val as $t),
+                        (val, false) => Some(val as $t),
                         _ => None,
                     }
                 }
@@ -65,9 +65,31 @@ macro_rules! int_impls {
             pub fn checked_mul(self, other: $t) -> Option<$t> {
                 unsafe {
                     match intrinsics::$checked_mul(self as $size_t, other as $size_t) {
-                        (val, true) => Some(val as $t),
+                        (val, false) => Some(val as $t),
                         _ => None,
                     }
+                }
+            }
+
+            pub fn saturating_add(self, other: $t) -> $t {
+                match self.checked_add(other) {
+                    Some(val) => val,
+                    _ => if other > 0 {
+                        self::$t::MAX
+                    } else {
+                        self::$t::MIN
+                    },
+                }
+            }
+
+            pub fn saturating_sub(self, other: $t) -> $t {
+                match self.checked_sub(other) {
+                    Some(val) => val,
+                    _ => if other > 0 {
+                        self::$t::MIN
+                    } else {
+                        self::$t::MAX
+                    },
                 }
             }
 

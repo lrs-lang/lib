@@ -17,7 +17,7 @@ extern crate linux_arch_fns;
 
 pub use linux_cty as cty;
 pub use linux_w_syscall as syscall;
-pub use linux_arch_fns::{memchr, memrchr, strlen};
+pub use linux_arch_fns::{equal, memchr, memrchr, strlen, all_bytes};
 
 mod linux {
     pub use core::linux::*;

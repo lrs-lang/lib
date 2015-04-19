@@ -8,6 +8,8 @@
 use linux_ty_one::error::{Errno, c_int};
 use linux_ty_one::num::{SignedInt, Int};
 
+pub use linux_arch_fns::{memchr, memrchr, strlen};
+
 #[cfg(feature = "retry")]
 pub fn retry<T: SignedInt, F: FnMut() -> T>(mut f: F) -> Result<T> {
     use ty_one::{error};

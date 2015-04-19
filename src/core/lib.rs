@@ -30,6 +30,7 @@ pub mod repr;
 pub mod slice;
 pub mod str;
 pub mod char;
+pub mod bool;
 
 pub mod linux {
     pub use ::{marker, ops, clone, intrinsics, option, mem};

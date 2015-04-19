@@ -15,8 +15,8 @@ extern crate linux_io as io;
 
 #[prelude_import] use core::prelude::*;
 #[prelude_import] use ty_one::prelude::*;
-use io::{Write};
 
+pub use io::{Write};
 pub use impls::num::{format_u64};
 
 pub mod linux {
@@ -29,22 +29,25 @@ mod impls {
     pub mod str;
     pub mod byte_str;
     pub mod c_str;
+    pub mod option;
+    pub mod result;
+    pub mod errno;
 }
 
 macro_rules! fmt_var {
     ($name:ident) => {
         pub trait $name {
-            fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result;
+            fn fmt<W: Write>(&self, w: &mut W) -> Result;
         }
 
         impl<'a, T: $name+?Sized> $name for &'a T {
-            fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
+            fn fmt<W: Write>(&self, w: &mut W) -> Result {
                 (**self).fmt(w)
             }
         }
 
         impl<'a, T: $name+?Sized> $name for &'a mut T {
-            fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
+            fn fmt<W: Write>(&self, w: &mut W) -> Result {
                 (**self).fmt(w)
             }
         }
@@ -61,7 +64,7 @@ mod fmt {
 }
 
 impl<T: Debug> Debug for [T] {
-    fn fmt<W: Write+?Sized>(&self, mut w: &mut W) -> Result {
+    fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
         try!(write!(w, "["));
         if self.len() > 0 {
             for el in &self[..self.len() - 1] {

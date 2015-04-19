@@ -9,6 +9,7 @@ use ty_one::byte_str::{ByteStr};
 use io::{Write};
 use fmt::{Debug};
 use vec::{Vec};
+use rmo::{AsRef, AsMut, ToOwned};
 
 pub struct ByteString {
     data: Vec<u8>,
@@ -27,8 +28,33 @@ impl Deref for ByteString {
     }
 }
 
+impl DerefMut for ByteString {
+    fn deref_mut(&mut self) -> &mut ByteStr {
+        unsafe { mem::cast(self.data.deref_mut()) }
+    }
+}
+
 impl Debug for ByteString {
-    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
         Debug::fmt(self.deref(), w)
+    }
+}
+
+impl AsRef<ByteStr> for ByteString {
+    fn as_ref(&self) -> &ByteStr {
+        self.deref()
+    }
+}
+
+impl AsMut<ByteStr> for ByteString {
+    fn as_mut(&mut self) -> &mut ByteStr {
+        self.deref_mut()
+    }
+}
+
+impl ToOwned for ByteStr {
+    type Owned = ByteString;
+    fn to_owned(&self) -> Result<ByteString> {
+        self.as_ref().to_owned().map(|o| ByteString { data: o })
     }
 }

@@ -4,6 +4,8 @@
 
 #[prelude_import] use core::prelude::*;
 use core::{mem};
+use core::ops::{Range, RangeTo};
+use range::{BoundedRange};
 
 pub trait Int {
     fn negative(&self) -> bool;
@@ -50,6 +52,12 @@ macro_rules! uint_impl {
                 } else {
                     Some(npot)
                 }
+            }
+        }
+
+        impl BoundedRange<$name> for RangeTo<$name> {
+            fn to_range(self) -> Range<$name> {
+                Range { start: 0, end: self.end }
             }
         }
     }

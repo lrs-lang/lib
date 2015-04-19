@@ -54,6 +54,10 @@ pub trait Write {
         }
         Ok(written)
     }
+
+    fn write_str(&mut self, buf: &str) -> Result<usize> {
+        self.write(buf.as_bytes())
+    }
 }
 
 impl<'a> Read for &'a [u8] {

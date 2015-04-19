@@ -12,7 +12,7 @@ use io::{Write};
 use alloc::{allocate_array, reallocate_array, free_array, empty_ptr};
 
 use ty_one::{error};
-use ty_one::bytes::{AsBytes, AsMutBytes};
+use ty_one::rmo::{AsRef, AsMut};
 use ty_one::byte_str::{ByteStr, AsByteStr, AsMutByteStr};
 use ty_one::c_str::{CStr, AsCStr, AsMutCStr, ToCStr};
 use ty_one::path::{Path, AsMutPath, AsPath};
@@ -149,20 +149,20 @@ impl<T> DerefMut for Vec<T> {
 }
 
 impl<T: Debug> Debug for Vec<T> {
-    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
         self.deref().fmt(w)
     }
 }
 
 // Maybe these aren't really needed. We can just let the user manually deref.
 
-impl AsBytes for Vec<u8> {
-    fn as_bytes(&self) -> &[u8] {
+impl AsRef<[u8]> for Vec<u8> {
+    fn as_ref(&self) -> &[u8] {
         self.deref()
     }
 }
-impl AsMutBytes for Vec<u8> {
-    fn as_mut_bytes(&mut self) -> &mut [u8] {
+impl AsMut<[u8]> for Vec<u8> {
+    fn as_mut(&mut self) -> &mut [u8] {
         self.deref_mut()
     }
 }

@@ -4,7 +4,6 @@
 
 #![allow(non_upper_case_globals, non_camel_case_types)]
 
-#[prelude_import] use core::prelude::*;
 pub use cty_base::{errno};
 pub use cty_base::types::{c_int};
 
@@ -23,10 +22,10 @@ macro_rules! create {
                 }
             }
 
-            pub fn name(self) -> Option<&'static str> {
+            pub fn name(self) -> &'static str {
                 match self {
-                    $($name => Some(stringify!($name)),)*
-                    _ => None,
+                    $($name => stringify!($name),)*
+                    _ => "Unknown error",
                 }
             }
         }

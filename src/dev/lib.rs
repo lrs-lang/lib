@@ -19,8 +19,9 @@ mod core { pub use base::core::*; }
 //
 // Source: http://www.lanana.org/docs/device-list/devices-2.6+.txt
 
-use base::io::{Write};
-use base::{fmt, error, mem};
+use base::fmt::{Write, Debug};
+use base::string::{AsByteStr};
+use base::{error, mem};
 use base::alias::{DeviceId};
 
 /// The type of a device special file.
@@ -86,11 +87,10 @@ impl Device {
     }
 }
 
-// This impl is not that great because it has to allocate and can even panic.
-impl fmt::Debug for Device {
-    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
+impl Debug for Device {
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
         let mut buf = [0; 128];
-        fmt::Debug::fmt(path_from_device_int(*self, &mut buf), w)
+        Debug::fmt(path_from_device_int(*self, &mut buf).as_byte_str(), w)
     }
 }
 

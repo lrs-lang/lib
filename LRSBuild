@@ -16,7 +16,7 @@ obj lock       core ty_one arch io fmt
 obj alloc      core
 obj ty_two     core ty_one arch lock io fmt alloc
 
-obj base       core sort io fmt ty_one lock ty_two arch
+obj base       core sort io fmt ty_one lock ty_two arch arch_fns
 
 obj dev        base
 obj fs         base

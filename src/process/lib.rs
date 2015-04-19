@@ -4,14 +4,18 @@
 
 #![crate_name = "linux_process"]
 #![crate_type = "lib"]
-#![feature(negate_unsigned)]
+#![feature(plugin, no_std, negate_unsigned)]
+#![plugin(linux_core_plugin)]
+#![no_std]
 #![allow(trivial_numeric_casts)]
 
 #[macro_use]
-extern crate linux_core as core;
+extern crate linux_base as base;
+mod linux { pub use base::linux::*; }
+mod core { pub use base::core::*; }
 
-use core::syscall::{getpid, getppid};
-use core::alias::{ProcessId};
+use base::syscall::{getpid, getppid};
+use base::alias::{ProcessId};
 
 pub mod ids;
 

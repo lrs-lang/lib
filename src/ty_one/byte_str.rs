@@ -10,7 +10,7 @@ use core::ops::{Eq};
 
 use c_str::{CStr, ToCStr};
 use path::{AsPath, AsMutPath, Path};
-use bytes::{AsBytes, AsMutBytes};
+use rmo::{AsRef, AsMut};
 
 /// A borrowed byte sequence that can be interpreted as a string but doesn't necessarily
 /// contain UTF-8.
@@ -87,8 +87,8 @@ impl IndexMut<Range<usize>> for ByteStr {
     }
 }
 
-impl AsBytes for ByteStr { fn as_bytes(&self) -> &[u8] { &self.data } }
-impl AsMutBytes for ByteStr { fn as_mut_bytes(&mut self) -> &mut [u8] { &mut self.data } }
+impl AsRef<[u8]> for ByteStr { fn as_ref(&self) -> &[u8] { &self.data } }
+impl AsMut<[u8]> for ByteStr { fn as_mut(&mut self) -> &mut [u8] { &mut self.data } }
 
 impl AsPath for ByteStr {
     fn as_path(&self) -> Result<&Path> {

@@ -7,7 +7,8 @@
 use core::ops::{Index};
 use core::{mem};
 use cty_base::types::{c_char};
-use bytes::{AsBytes, AsMutBytes, ToBytes};
+use rmo::{AsRef, AsMut};
+use bytes::{ToBytes};
 use byte_str::{ByteStr, AsByteStr};
 use {error};
 use arch_fns::{all_bytes, memchr};
@@ -40,7 +41,7 @@ impl CStr {
     }
 
     pub fn len(&self) -> usize {
-        self.as_bytes().len() - 1
+        self.data.len() - 1
     }
 }
 
@@ -58,15 +59,15 @@ impl Index<usize> for CStr {
     }
 }
 
-impl AsBytes for CStr {
-    fn as_bytes(&self) -> &[u8] {
+impl AsRef<[u8]> for CStr {
+    fn as_ref(&self) -> &[u8] {
         &self.data
     }
 }
 
 impl ToBytes for CStr {
     fn to_bytes<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut [u8]> {
-        let bytes = self.as_bytes();
+        let bytes = &self.data;
         if bytes.len() <= buf.len() {
             mem::copy(buf, bytes);
             Ok(&mut buf[..bytes.len()])
@@ -76,7 +77,7 @@ impl ToBytes for CStr {
     }
 
     fn to_or_as_bytes<'a>(&'a self, _: &'a mut [u8]) -> Result<&'a [u8]> {
-        Ok(self.as_bytes())
+        Ok(&self.data)
     }
 }
 
@@ -101,9 +102,9 @@ impl AsMutPath for CStr {
 
 ////////////////////////
 
-pub trait AsCStr : AsBytes {
+pub trait AsCStr : AsRef<[u8]> {
     fn as_cstr(&self) -> Result<&CStr> {
-        self.as_bytes().as_cstr()
+        self.as_ref().as_cstr()
     }
 }
 
@@ -139,8 +140,8 @@ impl AsCStr for [u8] {
 }
 
 impl AsCStr for CStr { fn as_cstr(&self) -> Result<&CStr> { Ok(self) } }
-impl AsCStr for [i8] { fn as_cstr(&self) -> Result<&CStr> { self.as_bytes().as_cstr() } }
-impl AsCStr for str { fn as_cstr(&self) -> Result<&CStr> { self.as_bytes().as_cstr() } }
+impl AsCStr for [i8] { fn as_cstr(&self) -> Result<&CStr> { self.as_ref().as_cstr() } }
+impl AsCStr for str { fn as_cstr(&self) -> Result<&CStr> { self.as_ref().as_cstr() } }
 
 impl AsMutCStr for [u8] {
     fn as_mut_cstr(&mut self) -> Result<&mut CStr> {
@@ -152,11 +153,11 @@ impl AsMutCStr for [u8] {
 }
 
 impl AsMutCStr for CStr { fn as_mut_cstr(&mut self) -> Result<&mut CStr> { Ok(self) } }
-impl AsMutCStr for [i8] { fn as_mut_cstr(&mut self) -> Result<&mut CStr> { self.as_mut_bytes().as_mut_cstr() } }
+impl AsMutCStr for [i8] { fn as_mut_cstr(&mut self) -> Result<&mut CStr> { self.as_mut().as_mut_cstr() } }
 
 impl ToCStr for CStr {
     fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
-        let bytes = self.as_bytes();
+        let bytes = &self.data;
         if bytes.len() <= buf.len() {
             mem::copy(buf, bytes);
             Ok(unsafe { CStr::from_bytes_unchecked_mut(&mut buf[..bytes.len()]) })
@@ -219,9 +220,9 @@ impl ToCStr for [u8] {
 }
 
 impl ToCStr for [i8] {
-    fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> { self.as_bytes().to_cstr(buf) }
-    fn to_or_as_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<&'a CStr> { self.as_bytes().to_or_as_cstr(buf) }
-    fn to_or_as_mut_cstr<'a>(&'a mut self, buf: &'a mut [u8]) -> Result<&'a mut CStr> { self.as_mut_bytes().to_or_as_mut_cstr(buf) }
+    fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> { self.as_ref().to_cstr(buf) }
+    fn to_or_as_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<&'a CStr> { self.as_ref().to_or_as_cstr(buf) }
+    fn to_or_as_mut_cstr<'a>(&'a mut self, buf: &'a mut [u8]) -> Result<&'a mut CStr> { self.as_mut().to_or_as_mut_cstr(buf) }
 }
 
 impl ToCStr for str {

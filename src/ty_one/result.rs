@@ -22,9 +22,20 @@ impl<T, E> Result<T, E> {
         }
     }
 
-    pub fn map<U, F: FnOnce(T) -> U>(self, f: F) -> Result<U, E> {
+    pub fn map<U, F>(self, f: F) -> Result<U, E>
+        where F: FnOnce(T) -> U,
+    {
         match self {
             Ok(t) => Ok(f(t)),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn chain<U, F>(self, f: F) -> Result<U, E>
+        where F: FnOnce(T) -> Result<U, E>,
+    {
+        match self {
+            Ok(t) => f(t),
             Err(e) => Err(e),
         }
     }
@@ -38,5 +49,12 @@ impl<T, E> Result<T, E> {
 
     pub fn is_err(&self) -> bool {
         !self.is_ok()
+    }
+
+    pub fn ignore_ok(self) -> Result<(), E> {
+        match self {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
+        }
     }
 }

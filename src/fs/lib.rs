@@ -11,7 +11,6 @@
 
 #[macro_use]
 extern crate linux_base as base;
-#[prelude_import] use base::prelude::*;
 mod linux { pub use base::linux::*; }
 mod core { pub use base::core::*; }
 

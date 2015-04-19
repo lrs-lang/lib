@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#[prelude_import] use base::prelude::*;
 use base::fmt::{Debug};
 use base::io::{Write};
 use base::cty::{c_ulong};
@@ -14,9 +15,9 @@ macro_rules! create {
     ($($name:ident = ($val:expr, $str:expr),)*) => {
         $(pub const $name: FileSystem = FileSystem($val);)*
         impl Debug for FileSystem {
-            fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
+            fn fmt<W: Write+?Sized>(&self, mut w: &mut W) -> Result {
                 match *self {
-                    $($name => w.write($str),)*
+                    $($name => w.write($str).ignore_ok(),)*
                     x => write!(w, "Unknown(0x{:X})", x.0),
                 }
             }

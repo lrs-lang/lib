@@ -30,10 +30,10 @@ macro_rules! try {
 #[macro_export]
 macro_rules! println {
     ($fmt:expr) => {
-        write!(Stdout, concat!($fmt, "\n"))
+        write!(::linux::stdio::raw::STDOUT, concat!($fmt, "\n"))
     };
     ($fmt:expr, $($arg:tt)*) => {
-        write!(Stdout, concat!($fmt, "\n"), $($arg)*)
+        write!(::linux::stdio::raw::STDOUT, concat!($fmt, "\n"), $($arg)*)
     };
 }
 

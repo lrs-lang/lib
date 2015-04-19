@@ -4,8 +4,8 @@
 
 #[prelude_import] use core::prelude::*;
 #[prelude_import] use prelude::*;
-use bytes::{AsBytes};
 use {error};
+use rmo::{AsRef};
 
 mod int;
 
@@ -14,8 +14,8 @@ pub trait Parse {
 }
 
 impl Parse for [u8] { fn parse<P: Parsable>(&self) -> Result<P> { P::parse_bytes(self)    } }
-impl Parse for [i8] { fn parse<P: Parsable>(&self) -> Result<P> { self.as_bytes().parse() } }
-impl Parse for str  { fn parse<P: Parsable>(&self) -> Result<P> { self.as_bytes().parse() } }
+impl Parse for [i8] { fn parse<P: Parsable>(&self) -> Result<P> { self.as_ref().parse() } }
+impl Parse for str  { fn parse<P: Parsable>(&self) -> Result<P> { self.as_ref().parse() } }
 
 pub trait Parsable : Sized {
     fn parse_bytes_init(bytes: &[u8]) -> Result<(Self, usize)>;

@@ -2,13 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::{mem};
-
-use core::cty::{c_int, itimerspec, TFD_TIMER_ABSTIME};
-use core::syscall::{close, timerfd_settime, timerfd_gettime, read};
-use core::fd_container::{FDContainer};
-use core::result::{Result};
-use core::util::{retry};
+#[prelude_import] use base::prelude::*;
+use base::{mem};
+use base::cty::{c_int, itimerspec, TFD_TIMER_ABSTIME};
+use base::syscall::{close, timerfd_settime, timerfd_gettime, read};
+use base::fd_container::{FDContainer};
+use base::result::{Result};
+use base::util::{retry};
 
 use super::{Time, time_to_timespec, time_from_timespec};
 
@@ -83,7 +83,7 @@ impl Timer {
     pub fn ticks(&self) -> Result<u64> {
         let mut buf = [0; 8];
         try!(retry(|| read(self.fd, &mut buf[..])));
-        Ok(unsafe { mem::transmute(buf) })
+        Ok(unsafe { mem::cast(buf) })
     }
 }
 
@@ -98,7 +98,7 @@ impl Drop for Timer {
 impl FDContainer for Timer {
     fn unwrap(self) -> c_int {
         let fd = self.fd;
-        unsafe { mem::forget(self); }
+        mem::forget(self);
         fd
     }
 

@@ -2,13 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use core::syscall::{getresuid, getresgid, setresuid, setresgid, setgroups, getgroups};
-use core::result::{Result};
-use core::errno::{self};
-use core::alias::{UserId, GroupId};
+#[prelude_import] use base::prelude::*;
+use base::syscall::{getresuid, getresgid, setresuid, setresgid, setgroups, getgroups};
+use base::result::{Result};
+use base::error::{self};
+use base::alias::{UserId, GroupId};
 
 /// User ids of a process.
-#[derive(Copy, Debug, Clone, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct UserIds {
     /// Real id
     pub real:      UserId,
@@ -37,7 +38,7 @@ impl UserIds {
 }
 
 /// Group ids of a process.
-#[derive(Copy, Debug, Clone, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct GroupIds {
     /// Real id
     pub real:      GroupId,
@@ -99,7 +100,7 @@ pub fn num_supplementary_groups() -> usize {
 /// Retreives the supplementary groups.
 pub fn supplementary_groups(buf: &mut [GroupId]) -> Result<usize> {
     if buf.len() > 65536 {
-        return Err(errno::InvalidArgument);
+        return Err(error::InvalidArgument);
     }
     rv!(getgroups(buf), -> usize)
 }
@@ -107,7 +108,7 @@ pub fn supplementary_groups(buf: &mut [GroupId]) -> Result<usize> {
 /// Sets the supplementary groups.
 pub fn set_supplementary_groups(buf: &[GroupId]) -> Result {
     if buf.len() > 65536 {
-        return Err(errno::InvalidArgument);
+        return Err(error::InvalidArgument);
     }
     rv!(setgroups(buf))
 }

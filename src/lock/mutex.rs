@@ -97,7 +97,7 @@ impl<'a, T> DerefMut for MutexGuard<'a, T> {
 }
 
 impl<'a, T: Debug> Debug for MutexGuard<'a, T> {
-    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
         self.deref().fmt(w)
     }
 }

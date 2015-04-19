@@ -4,25 +4,29 @@
 
 #![crate_name = "linux_poll"]
 #![crate_type = "lib"]
+#![feature(plugin, no_std)]
+#![plugin(linux_core_plugin)]
+#![no_std]
 
-#[macro_use]
-extern crate linux_core as core;
+#[macro_use] extern crate linux_base as base;
+#[prelude_import] use base::prelude::*;
+mod linux { pub use base::linux::*; }
+mod core { pub use base::core::*; }
+
 extern crate linux_time_base as time_base;
 
-use std::{mem};
-
-use core::cty::{self, c_int, EPOLL_CLOEXEC, EPOLL_CTL_ADD, EPOLL_CTL_MOD, EPOLL_CTL_DEL,
+use base::{mem};
+use base::cty::{self, c_int, EPOLL_CLOEXEC, EPOLL_CTL_ADD, EPOLL_CTL_MOD, EPOLL_CTL_DEL,
                 epoll_event};
-use core::result::{Result};
-use core::syscall::{epoll_create, epoll_ctl, epoll_pwait, close};
-use core::fd_container::{FDContainer};
-use core::util::{retry};
-use core::ext::{SaturatingCast};
+use base::syscall::{epoll_create, epoll_ctl, epoll_pwait, close};
+use base::fd_container::{FDContainer};
+use base::util::{retry};
+use base::num::{SaturatingCast};
 
 use time_base::{Time};
 
 /// Flags for modifying a polled file descriptor.
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct Flags(u32);
 
 impl Flags {
@@ -69,7 +73,7 @@ pub const EMPTY_EVENT: Event = Event { data: epoll_event { events: 0, data: 0 } 
 
 /// An event returned from a `wait` call.
 #[repr(C)]
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct Event {
     data: epoll_event,
 }
@@ -98,7 +102,7 @@ impl Event {
 }
 
 /// An epoll instance.
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Eq)]
 pub struct Epoll {
     fd: c_int,
     owned: bool,
@@ -142,9 +146,9 @@ impl Epoll {
 
     fn wait_common<'a>(&self, events: &'a mut [Event],
                            timeout: c_int) -> Result<&'a mut [Event]> {
-        let events: &mut [epoll_event] = unsafe { mem::transmute(events) };
+        let events: &mut [epoll_event] = unsafe { mem::cast(events) };
         let ret = try!(retry(|| epoll_pwait(self.fd, events, timeout, None)));
-        let events: &mut [Event] = unsafe { mem::transmute(events) };
+        let events: &mut [Event] = unsafe { mem::cast(events) };
         Ok(&mut events[..ret as usize])
     }
 }
@@ -160,7 +164,7 @@ impl Drop for Epoll {
 impl FDContainer for Epoll {
     fn unwrap(self) -> c_int {
         let fd = self.fd;
-        unsafe { mem::forget(self); }
+        mem::forget(self);
         fd
     }
 

@@ -26,6 +26,21 @@ impl<T> [T] {
     pub fn as_mut_ptr(&mut self) -> *mut T {
         self.repr().ptr as *mut T
     }
+
+    pub fn iter<'a>(&'a self) -> Items<'a, T> {
+        Items { slice: self }
+    }
+}
+
+pub struct Items<'a, T: 'a> {
+    slice: &'a [T],
+}
+
+impl<'a, T> Iterator for Items<'a, T> {
+    type Item = &'a T;
+    fn next(&mut self) -> Option<&'a T> {
+        self.slice.next()
+    }
 }
 
 /////////

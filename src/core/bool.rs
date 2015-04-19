@@ -2,11 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-extern crate linux;
+use ops::{Eq};
 
-use linux::{file};
-
-fn main() {
-    assert_eq!(file::exists("Makefile"), Ok(true));
-    assert_eq!(file::exists("doesnotexist"), Ok(false));
+impl Eq for bool {
+    fn eq(&self, other: &bool) -> bool {
+        *self == *other
+    }
 }

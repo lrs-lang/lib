@@ -5,5 +5,5 @@
 pub use linux_ty_one::c_str::{CStr, AsCStr, AsMutCStr, ToCStr};
 pub use linux_ty_one::byte_str::{ByteStr, AsByteStr, AsMutByteStr};
 pub use linux_ty_two::string::{String};
-pub use linux_ty_two::c_string::{CString};
+pub use linux_ty_two::c_string::{CString, ToCString};
 pub use linux_ty_two::byte_string::{ByteString};

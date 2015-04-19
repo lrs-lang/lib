@@ -2,12 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import] use core::prelude::*;
 #[prelude_import] use ty_one::prelude::*;
 use io::{Write};
 use {Debug, Display};
 
-fn debug_char_no_quotes<W: Write+?Sized>(c: char, w: &mut W, esc_double: bool,
+fn debug_char_no_quotes<W: Write>(c: char, w: &mut W, esc_double: bool,
                                          esc_single: bool) -> Result {
     let val = c as u32;
     if c == '\\' {
@@ -27,7 +26,7 @@ fn debug_char_no_quotes<W: Write+?Sized>(c: char, w: &mut W, esc_double: bool,
 }
 
 impl Debug for char {
-    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
         try!(w.write_all(b"'"));
         try!(debug_char_no_quotes(*self, w, false, true));
         try!(w.write_all(b"'"));
@@ -36,14 +35,14 @@ impl Debug for char {
 }
 
 impl Display for char {
-    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
         let bytes = self.to_utf8();
         try!(w.write_all(&bytes[..self.width()]));
         Ok(())
     }
 }
 
-pub fn debug_str_no_quotes<W: Write+?Sized>(s: &str, w: &mut W) -> Result {
+pub fn debug_str_no_quotes<W: Write>(s: &str, w: &mut W) -> Result {
     for c in s {
         try!(debug_char_no_quotes(c, w, true, false));
     }
@@ -51,7 +50,7 @@ pub fn debug_str_no_quotes<W: Write+?Sized>(s: &str, w: &mut W) -> Result {
 }
 
 impl Debug for str {
-    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
         try!(w.write_all(b"\""));
         try!(debug_str_no_quotes(self, w));
         try!(w.write_all(b"\""));
@@ -60,7 +59,7 @@ impl Debug for str {
 }
 
 impl Display for str {
-    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
         try!(w.write_all(self.as_bytes()));
         Ok(())
     }

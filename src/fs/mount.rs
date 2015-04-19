@@ -8,7 +8,7 @@ use base::cty::{c_ulong, c_int, MS_RDONLY, MS_NOSUID, MS_NODEV, MS_NOEXEC, MS_SY
                 MS_PRIVATE, MS_SLAVE, MS_SHARED, MS_STRICTATIME, PATH_MAX, MNT_FORCE,
                 MNT_DETACH, MNT_EXPIRE, UMOUNT_NOFOLLOW,};
 use base::syscall::{self};
-use base::string::{AsByteStr};
+use base::string::{ToCString};
 use base::result::{Result};
 use base::{mem};
 
@@ -124,16 +124,16 @@ impl MountFlags {
 ///
 /// The contents of the `data` field depend on the filesystem type.
 pub fn mount<P, Q, R, S>(src: P, dst: Q, ty: R, flags: MountFlags, data: S) -> Result
-    where P: AsCStr, Q: AsCStr, R: AsCStr, S: AsCStr
+    where P: ToCString, Q: ToCString, R: ToCString, S: ToCString
 {
     let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let mut buf3: [u8; 256] = unsafe { mem::uninit() };
     let mut buf4: [u8; 256] = unsafe { mem::uninit() };
-    let src = try!(src.to_cstr(&mut buf1));
-    let dst = try!(dst.to_cstr(&mut buf2));
-    let ty = try!(ty.to_cstr(&mut buf3));
-    let data = try!(data.to_cstr(&mut buf4));
+    let src = try!(src.rmo_cstr(&mut buf1));
+    let dst = try!(dst.rmo_cstr(&mut buf2));
+    let ty = try!(ty.rmo_cstr(&mut buf3));
+    let data = try!(data.rmo_cstr(&mut buf4));
     rv!(syscall::mount(&src, &dst, &ty, flags.0, &data))
 }
 
@@ -183,9 +183,9 @@ impl UnmountFlags {
 
 /// Unmounts the device mounted at `dst` with the flags `flags`.
 pub fn unmount<P>(dst: P, flags: UnmountFlags) -> Result
-    where P: AsCStr,
+    where P: ToCString,
 {
     let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let dst = try!(dst.to_cstr(&mut buf));
+    let dst = try!(dst.rmo_cstr(&mut buf));
     rv!(syscall::umount(&dst, flags.0))
 }

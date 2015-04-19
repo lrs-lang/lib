@@ -21,13 +21,13 @@ impl Deref for String {
 }
 
 impl Debug for String {
-    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
         Debug::fmt(self.deref(), w)
     }
 }
 
 impl Display for String {
-    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
         Display::fmt(self.deref(), w)
     }
 }

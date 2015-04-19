@@ -2,18 +2,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import] use core::prelude::*;
 #[prelude_import] use ty_one::prelude::*;
 use core::str::{longest_sequence};
 use {Debug, UpperHex};
 use io::{Write};
 use ty_one::byte_str::{ByteStr};
-use ty_one::bytes::{AsBytes};
+use ty_one::rmo::{AsRef};
 use impls::str::{debug_str_no_quotes};
 
 impl Debug for ByteStr {
-    fn fmt<W: Write+?Sized>(&self, mut w: &mut W) -> Result {
-        let mut bytes = self.as_bytes();
+    fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
+        let mut bytes = self.as_ref();
         try!(w.write_all(b"\""));
         while bytes.len() > 0 {
             let remove = {

@@ -2,13 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#[prelude_import] use base::prelude::*;
 use base::fmt::{Debug};
 use base::io::{Write};
 use base::cty::{ST_RDONLY, ST_NOSUID, ST_NODEV, ST_NOEXEC, ST_SYNCHRONOUS, ST_MANDLOCK,
                 ST_NOATIME, ST_NODIRATIME, ST_RELATIME, c_ulong};
 
 /// Mount flags of a filesystem.
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct Flags(pub c_ulong);
 
 impl Flags {
@@ -33,12 +34,12 @@ impl Flags {
 }
 
 impl Debug for Flags {
-    fn fmt<W: Write+?Sized>(&self, mut w: &mut W) -> Result {
+    fn fmt<W: Write+?Sized>(&self, w: &mut W) -> Result {
         let mut first = true;
         let mut add = |s| {
-            if !first { try!(w.write(b",")); }
+            if !first { try!(w.write(b",").ignore_ok()); }
             first = false;
-            w.write(s)
+            w.write(s).ignore_ok()
         };
         if self.read_only()                   { try!(add(b"ReadOnly"))   }
         if self.no_set_id()                   { try!(add(b"NoSetId"))    }

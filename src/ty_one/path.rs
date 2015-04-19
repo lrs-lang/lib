@@ -4,13 +4,13 @@
 
 #[prelude_import] use core::prelude::*;
 #[prelude_import] use prelude::*;
-use core::ops::{Index, IndexMut, Range, RangeFrom, RangeTo, RangeFull};
-use core::{mem};
-use bytes::{AsBytes, AsMutBytes};
-use byte_str::{ByteStr, AsByteStr};
-use c_str::{CStr, ToCStr};
 use arch_fns::{memrchr, memchr};
-use {error};
+use byte_str::{ByteStr, AsByteStr};
+use core::{mem};
+use core::ops::{Index, IndexMut, Range, RangeFrom, RangeTo, RangeFull};
+use c_str::{CStr, ToCStr};
+use error::{self};
+use rmo::{AsRef, AsMut};
 
 pub struct Path {
     data: [u8],
@@ -117,8 +117,8 @@ impl IndexMut<Range<usize>> for Path {
     }
 }
 
-impl AsBytes for Path {
-    fn as_bytes(&self) -> &[u8] { &self.data }
+impl AsRef<[u8]> for Path {
+    fn as_ref(&self) -> &[u8] { &self.data }
 }
 
 impl AsByteStr for Path {
@@ -158,8 +158,8 @@ impl AsPath for [u8] {
 }
 
 impl AsPath for Path { fn as_path(&self) -> Result<&Path> { Ok(self) } }
-impl AsPath for [i8] { fn as_path(&self) -> Result<&Path> { self.as_bytes().as_path() } }
-impl AsPath for str  { fn as_path(&self) -> Result<&Path> { self.as_bytes().as_path() } }
+impl AsPath for [i8] { fn as_path(&self) -> Result<&Path> { self.as_ref().as_path() } }
+impl AsPath for str  { fn as_path(&self) -> Result<&Path> { self.as_ref().as_path() } }
 
 impl AsMutPath for [u8] {
     fn as_mut_path(&mut self) -> Result<&mut Path> {
@@ -171,4 +171,4 @@ impl AsMutPath for [u8] {
 }
 
 impl AsMutPath for Path { fn as_mut_path(&mut self) -> Result<&mut Path> { Ok(self) } }
-impl AsMutPath for [i8] { fn as_mut_path(&mut self) -> Result<&mut Path> { self.as_mut_bytes().as_mut_path() } }
+impl AsMutPath for [i8] { fn as_mut_path(&mut self) -> Result<&mut Path> { self.as_mut().as_mut_path() } }
