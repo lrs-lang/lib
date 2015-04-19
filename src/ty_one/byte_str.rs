@@ -112,6 +112,12 @@ impl Eq for ByteStr {
     }
 }
 
+impl Eq<str> for ByteStr {
+    fn eq(&self, other: &str) -> bool {
+        self.data.eq(other.as_bytes())
+    }
+}
+
 ////////////////////////
 
 /// A trait for converting to a borrowed linux string.

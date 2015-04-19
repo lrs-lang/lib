@@ -147,8 +147,8 @@ pub trait Eq<Rhs: ?Sized = Self> {
     fn ne(&self, other: &Rhs) -> bool { !self.eq(other) }
 }
 
-impl<'a, T: Eq+?Sized> Eq for &'a T {
-    fn eq(&self, other: &&T) -> bool { (*self).eq(*other) }
+impl<'a, 'b, U: ?Sized, T: Eq<U>+?Sized> Eq<&'b U> for &'a T {
+    fn eq(&self, other: &&U) -> bool { (*self).eq(*other) }
 }
 
 /// Result of a comparison of two values.

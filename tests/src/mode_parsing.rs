@@ -14,6 +14,6 @@ use linux::file::{Mode};
 
 fn main() {
     let mode: Mode = "rwxrwxrwx".parse().unwrap();
-    println!("{:?}", format!("{}", mode));
-    // assert!(mode.to_string() == "rwxrwxrwx");
+    //println!("{:?}", format!("{}", mode));
+    assert!(&format!("{:?}", mode) == "rwxrwxrwx");
 }

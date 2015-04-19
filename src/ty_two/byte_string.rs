@@ -4,6 +4,7 @@
 
 #[prelude_import] use ty_one::prelude::*;
 use core::{mem};
+use core::ops::{Eq};
 use ty_one::byte_str::{ByteStr};
 use ty_one::clone::{Clone};
 use io::{Write};
@@ -62,5 +63,11 @@ impl ToOwned for ByteStr {
 impl Clone for ByteString {
     fn clone(&self) -> Result<ByteString> {
         self.data.clone().map(|o| ByteString { data: o })
+    }
+}
+
+impl Eq<str> for ByteString {
+    fn eq(&self, other: &str) -> bool {
+        self.as_ref().eq(other)
     }
 }
