@@ -68,6 +68,27 @@ impl<T> [T] {
         }
         (None, left)
     }
+
+    pub fn last(&self) -> Option<&T> {
+        match self.len() {
+            0 => None,
+            n => Some(&self[n - 1]),
+        }
+    }
+
+    pub fn split<'a, F>(&'a self, f: F) -> Split<'a, T, F>
+        where F: FnMut(&T) -> bool,
+    {
+        Split { slice: self, f: f }
+    }
+
+    pub fn split_at<'a>(&'a self, at: usize) -> (&'a [T], &'a [T]) {
+        let repr = self.repr();
+        assert!(at <= repr.len);
+        let left = unsafe { from_ptr(repr.ptr, at) };
+        let right = unsafe { from_ptr(repr.ptr.add(at), repr.len - at) };
+        (left, right)
+    }
 }
 
 pub struct Items<'a, T: 'a> {
@@ -78,6 +99,34 @@ impl<'a, T> Iterator for Items<'a, T> {
     type Item = &'a T;
     fn next(&mut self) -> Option<&'a T> {
         self.slice.next()
+    }
+}
+
+pub struct Split<'a, T: 'a, F> {
+    slice: &'a [T],
+    f: F,
+}
+
+impl<'a, T, F> Iterator for Split<'a, T, F>
+    where F: FnMut(&T) -> bool,
+{
+    type Item = &'a [T];
+    fn next(&mut self) -> Option<&'a [T]> {
+        if self.slice.len() == 0 {
+            return None;
+        }
+
+        let mut i = 0;
+        while i < self.slice.len() {
+            i += 1;
+            if (self.f)(&self.slice[i-1]) {
+                break;
+            }
+        }
+
+        let (left, right) = self.slice.split_at(i);
+        self.slice = right;
+        Some(&left[..left.len() - 1])
     }
 }
 

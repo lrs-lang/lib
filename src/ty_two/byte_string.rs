@@ -66,6 +66,12 @@ impl Clone for ByteString {
     }
 }
 
+impl Eq for ByteString {
+    fn eq(&self, other: &ByteString) -> bool {
+        self.data == other.data
+    }
+}
+
 impl Eq<str> for ByteString {
     fn eq(&self, other: &str) -> bool {
         self.as_ref().eq(other)

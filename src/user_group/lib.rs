@@ -17,8 +17,9 @@ extern crate linux_file as file;
 
 use base::{mem};
 use base::result::{Result};
-use base::errno::{self};
-use base::util::{memchr, memmove};
+use base::error::{self};
+use base::util::{memchr};
+use base::ptr::{memmove};
 
 use file::{File};
 
@@ -53,7 +54,7 @@ impl<'a> LineReader<'a> {
         }
     }
 
-    fn set_err(&mut self, e: errno::Errno) {
+    fn set_err(&mut self, e: error::Errno) {
         if let Some(ref mut err) = self.err {
             **err = Err(e);
         }
@@ -63,7 +64,7 @@ impl<'a> LineReader<'a> {
         loop {
             {
                 // Borrow checked doesn't understand that return ends the loop.
-                let cur: &'static [u8] = unsafe { mem::transmute(&buf[self.start..self.end]) };
+                let cur: &'static [u8] = unsafe { mem::cast(&buf[self.start..self.end]) };
                 if let Some(pos) = memchr(cur, b'\n') {
                     self.start += pos + 1;
                     return &cur[..pos];
@@ -71,14 +72,16 @@ impl<'a> LineReader<'a> {
             }
             // No newline in the current buffer.
             // Move it to the left, try to read more, repeat.
-            let dst = buf.as_mut_ptr();
-            let src = unsafe { dst.offset(self.start as isize) } as *const u8;
-            unsafe { memmove(dst, src, self.end - self.start); }
+            unsafe {
+                let dst = buf.as_mut_ptr();
+                let src = dst.add(self.start);
+                memmove(dst, src, self.end - self.start);
+            }
             self.end -= self.start;
             self.start = 0;
             match self.file.read(&mut buf[self.end..]) {
                 Err(e) => {
-                    // This can be errno::Interrupted but only if the library was compiled
+                    // This can be error::Interrupted but only if the library was compiled
                     // without the 'retry' feature. The user wants to handle it himself.
                     self.set_err(e);
                     return &[];
@@ -86,10 +89,10 @@ impl<'a> LineReader<'a> {
                 Ok(0) => {
                     if self.end == buf.len() {
                         // The buffer is too small for this entry.
-                        self.set_err(errno::NoMemory);
+                        self.set_err(error::NoMemory);
                     } else if self.end > self.start {
                         // Not at EOF but the buffer is not empty. The file is corrupted.
-                        self.set_err(errno::InvalidSequence);
+                        self.set_err(error::InvalidSequence);
                     }
                     return &[];
                 },

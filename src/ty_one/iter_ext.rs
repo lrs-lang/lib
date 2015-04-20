@@ -6,26 +6,50 @@
 use core::ops::{Add};
 use core::iter::{Iterator};
 
+pub fn repeat<T: Copy>(val: T) -> Repeat<T> {
+    Repeat { val: val }
+}
+
+pub struct Repeat<T> {
+    val: T,
+}
+
+impl<T> Iterator for Repeat<T>
+    where T: Copy,
+{
+    type Item = T;
+    fn next(&mut self) -> Option<T> { Some(self.val) }
+}
+
 impl<T: Iterator> IteratorExt for T { }
 
 pub trait IteratorExt : Iterator+Sized {
-    fn sum(mut self) -> Option<Self::Item>
-        where <Self as Iterator>::Item: Add<<Self as Iterator>::Item, Output=<Self as Iterator>::Item>
+    fn sum(self, start: Self::Item) -> Self::Item
+        where <Self as Iterator>::Item: Add<Self::Item, Output=Self::Item>
     {
-        let mut sum = match self.next() {
-            Some(e) => e,
-            _ => return None,
-        };
-        for e in self {
-            sum = sum + e;
-        }
-        Some(sum)
+        let mut sum = start;
+        for e in self { sum = sum + e; }
+        sum
     }
 
     fn map<T, F>(self, f: F) -> Map<T, F, Self>
         where F: FnMut(Self::Item) -> T,
     {
         Map { iter: self, f: f }
+    }
+
+    fn collect_into(&mut self, mut buf: &mut [Self::Item]) -> usize {
+        let mut count = 0;
+        while buf.len() > 0 {
+            let tmp = buf;
+            tmp[0] = match self.next() {
+                Some(v) => v,
+                _ => break,
+            };
+            count += 1;
+            buf = &mut tmp[1..];
+        }
+        count
     }
 }
 

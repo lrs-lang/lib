@@ -5,7 +5,7 @@
 #[prelude_import] use linux_ty_one::prelude::*;
 use linux_io::{Write, Read};
 use linux_arch::cty::{c_int};
-use linux_arch::syscall::{write, read};
+use linux_arch::syscall::{writev, readv};
 use util::{retry};
 
 pub struct FdIo(pub c_int);
@@ -14,13 +14,13 @@ pub const STDOUT: FdIo = FdIo(1);
 pub const STDERR: FdIo = FdIo(2);
 
 impl Write for FdIo {
-    fn write(&mut self, buf: &[u8]) -> Result<usize> {
-        retry(|| write(self.0, buf)).map(|r| r as usize)
+    fn gather_write(&mut self, buf: &[&[u8]]) -> Result<usize> {
+        retry(|| writev(self.0, buf)).map(|r| r as usize)
     }
 }
 
 impl Read for FdIo {
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
-        retry(|| read(self.0, buf)).map(|r| r as usize)
+    fn scatter_read(&mut self, buf: &mut [&mut [u8]]) -> Result<usize> {
+        retry(|| readv(self.0, buf)).map(|r| r as usize)
     }
 }

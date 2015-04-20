@@ -29,6 +29,7 @@ pub mod byte_string;
 pub mod c_string;
 pub mod io_ext;
 pub mod iter_ext;
+pub mod buf_reader;
 pub mod path_buf;
 pub mod queue;
 pub mod rc;

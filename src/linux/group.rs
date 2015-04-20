@@ -4,7 +4,7 @@
 
 //! Group handling.
 
-pub use linux_core::alias::{GroupId};
+pub use linux_base::alias::{GroupId};
 pub use linux_user_group::group::{Info, InfoIter, InfoMemberIter, Information,
                 InformationIter, InformationMemberIter, INFO_BUF_SIZE, GroupInfo, iter,
                 iter_buf};

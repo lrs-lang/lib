@@ -1218,8 +1218,8 @@ impl File {
 }
 
 impl Read for File {
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
-        Ok(try!(File::read(self, buf)))
+    fn scatter_read(&mut self, buf: &mut [&mut [u8]]) -> Result<usize> {
+        File::scatter_read(self, buf)
     }
 }
 

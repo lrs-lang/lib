@@ -2,6 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub use linux_core::iter::*;
-pub use linux_ty_one::iter_ext::{repeat, IteratorExt};
-pub use linux_ty_two::iter_ext::{IteratorExt2};
+#[prelude_import] use ty_one::prelude::*;
+use {Debug, Write};
+
+impl Debug for () {
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
+        w.write(b"()").ignore_ok()
+    }
+}

@@ -2,15 +2,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::{mem};
-use std::io::{BufReader, BufRead};
-use std::convert::{From};
-
-use core::result::{Result};
-use core::errno::{self};
-use core::ext::{IteratorExt2};
-use core::string::{AsLinuxStr, LinuxStr, LinuxString};
-use core::alias::{UserId, GroupId};
+#[prelude_import] use base::prelude::*;
+use base::{mem};
+use base::io::{BufReader, BufRead};
+use base::result::{Result};
+use base::fmt::{Debug, Write};
+use base::error::{self};
+use base::string::{AsByteStr, ByteStr, ByteString};
+use base::alias::{UserId, GroupId};
+use base::parse::{Parse};
 
 use file::{File};
 
@@ -20,89 +20,106 @@ use {LineReader};
 pub const INFO_BUF_SIZE: usize = 1024;
 
 /// Struct holding non-allocated user info.
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Eq)]
 pub struct Info<'a> {
-    name:     &'a LinuxStr,
-    password: &'a LinuxStr,
+    name:     &'a ByteStr,
+    password: &'a ByteStr,
     user_id:  UserId,
     group_id: GroupId,
-    comment:  &'a LinuxStr,
-    home:     &'a LinuxStr,
-    shell:    &'a LinuxStr,
+    comment:  &'a ByteStr,
+    home:     &'a ByteStr,
+    shell:    &'a ByteStr,
 }
 
 impl<'a> Info<'a> {
     /// Retrieves user info of the user with id `id`.
-    pub fn from_user_id(id: UserId, buf: &'a mut [u8]) -> Result<Info<'a>> {
+    pub fn from_user_id(buf: &'a mut [u8], id: UserId) -> Result<Info<'a>> {
         Info::find_by(buf, |user| user.user_id == id)
     }
 
     /// Retrieves user info of the user with name `name`.
-    pub fn from_user_name<S: AsLinuxStr>(name: S, buf: &'a mut [u8]) -> Result<Info<'a>> {
-        let name = name.as_linux_str();
+    pub fn from_user_name<S>(buf: &'a mut [u8], name: S) -> Result<Info<'a>>
+        where S: AsByteStr,
+    {
+        let name = name.as_byte_str();
         Info::find_by(buf, |user| user.name == name)
     }
 
     /// Finds the first user that satisfies the predicate.
-    pub fn find_by<F: Fn(&Info) -> bool>(buf: &'a mut [u8], pred: F) -> Result<Info<'a>> {
+    pub fn find_by<F>(buf: &'a mut [u8], pred: F) -> Result<Info<'a>>
+        where F: Fn(&Info) -> bool,
+    {
         let mut err = Ok(());
         {
             let mut iter = iter_buf(Some(&mut err));
             while let Some(user) = iter.next(buf) {
                 if pred(&user) {
                     // the borrow checked doesn't understand that return ends the loop
-                    let user = unsafe { mem::transmute(user) };
+                    let user = unsafe { mem::cast(user) };
                     return Ok(user);
                 }
             }
         }
         try!(err);
-        Err(errno::DoesNotExist)
+        Err(error::DoesNotExist)
     }
 
     /// Copies the contained data and returns owned information.
-    pub fn to_owned(&self) -> Information {
-        Information {
-            name:     self.name.to_linux_string(),
-            password: self.password.to_linux_string(),
+    pub fn to_owned(&self) -> Result<Information> {
+        Ok(Information {
+            name:     try!(self.name.to_owned()),
+            password: try!(self.password.to_owned()),
             user_id:  self.user_id,
             group_id: self.group_id,
-            comment:  self.comment.to_linux_string(),
-            home:     self.home.to_linux_string(),
-            shell:    self.shell.to_linux_string(),
-        }
+            comment:  try!(self.comment.to_owned()),
+            home:     try!(self.home.to_owned()),
+            shell:    try!(self.shell.to_owned()),
+        })
+    }
+}
+
+impl<'a> Debug for Info<'a> {
+    fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
+        write!(w, "Info {{ name: {:?}, password: {:?}, user_id: {:?}, group_id: {:?}, \
+                    comment: {:?}, home: {:?}, shell: {:?} }}",
+                    self.name, self.password, self.user_id, self.group_id, self.comment,
+                    self.home, self.shell)
     }
 }
 
 /// Struct holding allocated user info.
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Eq)]
 pub struct Information {
-    name:     LinuxString,
-    password: LinuxString,
+    name:     ByteString,
+    password: ByteString,
     user_id:  UserId,
     group_id: GroupId,
-    comment:  LinuxString,
-    home:     LinuxString,
-    shell:    LinuxString,
+    comment:  ByteString,
+    home:     ByteString,
+    shell:    ByteString,
 }
 
 impl Information {
     /// Retrieves user info of the user with id `id`.
     pub fn from_user_id(id: UserId) -> Result<Information> {
         let mut buf = [0; INFO_BUF_SIZE];
-        Info::from_user_id(id, &mut buf).map(|i| i.to_owned())
+        Info::from_user_id(&mut buf, id).chain(|i| i.to_owned())
     }
 
     /// Retrieves user info of the user with name `name`.
-    pub fn from_user_name<S: AsLinuxStr>(name: S) -> Result<Information> {
+    pub fn from_user_name<S>(name: S) -> Result<Information>
+        where S: AsByteStr
+    {
         let mut buf = [0; INFO_BUF_SIZE];
-        Info::from_user_name(name, &mut buf).map(|i| i.to_owned())
+        Info::from_user_name(&mut buf, name).chain(|i| i.to_owned())
     }
 
     /// Finds the first user that satisfies the predicate.
-    pub fn find_by<F: Fn(&Info) -> bool>(pred: F) -> Result<Information> {
+    pub fn find_by<F>(pred: F) -> Result<Information>
+        where F: Fn(&Info) -> bool,
+    {
         let mut buf = [0; INFO_BUF_SIZE];
-        Info::find_by(&mut buf, pred).map(|i| i.to_owned())
+        Info::find_by(&mut buf, pred).chain(|i| i.to_owned())
     }
 
     pub fn to_info<'a>(&'a self) -> Info<'a> {
@@ -121,39 +138,39 @@ impl Information {
 /// Trait for types that hold user info.
 pub trait UserInfo {
     /// Name of the user.
-    fn name(&self)     -> &LinuxStr;
+    fn name(&self)     -> &ByteStr;
     /// Password of the user.
-    fn password(&self) -> &LinuxStr;
+    fn password(&self) -> &ByteStr;
     /// User id of the user.
     fn user_id(&self)  -> UserId;
     /// Group id of the user.
     fn group_id(&self) -> GroupId;
     /// Comment of the user.
-    fn comment(&self)  -> &LinuxStr;
+    fn comment(&self)  -> &ByteStr;
     /// Home folder of the user.
-    fn home(&self)     -> &LinuxStr;
+    fn home(&self)     -> &ByteStr;
     /// Shell of the user.
-    fn shell(&self)    -> &LinuxStr;
+    fn shell(&self)    -> &ByteStr;
 }
 
 impl<'a> UserInfo for Info<'a> {
-    fn name(&self)     -> &LinuxStr { self.name     }
-    fn password(&self) -> &LinuxStr { self.password }
+    fn name(&self)     -> &ByteStr { self.name     }
+    fn password(&self) -> &ByteStr { self.password }
     fn user_id(&self)  -> UserId    { self.user_id  }
     fn group_id(&self) -> GroupId   { self.group_id }
-    fn comment(&self)  -> &LinuxStr { self.comment  }
-    fn home(&self)     -> &LinuxStr { self.home     }
-    fn shell(&self)    -> &LinuxStr { self.shell    }
+    fn comment(&self)  -> &ByteStr { self.comment  }
+    fn home(&self)     -> &ByteStr { self.home     }
+    fn shell(&self)    -> &ByteStr { self.shell    }
 }
 
 impl UserInfo for Information {
-    fn name(&self)     -> &LinuxStr { &self.name     }
-    fn password(&self) -> &LinuxStr { &self.password }
+    fn name(&self)     -> &ByteStr { &self.name     }
+    fn password(&self) -> &ByteStr { &self.password }
     fn user_id(&self)  -> UserId    { self.user_id   }
     fn group_id(&self) -> GroupId   { self.group_id  }
-    fn comment(&self)  -> &LinuxStr { &self.comment  }
-    fn home(&self)     -> &LinuxStr { &self.home     }
-    fn shell(&self)    -> &LinuxStr { &self.shell    }
+    fn comment(&self)  -> &ByteStr { &self.comment  }
+    fn home(&self)     -> &ByteStr { &self.home     }
+    fn shell(&self)    -> &ByteStr { &self.shell    }
 }
 
 /// Returns an allocating iterator over the users in `/etc/passwd`.
@@ -165,30 +182,37 @@ pub fn iter<'a>(error: Option<&'a mut Result>) -> InformationIter<'a> {
 
 /// An allocating iterator over users.
 pub struct InformationIter<'a> {
-    file: BufReader<File>,
+    file: BufReader<'static, File>,
     err: Option<&'a mut Result>,
 }
 
 impl<'a> InformationIter<'a> {
     fn new(error: Option<&'a mut Result>) -> InformationIter<'a> {
         match File::open_read("/etc/passwd") {
-            Err(e) => {
-                if let Some(err) = error {
-                    *err = Err(e);
+            Err(e) => InformationIter::error_dummy(e, error),
+            Ok(f) => {
+                match BufReader::allocate(f, 1024) {
+                    Ok(b) => InformationIter {
+                        file: b,
+                        err: error,
+                    },
+                    Err(e) => InformationIter::error_dummy(e, error),
                 }
-                InformationIter {
-                    file: BufReader::with_capacity(0, File::invalid()),
-                    err: None,
-                }
-            },
-            Ok(f) => InformationIter {
-                file: BufReader::new(f),
-                err: error,
             },
         }
     }
 
-    fn set_err(&mut self, e: errno::Errno) {
+    fn error_dummy(e: error::Errno, error: Option<&'a mut Result>) -> InformationIter<'a> {
+        if let Some(err) = error {
+            *err = Err(e);
+        }
+        InformationIter {
+            file: BufReader::new(File::invalid(), &mut []),
+            err: None,
+        }
+    }
+
+    fn set_err(&mut self, e: error::Errno) {
         if let Some(ref mut err) = self.err {
             **err = Err(e);
         }
@@ -200,8 +224,8 @@ impl<'a> Iterator for InformationIter<'a> {
 
     fn next(&mut self) -> Option<Information> {
         let mut buf = vec!();
-        if let Err(e) = self.file.read_until(b'\n', &mut buf) {
-            self.set_err(From::from(e));
+        if let Err(e) = self.file.copy_until(&mut buf, b'\n') {
+            self.set_err(e);
             None
         } else if buf.len() > 0 {
             let buf = match buf.last() {
@@ -211,18 +235,18 @@ impl<'a> Iterator for InformationIter<'a> {
             let (parts, uid, gid) = match parse_line(buf) {
                 Some(p) => p,
                 _ => {
-                    self.set_err(errno::InvalidSequence);
+                    self.set_err(error::InvalidSequence);
                     return None;
                 }
             };
             Some(Information {
-                name:     LinuxString::from_bytes(parts[0]),
-                password: LinuxString::from_bytes(parts[1]),
+                name:     ByteString::from_vec(parts[0].to_owned().unwrap()),
+                password: ByteString::from_vec(parts[1].to_owned().unwrap()),
                 user_id:  uid,
                 group_id: gid,
-                comment:  LinuxString::from_bytes(parts[4]),
-                home:     LinuxString::from_bytes(parts[5]),
-                shell:    LinuxString::from_bytes(parts[6]),
+                comment:  ByteString::from_vec(parts[4].to_owned().unwrap()),
+                home:     ByteString::from_vec(parts[5].to_owned().unwrap()),
+                shell:    ByteString::from_vec(parts[6].to_owned().unwrap()),
             })
         } else {
             None
@@ -258,16 +282,16 @@ impl<'a> InfoIter<'a> {
         }
         if let Some((parts, uid, gid)) = parse_line(buf) {
             Some(Info {
-                name:     parts[0].as_linux_str(),
-                password: parts[1].as_linux_str(),
+                name:     parts[0].as_byte_str(),
+                password: parts[1].as_byte_str(),
                 user_id:  uid,
                 group_id: gid,
-                comment:  parts[4].as_linux_str(),
-                home:     parts[5].as_linux_str(),
-                shell:    parts[6].as_linux_str(),
+                comment:  parts[4].as_byte_str(),
+                home:     parts[5].as_byte_str(),
+                shell:    parts[6].as_byte_str(),
             })
         } else {
-            self.reader.set_err(errno::InvalidSequence);
+            self.reader.set_err(error::InvalidSequence);
             None
         }
     }
@@ -278,11 +302,11 @@ fn parse_line(line: &[u8]) -> Option<([&[u8]; 7], UserId, GroupId)> {
     if line.split(|&c| c == b':').collect_into(&mut parts) < 7 {
         return None;
     }
-    let user_id = match parts[2].as_linux_str().parse() {
+    let user_id = match parts[2].parse() {
         Ok(id) => id,
         _ => return None,
     };
-    let group_id = match parts[3].as_linux_str().parse() {
+    let group_id = match parts[3].parse() {
         Ok(id) => id,
         _ => return None,
     };

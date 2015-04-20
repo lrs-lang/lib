@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use ty_one::prelude::*;
-use io::{Read};
+use io::{Read, Write};
 use vec::{Vec};
 
 pub const BUF_READ_STEP_SIZE: usize = 4096;
@@ -30,3 +30,7 @@ pub trait ReadExt : Read {
 }
 
 impl<T: Read> ReadExt for T { }
+
+pub trait BufRead : Read {
+    fn copy_until<W: Write>(&mut self, dst: &mut W, b: u8) -> Result<usize>;
+}

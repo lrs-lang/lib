@@ -183,6 +183,12 @@ impl<T: Clone> Clone for Vec<T> {
     }
 }
 
+impl<'a, T> IntoIterator for &'a Vec<T> {
+    type Item = &'a T;
+    type IntoIter = slice::Items<'a, T>;
+    fn into_iter(self) -> slice::Items<'a, T> { self.iter() }
+}
+
 // Maybe these aren't really needed. We can just let the user manually deref.
 
 impl AsRef<[u8]> for Vec<u8> {
@@ -251,7 +257,12 @@ impl Write for Vec<u8> {
         Ok(buf.len())
     }
 
-    fn write_all(&mut self, buf: &[u8]) -> Result<usize> {
-        self.write(buf)
+    fn gather_write(&mut self, mut buf: &[&[u8]]) -> Result<usize> {
+        let mut sum = 0;
+        while self.len() > 0 && buf.len() > 0 {
+            sum += try!(self.write(&buf[0]));
+            buf = &buf[1..];
+        }
+        Ok(sum)
     }
 }

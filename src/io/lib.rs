@@ -18,7 +18,11 @@ use ty_one::error::{Errno, DeviceFull};
 pub type Result<T> = ty_one::result::Result<T, Errno>;
 
 pub trait Read {
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize>;
+    fn scatter_read(&mut self, buf: &mut [&mut [u8]]) -> Result<usize>;
+
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+        self.scatter_read(&mut [buf])
+    }
 
     fn read_all(&mut self, mut buf: &mut [u8]) -> Result<usize> {
         let mut read = 0;
@@ -37,7 +41,11 @@ pub trait Read {
 }
 
 pub trait Write {
-    fn write(&mut self, buf: &[u8]) -> Result<usize>;
+    fn gather_write(&mut self, buf: &[&[u8]]) -> Result<usize>;
+
+    fn write(&mut self, buf: &[u8]) -> Result<usize> {
+        self.gather_write(&[buf])
+    }
 
     fn write_all(&mut self, mut buf: &[u8]) -> Result<usize> {
         let mut written = 0;
@@ -65,6 +73,16 @@ impl<'a> Read for &'a [u8] {
         *self = &self[n..];
         Ok(n)
     }
+
+    fn scatter_read(&mut self, mut buf: &mut [&mut [u8]]) -> Result<usize> {
+        let mut sum = 0;
+        while self.len() > 0 && buf.len() > 0 {
+            sum += self.read(&mut buf[0]).unwrap();
+            let b = buf;
+            buf = &mut b[1..];
+        }
+        Ok(sum)
+    }
 }
 
 impl<'a> Write for &'a mut [u8] {
@@ -77,16 +95,45 @@ impl<'a> Write for &'a mut [u8] {
         }
         Ok(n)
     }
+
+    fn gather_write(&mut self, mut buf: &[&[u8]]) -> Result<usize> {
+        let mut sum = 0;
+        while self.len() > 0 && buf.len() > 0 {
+            sum += self.write(&buf[0]).unwrap();
+            buf = &buf[1..];
+        }
+        Ok(sum)
+    }
 }
 
 impl<'a, T: Read+?Sized> Read for &'a mut T {
+    fn scatter_read(&mut self, buf: &mut [&mut [u8]]) -> Result<usize> {
+        (**self).scatter_read(buf)
+    }
+
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
-        (*self).read(buf)
+        (**self).read(buf)
+    }
+
+    fn read_all(&mut self, mut buf: &mut [u8]) -> Result<usize> {
+        (**self).read_all(buf)
     }
 }
 
 impl<'a, T: Write+?Sized> Write for &'a mut T {
+    fn gather_write(&mut self, buf: &[&[u8]]) -> Result<usize> {
+        (**self).gather_write(buf)
+    }
+
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
-        (*self).write(buf)
+        (**self).write(buf)
+    }
+
+    fn write_all(&mut self, buf: &[u8]) -> Result<usize> {
+        (**self).write_all(buf)
+    }
+
+    fn write_str(&mut self, buf: &str) -> Result<usize> {
+        (**self).write_str(buf)
     }
 }

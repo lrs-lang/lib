@@ -2,15 +2,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::{self, mem, fmt, iter};
-use std::io::{BufReader, BufRead};
-use std::convert::{From};
-
-use core::result::{Result};
-use core::errno::{self, Errno};
-use core::ext::{IteratorExt2};
-use core::string::{LinuxStr, LinuxString, AsLinuxStr};
-use core::alias::{GroupId};
+#[prelude_import] use base::prelude::*;
+use base::{mem, slice};
+use base::fmt::{Debug, Write};
+use base::io::{BufReader, BufRead};
+use base::result::{Result};
+use base::error::{self};
+use base::string::{AsByteStr, ByteStr, ByteString};
+use base::alias::{GroupId};
+use base::parse::{Parse};
 
 use file::{File};
 
@@ -20,133 +20,148 @@ use {LineReader};
 pub const INFO_BUF_SIZE: usize = 1024;
 
 /// Struct holding non-allocated group info.
-#[derive(Copy, Clone, Eq)]
-#[allow(raw_pointer_derive)]
+#[derive(Copy)]
 pub struct Info<'a> {
-    name:     &'a LinuxStr,
-    password: &'a LinuxStr,
+    name:     &'a ByteStr,
+    password: &'a ByteStr,
     id:       GroupId,
     members:  &'a [u8],
 }
 
 impl<'a> Info<'a> {
     /// Retrieves group info of the group with id `id`.
-    pub fn from_group_id(id: GroupId, buf: &'a mut [u8]) -> Result<Info<'a>> {
+    pub fn from_group_id(buf: &'a mut [u8], id: GroupId) -> Result<Info<'a>> {
         Info::find_by(buf, |group| group.id == id)
     }
 
     /// Retrieves group info of the group with name `name`.
-    pub fn from_group_name<S: AsLinuxStr>(name: S, buf: &'a mut [u8]) -> Result<Info<'a>> {
-        let name = name.as_linux_str();
+    pub fn from_group_name<S>(buf: &'a mut [u8], name: S) -> Result<Info<'a>>
+        where S: AsByteStr,
+    {
+        let name = name.as_byte_str();
         Info::find_by(buf, |group| group.name == name)
     }
 
     /// Finds the first group that satisfies the predicate.
-    pub fn find_by<F: Fn(&Info) -> bool>(buf: &'a mut [u8], pred: F) -> Result<Info<'a>> {
+    pub fn find_by<F>(buf: &'a mut [u8], pred: F) -> Result<Info<'a>>
+        where F: Fn(&Info) -> bool,
+    {
         let mut err = Ok(());
         {
             let mut iter = iter_buf(Some(&mut err));
             while let Some(group) = iter.next(buf) {
                 if pred(&group) {
                     // the borrow checked doesn't understand that return ends the loop
-                    let group = unsafe { mem::transmute(group) };
+                    let group = unsafe { mem::cast(group) };
                     return Ok(group);
                 }
             }
         }
         try!(err);
-        Err(errno::DoesNotExist)
+        Err(error::DoesNotExist)
     }
 
     /// Copies the contained data and returns owned information.
-    pub fn to_owned(&self) -> Information {
-        Information {
-            name:     self.name.to_linux_string(),
-            password: self.password.to_linux_string(),
+    pub fn to_owned(&self) -> Result<Information> {
+        let mut members = Vec::new();
+        for member in self.members() {
+            let member = try!(member.to_owned());
+            try!(members.reserve(1));
+            members.push(member);
+        }
+        Ok(Information {
+            name:     try!(self.name.to_owned()),
+            password: try!(self.password.to_owned()),
             id:       self.id,
-            members:  self.members().map(|v| v.to_linux_string()).collect(),
-        }
+            members:  members,
+        })
     }
 }
 
-impl<'a> PartialEq for Info<'a> {
-    fn eq(&self, other: &Info<'a>) -> bool {
-        if self.name != other.name || self.password != other.password ||
-                                                                self.id != other.id {
-            return false;
-        }
-        let iter1 =  self.members().map(Some).chain(iter::repeat(None));
-        let iter2 = other.members().map(Some).chain(iter::repeat(None));
-        for v in iter1.zip(iter2) {
-            match v {
-                (None, None) => break,
-                (None, _) => return false,
-                (_, None) => return false,
-                (Some(m1), Some(m2)) if m1 != m2 => return false,
-                _ => { },
-            }
-        }
-        true
-    }
-}
+// Not yet sure if we want `chain` and I don't want to implement this in another way right
+// now.
+//impl<'a> Eq for Info<'a> {
+//    fn eq(&self, other: &Info<'a>) -> bool {
+//        if self.name != other.name || self.password != other.password ||
+//                                                                self.id != other.id {
+//            return false;
+//        }
+//        let iter1 =  self.members().map(Some).chain(iter::repeat(None));
+//        let iter2 = other.members().map(Some).chain(iter::repeat(None));
+//        for v in iter1.zip(iter2) {
+//            match v {
+//                (None, None) => break,
+//                (None, _) => return false,
+//                (_, None) => return false,
+//                (Some(m1), Some(m2)) if m1 != m2 => return false,
+//                _ => { },
+//            }
+//        }
+//        true
+//    }
+//}
 
-impl<'a> fmt::Debug for Info<'a> {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        try!(write!(fmt, "Info {{ name: \"{:?}\", password: \"{:?}\", id: {}, members: [",
+impl<'a> Debug for Info<'a> {
+    fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
+        try!(write!(w, "Info {{ name: \"{:?}\", password: \"{:?}\", id: {}, members: [",
                     self.name, self.password, self.id));
-        for member in self.members() { try!(write!(fmt, "\"{:?}\", ", member)) }
-        write!(fmt, "] }}")
+        for member in self.members() { try!(write!(w, "\"{:?}\", ", member)) }
+        write!(w, "] }}")
     }
 }
 
 /// Struct holding allocated group info.
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Eq)]
 pub struct Information {
-    name:     LinuxString,
-    password: LinuxString,
+    name:     ByteString,
+    password: ByteString,
     id:       GroupId,
-    members:  Vec<LinuxString>,
+    members:  Vec<ByteString>,
 }
 
 impl Information {
     /// Retrieves group info of the group with id `id`.
     pub fn from_group_id(id: GroupId) -> Result<Information> {
         let mut buf = [0; INFO_BUF_SIZE];
-        Info::from_group_id(id, &mut buf).map(|i| i.to_owned())
+        Info::from_group_id(&mut buf, id).chain(|i| i.to_owned())
     }
 
     /// Retrieves group info of the group with name `name`.
-    pub fn from_group_name<S: AsLinuxStr>(name: S) -> Result<Information> {
+    pub fn from_group_name<S>(name: S) -> Result<Information>
+        where S: AsByteStr,
+    {
         let mut buf = [0; INFO_BUF_SIZE];
-        Info::from_group_name(name, &mut buf).map(|i| i.to_owned())
+        Info::from_group_name(&mut buf, name).chain(|i| i.to_owned())
     }
 
     /// Finds the first group that satisfies the predicate.
-    pub fn find_by<F: Fn(&Info) -> bool>(pred: F) -> Result<Information> {
+    pub fn find_by<F>(pred: F) -> Result<Information>
+        where F: Fn(&Info) -> bool,
+    {
         let mut buf = [0; INFO_BUF_SIZE];
-        Info::find_by(&mut buf, pred).map(|i| i.to_owned())
+        Info::find_by(&mut buf, pred).chain(|i| i.to_owned())
     }
 }
 
-impl fmt::Debug for Information {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        try!(write!(fmt, "Information {{ name: \"{:?}\", password: \"{:?}\", id: {}, members: [",
+impl Debug for Information {
+    fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
+        try!(write!(w, "Information {{ name: \"{:?}\", password: \"{:?}\", id: {}, members: [",
                     self.name, self.password, self.id));
-        for member in &self.members { try!(write!(fmt, "\"{:?}\", ", member)) }
-        write!(fmt, "] }}")
+        for member in &self.members { try!(write!(w, "\"{:?}\", ", member)) }
+        write!(w, "] }}")
     }
 }
 
 /// Trait for types that hold group info.
 pub trait GroupInfo<'a>
-    where <Self as GroupInfo<'a>>::Iterator: Iterator<Item=&'a LinuxStr>
+    where <Self as GroupInfo<'a>>::Iterator: Iterator<Item=&'a ByteStr>
 {
     type Iterator;
 
     /// Name of the group.
-    fn name(&self)       -> &LinuxStr;
+    fn name(&self)       -> &ByteStr;
     /// Password of the group.
-    fn password(&self)   -> &LinuxStr;
+    fn password(&self)   -> &ByteStr;
     /// Id of the group.
     fn id(&self)         -> GroupId;
     /// Iterator over the members of the group.
@@ -156,8 +171,8 @@ pub trait GroupInfo<'a>
 impl<'a: 'b, 'b> GroupInfo<'b> for Info<'a> {
     type Iterator = InfoMemberIter<'b>;
 
-    fn name(&self)     -> &LinuxStr { self.name }
-    fn password(&self) -> &LinuxStr { self.password }
+    fn name(&self)     -> &ByteStr { self.name }
+    fn password(&self) -> &ByteStr { self.password }
     fn id(&self)       -> GroupId { self.id }
 
     fn members(&'b self) -> InfoMemberIter<'b> {
@@ -169,22 +184,22 @@ fn comma_split(b: &u8) -> bool { *b == b',' }
 
 /// Iterator over the members in non-allocated group data.
 pub struct InfoMemberIter<'a> {
-    members: std::slice::Split<'a, u8, fn(&u8) -> bool>,
+    members: slice::Split<'a, u8, fn(&u8) -> bool>,
 }
 
 impl<'a> Iterator for InfoMemberIter<'a> {
-    type Item = &'a LinuxStr;
+    type Item = &'a ByteStr;
 
-    fn next(&mut self) -> Option<&'a LinuxStr> {
-        self.members.next().map(|v| v.as_linux_str())
+    fn next(&mut self) -> Option<&'a ByteStr> {
+        self.members.next().map(|v| v.as_byte_str())
     }
 }
 
 impl<'a> GroupInfo<'a> for Information {
     type Iterator = InformationMemberIter<'a>;
 
-    fn name(&self)     -> &LinuxStr { &self.name }
-    fn password(&self) -> &LinuxStr { &self.password }
+    fn name(&self)     -> &ByteStr { &self.name }
+    fn password(&self) -> &ByteStr { &self.password }
     fn id(&self)       -> GroupId { self.id }
 
     fn members(&'a self) -> InformationMemberIter<'a> {
@@ -194,14 +209,14 @@ impl<'a> GroupInfo<'a> for Information {
 
 /// Iterator over the members in allocated group data.
 pub struct InformationMemberIter<'a> {
-    iter: std::slice::Iter<'a, LinuxString>,
+    iter: slice::Items<'a, ByteString>,
 }
 
 impl<'a> Iterator for InformationMemberIter<'a> {
-    type Item = &'a LinuxStr;
+    type Item = &'a ByteStr;
 
-    fn next(&mut self) -> Option<&'a LinuxStr> {
-        self.iter.next().map(|v| v.as_linux_str())
+    fn next(&mut self) -> Option<&'a ByteStr> {
+        self.iter.next().map(|v| v.as_byte_str())
     }
 }
 
@@ -213,30 +228,37 @@ pub fn iter<'a>(error: Option<&'a mut Result>) -> InformationIter<'a> {
 }
 
 pub struct InformationIter<'a> {
-    file: BufReader<File>,
+    file: BufReader<'static, File>,
     err: Option<&'a mut Result>,
 }
 
 impl<'a> InformationIter<'a> {
     fn new(error: Option<&'a mut Result>) -> InformationIter<'a> {
         match File::open_read("/etc/group") {
-            Err(e) => {
-                if let Some(err) = error {
-                    *err = Err(e);
+            Err(e) => InformationIter::error_dummy(e, error),
+            Ok(f) => {
+                match BufReader::allocate(f, 1024) {
+                    Ok(b) => InformationIter {
+                        file: b,
+                        err: error,
+                    },
+                    Err(e) => InformationIter::error_dummy(e, error),
                 }
-                InformationIter {
-                    file: BufReader::with_capacity(0, File::invalid()),
-                    err: None,
-                }
-            },
-            Ok(f) => InformationIter {
-                file: BufReader::new(f),
-                err: error,
             },
         }
     }
 
-    fn set_err(&mut self, e: errno::Errno) {
+    fn error_dummy(e: error::Errno, error: Option<&'a mut Result>) -> InformationIter<'a> {
+        if let Some(err) = error {
+            *err = Err(e);
+        }
+        InformationIter {
+            file: BufReader::new(File::invalid(), &mut []),
+            err: None,
+        }
+    }
+
+    fn set_err(&mut self, e: error::Errno) {
         if let Some(ref mut err) = self.err {
             **err = Err(e);
         }
@@ -248,28 +270,50 @@ impl<'a> Iterator for InformationIter<'a> {
 
     fn next(&mut self) -> Option<Information> {
         let mut buf = vec!();
-        if let Err(e) = self.file.read_until(b'\n', &mut buf) {
-            self.set_err(From::from(e));
+        if let Err(e) = self.file.copy_until(&mut buf, b'\n') {
+            self.set_err(e);
             None
         } else if buf.len() > 0 {
             let buf = match buf.last() {
                 Some(&b'\n') => &buf[..buf.len()-1],
                 _ => &buf[..],
             };
-            let parts: Vec<_> = buf.split(|&c| c == b':').collect();
+            let parts = buf.split(|&c| c == b':').collect();
             if parts.len() != 4 {
-                self.set_err(errno::ProtocolError);
+                self.set_err(error::ProtocolError);
                 None
             } else {
-                let id = match parts[2].as_linux_str().parse() {
+                let id = match parts[2].parse() {
                     Ok(id) => id,
-                    _ => { self.set_err(errno::ProtocolError); return None; },
+                    _ => { self.set_err(error::ProtocolError); return None; },
                 };
-                let members = parts[3].split(|&c| c == b',')
-                                      .map(|s| LinuxString::from_bytes(s)).collect();
+                let mut members = Vec::new();
+                for member in parts[3].split(|&c| c == b',') {
+                    match members.reserve(1).chain(|_| member.to_owned()) {
+                        Ok(m) => members.push(ByteString::from_vec(m)),
+                        Err(e) => {
+                            self.set_err(e);
+                            return None;
+                        }
+                    }
+                }
+                let name = match parts[0].to_owned() {
+                    Ok(n) => ByteString::from_vec(n),
+                    Err(e) => {
+                        self.set_err(e);
+                        return None;
+                    }
+                };
+                let password = match parts[0].to_owned() {
+                    Ok(p) => ByteString::from_vec(p),
+                    Err(e) => {
+                        self.set_err(e);
+                        return None;
+                    }
+                };
                 Some(Information {
-                    name:     LinuxString::from_bytes(parts[0]),
-                    password: LinuxString::from_bytes(parts[1]),
+                    name:     name,
+                    password: password,
                     id:       id,
                     members:  members,
                 })
@@ -308,13 +352,13 @@ impl<'a> InfoIter<'a> {
         }
         if let Some((parts, id)) = parse_line(buf) {
             Some(Info {
-                name:     parts[0].as_linux_str(),
-                password: parts[1].as_linux_str(),
+                name:     parts[0].as_byte_str(),
+                password: parts[1].as_byte_str(),
                 id:       id,
-                members:  parts[3].as_linux_str().as_slice(),
+                members:  parts[3],
             })
         } else {
-            self.reader.set_err(errno::InvalidSequence);
+            self.reader.set_err(error::InvalidSequence);
             None
         }
     }
@@ -325,7 +369,7 @@ fn parse_line(line: &[u8]) -> Option<([&[u8]; 4], GroupId)> {
     if line.split(|&c| c == b':').collect_into(&mut parts) < 4 {
         return None;
     }
-    let id = match parts[2].as_linux_str().parse() {
+    let id = match parts[2].parse() {
         Ok(id) => id,
         _ => return None,
     };

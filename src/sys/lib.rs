@@ -33,7 +33,7 @@ pub fn cpu_count() -> usize {
     // XXX: Up to 512 CPUs which is the default maximum for ia64
     let mut buf = [0; 512 / 8];
     sched_getaffinity(0, &mut buf);
-    buf.iter().map(|b| b.count_ones()).sum().unwrap() as usize
+    buf.iter().map(|b| b.count_ones()).sum(0) as usize
 }
 
 /// Returns information about the system in form of strings.

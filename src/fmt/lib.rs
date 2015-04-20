@@ -32,6 +32,7 @@ mod impls {
     pub mod option;
     pub mod result;
     pub mod errno;
+    pub mod unit;
 }
 
 macro_rules! fmt_var {
