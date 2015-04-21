@@ -5,6 +5,7 @@
 use marker::{Copy};
 use mem::{self};
 
+/// The representation of `&[T]` or `&mut [T]`.
 #[repr(C)]
 pub struct Slice<T> {
     pub ptr: *const T,
@@ -13,12 +14,14 @@ pub struct Slice<T> {
 
 impl<T> Copy for Slice<T> {}
 
+/// The representation of `&Trait` or `Box<Trait>`.
 #[repr(C)]
 pub struct TraitObject {
     pub data: *mut u8,
     pub vtable: *mut u8,
 }
 
+/// Objects that have an alternative representation.
 pub unsafe trait Repr<T> {
     fn repr(&self) -> T;
 }

@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import] use ty_one::prelude::*;
+#[prelude_import] use base::prelude::*;
 use io::{Write};
 use core::{num, cmp};
 use {Debug, Display, UpperHex, LowerHex};

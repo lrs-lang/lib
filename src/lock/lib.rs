@@ -10,10 +10,13 @@
 
 #[macro_use]
 extern crate linux_core as core;
-extern crate linux_arch as arch;
-extern crate linux_ty_one as ty_one;
+extern crate linux_base as base;
 extern crate linux_io as io;
 extern crate linux_fmt as fmt;
+extern crate linux_cell as cell;
+extern crate linux_atomic as atomic;
+extern crate linux_cty as cty;
+extern crate linux_syscall as syscall;
 
 pub use raw_condvar::{RawCondvar, RAW_CONDVAR_INIT};
 pub use lock::{Lock, LockGuard, LOCK_INIT, DUMMY};

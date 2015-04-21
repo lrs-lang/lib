@@ -10,12 +10,19 @@
 #![allow(trivial_numeric_casts)]
 
 #[macro_use]
+extern crate linux_core as core;
 extern crate linux_base as base;
-mod linux { pub use base::linux::*; }
-mod core { pub use base::core::*; }
+extern crate linux_syscall as syscall;
+extern crate linux_cty as cty;
+extern crate linux_fmt as fmt;
 
-use base::syscall::{getpid, getppid};
-use base::alias::{ProcessId};
+mod linux {
+    pub use fmt::linux::*;
+    pub use {cty};
+}
+
+use syscall::{getpid, getppid};
+use cty::alias::{ProcessId};
 
 pub mod ids;
 

@@ -8,40 +8,57 @@
 #![plugin(linux_core_plugin)]
 #![no_std]
 
-#[macro_use] extern crate linux_base as base;
-#[prelude_import] use base::prelude::*;
-mod linux { pub use base::linux::*; }
-mod core { pub use base::core::*; }
-
-extern crate linux_dev as dev;
-extern crate linux_fs as fs;
+#[macro_use]
+extern crate linux_core      as core;
+extern crate linux_base      as base;
+extern crate linux_io        as io;
+extern crate linux_cty       as cty;
+extern crate linux_int       as int;
+extern crate linux_syscall   as syscall;
+extern crate linux_str_one   as str_one;
+extern crate linux_str_two   as str_two;
+extern crate linux_str_three as str_three;
+extern crate linux_arch_fns  as arch_fns;
+extern crate linux_rv        as rv;
+extern crate linux_fmt       as fmt;
+extern crate linux_vec       as vec;
+extern crate linux_rmo       as rmo;
+extern crate linux_parse     as parse;
+extern crate linux_fd        as fd;
+extern crate linux_dev       as dev;
+extern crate linux_fs        as fs;
 extern crate linux_time_base as time_base;
 
-use base::{mem};
-use base::io::{Read};
-use base::rmo::{AsRef, AsMut};
+#[prelude_import] use base::prelude::*;
+mod linux { pub use vec::linux::*; pub use {cty}; }
 
-use base::result::{Result};
+use vec::{Vec};
+use core::{mem};
+use io::{Read};
+use base::rmo::{AsRef, AsMut};
 use base::error::{self, Errno};
-use base::cty::{self, c_int, loff_t, c_uint, AT_FDCWD, AT_EMPTY_PATH, AT_SYMLINK_NOFOLLOW,
-                UTIME_NOW, UTIME_OMIT, timespec, RENAME_EXCHANGE, RENAME_NOREPLACE,
-                AT_REMOVEDIR, PATH_MAX, size_t, FALLOC_FL_KEEP_SIZE,
-                FALLOC_FL_PUNCH_HOLE, FALLOC_FL_COLLAPSE_RANGE, FALLOC_FL_ZERO_RANGE,
-                ssize_t, LOCK_SH, LOCK_EX, LOCK_NB, LOCK_UN};
-use base::range::{BoundedRange};
-use base::syscall::{openat, read, write, close, pread, lseek, pwrite, readv, writev,
-                    preadv, pwritev, ftruncate, fsync, fdatasync, syncfs, fadvise,
-                    fstatfs, fcntl_dupfd_cloexec, fcntl_getfl, fcntl_setfl, fcntl_getfd,
-                    fcntl_setfd, fstatat, faccessat, truncate, linkat, utimensat,
-                    renameat, mkdirat, unlinkat, symlinkat, readlinkat, fchownat,
-                    fchmodat, fchmod, mknodat, readahead, fallocate, setxattr, lsetxattr,
-                    fsetxattr, getxattr, lgetxattr, fgetxattr, removexattr, lremovexattr,
-                    fremovexattr, listxattr, llistxattr, flistxattr, flock};
-use base::path::{AsMutPath, Path, PathBuf};
-use base::string::{AsCStr, ToCString, CStr, ByteStr, ByteString, AsByteStr};
-use base::util::{retry, memchr};
-use base::alias::{UserId, GroupId};
-use base::fd_container::{FDContainer, FD};
+use cty::{c_int, loff_t, c_uint, AT_FDCWD, AT_EMPTY_PATH, AT_SYMLINK_NOFOLLOW,
+          UTIME_NOW, UTIME_OMIT, timespec, RENAME_EXCHANGE, RENAME_NOREPLACE,
+          AT_REMOVEDIR, PATH_MAX, size_t, FALLOC_FL_KEEP_SIZE,
+          FALLOC_FL_PUNCH_HOLE, FALLOC_FL_COLLAPSE_RANGE, FALLOC_FL_ZERO_RANGE,
+          ssize_t, LOCK_SH, LOCK_EX, LOCK_NB, LOCK_UN};
+use int::{BoundedRange};
+use syscall::{openat, read, write, close, pread, lseek, pwrite, readv, writev,
+              preadv, pwritev, ftruncate, fsync, fdatasync, syncfs, fadvise,
+              fstatfs, fcntl_dupfd_cloexec, fcntl_getfl, fcntl_setfl, fcntl_getfd,
+              fcntl_setfd, fstatat, faccessat, truncate, linkat, utimensat,
+              renameat, mkdirat, unlinkat, symlinkat, readlinkat, fchownat,
+              fchmodat, fchmod, mknodat, readahead, fallocate, setxattr, lsetxattr,
+              fsetxattr, getxattr, lgetxattr, fgetxattr, removexattr, lremovexattr,
+              fremovexattr, listxattr, llistxattr, flistxattr, flock};
+use str_one::{AsCStr, CStr, ByteStr, AsByteStr, NoNullStr, AsMutNoNullStr};
+use str_two::{ByteString, NoNullString};
+use str_three::{ToCString};
+use arch_fns::{memchr};
+use rv::{retry};
+use cty::alias::{UserId, GroupId};
+use fd::{FDContainer, FD};
+use rmo::{ToOwned};
 
 use time_base::{Time, time_to_timespec};
 
@@ -191,7 +208,7 @@ pub fn symlink<P, Q>(target: P, link: Q) -> Result
 /// Reads the target of the symbolic link `link` into `buf`.
 ///
 /// Relative paths will be interpreted relative to the current working directory.
-pub fn read_link_buf<P>(link: P, buf: &mut [u8]) -> Result<&mut Path>
+pub fn read_link_buf<P>(link: P, buf: &mut [u8]) -> Result<&mut NoNullStr>
     where P: ToCString,
 {
     File::current_dir().rel_read_link_buf(link, buf)
@@ -200,7 +217,7 @@ pub fn read_link_buf<P>(link: P, buf: &mut [u8]) -> Result<&mut Path>
 /// Reads the target of the symbolic link `link`.
 ///
 /// Relative paths will be interpreted relative to the current working directory.
-pub fn read_link<P>(link: P) -> Result<PathBuf>
+pub fn read_link<P>(link: P) -> Result<NoNullString>
     where P: ToCString,
 {
     File::current_dir().rel_read_link(link)
@@ -744,18 +761,18 @@ impl File {
     }
 
     /// Returns the path of the file that was used to open this file.
-    pub fn filename_buf<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut Path> {
+    pub fn filename_buf<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut NoNullStr> {
         // enough space for "/proc/self/fd/-{u64::MAX}\0"
         let mut proc_buf = [0; 36];
         let _ = write!(&mut proc_buf[..], "/proc/self/fd/{}", self.fd);
         // FIXME: not actually correct
         let cstr = proc_buf.as_cstr().unwrap();
         let len = try!(rv!(readlinkat(self.fd, cstr, buf), -> usize));
-        Ok(buf[..len].as_mut_path().unwrap())
+        Ok(buf[..len].as_mut_no_null_str().unwrap())
     }
 
     /// Returns the path of the file that was used to open this file.
-    pub fn filename(&self) -> Result<PathBuf> {
+    pub fn filename(&self) -> Result<NoNullString> {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
         self.filename_buf(&mut buf).chain(|f| f.to_owned())
     }
@@ -1120,20 +1137,20 @@ impl File {
     /// If `link` is relative, then `self` has to be a directory and `link` will be
     /// interpreted relative to `self`.
     pub fn rel_read_link_buf<'a, P>(&self, link: P,
-                                    buf: &'a mut [u8]) -> Result<&'a mut Path>
+                                    buf: &'a mut [u8]) -> Result<&'a mut NoNullStr>
         where P: ToCString,
     {
         let mut pbuf: [u8; PATH_MAX] = unsafe { mem::uninit() };
         let link = try!(link.rmo_cstr(&mut pbuf));
         let len = try!(rv!(readlinkat(self.fd, &link, buf), -> usize));
-        Ok(unsafe { Path::from_bytes_unchecked_mut(&mut buf[..len]) })
+        Ok(unsafe { NoNullStr::from_bytes_unchecked_mut(&mut buf[..len]) })
     }
 
     /// Reads the target of the symbolic link `link`.
     ///
     /// If `link` is relative, then `self` has to be a directory and `link` will be
     /// interpreted relative to `self`.
-    pub fn rel_read_link<P>(&self, link: P) -> Result<PathBuf>
+    pub fn rel_read_link<P>(&self, link: P) -> Result<NoNullString>
         where P: ToCString,
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };

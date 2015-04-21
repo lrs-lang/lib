@@ -10,14 +10,23 @@
 #![allow(trivial_numeric_casts)]
 
 #[macro_use]
+extern crate linux_core as core;
 extern crate linux_base as base;
-#[prelude_import] use base::prelude::*;
-mod linux { pub use base::linux::*; }
-mod core { pub use base::core::*; }
+extern crate linux_cty as cty;
+extern crate linux_syscall as syscall;
+extern crate linux_fmt as fmt;
+extern crate linux_fd as fd;
+extern crate linux_rv as rv;
 
-use base::ops::{Add, Sub};
-use base::cty::{timespec, time_t, k_long};
-use base::fmt::{Debug, Write};
+#[prelude_import] use base::prelude::*;
+mod linux {
+    pub use fmt::linux::*;
+    pub use {cty};
+}
+
+use core::ops::{Add, Sub};
+use cty::{timespec, time_t, k_long};
+use fmt::{Debug, Write};
 
 pub mod clock;
 pub mod timer;

@@ -3,14 +3,12 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use base::fmt::{Debug};
-use base::io::{Write};
-use base::{mem};
-use base::cty::{PATH_MAX, statfs, c_ulong};
-use base::syscall::{statfs};
-use base::util::{retry};
-use base::result::{Result};
-use base::string::{ToCString};
+use fmt::{Debug, Write};
+use core::{mem};
+use cty::{PATH_MAX, statfs, c_ulong};
+use syscall::{statfs};
+use rv::{retry};
+use str_three::{ToCString};
 
 use self::mount::{Flags};
 use self::types::{FileSystem};

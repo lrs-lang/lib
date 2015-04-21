@@ -3,10 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use base::fmt::{Debug};
-use base::io::{Write};
-use base::cty::{ST_RDONLY, ST_NOSUID, ST_NODEV, ST_NOEXEC, ST_SYNCHRONOUS, ST_MANDLOCK,
-                ST_NOATIME, ST_NODIRATIME, ST_RELATIME, c_ulong};
+use fmt::{Debug, Write};
+use cty::{ST_RDONLY, ST_NOSUID, ST_NODEV, ST_NOEXEC, ST_SYNCHRONOUS, ST_MANDLOCK,
+          ST_NOATIME, ST_NODIRATIME, ST_RELATIME, c_ulong};
 
 /// Mount flags of a filesystem.
 #[derive(Copy, Eq)]

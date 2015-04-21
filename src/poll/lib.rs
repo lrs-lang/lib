@@ -8,21 +8,27 @@
 #![plugin(linux_core_plugin)]
 #![no_std]
 
-#[macro_use] extern crate linux_base as base;
+#[macro_use]
+extern crate linux_core       as core;
+extern crate linux_base       as base;
+extern crate linux_cty        as cty;
+extern crate linux_syscall    as syscall;
+extern crate linux_fd         as fd;
+extern crate linux_rv         as rv;
+extern crate linux_saturating as saturating;
+extern crate linux_fmt        as fmt;
+extern crate linux_time_base  as time_base;
+
 #[prelude_import] use base::prelude::*;
-mod linux { pub use base::linux::*; }
-mod core { pub use base::core::*; }
+mod linux { pub use base::linux::*; pub use {cty}; }
 
-extern crate linux_time_base as time_base;
-
-use base::{mem};
-use base::cty::{self, c_int, EPOLL_CLOEXEC, EPOLL_CTL_ADD, EPOLL_CTL_MOD, EPOLL_CTL_DEL,
-                epoll_event};
-use base::syscall::{epoll_create, epoll_ctl, epoll_pwait, close};
-use base::fd_container::{FDContainer};
-use base::util::{retry};
-use base::num::{SaturatingCast};
-use base::fmt::{Debug, Write};
+use core::{mem};
+use cty::{c_int, EPOLL_CLOEXEC, EPOLL_CTL_ADD, EPOLL_CTL_MOD, EPOLL_CTL_DEL, epoll_event};
+use syscall::{epoll_create, epoll_ctl, epoll_pwait, close};
+use fd::{FDContainer};
+use rv::{retry};
+use saturating::{SaturatingCast};
+use fmt::{Debug, Write};
 
 use time_base::{Time};
 

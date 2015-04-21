@@ -9,7 +9,8 @@ use option::{Option};
 
 #[lang = "char"]
 impl char {
-    pub fn width(self) -> usize {
+    /// Calculates the length of the UTF-8 representation of the character.
+    pub fn len(self) -> usize {
         match self as u32 {
             0x0000 ... 0x007f => 1,
             0x0080 ... 0x07ff => 2,
@@ -18,16 +19,19 @@ impl char {
         }
     }
 
+    /// Converts the character to its UTF-8 representation.
+    ///
+    /// Only the first `len` bytes are meaningful.
     pub fn to_utf8(self) -> [u8; 4] {
         let val = self as u32;
         if val < 128 {
             return [val as u8, 0, 0, 0];
         }
         let mut bytes = [0; 4];
-        let width = self.width();
-        bytes[0] = !(!0 >> width);
-        for i in 0..width {
-            bytes[width - i - 1] |= 0b1000_0000 | (val as u8 & 0b11_1111);
+        let len = self.len();
+        bytes[0] = !(!0 >> len);
+        for i in 0..len {
+            bytes[len - i - 1] |= 0b1000_0000 | (val as u8 & 0b11_1111);
             val >> 6;
         }
         bytes

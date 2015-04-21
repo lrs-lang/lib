@@ -3,10 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use base::fmt::{Debug, Display, Write};
+use fmt::{Debug, Display, Write};
 use base::{error};
-use base::parse::{Parsable};
-use base::cty::{self, c_int, umode_t, S_IROTH, S_IWOTH, S_IXOTH};
+use parse::{Parsable};
+use cty::{self, c_int, umode_t, S_IROTH, S_IWOTH, S_IXOTH};
 
 /// Flags for opening and modifying a file.
 #[derive(Copy, Eq)]

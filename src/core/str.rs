@@ -11,18 +11,22 @@ use mem::{self};
 
 #[lang = "str"]
 impl str {
+    /// Returns a pointer to the first byte in the string.
     pub fn as_ptr(&self) -> *const u8 {
         self.repr().ptr
     }
 
+    /// Returns the wrapped bytes.
     pub fn as_bytes(&self) -> &[u8] {
         unsafe { mem::cast(self) }
     }
 
+    /// Returns the length of the string.
     pub fn len(&self) -> usize {
         self.as_bytes().len()
     }
 
+    /// Checks if `b` contains vaild UTF-8 and, if so, returns it as a string.
     pub fn from_bytes(b: &[u8]) -> Option<&str> {
         let longest = longest_sequence(b);
         if longest.len() == b.len() {
@@ -32,8 +36,9 @@ impl str {
         }
     }
 
-    pub fn chars_width<'a>(&'a self) -> CharsWidth<'a> {
-        CharsWidth { data: self.as_bytes() }
+    /// Returns an iterator over the contained characters and their UTF-8 lengths.
+    pub fn chars_len<'a>(&'a self) -> CharsLen<'a> {
+        CharsLen { data: self.as_bytes() }
     }
 }
 
@@ -42,7 +47,7 @@ impl Eq for str {
 }
 
 
-pub static UTF8_CHAR_WIDTH: [u8; 256] = [
+pub static UTF8_CHAR_LEN: [u8; 256] = [
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -64,27 +69,28 @@ pub static UTF8_CHAR_WIDTH: [u8; 256] = [
 impl<'a> Iterator for &'a str {
     type Item = char;
     fn next(&mut self) -> Option<char> {
-        let mut cw = CharsWidth { data: self.as_bytes() };
+        let mut cw = CharsLen { data: self.as_bytes() };
         let res = cw.next().map(|(c, _)| c);
         *self = unsafe { mem::cast(cw.data) };
         res
     }
 }
 
-pub struct CharsWidth<'a> {
+/// See the `chars_len` documentation.
+pub struct CharsLen<'a> {
     data: &'a [u8],
 }
 
-impl<'a> Iterator for CharsWidth<'a> {
+impl<'a> Iterator for CharsLen<'a> {
     type Item = (char, usize);
     fn next(&mut self) -> Option<(char, usize)> {
         if self.data.len() == 0 {
             return None;
         }
-        let width = UTF8_CHAR_WIDTH[self.data[0] as usize] as usize;
-        let c = unsafe { bytes_to_char(&self.data[..width]) };
-        self.data = &self.data[width..];
-        Some((c, width))
+        let len = UTF8_CHAR_LEN[self.data[0] as usize] as usize;
+        let c = unsafe { bytes_to_char(&self.data[..len]) };
+        self.data = &self.data[len..];
+        Some((c, len))
     }
 }
 
@@ -97,14 +103,14 @@ unsafe fn bytes_to_char(b: &[u8]) -> char {
     mem::cast(val)
 }
 
-/// Returns the longest initial sequence of valid UTF-8 in the buffer.
+/// Returns the longest initial sequence of valid UTF-8 in the `b`.
 pub fn longest_sequence(b: &[u8]) -> &str {
     let mut idx = 0;
     while idx < b.len() {
-        let width = UTF8_CHAR_WIDTH[b[idx] as usize] as usize;
-        if width == 1 { idx += 1; continue; }
-        if width == 0 || idx + width > b.len() { break; }
-        if width == 3 {
+        let len = UTF8_CHAR_LEN[b[idx] as usize] as usize;
+        if len == 1 { idx += 1; continue; }
+        if len == 0 || idx + len > b.len() { break; }
+        if len == 3 {
             match (b[idx], b[idx+1], b[idx+2]) {
                 (0xE0,        0xA0...0xBF, 0x80...0xBF) => { },
                 (0xE1...0xEC, 0x80...0xBF, 0x80...0xBF) => { },
@@ -112,7 +118,7 @@ pub fn longest_sequence(b: &[u8]) -> &str {
                 _ => break,
             }
         }
-        if width == 4 {
+        if len == 4 {
             match (b[idx], b[idx+1], b[idx+2], b[idx+3]) {
                 (0xF0,        0x90...0xBF, 0x80...0xBF, 0x80...0xBF) => { },
                 (0xF1...0xF3, 0x80...0xBF, 0x80...0xBF, 0x80...0xBF) => { },
@@ -120,7 +126,7 @@ pub fn longest_sequence(b: &[u8]) -> &str {
                 _ => break,
             }
         }
-        idx += width;
+        idx += len;
     }
     unsafe { mem::cast(&b[..idx]) }
 }

@@ -3,9 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use base::ops::{Ordering};
-use base::cmp::{Ord};
-use base::{num};
+use core::ops::{Ordering};
+use core::cmp::{Ord};
+use core::{num};
 
 use super::{Zone, DateTime, Weekday, Time};
 

@@ -10,15 +10,16 @@
 
 #[macro_use]
 extern crate linux_core as core;
-extern crate linux_ty_zero as ty_zero;
+extern crate linux_base as base;
+extern crate linux_cell as cell;
 
-#[prelude_import] use core::prelude::*;
+#[prelude_import] use base::prelude::*;
 
 use core::{mem, intrinsics};
-use core::cell::{Cell};
+use cell::cell::{Cell};
 
 pub mod linux {
-    pub use ::ty_zero::linux::*;
+    pub use ::base::linux::*;
 }
 
 pub fn fence_release() {
@@ -369,3 +370,6 @@ impl_atomic!(AtomicI16,   ATOMIC_I16_INIT,   i16,   true);
 impl_atomic!(AtomicI32,   ATOMIC_I32_INIT,   i32,   true);
 impl_atomic!(AtomicI64,   ATOMIC_I64_INIT,   i64,   true);
 impl_atomic!(AtomicIsize, ATOMIC_ISIZE_INIT, isize, true);
+
+pub type AtomicCInt = AtomicI32;
+pub const ATOMIC_CINT_INIT: AtomicCInt = ATOMIC_I32_INIT;

@@ -3,12 +3,11 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use base::{mem};
-use base::cty::{c_int, itimerspec, TFD_TIMER_ABSTIME};
-use base::syscall::{close, timerfd_settime, timerfd_gettime, read};
-use base::fd_container::{FDContainer};
-use base::result::{Result};
-use base::util::{retry};
+use core::{mem};
+use cty::{c_int, itimerspec, TFD_TIMER_ABSTIME};
+use syscall::{close, timerfd_settime, timerfd_gettime, read};
+use fd::{FDContainer};
+use rv::{retry};
 
 use super::{Time, time_to_timespec, time_from_timespec};
 

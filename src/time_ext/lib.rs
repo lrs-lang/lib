@@ -8,23 +8,26 @@
 #![plugin(linux_core_plugin)]
 #![no_std]
 
-#[macro_use] extern crate linux_base as base;
-#[prelude_import] use base::prelude::*;
-mod linux { pub use base::linux::*; }
-mod core { pub use base::core::*; }
-
-extern crate linux_file as file;
+#[macro_use]
+extern crate linux_core      as core;
+extern crate linux_base      as base;
+extern crate linux_fmt       as fmt;
+extern crate linux_str_one   as str_one;
+extern crate linux_file      as file;
 extern crate linux_time_base as time_base;
+extern crate linux_io        as io;
+extern crate linux_vec       as vec;
+
+#[prelude_import] use base::prelude::*;
+mod linux { pub use vec::linux::*; }
 
 pub use time_base::{Time};
 
 use base::rmo::{AsRef};
-use base::fmt::{Debug, Write};
-use base::path::{AsPath};
-use base::result::{Result};
-
+use fmt::{Debug, Write};
+use vec::{Vec};
+use str_one::{AsNoNullStr};
 use file::{File};
-
 
 mod parse;
 mod convert;
@@ -87,7 +90,7 @@ impl Zone {
     fn load_from(zone: &[u8]) -> Result<Zone> {
         let mut file = try!(File::open_read(&zone));
         let mut data = vec!();
-        try!(file.read_to_end(&mut data));
+        try!(data.read_to_eof(&mut file));
         let mut input = &data[..];
         parse::parse(&mut input)
     }
@@ -97,10 +100,10 @@ impl Zone {
     /// For example: "Europe/Berlin", "Asia/Tokyo". The full list of name can be found on
     /// wikipedia.
     pub fn load<S>(zone: S) -> Result<Zone>
-        where S: AsPath,
+        where S: AsNoNullStr,
     {
         const PREFIX: &'static [u8] = b"/usr/share/zoneinfo/";
-        let path = try!(zone.as_path());
+        let path = try!(zone.as_no_null_str());
         let mut vec = try!(Vec::with_capacity(PREFIX.len() + path.len() + 1));
         vec.push_all(PREFIX);
         vec.push_all(path.as_ref());

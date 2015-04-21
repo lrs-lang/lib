@@ -8,18 +8,29 @@
 #![plugin(linux_core_plugin)]
 #![no_std]
 
-#[macro_use] extern crate linux_base as base;
+#[macro_use]
+extern crate linux_core       as core;
+extern crate linux_base       as base;
+extern crate linux_arch_fns   as arch_fns;
+extern crate linux_io         as io;
+extern crate linux_buf_reader as buf_reader;
+extern crate linux_fmt        as fmt;
+extern crate linux_str_one    as str_one;
+extern crate linux_str_two    as str_two;
+extern crate linux_cty        as cty;
+extern crate linux_parse      as parse;
+extern crate linux_file       as file;
+extern crate linux_vec        as vec;
+extern crate linux_rmo        as rmo;
+extern crate linux_iter       as iter;
+
 #[prelude_import] use base::prelude::*;
-mod linux { pub use base::linux::*; }
-mod core { pub use base::core::*; }
+mod linux { pub use vec::linux::*; }
 
-extern crate linux_file as file;
-
-use base::{mem};
-use base::result::{Result};
+use core::{mem};
+use core::ptr::{memmove};
 use base::error::{self};
-use base::util::{memchr};
-use base::ptr::{memmove};
+use arch_fns::{memchr};
 
 use file::{File};
 

@@ -14,7 +14,6 @@ pub mod macros;
 
 pub mod array;
 pub mod bool;
-pub mod cell;
 pub mod char;
 pub mod cmp;
 pub mod intrinsics;
@@ -48,7 +47,11 @@ pub mod prelude {
     pub use ops::{Fn, FnOnce, FnMut, Drop, Deref, DerefMut};
 
     pub use mem::{drop};
+
+    pub use iter::{Iterator};
 }
+
+// TODO: Move below into "start" or "rt"
 
 #[link(name = "c")]
 extern { }

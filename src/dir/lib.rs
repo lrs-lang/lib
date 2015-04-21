@@ -8,22 +8,35 @@
 #![plugin(linux_core_plugin)]
 #![no_std]
 
-#[macro_use] extern crate linux_base as base;
+#[macro_use]
+extern crate linux_base      as base;
+extern crate linux_core      as core;
+extern crate linux_cty       as cty;
+extern crate linux_str_one   as str_one;
+extern crate linux_str_two   as str_two;
+extern crate linux_str_three as str_three;
+extern crate linux_syscall   as syscall;
+extern crate linux_fd        as fd;
+extern crate linux_rmo       as rmo;
+extern crate linux_fmt       as fmt;
+extern crate linux_file      as file;
+extern crate linux_vec       as vec;
+
 #[prelude_import] use base::prelude::*;
-mod linux { pub use base::linux::*; }
-mod core { pub use base::core::*; }
+mod linux { pub use fmt::linux::*; }
 
-extern crate linux_file as file;
-
-use base::cty::{linux_dirent64, MODE_TYPE_SHIFT, umode_t, PATH_MAX};
-use base::string::{CStr, ToCString, ByteString};
-use base::result::{Result};
-use base::syscall::{getdents};
+use cty::{linux_dirent64, MODE_TYPE_SHIFT, umode_t, PATH_MAX};
+use str_one::{CStr};
+use str_two::{ByteString};
+use str_three::{ToCString};
+use syscall::{getdents};
 use base::error::{Errno};
-use base::fd_container::{FDContainer};
+use vec::{Vec};
+use fd::{FDContainer};
 use base::rmo::{AsRef};
-use base::fmt::{Debug, Write};
-use base::{mem};
+use fmt::{Debug, Write};
+use core::{mem};
+use rmo::{ToOwned};
 
 use file::{File, Seek};
 use file::flags::{Flags};

@@ -12,12 +12,20 @@
 
 extern crate linux_core as core;
 extern crate linux_cty_base as cty_base;
-extern crate linux_ty_zero as ty_zero;
+extern crate linux_base as base;
 
 pub use self::arch::*;
 pub use cty_base::errno::*;
 
-mod linux { pub use ::ty_zero::linux::*; }
+pub mod alias {
+    pub type UserId    = ::uid_t;
+    pub type GroupId   = ::gid_t;
+    pub type DeviceId  = ::dev_t;
+    pub type InodeId   = ::ino_t;
+    pub type ProcessId = ::pid_t;
+}
+
+mod linux { pub use ::base::linux::*; }
 
 mod gen;
 

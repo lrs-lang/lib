@@ -3,16 +3,18 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use base::{mem};
-use base::io::{BufReader, BufRead};
-use base::result::{Result};
-use base::fmt::{Debug, Write};
+use core::{mem};
+use io::{BufRead};
+use buf_reader::{BufReader};
+use fmt::{Debug, Write};
 use base::error::{self};
-use base::string::{AsByteStr, ByteStr, ByteString};
-use base::alias::{UserId, GroupId};
-use base::parse::{Parse};
-
+use str_one::{AsByteStr, ByteStr};
+use str_two::{ByteString};
+use cty::alias::{UserId, GroupId};
+use parse::{Parse};
 use file::{File};
+use rmo::{ToOwned};
+use iter::{IteratorExt};
 
 use {LineReader};
 

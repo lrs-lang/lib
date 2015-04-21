@@ -18,10 +18,12 @@ use core::ops::{Ordering};
 use core::cmp::{Ord};
 use core::ops::Ordering::{Greater};
 
+/// Sorts the slice in-place.
 pub fn sort<T: Ord>(slice: &mut [T]) {
     sort_by(slice, |one, two| one.cmp(two));
 }
 
+/// Sorts the slice in-place with the provided comparison function.
 pub fn sort_by<T, F: FnMut(&T, &T) -> Ordering>(slice: &mut [T], mut f: F) {
     if slice.len() < 2 {
         return;

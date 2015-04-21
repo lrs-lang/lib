@@ -8,23 +8,35 @@
 #![plugin(linux_core_plugin)]
 #![no_std]
 
-#[macro_use] extern crate linux_base as base;
-#[prelude_import] use base::prelude::*;
-mod linux { pub use base::linux::*; }
-mod core { pub use base::core::*; }
-
+#[macro_use]
+extern crate linux_core as core;
+extern crate linux_base as base;
+extern crate linux_fmt as fmt;
+extern crate linux_cty as cty;
+extern crate linux_syscall as syscall;
+extern crate linux_str_one as str_one;
+extern crate linux_str_three as str_three;
+extern crate linux_rv as rv;
 extern crate linux_time_base as time_base;
+extern crate linux_iter as iter;
 
-use base::{mem, fmt};
-use base::ops::{Eq};
-use base::io::{Write};
-use base::cty::{new_utsname, sysinfo, GRND_NONBLOCK, PATH_MAX};
-use base::syscall::{sched_getaffinity, uname, sysinfo, getrandom, acct, sethostname,
+#[prelude_import] use base::prelude::*;
+mod linux {
+    pub use fmt::linux::*;
+    pub use {cty};
+}
+
+use core::{mem};
+use core::ops::{Eq};
+use fmt::{Debug, Write};
+use cty::{new_utsname, sysinfo, GRND_NONBLOCK, PATH_MAX};
+use syscall::{sched_getaffinity, uname, sysinfo, getrandom, acct, sethostname,
                     setdomainname};
-use base::string::{ToCString, AsByteStr, AsCStr, ByteStr};
+use str_one::{AsByteStr, AsCStr, ByteStr};
+use str_three::{ToCString};
 use base::rmo::{AsRef};
-use base::result::{Result};
-use base::util::{retry};
+use rv::{retry};
+use iter::{IteratorExt};
 
 use time_base::{Time};
 

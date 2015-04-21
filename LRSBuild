@@ -1,38 +1,52 @@
 obj core
 obj sort       core
+obj int        core
+obj saturating core
 obj arch_fns   core
-
 obj cty_base   core
-obj ty_zero    core cty_base
+obj base       core cty_base
 
-obj ty_one     core cty_base ty_zero arch_fns
-obj io         core ty_one
-obj fmt        core ty_one io
+obj rv         core base int
+obj parse      core base
+obj io         core base
+obj fmt        core base io
 
-obj atomic     core ty_zero
-obj cty        core ty_zero cty_base
+obj cell       core base
+obj str_one    core cty_base base arch_fns fmt
+
+obj atomic     core base cell
+obj cty        core base cty_base
 obj r_syscall  core cty
-obj w_syscall  core cty ty_one r_syscall
-obj arch       core cty w_syscall atomic
+obj syscall    core saturating base str_one cty r_syscall
 
-obj lock       core ty_one arch io fmt
-obj alloc      core
-obj ty_two     core ty_one arch lock io fmt alloc
+obj fd         core base rv io cty syscall
 
-obj base       core sort io fmt ty_one lock ty_two arch arch_fns
+obj lock       core base cell io fmt atomic syscall cty
+obj alloc      core syscall
+obj queue      core base cell arch_fns atomic lock alloc
 
-obj fs         base
-obj process    base
-obj socket     base
+obj buf_reader core arch_fns base io alloc
+obj rc         core base fmt cell alloc atomic
 
-obj time_base  base
+obj vec        core base str_one io fmt alloc
+obj iter       core vec
 
-obj sys        base time_base
-obj poll       base time_base
+obj str_two    core arch_fns base str_one fmt vec
+obj rmo        core base fmt str_one vec str_two
+obj str_three  core arch_fns base str_one str_two rmo
 
-obj dev        base
-obj file       base dev fs time_base
-obj time_ext   base time_base file
+obj fs         core base fmt cty syscall rv str_three
+obj process    core base syscall cty fmt
+obj socket     core base
 
-obj dir        base file
-obj user_group base file
+obj time_base  core base cty syscall fmt fd rv
+
+obj sys        core base fmt cty syscall str_one str_three rv time_base iter
+obj poll       core base cty syscall fd rv saturating fmt time_base
+
+obj dev        core base fmt cty
+obj file       core base io cty fmt int syscall str_one str_two str_three arch_fns rv parse fd dev fs time_base vec rmo
+obj time_ext   core base fmt str_one file time_base io vec
+
+obj dir        core base cty str_one str_two str_three syscall fd fmt file vec rmo
+obj user_group core base arch_fns io buf_reader fmt str_one str_two cty parse file vec rmo iter

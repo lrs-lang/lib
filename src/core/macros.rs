@@ -2,21 +2,20 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[macro_export]
-macro_rules! linux_shim {
-    () => { mod linux { pub use ::core::linux::*; } }
-}
-
+/// Aborts the process.
 #[macro_export]
 macro_rules! abort {
     () => { ::linux::intrinsics::linux_abort() }
 }
 
+/// Asserts that a condition is satisfied. Aborts the process otherwise.
 #[macro_export]
 macro_rules! assert {
     ($pred:expr) => { if !$pred { abort!() } }
 }
 
+/// Unwraps the `Ok` branch of a `Result` and returns the error from the calling function
+/// otherwise.
 #[macro_export]
 macro_rules! try {
     ($val:expr) => {
@@ -27,16 +26,20 @@ macro_rules! try {
     }
 }
 
+/// Prints a value to stdout.
+///
+/// Note that stdout always refers to the file descriptor `1`.
 #[macro_export]
 macro_rules! println {
     ($fmt:expr) => {
-        write!(::linux::stdio::raw::STDOUT, concat!($fmt, "\n"))
+        write!(::linux::fd::STDOUT, concat!($fmt, "\n"))
     };
     ($fmt:expr, $($arg:tt)*) => {
-        write!(::linux::stdio::raw::STDOUT, concat!($fmt, "\n"), $($arg)*)
+        write!(::linux::fd::STDOUT, concat!($fmt, "\n"), $($arg)*)
     };
 }
 
+/// Formats a value into a `ByteString`.
 #[macro_export]
 macro_rules! format {
     ($fmt:expr, $($arg:tt)*) => {{
@@ -46,13 +49,14 @@ macro_rules! format {
     }};
 }
 
-#[macro_export]
-macro_rules! matches {
-    ($pat:pat = $val:expr) => {
-        match val { $pat => true, _ => false, }
-    }
-}
+//#[macro_export]
+//macro_rules! matches {
+//    ($pat:pat = $val:expr) => {
+//        match val { $pat => true, _ => false, }
+//    }
+//}
 
+/// Creates a vector out of the arguments.
 #[macro_export]
 macro_rules! vec {
     ($elem:expr; $n:expr) => {
@@ -70,4 +74,22 @@ macro_rules! vec {
         }
     };
     ($($x:expr,)*) => { vec!($($x),*) };
+}
+
+#[macro_export]
+macro_rules! rv {
+    ($x:expr) => {
+        if $x < 0 {
+            ::linux::result::Result::Err(::linux::error::Errno(-$x as ::linux::cty::c_int))
+        } else {
+            ::linux::result::Result::Ok(())
+        }
+    };
+    ($x:expr, -> $t:ty) => {
+        if $x < 0 {
+            ::linux::result::Result::Err(::linux::error::Errno(-$x as ::linux::cty::c_int))
+        } else {
+            ::linux::result::Result::Ok($x as $t)
+        }
+    };
 }

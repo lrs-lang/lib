@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import] use ty_one::prelude::*;
+#[prelude_import] use base::prelude::*;
 use io::{Write};
 use {Debug, Display};
 
@@ -37,7 +37,7 @@ impl Debug for char {
 impl Display for char {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
         let bytes = self.to_utf8();
-        try!(w.write_all(&bytes[..self.width()]));
+        try!(w.write_all(&bytes[..self.len()]));
         Ok(())
     }
 }

@@ -3,8 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use base::io::{Read};
-use base::{mem, error, cmp};
+use io::{Read};
+use core::{mem, cmp};
+use base::{error};
 
 use super::{Zone};
 

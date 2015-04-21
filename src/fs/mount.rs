@@ -2,15 +2,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use base::cty::{c_ulong, c_int, MS_RDONLY, MS_NOSUID, MS_NODEV, MS_NOEXEC, MS_SYNCHRONOUS,
-                MS_REMOUNT, MS_MANDLOCK, MS_DIRSYNC, MS_NOATIME, MS_NODIRATIME,
-                MS_BIND, MS_MOVE, MS_REC, MS_SILENT, MS_POSIXACL, MS_UNBINDABLE,
-                MS_PRIVATE, MS_SLAVE, MS_SHARED, MS_STRICTATIME, PATH_MAX, MNT_FORCE,
-                MNT_DETACH, MNT_EXPIRE, UMOUNT_NOFOLLOW,};
-use base::syscall::{self};
-use base::string::{ToCString};
-use base::result::{Result};
-use base::{mem};
+#[prelude_import] use base::prelude::*;
+use core::{mem};
+use cty::{c_ulong, c_int, MS_RDONLY, MS_NOSUID, MS_NODEV, MS_NOEXEC, MS_SYNCHRONOUS,
+          MS_REMOUNT, MS_MANDLOCK, MS_DIRSYNC, MS_NOATIME, MS_NODIRATIME,
+          MS_BIND, MS_MOVE, MS_REC, MS_SILENT, MS_POSIXACL, MS_UNBINDABLE,
+          MS_PRIVATE, MS_SLAVE, MS_SHARED, MS_STRICTATIME, PATH_MAX, MNT_FORCE,
+          MNT_DETACH, MNT_EXPIRE, UMOUNT_NOFOLLOW,};
+use syscall::{self};
+use str_three::{ToCString};
 
 /// Flags used when mounting a filesystem.
 pub struct MountFlags(c_ulong);

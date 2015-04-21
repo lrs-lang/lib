@@ -10,17 +10,20 @@
 #![allow(trivial_numeric_casts)]
 
 #[macro_use]
+extern crate linux_core as core;
 extern crate linux_base as base;
+extern crate linux_fmt as fmt;
+extern crate linux_cty as cty;
+
 #[prelude_import] use base::prelude::*;
-mod linux { pub use base::linux::*; }
-mod core { pub use base::core::*; }
+mod linux { pub use fmt::linux::*; }
 
 // Device Id <-> Device Name mapping
 //
 // Source: http://www.lanana.org/docs/device-list/devices-2.6+.txt
 
-use base::fmt::{Write, Debug};
-use base::alias::{DeviceId};
+use fmt::{Write, Debug};
+use cty::alias::{DeviceId};
 
 /// The type of a device special file.
 #[derive(Copy, Eq)]
@@ -90,15 +93,15 @@ impl Device {
     /// assert_eq!(device.to_path(), "/dev/sda1");
     /// ```
     pub fn to_path(self, buf: &mut [u8]) -> Result<&mut [u8]> {
-        fmt::to_path(self, buf)
+        dfmt::to_path(self, buf)
     }
 }
 
 #[cfg(not(device_paths))]
-mod fmt {
+mod dfmt {
     #[prelude_import] use base::prelude::*;
     use super::{Device};
-    use base::fmt::{Write, Debug};
+    use fmt::{Write, Debug};
     use base::{error};
 
     pub fn to_path(_: Device, _: &mut [u8]) -> Result<&mut [u8]> {
@@ -113,10 +116,10 @@ mod fmt {
 }
 
 #[cfg(device_paths)]
-mod fmt {
+mod dfmt {
     #[prelude_import] use base::prelude::*;
     use super::{Device};
-    use base::fmt::{Write, Debug};
+    use fmt::{Write, Debug};
 
     pub fn to_path(d: Device, buf: &mut [u8]) -> Result<&mut [u8]> {
         path_from_device(self, buf)

@@ -32,18 +32,22 @@ macro_rules! int_impls {
      ) => {
         #[lang = $as_str]
         impl $t {
+            /// Adds `other` and `self` without triggering overflow checking.
             pub fn wrapping_add(self, other: $t) -> $t {
                 unsafe { intrinsics::overflowing_sub(self, other) }
             }
 
+            /// Like `wrapping_add`.
             pub fn wrapping_sub(self, other: $t) -> $t {
                 unsafe { intrinsics::overflowing_sub(self, other) }
             }
 
+            /// Like `wrapping_add`.
             pub fn wrapping_mul(self, other: $t) -> $t {
                 unsafe { intrinsics::overflowing_mul(self, other) }
             }
 
+            /// Adds `other` and `self` and returns the value if no overflow occurred.
             pub fn checked_add(self, other: $t) -> Option<$t> {
                 unsafe {
                     match intrinsics::$checked_add(self as $size_t, other as $size_t) {
@@ -53,6 +57,7 @@ macro_rules! int_impls {
                 }
             }
 
+            /// Like `checked_add`.
             pub fn checked_sub(self, other: $t) -> Option<$t> {
                 unsafe {
                     match intrinsics::$checked_sub(self as $size_t, other as $size_t) {
@@ -62,6 +67,7 @@ macro_rules! int_impls {
                 }
             }
 
+            /// Like `checked_add`.
             pub fn checked_mul(self, other: $t) -> Option<$t> {
                 unsafe {
                     match intrinsics::$checked_mul(self as $size_t, other as $size_t) {
@@ -71,6 +77,16 @@ macro_rules! int_impls {
                 }
             }
 
+            /// Adds `other` and `self` and returns the result if no overflow occurred or
+            /// the maximum value in the direction in which the overflow occurred.
+            ///
+            /// # Example
+            ///
+            /// ```
+            /// let x: u8 = 200;
+            /// let y: u8 = 100;
+            /// assert!(x.saturating_add(y) == 255);
+            /// ```
             pub fn saturating_add(self, other: $t) -> $t {
                 match self.checked_add(other) {
                     Some(val) => val,
@@ -82,6 +98,7 @@ macro_rules! int_impls {
                 }
             }
 
+            /// Like `saturating_add`.
             pub fn saturating_sub(self, other: $t) -> $t {
                 match self.checked_sub(other) {
                     Some(val) => val,
@@ -93,22 +110,44 @@ macro_rules! int_impls {
                 }
             }
 
+            /// Calculates the next power of two greater or equal the current value.
+            ///
+            /// On overflow `1` is returned.
+            pub fn next_power_of_two(self) -> $t {
+                1 << (($width - self.wrapping_sub(1).leading_zeros()) % $width)
+            }
+
+            /// Like `next_power_of_two` but returns `None` on overflow.
+            pub fn checked_next_power_of_two(self) -> Option<$t> {
+                let npot = self.next_power_of_two();
+                if npot < self {
+                    None
+                } else {
+                    Some(npot)
+                }
+            }
+
+            /// Returns whether this type is signed.
             pub fn signed(self) -> bool {
                 $signed
             }
 
+            /// Casts this type to the signed type of same width.
             pub fn as_signed(self) -> $as_i {
                 self as $as_i
             }
 
+            /// Like `as_signed`.
             pub fn as_unsigned(self) -> $as_u {
                 self as $as_u
             }
 
+            /// Returns the width in bits of this type.
             pub fn width(self) -> usize {
                 $width
             }
 
+            /// Returns whether `self` is negative.
             #[allow(unused_comparisons)]
             pub fn negative(self) -> bool {
                 if $signed {
@@ -118,6 +157,14 @@ macro_rules! int_impls {
                 }
             }
 
+            /// Returns the absolute value of `self`.
+            ///
+            /// # Example
+            ///
+            /// ```
+            /// let x: i8 = -128;
+            /// assert!(x.abs() == -128);
+            /// ```
             #[allow(unused_comparisons)]
             pub fn abs(self) -> $t {
                 if $signed {
@@ -131,50 +178,79 @@ macro_rules! int_impls {
                 }
             }
 
+            /// Counts the bits set in `self`.
             pub fn count_ones(self) -> usize {
                 unsafe { intrinsics::$ctpop(self as $pop_ty) as usize }
             }
 
+            /// Like `count_ones`.
             pub fn count_zeroes(self) -> usize {
                 (!self).count_ones()
             }
 
+            /// Returns the length of longest sequence of set bits starting at the most
+            /// significant bit.
             pub fn leading_ones(self) -> usize {
                 (!self).leading_zeros()
             }
 
+            /// Like `leading_ones`.
             pub fn leading_zeros(self) -> usize {
                 unsafe { intrinsics::$ctlz(self as $pop_ty) as usize }
             }
 
+            /// Like `leading_ones`.
             pub fn trailing_ones(self) -> usize {
                 (!self).trailing_zeros()
             }
 
+            /// Like `leading_ones`.
             pub fn trailing_zeros(self) -> usize {
                 unsafe { intrinsics::$cttz(self as $pop_ty) as usize }
             }
 
+            /// Swaps the bytes in `self`.
             pub fn swap(self) -> $t {
                 unsafe { intrinsics::$bswap(self as $pop_ty) as $t }
             }
 
+            /// Interprets `self` as a value in big-endian representation and returns
+            /// the value in little-endian representation.
+            ///
+            /// # Example on a little-endian machine.
+            ///
+            /// ```
+            /// let x: u16 = 0x0100;
+            /// assert!(x.from_be() == 1);
+            /// ```
             #[cfg(target_endian = "little")]
             pub fn from_be(self) -> $t {
                 unsafe { intrinsics::$bswap(self as $pop_ty) as $t }
             }
 
+            /// Interprets `self` as a value in big-endian representation and returns
+            /// the value in little-endian representation.
+            ///
+            /// # Example on a little-endian machine.
+            ///
+            /// ```
+            /// let x: u16 = 0x0100;
+            /// assert!(x.from_be() == 1);
+            /// ```
             #[cfg(target_endian = "big")]
             pub fn from_be(self) -> $t { self }
 
+            /// Like `from_be`.
             #[cfg(target_endian = "little")]
             pub fn from_le(self) -> $t { self }
 
+            /// Like `from_be`.
             #[cfg(target_endian = "big")]
             pub fn from_le(self) -> $t {
                 unsafe { intrinsics::$bswap(self as $pop_ty) as $t }
             }
 
+            /// Returns `(self / other, self % other)`.
             pub fn div_rem(self, other: $t) -> ($t, $t) {
                 (self / other, self % other)
             }

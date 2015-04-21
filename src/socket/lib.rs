@@ -9,6 +9,7 @@
 #![no_std]
 
 #[macro_use]
+extern crate linux_core as core;
 extern crate linux_base as base;
+
 mod linux { pub use base::linux::*; }
-mod core { pub use base::core::*; }

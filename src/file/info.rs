@@ -3,10 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use base::fmt::{Debug, Write};
-use base::cty::{stat, S_IFMT, S_IFDIR, S_IFCHR, S_IFBLK, S_IFREG, S_IFIFO, S_IFLNK,
-                S_IFSOCK, umode_t};
-use base::alias::{InodeId, UserId, GroupId, DeviceId};
+use fmt::{Debug, Write};
+use cty::{stat, S_IFMT, S_IFDIR, S_IFCHR, S_IFBLK, S_IFREG, S_IFIFO, S_IFLNK,
+          S_IFSOCK, umode_t};
+use cty::alias::{InodeId, UserId, GroupId, DeviceId};
 use time_base::{Time};
 use dev::{Device, DeviceType};
 use flags::{Mode};

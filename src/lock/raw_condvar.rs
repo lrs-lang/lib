@@ -2,12 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import] use core::prelude::*;
+#[prelude_import] use base::prelude::*;
 use core::{mem};
-use core::cell::{Cell};
-use arch::atomic::{AtomicCInt};
-use arch::syscall::{futex_wait, futex_wake};
-use arch::cty::{c_int};
+use cell::cell::{Cell};
+use atomic::{AtomicCInt};
+use syscall::{futex_wait, futex_wake};
+use cty::{c_int};
 use lock::{Lock, LockGuard, LOCK_INIT};
 
 const WAITING:  c_int = 0;

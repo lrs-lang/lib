@@ -3,9 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use base::fmt::{Debug};
-use base::io::{Write};
-use base::cty::{c_ulong};
+use fmt::{Debug, Write};
+use cty::{c_ulong};
 
 /// A filesystem type.
 #[derive(Copy, Eq)]

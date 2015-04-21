@@ -5,13 +5,12 @@
 #![allow(non_upper_case_globals)]
 
 #[prelude_import] use base::prelude::*;
-use base::{mem};
-use base::cty::{clockid_t, c_int, TIMER_ABSTIME, TFD_NONBLOCK, TFD_CLOEXEC};
-use base::syscall::{clock_gettime, clock_settime, clock_getres, clock_nanosleep,
+use core::{mem};
+use cty::{clockid_t, c_int, TIMER_ABSTIME, TFD_NONBLOCK, TFD_CLOEXEC};
+use syscall::{clock_gettime, clock_settime, clock_getres, clock_nanosleep,
                     timerfd_create};
-use base::result::{Result};
-use base::util::{retry};
-use base::fd_container::{FDContainer};
+use rv::{retry};
+use fd::{FDContainer};
 
 use super::{Time, time_from_timespec, time_to_timespec};
 use timer::{Timer};

@@ -4,7 +4,7 @@
 
 #![crate_name = "linux_arch_fns"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std)]
+#![feature(plugin, no_std, asm)]
 #![plugin(linux_core_plugin)]
 #![no_std]
 
@@ -62,4 +62,14 @@ pub unsafe fn strlen(ptr: *const u8) -> usize {
     #[allow(improper_ctypes)]
     extern { fn strlen(s: *const u8) -> usize; }
     strlen(ptr)
+}
+
+#[cfg(any(target_arch = "x86_64", target_arch = "x86"))]
+pub fn spin() {
+    unsafe { asm!("pause" : : : "memory"); }
+}
+
+#[cfg(not(any(target_arch = "x86_64", target_arch = "x86")))]
+pub fn spin() {
+    atomic::fence_seqcst();
 }

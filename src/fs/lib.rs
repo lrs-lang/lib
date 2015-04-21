@@ -10,11 +10,20 @@
 #![allow(trivial_numeric_casts)]
 
 #[macro_use]
-extern crate linux_base as base;
-mod linux { pub use base::linux::*; }
-mod core { pub use base::core::*; }
+extern crate linux_core      as core;
+extern crate linux_base      as base;
+extern crate linux_fmt       as fmt;
+extern crate linux_cty       as cty;
+extern crate linux_syscall   as syscall;
+extern crate linux_rv        as rv;
+extern crate linux_str_three as str_three;
 
-use base::syscall::{sync};
+mod linux {
+    pub use fmt::linux::*;
+    pub use {cty};
+}
+
+use syscall::{sync};
 
 pub mod info;
 pub mod mount;

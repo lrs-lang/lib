@@ -12,8 +12,18 @@ extern "rust-intrinsic" {
     pub fn pref_align_of<T>() -> usize;
     pub fn init_dropped<T>() -> T;
     pub fn init<T>() -> T;
+    /// Creates a completely uninitialized object.
+    ///
+    /// This is a zero-cost operation but reading from the object before it has been
+    /// initialized is undefined behavior.
     pub fn uninit<T>() -> T;
+    /// You probably want to use `mem::forget`.
+    ///
+    /// If you actually want this function then I'd be interested in hearing why.
     pub fn forget<T>(_: T) -> ();
+    /// Casts one object into another.
+    ///
+    /// The objects must have the same size. This is checked at compile time.
     pub fn transmute<T,U>(e: T) -> U;
     pub fn needs_drop<T>() -> bool;
     pub fn offset<T>(dst: *const T, offset: isize) -> *const T;
@@ -190,6 +200,11 @@ extern "rust-intrinsic" {
 
 pub unsafe fn bswap8(x: u8) -> u8 { x }
 
+/// Aborts the process.
+///
+/// This function is called by the `abort` macro and exists for easier debugging as
+/// calling the `abort` intrinsic directly can cause the code to be modified even without
+/// optimization enabled.
 #[no_mangle]
 #[inline]
 pub fn linux_abort() -> ! {

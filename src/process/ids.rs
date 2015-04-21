@@ -3,11 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use base::syscall::{getresuid, getresgid, setresuid, setresgid, setgroups, getgroups};
-use base::result::{Result};
+use syscall::{getresuid, getresgid, setresuid, setresgid, setgroups, getgroups};
 use base::error::{self};
-use base::alias::{UserId, GroupId};
-use base::fmt::{Debug, Write};
+use cty::alias::{UserId, GroupId};
+use fmt::{Debug, Write};
 
 /// User ids of a process.
 #[derive(Copy, Eq)]

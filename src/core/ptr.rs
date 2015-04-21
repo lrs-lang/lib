@@ -8,39 +8,48 @@ use ops::{Eq, PartialOrd, Ordering};
 use cmp::{Ord};
 use option::{Option};
 
+/// Reads a value from a pointer.
 pub unsafe fn read<T>(src: *const T) -> T {
     let mut tmp: T = mem::uninit();
     memcpy(&mut tmp, src, 1);
     tmp
 }
 
+/// Writes a value to a pointer.
 pub unsafe fn write<T>(dst: *mut T, data: T) {
     memcpy(dst, &data, 1);
     intrinsics::forget(data);
 }
 
+/// Copies `n` elements from `src` to `dst` which must not overlap.
 pub unsafe fn memcpy<T>(dst: *mut T, src: *const T, n: usize) {
     intrinsics::copy_nonoverlapping(src, dst, n);
 }
 
+/// Copies `n` elements from `src` to `dst` which are allowed to overlap.
 pub unsafe fn memmove<T>(dst: *mut T, src: *const T, n: usize) {
     intrinsics::copy(src, dst, n);
 }
 
 #[lang = "const_ptr"]
 impl<T> *const T {
+    /// Returns whether this is a null pointer.
     pub fn is_null(self) -> bool {
         self as usize == 0
     }
 
+    /// Like `ptr + val` in C. The result must be a valid pointer or the behavior is
+    /// undefined.
     pub unsafe fn offset(self, val: isize) -> *const T {
         intrinsics::offset(self, val)
     }
 
+    /// Like `offset`.
     pub unsafe fn add(self, val: usize) -> *const T {
         self.offset(val as isize)
     }
 
+    /// Like `offset`.
     pub unsafe fn sub(self, val: usize) -> *const T {
         self.offset(-(val as isize))
     }
@@ -66,18 +75,23 @@ impl<T> Ord for *const T {
 
 #[lang = "mut_ptr"]
 impl<T> *mut T {
+    /// Returns whether this is a null pointer.
     pub fn is_null(self) -> bool {
         self as usize == 0
     }
 
+    /// Like `ptr + val` in C. The result must be a valid pointer or the behavior is
+    /// undefined.
     pub unsafe fn offset(self, val: isize) -> *mut T {
         intrinsics::offset(self, val) as *mut T
     }
 
+    /// Like `offset`.
     pub unsafe fn add(self, val: usize) -> *mut T {
         self.offset(val as isize)
     }
 
+    /// Like `offset`.
     pub unsafe fn sub(self, val: usize) -> *mut T {
         self.offset(-(val as isize))
     }

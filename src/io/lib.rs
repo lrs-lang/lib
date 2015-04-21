@@ -9,13 +9,13 @@
 #![no_std]
 
 extern crate linux_core as core;
-extern crate linux_ty_one as ty_one;
+extern crate linux_base as base;
 
-#[prelude_import] use ty_one::prelude::*;
+#[prelude_import] use base::prelude::*;
 use core::{mem};
-use ty_one::error::{Errno, DeviceFull};
+use base::error::{Errno, DeviceFull};
 
-pub type Result<T> = ty_one::result::Result<T, Errno>;
+pub type Result<T> = base::result::Result<T, Errno>;
 
 pub trait Read {
     fn scatter_read(&mut self, buf: &mut [&mut [u8]]) -> Result<usize>;
@@ -38,6 +38,10 @@ pub trait Read {
         }
         Ok(read)
     }
+}
+
+pub trait BufRead {
+    fn copy_until<W: Write>(&mut self, dst: &mut W, b: u8) -> Result<usize>;
 }
 
 pub trait Write {

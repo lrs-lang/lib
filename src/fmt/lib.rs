@@ -10,25 +10,22 @@
 
 #[macro_use]
 extern crate linux_core as core;
-extern crate linux_ty_one as ty_one;
+extern crate linux_base as base;
 extern crate linux_io as io;
 
-#[prelude_import] use ty_one::prelude::*;
+#[prelude_import] use base::prelude::*;
 
 pub use io::{Write};
 pub use impls::num::{format_u64};
 
 pub mod linux {
-    pub use ::ty_one::linux::*;
+    pub use ::base::linux::*;
     pub mod fmt { pub use {LowerHex, UpperHex, Debug, Display}; }
 }
 
-mod impls {
+pub mod impls {
     pub mod num;
     pub mod str;
-    pub mod byte_str;
-    pub mod path;
-    pub mod c_str;
     pub mod option;
     pub mod result;
     pub mod errno;
@@ -77,10 +74,3 @@ impl<T: Debug> Debug for [T] {
         Ok(())
     }
 }
-
-//fn main() {
-//    use ty_one::byte_str::{AsByteStr};
-//    use stdio::{Stdout};
-//    let bs = b"al\xFFien".as_byte_str();
-//    println!("ayy {:?} lmao", bs);
-//}

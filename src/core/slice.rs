@@ -9,28 +9,37 @@ use option::{Option};
 use option::Option::{None, Some};
 use iter::{Iterator};
 
+/// Creates a slice from a pointer and a length.
+///
+/// The arguments must be valid or the behavior is undefined.
 pub unsafe fn from_ptr<'a, T>(ptr: *const T, len: usize) -> &'a mut [T] {
     mem::cast(Slice { ptr: ptr, len: len })
 }
 
 #[lang = "slice"]
 impl<T> [T] {
+    /// Returns the length of the slice.
     pub fn len(&self) -> usize {
         self.repr().len
     }
 
+    /// Returns the starting address of the data.
     pub fn as_ptr(&self) -> *const T {
         self.repr().ptr
     }
 
+    /// Like `as_ptr`.
     pub fn as_mut_ptr(&mut self) -> *mut T {
         self.repr().ptr as *mut T
     }
 
+    /// Creates an iterator over the elements of the slice.
     pub fn iter<'a>(&'a self) -> Items<'a, T> {
         Items { slice: self }
     }
 
+    /// Returns the index of the first element in the slice which satisfies the predicate
+    /// `f` (if any.)
     pub fn find<F>(&self, mut f: F) -> Option<usize>
         where F: FnMut(&T) -> bool
     {
@@ -42,6 +51,7 @@ impl<T> [T] {
         None
     }
 
+    /// Like `find` but searches backwards.
     pub fn find_reverse<F>(&self, mut f: F) -> Option<usize>
         where F: FnMut(&T) -> bool
     {
@@ -53,6 +63,10 @@ impl<T> [T] {
         None
     }
 
+    /// Like `find` but performs a binary search.
+    ///
+    /// If an element was found its index will be returned in the first slot. Otherwise
+    /// the index in which it could be inserted will be returned in the second slot.
     pub fn find_binary<F>(&self, mut f: F) -> (Option<usize>, usize)
         where F: FnMut(&T) -> Ordering,
     {
@@ -69,6 +83,7 @@ impl<T> [T] {
         (None, left)
     }
 
+    /// Returns a reference to the last element in the slice (if any.)
     pub fn last(&self) -> Option<&T> {
         match self.len() {
             0 => None,
@@ -76,12 +91,16 @@ impl<T> [T] {
         }
     }
 
+    /// Returns an iterator over the sub-slices which are separated by elements that
+    /// satisfy the predicate `f`.
     pub fn split<'a, F>(&'a self, f: F) -> Split<'a, T, F>
         where F: FnMut(&T) -> bool,
     {
         Split { slice: self, f: f }
     }
 
+    /// Splits `self` at `at`. The element at `at` is the first element of the second
+    /// slice.
     pub fn split_at<'a>(&'a self, at: usize) -> (&'a [T], &'a [T]) {
         let repr = self.repr();
         assert!(at <= repr.len);
@@ -91,6 +110,7 @@ impl<T> [T] {
     }
 }
 
+/// See the `iter` documentation.
 pub struct Items<'a, T: 'a> {
     slice: &'a [T],
 }
@@ -102,6 +122,7 @@ impl<'a, T> Iterator for Items<'a, T> {
     }
 }
 
+/// See the `split` documentation.
 pub struct Split<'a, T: 'a, F> {
     slice: &'a [T],
     f: F,
