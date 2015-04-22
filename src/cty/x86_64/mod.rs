@@ -11,7 +11,7 @@ pub use ::gen::{
 pub use ::gen::{
     __kernel_ino_t, __kernel_mode_t, BYTES_PER_KERNEL_MODE_T, __kernel_pid_t,
     __kernel_ipc_pid_t, __kernel_uid_t, __kernel_gid_t, __kernel_suseconds_t,
-    __kernel_daddr_t, __kernel_uid32_t, __kernel_gid32_t, 
+    __kernel_daddr_t, __kernel_uid32_t, __kernel_gid32_t,
 };
 
 pub use ::gen::{
@@ -163,7 +163,18 @@ pub use ::gen::{
 };
 
 pub use ::gen::{
-    SI_MAX_SIZE,
+    sigval_t, SI_MAX_SIZE, SI_PAD_SIZE, __ARCH_SI_UID_T, __ARCH_SI_BAND_T,
+    __ARCH_SI_CLOCK_T, siginfo_kill, BYTES_PER_ARCH_SI_UID_T, siginfo_timer, siginfo_rt,
+    siginfo_sigchld, siginfo_addr_bnd, siginfo_sigpoll, siginfo_sigsys, SI_USER,
+    SI_KERNEL, SI_QUEUE, SI_TIMER, SI_MESGQ, SI_ASYNCIO, SI_SIGIO, SI_TKILL, SI_DETHREAD,
+    ILL_ILLOPC, ILL_ILLOPN, ILL_ILLADR, ILL_ILLTRP, ILL_PRVOPC, ILL_PRVREG, ILL_COPROC,
+    ILL_BADSTK, NSIGILL, FPE_INTDIV, FPE_INTOVF, FPE_FLTDIV, FPE_FLTOVF, FPE_FLTUND,
+    FPE_FLTRES, FPE_FLTINV, FPE_FLTSUB, NSIGFPE, SEGV_MAPERR, SEGV_ACCERR, SEGV_BNDERR,
+    BUS_ADRALN, BUS_ADRERR, BUS_OBJERR, BUS_MCEERR_AR, BUS_MCEERR_AO, TRAP_BRKPT,
+    TRAP_TRACE, TRAP_BRANCH, TRAP_HWBKPT, NSIGTRAP, CLD_EXITED, CLD_KILLED, CLD_DUMPED,
+    CLD_TRAPPED, CLD_STOPPED, CLD_CONTINUED, NSIGCHLD, POLL_IN, POLL_OUT, POLL_MSG,
+    POLL_ERR, POLL_PRI, POLL_HUP, NSIGPOLL, SYS_SECCOMP, NSIGSYS, SIGEV_SIGNAL,
+    SIGEV_NONE, SIGEV_THREAD, SIGEV_THREAD_ID,
 };
 
 pub use self::abi::{
@@ -191,7 +202,7 @@ pub use self::abi::{
 };
 
 pub use self::abi::{
-    __ARCH_SI_PREAMBLE_SIZE, siginfo,
+    __ARCH_SI_PREAMBLE_SIZE,
 };
 
 #[cfg(target_pointer_width = "32")]
@@ -259,24 +270,24 @@ pub fn bf64_set(f: u64, start: usize, width: usize, val: u64) -> u64 {
 #[repr(C)]
 #[derive(Copy, Eq)]
 pub struct stat {
-	pub st_dev:        __kernel_ulong_t,
-	pub st_ino:        __kernel_ulong_t,
-	pub st_nlink:      __kernel_ulong_t,
-	pub st_mode:       c_uint,
-	pub st_uid:        c_uint,
-	pub st_gid:        c_uint,
-	pub __pad0:        c_uint,
-	pub st_rdev:       __kernel_ulong_t,
-	pub st_size:       __kernel_long_t,
-	pub st_blksize:    __kernel_long_t,
-	pub st_blocks:     __kernel_long_t,
-	pub st_atime:      __kernel_ulong_t,
-	pub st_atime_nsec: __kernel_ulong_t,
-	pub st_mtime:      __kernel_ulong_t,
-	pub st_mtime_nsec: __kernel_ulong_t,
-	pub st_ctime:      __kernel_ulong_t,
-	pub st_ctime_nsec: __kernel_ulong_t,
-	pub __unused:      [__kernel_long_t; 3],
+    pub st_dev:        __kernel_ulong_t,
+    pub st_ino:        __kernel_ulong_t,
+    pub st_nlink:      __kernel_ulong_t,
+    pub st_mode:       c_uint,
+    pub st_uid:        c_uint,
+    pub st_gid:        c_uint,
+    pub __pad0:        c_uint,
+    pub st_rdev:       __kernel_ulong_t,
+    pub st_size:       __kernel_long_t,
+    pub st_blksize:    __kernel_long_t,
+    pub st_blocks:     __kernel_long_t,
+    pub st_atime:      __kernel_ulong_t,
+    pub st_atime_nsec: __kernel_ulong_t,
+    pub st_mtime:      __kernel_ulong_t,
+    pub st_mtime_nsec: __kernel_ulong_t,
+    pub st_ctime:      __kernel_ulong_t,
+    pub st_ctime_nsec: __kernel_ulong_t,
+    pub __unused:      [__kernel_long_t; 3],
 }
 
 // x86_64 doesn't need a stat64. we (don't) use the genric one.
@@ -284,17 +295,17 @@ pub struct stat {
 #[repr(C)]
 #[derive(Copy, Eq)]
 pub struct __old_kernel_stat {
-	pub st_dev:   c_ushort,
-	pub st_ino:   c_ushort,
-	pub st_mode:  c_ushort,
-	pub st_nlink: c_ushort,
-	pub st_uid:   c_ushort,
-	pub st_gid:   c_ushort,
-	pub st_rdev:  c_ushort,
-	pub st_size:  c_uint,
-	pub st_atime: c_uint,
-	pub st_mtime: c_uint,
-	pub st_ctime: c_uint,
+    pub st_dev:   c_ushort,
+    pub st_ino:   c_ushort,
+    pub st_mode:  c_ushort,
+    pub st_nlink: c_ushort,
+    pub st_uid:   c_ushort,
+    pub st_gid:   c_ushort,
+    pub st_rdev:  c_ushort,
+    pub st_size:  c_uint,
+    pub st_atime: c_uint,
+    pub st_mtime: c_uint,
+    pub st_ctime: c_uint,
 }
 
 // statfs.h
@@ -327,8 +338,8 @@ pub struct statfs64 {
 #[repr(C, packed)]
 #[derive(Copy, Eq)]
 pub struct epoll_event {
-	pub events: __u32,
-	pub data:   __u64,
+    pub events: __u32,
+    pub data:   __u64,
 }
 
 // signal.h
@@ -391,18 +402,18 @@ pub const SA_RESTORER  : c_int = 0x04000000;
 #[repr(C)]
 #[derive(Copy)]
 pub struct sigaction {
-	pub sa_handler: __sighandler_t,
-	pub sa_flags: c_ulong, // this must be c_ulong because on x32 we usa a compat syscall
-	pub sa_restorer: __sigrestore_t,
-	pub sa_mask: sigset_t,
+    pub sa_handler: __sighandler_t,
+    pub sa_flags: c_ulong, // this must be c_ulong because on x32 we usa a compat syscall
+    pub sa_restorer: __sigrestore_t,
+    pub sa_mask: sigset_t,
 }
 
 #[repr(C)]
 #[derive(Copy, Eq)]
 pub struct sigaltstack {
-	pub ss_sp: *mut c_void,
-	pub ss_flags: c_int,
-	pub ss_size: ::size_t,
+    pub ss_sp: *mut c_void,
+    pub ss_flags: c_int,
+    pub ss_size: ::size_t,
 }
 
 pub type stack_t = sigaltstack;
@@ -790,17 +801,17 @@ impl ::bpf_insn {
 #[repr(C)]
 #[derive(Copy, Eq)]
 pub struct msqid64_ds {
-	pub msg_perm:   ipc64_perm,
-	pub msg_stime:  __kernel_time_t,
-	pub msg_rtime:  __kernel_time_t,
-	pub msg_ctime:  __kernel_time_t,
-	pub msg_cbytes: __kernel_ulong_t,
-	pub msg_qnum:   __kernel_ulong_t,
-	pub msg_qbytes: __kernel_ulong_t,
-	pub msg_lspid:  __kernel_pid_t,
-	pub msg_lrpid:  __kernel_pid_t,
-	pub __unused4:  __kernel_ulong_t,
-	pub __unused5:  __kernel_ulong_t,
+    pub msg_perm:   ipc64_perm,
+    pub msg_stime:  __kernel_time_t,
+    pub msg_rtime:  __kernel_time_t,
+    pub msg_ctime:  __kernel_time_t,
+    pub msg_cbytes: __kernel_ulong_t,
+    pub msg_qnum:   __kernel_ulong_t,
+    pub msg_qbytes: __kernel_ulong_t,
+    pub msg_lspid:  __kernel_pid_t,
+    pub msg_lrpid:  __kernel_pid_t,
+    pub __unused4:  __kernel_ulong_t,
+    pub __unused5:  __kernel_ulong_t,
 }
 
 // sembuf.h
@@ -808,14 +819,14 @@ pub struct msqid64_ds {
 #[repr(C)]
 #[derive(Copy, Eq)]
 pub struct semid64_ds {
-	pub sem_perm:  ipc64_perm,
-	pub sem_otime: __kernel_time_t,
-	pub __unused1: __kernel_ulong_t,
-	pub sem_ctime: __kernel_time_t,
-	pub __unused2: __kernel_ulong_t,
-	pub sem_nsems: __kernel_ulong_t,
-	pub __unused3: __kernel_ulong_t,
-	pub __unused4: __kernel_ulong_t,
+    pub sem_perm:  ipc64_perm,
+    pub sem_otime: __kernel_time_t,
+    pub __unused1: __kernel_ulong_t,
+    pub sem_ctime: __kernel_time_t,
+    pub __unused2: __kernel_ulong_t,
+    pub sem_nsems: __kernel_ulong_t,
+    pub __unused3: __kernel_ulong_t,
+    pub __unused4: __kernel_ulong_t,
 }
 
 // shmbuf.h
@@ -845,16 +856,16 @@ pub const LDT_ENTRY_SIZE : c_int = 8;
 #[repr(C)]
 #[derive(Copy, Eq)]
 pub struct user_desc {
-	pub entry_number: c_uint,
-	pub base_addr:    c_uint,
-	pub limit:        c_uint,
-	//unsigned int seg_32bit:1;
-	//unsigned int contents:2;
-	//unsigned int read_exec_only:1;
-	//unsigned int limit_in_pages:1;
-	//unsigned int seg_not_present:1;
-	//unsigned int useable:1;
-	//unsigned int lm:1;
+    pub entry_number: c_uint,
+    pub base_addr:    c_uint,
+    pub limit:        c_uint,
+    //unsigned int seg_32bit:1;
+    //unsigned int contents:2;
+    //unsigned int read_exec_only:1;
+    //unsigned int limit_in_pages:1;
+    //unsigned int seg_not_present:1;
+    //unsigned int useable:1;
+    //unsigned int lm:1;
     __bitfield_one: c_uint,
 }
 
@@ -878,5 +889,16 @@ impl user_desc {
 
 // siginfo.h
 
-pub const SI_PAD_SIZE: usize = (::SI_MAX_SIZE - ::__ARCH_SI_PREAMBLE_SIZE) /
-                                                                    ::BYTES_PER_INT;
+#[repr(C)]
+#[derive(Copy, Eq)]
+pub struct siginfo_t {
+    data: [u64; SI_MAX_SIZE / 8],
+}
+
+#[repr(C)]
+#[derive(Copy, Eq)]
+pub struct siginfo_sigfault {
+    pub _addr: *mut c_void,
+    pub _addr_lsb: c_short,
+    pub _addr_bnd: siginfo_addr_bnd,
+}

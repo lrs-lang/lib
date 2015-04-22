@@ -15,7 +15,7 @@ use cty::{
     __old_kernel_stat, old_linux_dirent, oldold_utsname, old_sigaction, old_sigset_t,
     old_utsname, perf_event_attr, pid_t, pollfd, qid_t, rlimit, rlimit64,
     robust_list_head, rusage, __s32, sched_attr, sched_param, sel_arg_struct, sembuf,
-    shmid64_ds, sigaction, siginfo,
+    shmid64_ds, sigaction, siginfo_t,
     ssize_t, stack_t, stat, stat64, statfs, statfs64, __sysctl_args, sysinfo, timer_t,
     time_t, timeval, timezone, tms, __u64, user_msghdr, ustat, utimbuf, IPC_64, k_uchar,
 };
@@ -1670,7 +1670,7 @@ pub unsafe fn wait4(upid: pid_t, stat_addr: *mut k_int, options: k_int,
     call!(__NR_wait4, upid, stat_addr, options, ru) as pid_t
 }
 
-pub unsafe fn waitid(which: k_int, upid: pid_t, infop: *mut siginfo, options: k_int,
+pub unsafe fn waitid(which: k_int, upid: pid_t, infop: *mut siginfo_t, options: k_int,
                      ru: *mut rusage) -> k_int {
     call!(__NR_waitid, which, upid, infop, options, ru) as k_int
 }

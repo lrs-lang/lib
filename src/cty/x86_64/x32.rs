@@ -5,7 +5,7 @@
 #![allow(non_camel_case_types, raw_pointer_derive)]
 
 pub use ::gen::{
-    __kernel_old_uid_t, __kernel_old_gid_t, __kernel_old_dev_t,
+    __kernel_old_uid_t, __kernel_old_gid_t, __kernel_old_dev_t, __ARCH_SI_PREAMBLE_SIZE,
 };
 
 pub const USER_POINTER_ALIGN : usize = 4;
@@ -55,18 +55,5 @@ pub const __NR_io_submit         : usize = 544;
 pub const __NR_execveat          : usize = 545;
 
 // siginfo.h
-// Literally THE WORST
 
-pub const __ARCH_SI_PREAMBLE_SIZE: usize = 3 * ::BYTES_PER_INT;
-
-#[repr(C)]
-#[derive(Copy, Eq)]
-pub struct siginfo {
-	// si_signo: ::c_int,
-	// si_errno: ::c_int,
-    // This struct has to be 8 byte aligned so we replace the first two fields by this
-    // one. Note that u64 is 8 byte aligned on x32.
-    _alignment: u64,
-	si_code: ::c_int,
-    _pad: [::c_int; ::SI_PAD_SIZE],
-}
+pub type __ARCH_SI_CLOCK_T = [u32; 2];

@@ -61,68 +61,68 @@ pub const STAT_HAVE_NSEC: ::c_int = 1;
 #[repr(C)]
 #[derive(Copy, Eq)]
 pub struct stat {
-	pub st_dev:        ::c_ulong,
-	pub st_ino:        ::c_ulong,
-	pub st_mode:       ::c_uint,
-	pub st_nlink:      ::c_uint,
-	pub st_uid:        ::c_uint,
-	pub st_gid:        ::c_uint,
-	pub st_rdev:       ::c_ulong,
-	pub __pad1:        ::c_ulong,
-	pub st_size:       ::c_long,
-	pub st_blksize:    ::c_int,
-	pub __pad2:        ::c_int,
-	pub st_blocks:     ::c_long,
-	pub st_atime:      ::c_long,
-	pub st_atime_nsec: ::c_ulong,
-	pub st_mtime:      ::c_long,
-	pub st_mtime_nsec: ::c_ulong,
-	pub st_ctime:      ::c_long,
-	pub st_ctime_nsec: ::c_ulong,
-	pub __unused4:     ::c_uint,
-	pub __unused5:     ::c_uint,
+    pub st_dev:        ::c_ulong,
+    pub st_ino:        ::c_ulong,
+    pub st_mode:       ::c_uint,
+    pub st_nlink:      ::c_uint,
+    pub st_uid:        ::c_uint,
+    pub st_gid:        ::c_uint,
+    pub st_rdev:       ::c_ulong,
+    pub __pad1:        ::c_ulong,
+    pub st_size:       ::c_long,
+    pub st_blksize:    ::c_int,
+    pub __pad2:        ::c_int,
+    pub st_blocks:     ::c_long,
+    pub st_atime:      ::c_long,
+    pub st_atime_nsec: ::c_ulong,
+    pub st_mtime:      ::c_long,
+    pub st_mtime_nsec: ::c_ulong,
+    pub st_ctime:      ::c_long,
+    pub st_ctime_nsec: ::c_ulong,
+    pub __unused4:     ::c_uint,
+    pub __unused5:     ::c_uint,
 }
 
 #[repr(C)]
 #[derive(Copy, Eq)]
 pub struct stat64 {
-	pub st_dev:        ::c_ulonglong,
-	pub st_ino:        ::c_ulonglong,
-	pub st_mode:       ::c_uint,
-	pub st_nlink:      ::c_uint,
-	pub st_uid:        ::c_uint,
-	pub st_gid:        ::c_uint,
-	pub st_rdev:       ::c_ulonglong,
-	pub __pad1:        ::c_ulonglong,
-	pub st_size:       ::c_longlong,
-	pub st_blksize:    ::c_int,
-	pub __pad2:        ::c_int,
-	pub st_blocks:     ::c_longlong,
-	pub st_atime:      ::c_int,
-	pub st_atime_nsec: ::c_uint,
-	pub st_mtime:      ::c_int,
-	pub st_mtime_nsec: ::c_uint,
-	pub st_ctime:      ::c_int,
-	pub st_ctime_nsec: ::c_uint,
-	pub __unused4:     ::c_uint,
-	pub __unused5:     ::c_uint,
+    pub st_dev:        ::c_ulonglong,
+    pub st_ino:        ::c_ulonglong,
+    pub st_mode:       ::c_uint,
+    pub st_nlink:      ::c_uint,
+    pub st_uid:        ::c_uint,
+    pub st_gid:        ::c_uint,
+    pub st_rdev:       ::c_ulonglong,
+    pub __pad1:        ::c_ulonglong,
+    pub st_size:       ::c_longlong,
+    pub st_blksize:    ::c_int,
+    pub __pad2:        ::c_int,
+    pub st_blocks:     ::c_longlong,
+    pub st_atime:      ::c_int,
+    pub st_atime_nsec: ::c_uint,
+    pub st_mtime:      ::c_int,
+    pub st_mtime_nsec: ::c_uint,
+    pub st_ctime:      ::c_int,
+    pub st_ctime_nsec: ::c_uint,
+    pub __unused4:     ::c_uint,
+    pub __unused5:     ::c_uint,
 }
 
 #[repr(C)]
 #[derive(Copy, Eq)]
 pub struct statfs {
-	pub f_type:    ::__statfs_word,
-	pub f_bsize:   ::__statfs_word,
-	pub f_blocks:  ::__statfs_word,
-	pub f_bfree:   ::__statfs_word,
-	pub f_bavail:  ::__statfs_word,
-	pub f_files:   ::__statfs_word,
-	pub f_ffree:   ::__statfs_word,
-	pub f_fsid:    ::__kernel_fsid_t,
-	pub f_namelen: ::__statfs_word,
-	pub f_frsize:  ::__statfs_word,
-	pub f_flags:   ::__statfs_word,
-	pub f_spare:   [::__statfs_word; 4],
+    pub f_type:    ::__statfs_word,
+    pub f_bsize:   ::__statfs_word,
+    pub f_blocks:  ::__statfs_word,
+    pub f_bfree:   ::__statfs_word,
+    pub f_bavail:  ::__statfs_word,
+    pub f_files:   ::__statfs_word,
+    pub f_ffree:   ::__statfs_word,
+    pub f_fsid:    ::__kernel_fsid_t,
+    pub f_namelen: ::__statfs_word,
+    pub f_frsize:  ::__statfs_word,
+    pub f_flags:   ::__statfs_word,
+    pub f_spare:   [::__statfs_word; 4],
 }
 
 // signal-defs.h
@@ -209,9 +209,9 @@ pub type old_sigset_t = ::c_ulong;
 #[repr(C)]
 #[derive(Copy, Eq)]
 pub struct sigaltstack {
-	pub ss_sp: *mut ::c_void,
-	pub ss_flags: ::c_int,
-	pub ss_size: ::size_t,
+    pub ss_sp: *mut ::c_void,
+    pub ss_flags: ::c_int,
+    pub ss_size: ::size_t,
 }
 
 pub type stack_t = ::sigaltstack;
@@ -399,8 +399,8 @@ pub const _IOC_READ  : ::c_uint = 2;
 
 pub fn _IOC(dir: ::c_uint, ty: ::c_uint, nr: ::c_uint,
             size: ::c_uint) -> ::c_uint {
-	(dir << ::_IOC_DIRSHIFT) | (ty   << ::_IOC_TYPESHIFT) |
-	(nr  << ::_IOC_NRSHIFT)  | (size << ::_IOC_SIZESHIFT)
+    (dir << ::_IOC_DIRSHIFT) | (ty   << ::_IOC_TYPESHIFT) |
+    (nr  << ::_IOC_NRSHIFT)  | (size << ::_IOC_SIZESHIFT)
 }
 
 pub fn _IOC_TYPECHECK<T>(_: T) -> ::c_uint { ::core::mem::size_of::<T>() as ::c_uint }
@@ -542,12 +542,12 @@ pub const NCCS : usize = 19;
 #[repr(C)]
 #[derive(Copy, Eq)]
 pub struct termios {
-	pub c_iflag:    ::tcflag_t,
-	pub c_oflag:    ::tcflag_t,
-	pub c_cflag:    ::tcflag_t,
-	pub c_lflag:    ::tcflag_t,
-	pub c_line:     ::cc_t,
-	pub c_cc: [::cc_t; ::NCCS],
+    pub c_iflag:    ::tcflag_t,
+    pub c_oflag:    ::tcflag_t,
+    pub c_cflag:    ::tcflag_t,
+    pub c_lflag:    ::tcflag_t,
+    pub c_line:     ::cc_t,
+    pub c_cc: [::cc_t; ::NCCS],
 }
 
 #[repr(C)]
@@ -843,4 +843,200 @@ pub const POSIX_FADV_NOREUSE  : ::c_int = 5;
 
 // siginfo.h
 
+// XXX: Assumes that usize == *void >= int
+#[repr(C)]
+#[derive(Copy, Eq)]
+pub struct sigval_t {
+    _data: usize,
+}
+
+impl sigval_t {
+    pub fn sigval_int_mut(&mut self) -> &mut ::c_int {
+        unsafe { ::core::mem::cast(self) }
+    }
+
+    pub fn sigval_ptr_mut(&mut self) -> *mut ::c_void {
+        unsafe { ::core::mem::cast(self) }
+    }
+}
+
+pub const __ARCH_SI_PREAMBLE_SIZE: usize = 3 * ::BYTES_PER_INT;
 pub const SI_MAX_SIZE: usize = 128;
+pub const SI_PAD_SIZE: usize = (::SI_MAX_SIZE - ::__ARCH_SI_PREAMBLE_SIZE) / ::BYTES_PER_INT;
+pub type __ARCH_SI_UID_T   = ::__kernel_uid32_t;
+pub type __ARCH_SI_BAND_T  = ::c_long;
+pub type __ARCH_SI_CLOCK_T = ::__kernel_clock_t;
+pub const BYTES_PER_ARCH_SI_UID_T: usize = ::BYTES_PER_INT;
+
+#[repr(C)]
+#[derive(Copy, Eq)]
+pub struct siginfo_kill {
+    pub _pid: ::__kernel_pid_t,
+    pub _uid: ::__ARCH_SI_UID_T,
+}
+
+#[repr(C)]
+#[derive(Copy, Eq)]
+pub struct siginfo_timer {
+    pub _tid: ::__kernel_timer_t,
+    pub _overrun: ::c_int,
+    pub _pad: [::c_char; ::BYTES_PER_ARCH_SI_UID_T - ::BYTES_PER_INT],
+    pub _sigval: ::sigval_t,
+    pub _sys_private: ::c_int,
+}
+
+#[repr(C)]
+#[derive(Copy, Eq)]
+pub struct siginfo_rt {
+    pub _pid: ::__kernel_pid_t,
+    pub _uid: ::__ARCH_SI_UID_T,
+    pub _sigval: ::sigval_t,
+}
+
+#[repr(C)]
+#[derive(Copy, Eq)]
+pub struct siginfo_sigchld {
+    pub _pid: ::__kernel_pid_t,
+    pub _uid: ::__ARCH_SI_UID_T,
+    pub _status: ::c_int,
+    pub _utime: ::__ARCH_SI_CLOCK_T,
+    pub _stime: ::__ARCH_SI_CLOCK_T,
+}
+
+#[repr(C)]
+#[derive(Copy, Eq)]
+pub struct siginfo_addr_bnd {
+    pub _lower: *mut ::c_void,
+    pub _upper: *mut ::c_void,
+}
+
+#[repr(C)]
+#[derive(Copy, Eq)]
+pub struct siginfo_sigpoll {
+    pub _band: ::__ARCH_SI_BAND_T,
+    pub _fd: ::c_int,
+}
+
+#[repr(C)]
+#[derive(Copy, Eq)]
+pub struct siginfo_sigsys {
+    pub _call_addr: *mut ::c_void,
+    pub _syscall: ::c_int,
+    pub _arch: ::c_uint,
+}
+
+impl ::siginfo_t {
+    pub fn si_signo_mut(&mut self) -> &mut ::c_int {
+        unsafe { &mut *(self as *mut _ as *mut ::c_int) }
+    }
+
+    pub fn si_errno_mut(&mut self) -> &mut ::c_int {
+        unsafe { &mut *(self as *mut _ as *mut ::c_int).add(1) }
+    }
+
+    pub fn si_code_mut(&mut self) -> &mut ::c_int {
+        unsafe { &mut *(self as *mut _ as *mut ::c_int).add(2) }
+    }
+
+    fn data(&mut self) -> *mut u8 {
+        unsafe { (self as *mut _ as *mut u8).add(::__ARCH_SI_PREAMBLE_SIZE) }
+    }
+
+    pub fn _kill_mut(&mut self) -> &mut ::siginfo_kill {
+        unsafe { &mut *(self.data() as *mut _) }
+    }
+
+    pub fn _timer_mut(&mut self) -> &mut ::siginfo_timer {
+        unsafe { &mut *(self.data() as *mut _) }
+    }
+
+    pub fn _rt_mut(&mut self) -> &mut ::siginfo_rt {
+        unsafe { &mut *(self.data() as *mut _) }
+    }
+
+    pub fn _sigchld_mut(&mut self) -> &mut ::siginfo_sigchld {
+        unsafe { &mut *(self.data() as *mut _) }
+    }
+
+    pub fn _sigfault_mut(&mut self) -> &mut ::siginfo_sigfault {
+        unsafe { &mut *(self.data() as *mut _) }
+    }
+
+    pub fn _sigpoll_mut(&mut self) -> &mut ::siginfo_sigpoll {
+        unsafe { &mut *(self.data() as *mut _) }
+    }
+
+    pub fn _sigsys_mut(&mut self) -> &mut ::siginfo_sigsys {
+        unsafe { &mut *(self.data() as *mut _) }
+    }
+}
+
+pub const SI_USER     : ::c_int = 0;
+pub const SI_KERNEL   : ::c_int = 0x80;
+pub const SI_QUEUE    : ::c_int = -1;
+pub const SI_TIMER    : ::c_int = -2;
+pub const SI_MESGQ    : ::c_int = -3;
+pub const SI_ASYNCIO  : ::c_int = -4;
+pub const SI_SIGIO    : ::c_int = -5;
+pub const SI_TKILL    : ::c_int = -6;
+pub const SI_DETHREAD : ::c_int = -7;
+
+pub const ILL_ILLOPC : ::c_int = 1;
+pub const ILL_ILLOPN : ::c_int = 2;
+pub const ILL_ILLADR : ::c_int = 3;
+pub const ILL_ILLTRP : ::c_int = 4;
+pub const ILL_PRVOPC : ::c_int = 5;
+pub const ILL_PRVREG : ::c_int = 6;
+pub const ILL_COPROC : ::c_int = 7;
+pub const ILL_BADSTK : ::c_int = 8;
+pub const NSIGILL : usize = 8;
+
+pub const FPE_INTDIV : ::c_int = 1;
+pub const FPE_INTOVF : ::c_int = 2;
+pub const FPE_FLTDIV : ::c_int = 3;
+pub const FPE_FLTOVF : ::c_int = 4;
+pub const FPE_FLTUND : ::c_int = 5;
+pub const FPE_FLTRES : ::c_int = 6;
+pub const FPE_FLTINV : ::c_int = 7;
+pub const FPE_FLTSUB : ::c_int = 8;
+pub const NSIGFPE : usize = 8;
+
+pub const SEGV_MAPERR : ::c_int = 1;
+pub const SEGV_ACCERR : ::c_int = 2;
+pub const SEGV_BNDERR : ::c_int = 3;
+
+pub const BUS_ADRALN    : ::c_int = 1;
+pub const BUS_ADRERR    : ::c_int = 2;
+pub const BUS_OBJERR    : ::c_int = 3;
+pub const BUS_MCEERR_AR : ::c_int = 4;
+pub const BUS_MCEERR_AO : ::c_int = 5;
+
+pub const TRAP_BRKPT  : ::c_int = 1;
+pub const TRAP_TRACE  : ::c_int = 2;
+pub const TRAP_BRANCH : ::c_int = 3;
+pub const TRAP_HWBKPT : ::c_int = 4;
+pub const NSIGTRAP : usize = 4;
+
+pub const CLD_EXITED    : ::c_int = 1;
+pub const CLD_KILLED    : ::c_int = 2;
+pub const CLD_DUMPED    : ::c_int = 3;
+pub const CLD_TRAPPED   : ::c_int = 4;
+pub const CLD_STOPPED   : ::c_int = 5;
+pub const CLD_CONTINUED : ::c_int = 6;
+pub const NSIGCHLD : usize = 6;
+
+pub const POLL_IN  : ::c_int = 1;
+pub const POLL_OUT : ::c_int = 2;
+pub const POLL_MSG : ::c_int = 3;
+pub const POLL_ERR : ::c_int = 4;
+pub const POLL_PRI : ::c_int = 5;
+pub const POLL_HUP : ::c_int = 6;
+pub const NSIGPOLL : usize = 6;
+
+pub const SYS_SECCOMP : ::c_int = 1;
+pub const NSIGSYS : usize = 1;
+
+pub const SIGEV_SIGNAL    : ::c_int = 0;
+pub const SIGEV_NONE      : ::c_int = 1;
+pub const SIGEV_THREAD    : ::c_int = 2;
+pub const SIGEV_THREAD_ID : ::c_int = 4;
