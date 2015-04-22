@@ -37,27 +37,29 @@ use core::{mem};
 use io::{Read};
 use base::rmo::{AsRef, AsMut};
 use base::error::{self, Errno};
-use cty::{c_int, loff_t, c_uint, AT_FDCWD, AT_EMPTY_PATH, AT_SYMLINK_NOFOLLOW,
-          UTIME_NOW, UTIME_OMIT, timespec, RENAME_EXCHANGE, RENAME_NOREPLACE,
-          AT_REMOVEDIR, PATH_MAX, size_t, FALLOC_FL_KEEP_SIZE,
-          FALLOC_FL_PUNCH_HOLE, FALLOC_FL_COLLAPSE_RANGE, FALLOC_FL_ZERO_RANGE,
-          ssize_t, LOCK_SH, LOCK_EX, LOCK_NB, LOCK_UN};
+use cty::{
+    c_int, loff_t, c_uint, AT_FDCWD, AT_EMPTY_PATH, AT_SYMLINK_NOFOLLOW, UTIME_NOW,
+    UTIME_OMIT, timespec, RENAME_EXCHANGE, RENAME_NOREPLACE, AT_REMOVEDIR, PATH_MAX,
+    size_t, FALLOC_FL_KEEP_SIZE, FALLOC_FL_PUNCH_HOLE, FALLOC_FL_COLLAPSE_RANGE,
+    FALLOC_FL_ZERO_RANGE, ssize_t, LOCK_SH, LOCK_EX, LOCK_NB, LOCK_UN
+};
 use int::{BoundedRange};
-use syscall::{openat, read, write, close, pread, lseek, pwrite, readv, writev,
-              preadv, pwritev, ftruncate, fsync, fdatasync, syncfs, fadvise,
-              fstatfs, fcntl_dupfd_cloexec, fcntl_getfl, fcntl_setfl, fcntl_getfd,
-              fcntl_setfd, fstatat, faccessat, truncate, linkat, utimensat,
-              renameat, mkdirat, unlinkat, symlinkat, readlinkat, fchownat,
-              fchmodat, fchmod, mknodat, readahead, fallocate, setxattr, lsetxattr,
-              fsetxattr, getxattr, lgetxattr, fgetxattr, removexattr, lremovexattr,
-              fremovexattr, listxattr, llistxattr, flistxattr, flock};
+use syscall::{
+    openat, read, write, close, pread, lseek, pwrite, readv, writev, preadv, pwritev,
+    ftruncate, fsync, fdatasync, syncfs, fadvise, fstatfs, fcntl_dupfd_cloexec,
+    fcntl_getfl, fcntl_setfl, fcntl_getfd, fcntl_setfd, fstatat, faccessat, truncate,
+    linkat, utimensat, renameat, mkdirat, unlinkat, symlinkat, readlinkat, fchownat,
+    fchmodat, fchmod, mknodat, readahead, fallocate, setxattr, lsetxattr, fsetxattr,
+    getxattr, lgetxattr, fgetxattr, removexattr, lremovexattr, fremovexattr, listxattr,
+    llistxattr, flistxattr, flock
+};
 use str_one::{AsCStr, CStr, ByteStr, AsByteStr, NoNullStr, AsMutNoNullStr};
 use str_two::{ByteString, NoNullString};
 use str_three::{ToCString};
 use arch_fns::{memchr};
 use rv::{retry};
 use cty::alias::{UserId, GroupId};
-use fd::{FDContainer, FD};
+use fd::{FDContainer};
 use rmo::{ToOwned};
 
 use time_base::{Time, time_to_timespec};
@@ -1249,7 +1251,7 @@ impl Drop for File {
 }
 
 impl FDContainer for File {
-    fn unwrap(self) -> FD {
+    fn unwrap(self) -> c_int {
         let fd = self.fd;
         mem::forget(self);
         fd
@@ -1259,15 +1261,15 @@ impl FDContainer for File {
         self.owned
     }
 
-    fn borrow(&self) -> FD {
+    fn borrow(&self) -> c_int {
         self.fd
     }
 
-    fn from_owned(fd: FD) -> File {
+    fn from_owned(fd: c_int) -> File {
         File { fd: fd, owned: true }
     }
 
-    fn from_borrowed(fd: FD) -> File {
+    fn from_borrowed(fd: c_int) -> File {
         File { fd: fd, owned: false }
     }
 }

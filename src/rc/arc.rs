@@ -35,7 +35,7 @@ impl<T: Send+Sync> Arc<T> {
 
     pub fn as_mut(&mut self) -> Option<&mut T> {
         let data = unsafe { &mut *self.data };
-        match data.count.load_seqcst() {
+        match data.count.load() {
             1 => Some(&mut data.val),
             _ => None,
         }
@@ -46,7 +46,7 @@ impl<T: Send+Sync> Drop for Arc<T> {
     fn drop(&mut self) {
         unsafe {
             let data = &mut *self.data;
-            if data.count.sub_seqcst(1) == 1 {
+            if data.count.sub(1) == 1 {
                 if mem::needs_drop::<T>() {
                     ptr::read(&data.val);
                 }
@@ -68,7 +68,7 @@ impl<T: Send+Sync> Clone for Arc<T> {
     fn clone(&self) -> Result<Arc<T>> {
         unsafe {
             let data = &mut *self.data;
-            data.count.add_seqcst(1);
+            data.count.add(1);
             Ok(Arc { data: self.data })
         }
     }

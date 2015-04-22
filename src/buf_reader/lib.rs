@@ -24,6 +24,7 @@ use arch_fns::{memchr};
 
 pub mod linux { pub use base::linux::*; }
 
+/// A buffered reader.
 pub struct BufReader<'a, R: Read> {
     data: *mut u8,
     cap: usize,
@@ -35,6 +36,9 @@ pub struct BufReader<'a, R: Read> {
 }
 
 impl<'a, R: Read> BufReader<'a, R> {
+    /// Allocates at least `size` bytes on the heap for buffering.
+    ///
+    /// Note that `size` will be increased to the next power of two.
     pub fn allocate(read: R, size: usize) -> Result<BufReader<'static, R>> {
         let size = match size.checked_next_power_of_two() {
             Some(n) => n,
@@ -55,6 +59,9 @@ impl<'a, R: Read> BufReader<'a, R> {
         })
     }
 
+    /// Uses `buf` as a buffer.
+    ///
+    /// Note that the length of `buf` will be decreased to the previous power of two.
     pub fn new(read: R, buf: &'a mut [u8]) -> BufReader<'a, R> {
         let size = match buf.len() {
             0 => 0,
@@ -71,14 +78,17 @@ impl<'a, R: Read> BufReader<'a, R> {
         }
     }
 
+    /// The number of currently buffered bytes.
     pub fn available(&self) -> usize {
         self.end.wrapping_sub(self.start)
     }
 
+    /// The total buffer capacity.
     pub fn capacity(&self) -> usize {
         self.cap
     }
 
+    /// Calls the underlying reader once to fill the currently free buffer space.
     pub fn fill(&mut self) -> Result<usize> {
         if self.available() == self.cap {
             return Ok(0);

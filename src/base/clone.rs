@@ -8,6 +8,7 @@
 ///
 /// Duplication might not succeed (e.g. out of memory) in which case an error is returned.
 pub trait Clone {
+    /// Clones the value.
     fn clone(&self) -> Result<Self>;
 }
 

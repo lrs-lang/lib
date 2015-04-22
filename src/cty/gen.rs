@@ -840,3 +840,7 @@ pub struct epoll_event {
 
 pub const POSIX_FADV_DONTNEED : ::c_int = 4;
 pub const POSIX_FADV_NOREUSE  : ::c_int = 5;
+
+// siginfo.h
+
+pub const SI_MAX_SIZE: usize = 128;

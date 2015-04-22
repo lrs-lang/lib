@@ -39,7 +39,7 @@ impl<'a> Lock {
     }
 
     pub fn status(&self) -> LockStatus {
-        match self.val.load() {
+        match self.val.load_unordered() {
             UNLOCKED => LockStatus::Unlocked,
             LOCKED   => LockStatus::Locked,
             _        => LockStatus::Waiting,
@@ -47,7 +47,7 @@ impl<'a> Lock {
     }
 
     pub fn try_lock(&'a self) -> Option<LockGuard<'a>> {
-        if self.val.compare_exchange_seqcst(UNLOCKED, LOCKED) == UNLOCKED {
+        if self.val.compare_exchange(UNLOCKED, LOCKED) == UNLOCKED {
             Some(self.guard())
         } else {
             None
@@ -55,16 +55,16 @@ impl<'a> Lock {
     }
 
     pub fn lock(&'a self) -> LockGuard<'a> {
-        let mut status = self.val.compare_exchange_seqcst(UNLOCKED, LOCKED);
+        let mut status = self.val.compare_exchange(UNLOCKED, LOCKED);
         if status == UNLOCKED {
             return self.guard();
         }
         loop {
             if status == WAITING ||
-                        self.val.compare_exchange_seqcst(LOCKED, WAITING) != UNLOCKED {
+                        self.val.compare_exchange(LOCKED, WAITING) != UNLOCKED {
                 unsafe { futex_wait(self.val.unwrap(), WAITING, None); }
             }
-            status = self.val.compare_exchange_seqcst(UNLOCKED, WAITING);
+            status = self.val.compare_exchange(UNLOCKED, WAITING);
             if status == UNLOCKED {
                 return self.guard();
             }
@@ -88,8 +88,8 @@ impl<'a> LockGuard<'a> {
 
 impl<'a> Drop for LockGuard<'a> {
     fn drop(&mut self) {
-        if self.lock.val.sub_seqcst(1) != LOCKED {
-            self.lock.val.store_seqcst(UNLOCKED);
+        if self.lock.val.sub(1) != LOCKED {
+            self.lock.val.store(UNLOCKED);
             unsafe { futex_wake(self.lock.val.unwrap(), 1); }
         }
     }

@@ -58,7 +58,10 @@ extern crate linux_time_base;
 extern crate linux_time_ext;
 extern crate linux_user_group;
 extern crate linux_vec;
+extern crate linux_clone;
+extern crate linux_c_ptr_ptr;
 
+pub mod atomic;
 pub mod alloc;
 pub mod dir;
 pub mod env;
@@ -74,6 +77,7 @@ pub mod mem;
 pub mod num;
 pub mod ops;
 pub mod option;
+pub mod io;
 pub mod parse;
 pub mod poll;
 pub mod process;

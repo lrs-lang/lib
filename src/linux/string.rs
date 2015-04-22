@@ -14,3 +14,4 @@ pub use linux_str_two::{
 pub use linux_str_three::{
     ToCString,
 };
+pub use linux_c_ptr_ptr::{CPtrPtr};

@@ -14,7 +14,7 @@ pub const BITS_PER_C_ULONG : usize = 64;
 pub type c_long  = i64;
 pub type c_ulong = u64;
 
-pub type user_size_t = c_ulong;
+pub type user_size_t = ::c_ulong;
 
 pub type __kernel_old_uid_t = ::c_ushort;
 pub type __kernel_old_gid_t = ::c_ushort;
@@ -65,3 +65,22 @@ pub const __NR_sendmmsg          : usize = 307;
 pub const __NR_process_vm_readv  : usize = 310;
 pub const __NR_process_vm_writev : usize = 311;
 pub const __NR_execveat          : usize = 322;
+
+// siginfo.h
+// Literally THE WORST
+
+pub const __ARCH_SI_PREAMBLE_SIZE: usize = 4 * ::BYTES_PER_INT;
+
+#[repr(C)]
+#[derive(Copy, Eq)]
+pub struct siginfo {
+	// si_signo: ::c_int,
+	// si_errno: ::c_int,
+    // This struct has to be 8 byte aligned so we replace the first two fields by this
+    // one.
+    _alignment: u64,
+	si_code: ::c_int,
+    _sub_pad: ::c_int,
+    // Below is actually an 8 byte aligned union so we add the field above to align it.
+    _pad: [::c_int; ::SI_PAD_SIZE],
+}

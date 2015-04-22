@@ -10,3 +10,5 @@ pub use linux_process::ids::{UserIds, GroupIds, user_drop_privileges,
                              group_drop_privileges, user_set_effective_ids,
                              group_set_effective_ids, num_supplementary_groups,
                              supplementary_groups, set_supplementary_groups};
+pub use linux_process::command::{Command};
+pub use linux_clone::{fork};

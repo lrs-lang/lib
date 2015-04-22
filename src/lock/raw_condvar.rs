@@ -65,7 +65,7 @@ impl RawCondvar {
 
             node.left = inner.right_end;
             node.right = 0 as *mut Node;
-            node.lock.store_seqcst(WAITING);
+            node.lock.store(WAITING);
 
             if !inner.right_end.is_null() {
                 (&mut *inner.right_end).right = &mut node;
@@ -78,7 +78,7 @@ impl RawCondvar {
 
         drop(user_guard);
 
-        while node.lock.load_seqcst() == WAITING {
+        while node.lock.load() == WAITING {
             futex_wait(node.lock.unwrap(), WAITING, None);
         }
 
@@ -86,7 +86,7 @@ impl RawCondvar {
 
         if !node.right.is_null() {
             let next = &mut *node.right;
-            next.lock.store_seqcst(SIGNALED);
+            next.lock.store(SIGNALED);
             futex_wake(next.lock.unwrap(), 1);
         }
 
@@ -126,7 +126,7 @@ impl RawCondvar {
         }
         inner.left_end = end;
 
-        start.lock.store_seqcst(SIGNALED);
+        start.lock.store(SIGNALED);
         futex_wake(start.lock.unwrap(), 1);
     }
 }

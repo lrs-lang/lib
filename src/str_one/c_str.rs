@@ -122,7 +122,7 @@ impl Parse for CStr {
 ///
 /// This operation can fail if the object has interior null bytes, e.g.,
 /// `"Hello World\0\0\0"` will succeed but `"Hello\0World\0"` will fail.
-pub trait AsCStr : AsRef<[u8]> {
+pub trait AsCStr : ToCStr+AsRef<[u8]> {
     /// Borrows the object as a `CStr`.
     fn as_cstr(&self) -> Result<&CStr> {
         self.as_ref().as_cstr()
@@ -262,4 +262,10 @@ impl ToCStr for str {
     fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> { self.as_bytes().to_cstr(buf) }
     fn to_or_as_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<&'a CStr> { self.as_bytes().to_or_as_cstr(buf) }
     fn to_or_as_mut_cstr<'a>(&'a mut self, buf: &'a mut [u8]) -> Result<&'a mut CStr> { self.as_bytes().to_cstr(buf) }
+}
+
+impl<'b, T: ToCStr+?Sized> ToCStr for &'b T {
+    fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> { (**self).to_cstr(buf) }
+    fn to_or_as_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<&'a CStr> { (**self).to_or_as_cstr(buf) }
+    fn to_or_as_mut_cstr<'a>(&'a mut self, buf: &'a mut [u8]) -> Result<&'a mut CStr> { (**self).to_cstr(buf) }
 }

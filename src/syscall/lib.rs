@@ -591,3 +591,8 @@ pub fn exit_group(val: i32) -> ! {
     unsafe { r::exit_group(val as c_int); }
     loop { }
 }
+
+pub fn execveat(fd: c_int, filename: &CStr, argv: *const *const c_char,
+                envp: *const *const c_char, flags: c_int) -> c_int {
+    unsafe { r::execveat(fd, filename.as_ptr(), argv, envp, flags) }
+}

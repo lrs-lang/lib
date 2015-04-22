@@ -144,10 +144,8 @@ fn integers(a: &CStr, b: &CStr, cond: IntegerCondition) -> bool {
 }
 
 fn isatty(fd: &CStr) -> bool {
+    // TODO
     false
-    //use libc::{isatty};
-    //from_utf8(fd).and_then(|s| from_str(s))
-    //        .map(|i| unsafe { isatty(i) == 1 }).unwrap_or(false)
 }
 
 fn path(path: &CStr, cond: PathCondition) -> bool {
@@ -175,16 +173,16 @@ fn path(path: &CStr, cond: PathCondition) -> bool {
     };
 
     match cond {
+        Exists           => true,
+        NonEmpty         => info.size() > 0,
+        GroupIDFlag      => info.mode().is_set_group_id(),
+        UserIDFlag       => info.mode().is_set_user_id(),
         BlockSpecial     => info.file_type() == Type::BlockDevice,
         CharacterSpecial => info.file_type() == Type::CharDevice,
         Directory        => info.file_type() == Type::Directory,
-        Exists           => true,
         Regular          => info.file_type() == Type::File,
-        GroupIDFlag      => info.mode().is_set_group_id(),
         FIFO             => info.file_type() == Type::FIFO,
         Socket           => info.file_type() == Type::Socket,
-        NonEmpty         => info.size() > 0,
-        UserIDFlag       => info.mode().is_set_user_id(),
         _                => false,
     }
 }

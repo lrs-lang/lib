@@ -35,6 +35,7 @@ pub mod impls {
 macro_rules! fmt_var {
     ($name:ident) => {
         pub trait $name {
+            /// Formats the object into the writer.
             fn fmt<W: Write>(&self, w: &mut W) -> Result;
         }
 

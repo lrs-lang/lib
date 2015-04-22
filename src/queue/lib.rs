@@ -97,16 +97,16 @@ impl<T> Queue<T> {
     /// Get a position to write to if the queue isn't full
     fn get_write_pos(&self) -> Option<usize> {
         loop {
-            let read_start = self.read_start.load_seqcst();
-            let next_write = self.next_write.load_seqcst();
+            let read_start = self.read_start.load();
+            let next_write = self.next_write.load();
             if next_write.wrapping_sub(read_start) > self.cap_mask {
                 return None;
             }
             let next_next_write = next_write.wrapping_add(1);
-            if self.next_write.compare_exchange_seqcst(next_write,
-                                                       next_next_write) == next_write {
+            if self.next_write.compare_exchange(next_write,
+                                                next_next_write) == next_write {
                 if cfg!(target_pointer_width = "32") {
-                    let read_start = self.read_start.load_seqcst();
+                    let read_start = self.read_start.load();
                     if next_write.wrapping_sub(read_start) > self.cap_mask {
                         abort!();
                     }
@@ -119,13 +119,13 @@ impl<T> Queue<T> {
 
     /// `pos` is the position we've written to
     fn set_write_end(&self, pos: usize) {
-        let mut write_end = self.write_end.load_seqcst();
+        let mut write_end = self.write_end.load();
         while write_end != pos {
             spin();
-            write_end = self.write_end.load_seqcst();
+            write_end = self.write_end.load();
         }
 
-        self.write_end.store_seqcst(pos.wrapping_add(1));
+        self.write_end.store(pos.wrapping_add(1));
     }
 
     fn set_mem(&self, pos: usize, val: T) {
@@ -142,7 +142,7 @@ impl<T> Queue<T> {
         self.set_mem(write_pos, val);
         self.set_write_end(write_pos);
 
-        if self.sleeping_receivers.load_seqcst() > 0 {
+        if self.sleeping_receivers.load() > 0 {
             let _guard = match guard.is_some() {
                 true => None,
                 _ => Some(self.sleep_lock.lock()),
@@ -165,7 +165,7 @@ impl<T> Queue<T> {
         };
 
         let mut guard = self.sleep_lock.lock();
-        self.sleeping_senders.add_seqcst(1);
+        self.sleeping_senders.add(1);
         loop {
             val = match self.push_int(val, Some(&guard)) {
                 Some(v) => v,
@@ -173,22 +173,22 @@ impl<T> Queue<T> {
             };
             guard = self.send_condvar.wait(guard);
         }
-        self.sleeping_senders.sub_seqcst(1);
+        self.sleeping_senders.sub(1);
     }
 
     /// Get a position to read from if the queue isn't empty
     fn get_read_pos(&self) -> Option<usize> {
         loop {
-            let write_end = self.write_end.load_seqcst();
-            let next_read = self.next_read.load_seqcst();
+            let write_end = self.write_end.load();
+            let next_read = self.next_read.load();
             let next_next_read = next_read.wrapping_add(1);
             if write_end.wrapping_sub(next_next_read) > self.cap_mask {
                 return None;
             }
-            if self.next_read.compare_exchange_seqcst(next_read,
+            if self.next_read.compare_exchange(next_read,
                                                       next_next_read) == next_read {
                 if cfg!(target_pointer_width = "32") {
-                    let write_end = self.write_end.load_seqcst();
+                    let write_end = self.write_end.load();
                     if write_end.wrapping_sub(next_next_read) > self.cap_mask {
                         abort!();
                     }
@@ -201,13 +201,13 @@ impl<T> Queue<T> {
 
     /// `pos` is the position we've read from
     fn set_read_start(&self, pos: usize) {
-        let mut read_start = self.read_start.load_seqcst();
+        let mut read_start = self.read_start.load();
         while read_start != pos {
             spin();
-            read_start = self.read_start.load_seqcst();
+            read_start = self.read_start.load();
         }
 
-        self.read_start.store_seqcst(pos.wrapping_add(1));
+        self.read_start.store(pos.wrapping_add(1));
     }
 
     fn get_mem(&self, pos: usize) -> T {
@@ -224,7 +224,7 @@ impl<T> Queue<T> {
         let val = self.get_mem(read_pos);
         self.set_read_start(read_pos);
 
-        if self.sleeping_senders.load_seqcst() > 0 {
+        if self.sleeping_senders.load() > 0 {
             let _guard = match guard.is_some() {
                 true => None,
                 false => Some(self.sleep_lock.lock()),
@@ -246,7 +246,7 @@ impl<T> Queue<T> {
 
         if rv.is_none() {
             let mut guard = self.sleep_lock.lock();
-            self.sleeping_receivers.add_seqcst(1);
+            self.sleeping_receivers.add(1);
             loop {
                 rv = self.pop_int(Some(&guard));
                 if rv.is_some() {
@@ -254,7 +254,7 @@ impl<T> Queue<T> {
                 }
                 guard = self.recv_condvar.wait(guard);
             }
-            self.sleeping_receivers.sub_seqcst(1);
+            self.sleeping_receivers.sub(1);
         }
 
         rv.unwrap()
@@ -268,8 +268,8 @@ impl<T> Drop for Queue<T> {
     fn drop(&mut self) {
         unsafe {
             if mem::needs_drop::<T>() {
-                let write_end = self.write_end.load_seqcst();
-                let read_start = self.read_start.load_seqcst();
+                let write_end = self.write_end.load();
+                let read_start = self.read_start.load();
                 for i in 0..write_end-read_start {
                     self.get_mem(read_start + i);
                 }

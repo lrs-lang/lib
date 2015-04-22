@@ -13,6 +13,7 @@ extern crate linux_core as core;
 extern crate linux_base as base;
 extern crate linux_cty_base as cty_base;
 extern crate linux_str_one as str_one;
+extern crate linux_libc as libc;
 
 #[prelude_import] use base::prelude::*;
 use core::{mem};
@@ -24,11 +25,6 @@ mod linux { pub use base::linux::*; }
 
 static mut ARGC: isize = 0;
 static mut ARGV: *const *const u8 = 0 as *const *const u8;
-
-#[link(name = "c")]
-extern {
-    static mut environ: *const *const u8;
-}
 
 #[lang = "start"]
 fn lang_start(main: *const u8, argc: isize, argv: *const *const u8) -> isize {
@@ -68,7 +64,7 @@ impl Iterator for ArgsIter {
 }
 
 pub fn env() -> EnvIter {
-    unsafe { ArgsIter { argv: environ } }
+    unsafe { ArgsIter { argv: libc::environ } }
 }
 
 pub type EnvIter = ArgsIter;

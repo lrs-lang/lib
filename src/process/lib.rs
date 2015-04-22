@@ -15,16 +15,21 @@ extern crate linux_base as base;
 extern crate linux_syscall as syscall;
 extern crate linux_cty as cty;
 extern crate linux_fmt as fmt;
+extern crate linux_str_one as str_one;
+extern crate linux_str_three as str_three;
+extern crate linux_c_ptr_ptr as c_ptr_ptr;
 
 mod linux {
     pub use fmt::linux::*;
     pub use {cty};
 }
 
+#[allow(unused_imports)] #[prelude_import] use base::prelude::*;
 use syscall::{getpid, getppid, exit_group};
 use cty::alias::{ProcessId};
 
 pub mod ids;
+pub mod command;
 
 /// Returns the process id of this process.
 pub fn this_process_id() -> ProcessId {

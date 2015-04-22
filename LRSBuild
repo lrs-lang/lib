@@ -1,9 +1,10 @@
 obj core
 obj sort       core
+obj libc       core
 obj int        core
 obj saturating core
-obj arch_fns   core
 obj cty_base   core
+obj arch_fns   core libc
 obj base       core cty_base
 
 obj rv         core base int
@@ -13,18 +14,20 @@ obj fmt        core base io
 
 obj cell       core base
 obj str_one    core cty_base base arch_fns fmt parse
+obj c_ptr_ptr  core base cty_base str_one
 
-obj rt         core base str_one
+obj rt         core libc base str_one
 
 obj atomic     core base cell
 obj cty        core base cty_base
 obj r_syscall  core cty
 obj syscall    core saturating base str_one cty r_syscall
 
+obj clone      core libc base cty syscall
 obj fd         core base rv io cty syscall
 
 obj lock       core base cell io fmt atomic syscall cty
-obj alloc      core syscall
+obj alloc      core libc syscall
 obj queue      core base cell arch_fns atomic lock alloc
 
 obj buf_reader core arch_fns base io alloc
@@ -38,7 +41,7 @@ obj rmo        core base fmt str_one vec str_two
 obj str_three  core arch_fns base str_one str_two rmo
 
 obj fs         core base fmt cty syscall rv str_three
-obj process    core base syscall cty fmt
+obj process    core base syscall cty fmt str_one str_three c_ptr_ptr
 obj socket     core base
 
 obj time_base  core base cty syscall fmt fd rv

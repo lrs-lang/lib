@@ -15,7 +15,7 @@ use cty::{
     __old_kernel_stat, old_linux_dirent, oldold_utsname, old_sigaction, old_sigset_t,
     old_utsname, perf_event_attr, pid_t, pollfd, qid_t, rlimit, rlimit64,
     robust_list_head, rusage, __s32, sched_attr, sched_param, sel_arg_struct, sembuf,
-    shmid64_ds, sigaction,
+    shmid64_ds, sigaction, siginfo,
     ssize_t, stack_t, stat, stat64, statfs, statfs64, __sysctl_args, sysinfo, timer_t,
     time_t, timeval, timezone, tms, __u64, user_msghdr, ustat, utimbuf, IPC_64, k_uchar,
 };
@@ -66,7 +66,7 @@ use cty::{
     __NR_recvmmsg, __NR_recvmsg, __NR_remap_file_pages, __NR_removexattr, __NR_renameat2,
     __NR_renameat, __NR_rename, __NR_request_key, __NR_restart_syscall, __NR_rmdir,
     __NR_rt_sigaction, __NR_rt_sigpending, __NR_rt_sigprocmask,
-    __NR_rt_sigsuspend,
+    __NR_rt_sigsuspend, __NR_waitid,
     __NR_sched_getaffinity, __NR_sched_getattr, __NR_sched_getparam,
     __NR_sched_get_priority_max, __NR_sched_get_priority_min, __NR_sched_getscheduler,
     __NR_sched_rr_get_interval, __NR_sched_setaffinity, __NR_sched_setattr,
@@ -1670,10 +1670,10 @@ pub unsafe fn wait4(upid: pid_t, stat_addr: *mut k_int, options: k_int,
     call!(__NR_wait4, upid, stat_addr, options, ru) as pid_t
 }
 
-//pub unsafe fn waitid(which: k_int, upid: pid_t, infop: *mut siginfo, options: k_int,
-//                     ru: *mut rusage) -> k_int {
-//    call!(__NR_waitid, which, upid, infop, options, ru) as k_int
-//}
+pub unsafe fn waitid(which: k_int, upid: pid_t, infop: *mut siginfo, options: k_int,
+                     ru: *mut rusage) -> k_int {
+    call!(__NR_waitid, which, upid, infop, options, ru) as k_int
+}
 
 pub unsafe fn waitpid(pid: pid_t, stat_addr: *mut k_int, options: k_int) -> k_int {
     call!(__NR_waitpid, pid, stat_addr, options) as k_int

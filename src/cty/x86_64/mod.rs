@@ -162,6 +162,10 @@ pub use ::gen::{
     POSIX_FADV_DONTNEED, POSIX_FADV_NOREUSE,
 };
 
+pub use ::gen::{
+    SI_MAX_SIZE,
+};
+
 pub use self::abi::{
     __kernel_old_uid_t, __kernel_old_gid_t, __kernel_old_dev_t, __kernel_long_t,
     __kernel_ulong_t, c_long, c_ulong,
@@ -184,6 +188,10 @@ pub use self::abi::{
     __NR_rt_tgsigqueueinfo, __NR_recvmmsg, __NR_sendmmsg, __NR_process_vm_readv,
     __NR_process_vm_writev, __NR_setsockopt, __NR_getsockopt, __NR_io_setup,
     __NR_io_submit, __NR_execveat,
+};
+
+pub use self::abi::{
+    __ARCH_SI_PREAMBLE_SIZE, siginfo,
 };
 
 #[cfg(target_pointer_width = "32")]
@@ -867,3 +875,8 @@ impl user_desc {
     pub fn set_useable         (&mut self, val: bool) { self.__bitfield_one = bf32_set(self.__bitfield_one, 6, 1, val as c_uint) }
     pub fn set_lm              (&mut self, val: bool) { self.__bitfield_one = bf32_set(self.__bitfield_one, 7, 1, val as c_uint) }
 }
+
+// siginfo.h
+
+pub const SI_PAD_SIZE: usize = (::SI_MAX_SIZE - ::__ARCH_SI_PREAMBLE_SIZE) /
+                                                                    ::BYTES_PER_INT;

@@ -22,30 +22,34 @@ pub mod linux {
     pub use ::base::linux::*;
 }
 
+/// A release fence.
 pub fn fence_release() {
     unsafe { intrinsics::atomic_fence_rel(); }
 }
 
+/// An acquire fence.
 pub fn fence_acquire() {
     unsafe { intrinsics::atomic_fence_acq(); }
 }
 
+/// An acquire-release fence.
 pub fn fence_acquire_release() {
     unsafe { intrinsics::atomic_fence_acqrel(); }
 }
 
-pub fn fence_seqcst() {
+/// A sequentially consistent fence.
+pub fn fence() {
     unsafe { intrinsics::atomic_fence(); }
 }
 
 macro_rules! impl_atomic {
     ($name:ident, $init:ident, $raw:ident, $signed:expr) => {
-        pub const $init: $name = $name { val: Cell { data: 0 } };
-
         #[repr(C)]
         pub struct $name {
             val: Cell<$raw>,
         }
+
+        pub const $init: $name = $name { val: Cell { data: 0 } };
 
         impl Copy for $name { }
 
@@ -65,7 +69,7 @@ macro_rules! impl_atomic {
                 mem::cast(self)
             }
 
-            pub fn load(&self) -> $raw {
+            pub fn load_unordered(&self) -> $raw {
                 unsafe { intrinsics::atomic_load_unordered(self.val.ptr()) }
             }
 
@@ -77,11 +81,11 @@ macro_rules! impl_atomic {
                 unsafe { intrinsics::atomic_load_acq(self.val.ptr()) }
             }
 
-            pub fn load_seqcst(&self) -> $raw {
+            pub fn load(&self) -> $raw {
                 unsafe { intrinsics::atomic_load(self.val.ptr()) }
             }
 
-            pub fn store(&self, val: $raw) {
+            pub fn store_unordered(&self, val: $raw) {
                 unsafe { intrinsics::atomic_store_unordered(self.val.ptr(), val) }
             }
 
@@ -93,7 +97,7 @@ macro_rules! impl_atomic {
                 unsafe { intrinsics::atomic_store_rel(self.val.ptr(), val) }
             }
 
-            pub fn store_seqcst(&self, val: $raw) {
+            pub fn store(&self, val: $raw) {
                 unsafe { intrinsics::atomic_store(self.val.ptr(), val) }
             }
 
@@ -113,7 +117,7 @@ macro_rules! impl_atomic {
                 unsafe { intrinsics::atomic_xchg_acqrel(self.val.ptr(), val) }
             }
 
-            pub fn exchange_seqcst(&self, val: $raw) -> $raw {
+            pub fn exchange(&self, val: $raw) -> $raw {
                 unsafe { intrinsics::atomic_xchg(self.val.ptr(), val) }
             }
 
@@ -133,7 +137,7 @@ macro_rules! impl_atomic {
                 unsafe { intrinsics::atomic_cxchg_acqrel(self.val.ptr(), old, new) }
             }
 
-            pub fn compare_exchange_seqcst(&self, old: $raw, new: $raw) -> $raw {
+            pub fn compare_exchange(&self, old: $raw, new: $raw) -> $raw {
                 unsafe { intrinsics::atomic_cxchg(self.val.ptr(), old, new) }
             }
 
@@ -153,7 +157,7 @@ macro_rules! impl_atomic {
                 unsafe { intrinsics::atomic_xadd_acqrel(self.val.ptr(), val) }
             }
 
-            pub fn add_seqcst(&self, val: $raw) -> $raw {
+            pub fn add(&self, val: $raw) -> $raw {
                 unsafe { intrinsics::atomic_xadd(self.val.ptr(), val) }
             }
 
@@ -173,7 +177,7 @@ macro_rules! impl_atomic {
                 unsafe { intrinsics::atomic_xsub_acqrel(self.val.ptr(), val) }
             }
 
-            pub fn sub_seqcst(&self, val: $raw) -> $raw {
+            pub fn sub(&self, val: $raw) -> $raw {
                 unsafe { intrinsics::atomic_xsub(self.val.ptr(), val) }
             }
 
@@ -193,7 +197,7 @@ macro_rules! impl_atomic {
                 unsafe { intrinsics::atomic_and_acqrel(self.val.ptr(), val) }
             }
 
-            pub fn and_seqcst(&self, val: $raw) -> $raw {
+            pub fn and(&self, val: $raw) -> $raw {
                 unsafe { intrinsics::atomic_and(self.val.ptr(), val) }
             }
 
@@ -213,7 +217,7 @@ macro_rules! impl_atomic {
                 unsafe { intrinsics::atomic_or_acqrel(self.val.ptr(), val) }
             }
 
-            pub fn or_seqcst(&self, val: $raw) -> $raw {
+            pub fn or(&self, val: $raw) -> $raw {
                 unsafe { intrinsics::atomic_or(self.val.ptr(), val) }
             }
 
@@ -233,7 +237,7 @@ macro_rules! impl_atomic {
                 unsafe { intrinsics::atomic_nand_acqrel(self.val.ptr(), val) }
             }
 
-            pub fn nand_seqcst(&self, val: $raw) -> $raw {
+            pub fn nand(&self, val: $raw) -> $raw {
                 unsafe { intrinsics::atomic_nand(self.val.ptr(), val) }
             }
 
@@ -253,7 +257,7 @@ macro_rules! impl_atomic {
                 unsafe { intrinsics::atomic_xor_acqrel(self.val.ptr(), val) }
             }
 
-            pub fn xor_seqcst(&self, val: $raw) -> $raw {
+            pub fn xor(&self, val: $raw) -> $raw {
                 unsafe { intrinsics::atomic_xor(self.val.ptr(), val) }
             }
 
@@ -297,7 +301,7 @@ macro_rules! impl_atomic {
                 }
             }
 
-            pub fn min_seqcst(&self, val: $raw) -> $raw {
+            pub fn min(&self, val: $raw) -> $raw {
                 unsafe {
                     if $signed {
                         intrinsics::atomic_min(self.val.ptr(), val)
@@ -347,7 +351,7 @@ macro_rules! impl_atomic {
                 }
             }
 
-            pub fn max_seqcst(&self, val: $raw) -> $raw {
+            pub fn max(&self, val: $raw) -> $raw {
                 unsafe {
                     if $signed {
                         intrinsics::atomic_max(self.val.ptr(), val)
@@ -371,5 +375,6 @@ impl_atomic!(AtomicI32,   ATOMIC_I32_INIT,   i32,   true);
 impl_atomic!(AtomicI64,   ATOMIC_I64_INIT,   i64,   true);
 impl_atomic!(AtomicIsize, ATOMIC_ISIZE_INIT, isize, true);
 
+/// Atomic `c_int`.
 pub type AtomicCInt = AtomicI32;
 pub const ATOMIC_CINT_INIT: AtomicCInt = ATOMIC_I32_INIT;
