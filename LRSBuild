@@ -12,7 +12,9 @@ obj io         core base
 obj fmt        core base io
 
 obj cell       core base
-obj str_one    core cty_base base arch_fns fmt
+obj str_one    core cty_base base arch_fns fmt parse
+
+obj rt         core base str_one
 
 obj atomic     core base cell
 obj cty        core base cty_base

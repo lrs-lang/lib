@@ -50,14 +50,3 @@ pub mod prelude {
 
     pub use iter::{Iterator};
 }
-
-// TODO: Move below into "start" or "rt"
-
-#[link(name = "c")]
-extern { }
-
-#[lang = "start"]
-fn lang_start(main: *const u8, _argc: isize, _argv: *const *const u8) -> isize {
-    unsafe { mem::cast::<_, fn()>(main)(); }
-    0
-}

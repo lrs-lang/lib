@@ -8,6 +8,7 @@ use core::{mem, str};
 use core::ops::{Eq};
 use base::rmo::{AsRef, AsMut};
 use fmt::{self, Debug, UpperHex, Write};
+use parse::{Parse, Parsable};
 
 use c_str::{CStr, ToCStr};
 use no_null_str::{AsNoNullStr, AsMutNoNullStr, NoNullStr};
@@ -138,6 +139,12 @@ impl Debug for ByteStr {
         }
         try!(w.write_all(b"\""));
         Ok(())
+    }
+}
+
+impl Parse for ByteStr {
+    fn parse<P: Parsable>(&self) -> Result<P> {
+        self.as_ref().parse()
     }
 }
 

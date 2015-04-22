@@ -21,7 +21,7 @@ mod linux {
     pub use {cty};
 }
 
-use syscall::{getpid, getppid};
+use syscall::{getpid, getppid, exit_group};
 use cty::alias::{ProcessId};
 
 pub mod ids;
@@ -34,4 +34,9 @@ pub fn this_process_id() -> ProcessId {
 /// Returns the process id of the process that created this process.
 pub fn parent_process_id() -> ProcessId {
     getppid()
+}
+
+/// Exits the process.
+pub fn exit(code: i32) -> ! {
+    exit_group(code);
 }

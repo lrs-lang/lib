@@ -3,13 +3,14 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use core::ops::{Index};
+use core::ops::{Index, Eq};
 use core::{mem, slice};
 use base::rmo::{AsRef, AsMut};
 use base::{error};
 use arch_fns::{all_bytes, memchr, strlen};
 use cty_base::types::{c_char};
 use fmt::{Debug, Write};
+use parse::{Parse, Parsable};
 
 use byte_str::{ByteStr, AsByteStr};
 use no_null_str::{AsNoNullStr, AsMutNoNullStr, NoNullStr};
@@ -94,6 +95,24 @@ impl AsMutNoNullStr for CStr {
 impl Debug for CStr {
     fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
         Debug::fmt(self.as_byte_str(), w)
+    }
+}
+
+impl Eq for CStr {
+    fn eq(&self, other: &CStr) -> bool {
+        self.as_ref() == other.as_ref()
+    }
+}
+
+impl Eq<str> for CStr {
+    fn eq(&self, other: &str) -> bool {
+        self.as_byte_str() == other
+    }
+}
+
+impl Parse for CStr {
+    fn parse<P: Parsable>(&self) -> Result<P> {
+        self.as_byte_str().parse()
     }
 }
 

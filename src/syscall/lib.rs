@@ -586,3 +586,8 @@ pub fn futex_wake(addr: &mut c_int, num: usize) -> c_int {
                  0 as *mut _, 0)
     }
 }
+
+pub fn exit_group(val: i32) -> ! {
+    unsafe { r::exit_group(val as c_int); }
+    loop { }
+}

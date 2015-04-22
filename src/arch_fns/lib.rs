@@ -4,7 +4,7 @@
 
 #![crate_name = "linux_arch_fns"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, asm)]
+#![feature(plugin, no_std, asm, lang_items)]
 #![plugin(linux_core_plugin)]
 #![no_std]
 
@@ -14,6 +14,7 @@ extern crate linux_core as core;
 
 // TODO: Don't use libc.
 
+/// Returns the first occurrence of a byte in a slice if any.
 pub fn memchr(s: &[u8], c: u8) -> Option<usize> {
     #[allow(improper_ctypes)]
     extern {
@@ -25,6 +26,7 @@ pub fn memchr(s: &[u8], c: u8) -> Option<usize> {
     }
 }
 
+/// Like `memchr` but searches from the end.
 pub fn memrchr(s: &[u8], c: u8) -> Option<usize> {
     #[allow(improper_ctypes)]
     extern {
@@ -36,6 +38,7 @@ pub fn memrchr(s: &[u8], c: u8) -> Option<usize> {
     }
 }
 
+/// Returns whether the two slices are equal.
 pub fn equal(one: &[u8], two: &[u8]) -> bool {
     #[allow(improper_ctypes)]
     extern {
@@ -47,6 +50,7 @@ pub fn equal(one: &[u8], two: &[u8]) -> bool {
     unsafe { memcmp(one.as_ptr(), two.as_ptr(), one.len()) == 0 }
 }
 
+/// Returns whether all bytes in the slice have the specified value.
 pub fn all_bytes(buf: &[u8], val: u8) -> bool {
     if buf.len() == 0 {
         true
@@ -58,17 +62,25 @@ pub fn all_bytes(buf: &[u8], val: u8) -> bool {
     }
 }
 
+/// Returns the length of the null-terminated string pointed to by `ptr`.
 pub unsafe fn strlen(ptr: *const u8) -> usize {
     #[allow(improper_ctypes)]
     extern { fn strlen(s: *const u8) -> usize; }
     strlen(ptr)
 }
 
+#[lang = "str_eq"]
+pub fn str_equal(a: &str, b: &str) -> bool {
+    equal(a.as_bytes(), b.as_bytes())
+}
+
+/// Informs the CPU that the execution is blocked by another thread.
 #[cfg(any(target_arch = "x86_64", target_arch = "x86"))]
 pub fn spin() {
     unsafe { asm!("pause" : : : "memory"); }
 }
 
+/// Informs the CPU that the execution is blocked by another thread.
 #[cfg(not(any(target_arch = "x86_64", target_arch = "x86")))]
 pub fn spin() {
     atomic::fence_seqcst();

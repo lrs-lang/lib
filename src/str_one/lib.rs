@@ -13,6 +13,7 @@ extern crate linux_core as core;
 extern crate linux_cty_base as cty_base;
 extern crate linux_base as base;
 extern crate linux_arch_fns as arch_fns;
+extern crate linux_parse as parse;
 extern crate linux_fmt as fmt;
 
 pub use byte_str::{ByteStr, AsByteStr, AsMutByteStr};
