@@ -27,7 +27,7 @@ obj clone      core libc base cty syscall
 obj fd         core base rv io cty syscall
 
 obj lock       core base cell io fmt atomic syscall cty
-obj alloc      core libc syscall
+obj alloc      core base cty syscall libc
 obj queue      core base cell arch_fns atomic lock alloc
 
 obj buf_reader core arch_fns base io alloc

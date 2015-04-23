@@ -8,10 +8,10 @@ use {Allocator, MAX_SIZE};
 use linux_libc as libc;
 
 /// The libc heap
+///
+/// Note that this allocator ignores the alignment argument and always returns maximally
+/// aligned pointers.
 pub struct LibcHeap;
-
-// FIXME: There doesn't seem to be an API for aligned reallocations in libc. There is
-// `aligned_alloc` but we don't use it.
 
 impl Allocator for LibcHeap {
     unsafe fn allocate_raw(size: usize, alignment: usize) -> Result<*mut u8> {

@@ -46,8 +46,24 @@ pub struct Vec<'a, T, Heap = alloc::Heap>
 }
 
 impl<'a, T> Vec<'a, T, alloc::NoHeap> {
-    pub fn buffered(_buf: &'a mut [u8]) -> Vec<'a, T, alloc::NoHeap> {
-        loop { }
+    pub fn buffered(buf: &'a mut [u8]) -> Vec<'a, T, alloc::NoHeap> {
+        if mem::size_of::<T>() == 0 {
+            return Vec { ptr: empty_ptr(), len: 0, cap: 0, _marker: PhantomData };
+        }
+
+        let align_mask = mem::align_of::<T>() - 1;
+        let mut ptr = buf.as_mut_ptr() as usize;
+        let mut len = buf.len();
+        if ptr & align_mask != 0 {
+            let diff = (!ptr & align_mask) + 1;
+            if diff > len {
+                return Vec { ptr: empty_ptr(), len: 0, cap: 0, _marker: PhantomData };
+            }
+            ptr += diff;
+            len -= diff;
+        }
+        let cap = len / mem::size_of::<T>();
+        Vec { ptr: ptr as *mut T, len: 0, cap: cap, _marker: PhantomData }
     }
 }
 
@@ -70,12 +86,12 @@ impl<T, H> SVec<T, H>
 impl<'a, T, H> Vec<'a, T, H>
     where H: Allocator,
 {
-    pub fn len(&self) -> usize {
-        self.len
-    }
-
     pub fn capacity(&self) -> usize {
         self.cap
+    }
+
+    pub fn availabel(&self) -> usize {
+        self.cap - self.len
     }
 
     pub fn reserve(&mut self, n: usize) -> Result {
@@ -239,8 +255,9 @@ impl<'a, T, H> Debug for Vec<'a, T, H>
     }
 }
 
-impl<T: Clone, H> Clone for SVec<T, H>
-    where H: Allocator,
+impl<T, H> Clone for SVec<T, H>
+    where T: Clone,
+          H: Allocator,
 {
     fn clone(&self) -> Result<SVec<T, H>> {
         let mut vec = try!(Vec::with_capacity(self.len()));

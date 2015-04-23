@@ -177,6 +177,20 @@ pub use ::gen::{
     SIGEV_NONE, SIGEV_THREAD, SIGEV_THREAD_ID,
 };
 
+pub use gen::{
+    PROT_READ, PROT_WRITE, PROT_EXEC, PROT_SEM, PROT_NONE, PROT_GROWSDOWN, PROT_GROWSUP,
+    MAP_SHARED, MAP_PRIVATE, MAP_TYPE, MAP_FIXED, MAP_ANONYMOUS, MAP_UNINITIALIZED,
+    MS_ASYNC, MS_INVALIDATE, MS_SYNC, MADV_NORMAL, MADV_RANDOM, MADV_SEQUENTIAL,
+    MADV_WILLNEED, MADV_DONTNEED, MADV_REMOVE, MADV_DONTFORK, MADV_DOFORK, MADV_HWPOISON,
+    MADV_SOFT_OFFLINE, MADV_MERGEABLE, MADV_UNMERGEABLE, MADV_HUGEPAGE, MADV_NOHUGEPAGE,
+    MADV_DONTDUMP, MADV_DODUMP, MAP_FILE, MAP_HUGE_SHIFT, MAP_HUGE_MASK,
+};
+
+pub use gen::{
+    MAP_GROWSDOWN, MAP_DENYWRITE, MAP_EXECUTABLE, MAP_LOCKED, MAP_NORESERVE, MAP_POPULATE,
+    MAP_NONBLOCK, MAP_STACK, MAP_HUGETLB, MCL_CURRENT, MCL_FUTURE,
+};
+
 pub use self::abi::{
     __kernel_old_uid_t, __kernel_old_gid_t, __kernel_old_dev_t, __kernel_long_t,
     __kernel_ulong_t, c_long, c_ulong,
@@ -902,3 +916,9 @@ pub struct siginfo_sigfault {
     pub _addr_lsb: c_short,
     pub _addr_bnd: siginfo_addr_bnd,
 }
+
+// mman.h
+
+pub const MAP_32BIT    : ::c_int = 0x40;
+pub const MAP_HUGE_2MB : ::c_int = 21 << MAP_HUGE_SHIFT;
+pub const MAP_HUGE_1GB : ::c_int = 30 << MAP_HUGE_SHIFT;

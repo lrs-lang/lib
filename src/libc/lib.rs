@@ -12,6 +12,7 @@
 extern crate linux_core as core;
 
 #[allow(improper_ctypes)]
+#[link(name = "c")]
 extern {
     pub static mut environ: *const *const u8;
 

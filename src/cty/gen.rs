@@ -1040,3 +1040,55 @@ pub const SIGEV_SIGNAL    : ::c_int = 0;
 pub const SIGEV_NONE      : ::c_int = 1;
 pub const SIGEV_THREAD    : ::c_int = 2;
 pub const SIGEV_THREAD_ID : ::c_int = 4;
+
+// mman-common.h
+
+pub const PROT_READ         : ::c_int = 0x1;
+pub const PROT_WRITE        : ::c_int = 0x2;
+pub const PROT_EXEC         : ::c_int = 0x4;
+pub const PROT_SEM          : ::c_int = 0x8;
+pub const PROT_NONE         : ::c_int = 0x0;
+pub const PROT_GROWSDOWN    : ::c_int = 0x01000000;
+pub const PROT_GROWSUP      : ::c_int = 0x02000000;
+pub const MAP_SHARED        : ::c_int = 0x01;
+pub const MAP_PRIVATE       : ::c_int = 0x02;
+pub const MAP_TYPE          : ::c_int = 0x0f;
+pub const MAP_FIXED         : ::c_int = 0x10;
+pub const MAP_ANONYMOUS     : ::c_int = 0x20;
+pub const MAP_UNINITIALIZED : ::c_int = 0x4000000;
+pub const MS_ASYNC          : ::c_int = 1;
+pub const MS_INVALIDATE     : ::c_int = 2;
+pub const MS_SYNC           : ::c_int = 4;
+pub const MADV_NORMAL       : ::c_int = 0;
+pub const MADV_RANDOM       : ::c_int = 1;
+pub const MADV_SEQUENTIAL   : ::c_int = 2;
+pub const MADV_WILLNEED     : ::c_int = 3;
+pub const MADV_DONTNEED     : ::c_int = 4;
+pub const MADV_REMOVE       : ::c_int = 9;
+pub const MADV_DONTFORK     : ::c_int = 10;
+pub const MADV_DOFORK       : ::c_int = 11;
+pub const MADV_HWPOISON     : ::c_int = 100;
+pub const MADV_SOFT_OFFLINE : ::c_int = 101;
+pub const MADV_MERGEABLE    : ::c_int = 12;
+pub const MADV_UNMERGEABLE  : ::c_int = 13;
+pub const MADV_HUGEPAGE     : ::c_int = 14;
+pub const MADV_NOHUGEPAGE   : ::c_int = 15;
+pub const MADV_DONTDUMP     : ::c_int = 16;
+pub const MADV_DODUMP       : ::c_int = 17;
+pub const MAP_FILE          : ::c_int = 0;
+pub const MAP_HUGE_SHIFT    : ::c_int = 26;
+pub const MAP_HUGE_MASK     : ::c_int = 0x3f;
+
+// mman.h
+
+pub const MAP_GROWSDOWN  : ::c_int = 0x0100;
+pub const MAP_DENYWRITE  : ::c_int = 0x0800;
+pub const MAP_EXECUTABLE : ::c_int = 0x1000;
+pub const MAP_LOCKED     : ::c_int = 0x2000;
+pub const MAP_NORESERVE  : ::c_int = 0x4000;
+pub const MAP_POPULATE   : ::c_int = 0x8000;
+pub const MAP_NONBLOCK   : ::c_int = 0x10000;
+pub const MAP_STACK      : ::c_int = 0x20000;
+pub const MAP_HUGETLB    : ::c_int = 0x40000;
+pub const MCL_CURRENT    : ::c_int = 1;
+pub const MCL_FUTURE     : ::c_int = 2;

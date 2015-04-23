@@ -11,6 +11,8 @@
 #[macro_use]
 extern crate linux_core as core;
 extern crate linux_base as base;
+extern crate linux_cty as cty;
+extern crate linux_syscall as syscall;
 extern crate linux_libc;
 
 #[prelude_import] use base::prelude::*;
@@ -19,13 +21,18 @@ use base::{error};
 
 pub use libc::{LibcHeap};
 pub use no::{NoHeap};
+pub use bda::{Bda};
+pub use jemalloc::{JeMalloc};
 
 mod libc;
 mod no;
+mod bda;
+mod jemalloc;
 
-pub type Heap = LibcHeap;
+/// The default allocator
+pub type Heap = Bda;
 
-/// The maximum size of an allocation.
+/// The maximum size of an allocation
 pub const MAX_SIZE: usize = num::isize::MAX as usize;
 
 /// Returns a non-null pointer that points to a vaild address and has pointer alignment.

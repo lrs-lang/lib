@@ -2682,3 +2682,11 @@ pub const POSIX_FADV_NORMAL     : c_int = 0;
 pub const POSIX_FADV_RANDOM     : c_int = 1;
 pub const POSIX_FADV_SEQUENTIAL : c_int = 2;
 pub const POSIX_FADV_WILLNEED   : c_int = 3;
+
+// mman.h
+
+pub const MREMAP_MAYMOVE    : c_int = 1;
+pub const MREMAP_FIXED      : c_int = 2;
+pub const OVERCOMMIT_GUESS  : c_int = 0;
+pub const OVERCOMMIT_ALWAYS : c_int = 1;
+pub const OVERCOMMIT_NEVER  : c_int = 2;

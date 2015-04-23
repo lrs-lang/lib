@@ -596,3 +596,23 @@ pub fn execveat(fd: c_int, filename: &CStr, argv: *const *const c_char,
                 envp: *const *const c_char, flags: c_int) -> c_int {
     unsafe { r::execveat(fd, filename.as_ptr(), argv, envp, flags) }
 }
+
+pub fn mmap(addr: usize, len: usize, prot: c_int, flags: c_int, fd: c_int,
+            off: u64) -> isize {
+    unsafe {
+        r::mmap(addr as k_ulong, len as k_ulong, prot as k_ulong, flags as k_ulong,
+               fd as k_ulong, off as k_ulong) as isize
+    }
+}
+
+pub fn munmap(addr: usize, len: usize) -> c_int {
+    unsafe { r::munmap(addr as k_ulong, len as size_t) }
+}
+
+pub fn mremap(addr: usize, old_len: usize, new_len: usize, flags: c_int,
+              new_addr: usize) -> isize {
+    unsafe {
+        r::mremap(addr as k_ulong, old_len as k_ulong, new_len as k_ulong,
+                  flags as k_ulong, new_addr as k_ulong) as isize
+    }
+}
