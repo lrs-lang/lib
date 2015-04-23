@@ -5,6 +5,5 @@
 //! Memory allocation
 
 pub use linux_alloc::{
-    MAX_SIZE, empty_ptr, allocate_raw, allocate_array, allocate, free_raw, free_array,
-    free, reallocate_raw, reallocate_array,
+    MAX_SIZE, empty_ptr, Allocator, Heap, LibcHeap, NoHeap,
 };

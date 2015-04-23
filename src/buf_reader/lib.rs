@@ -18,43 +18,44 @@ extern crate linux_alloc as alloc;
 #[prelude_import] use base::prelude::*;
 use core::{num, slice};
 use base::{error};
-use alloc::{allocate_array, free_array};
+use alloc::{NoHeap, Allocator};
 use io::{Read, BufRead, Write};
 use arch_fns::{memchr};
 
 pub mod linux { pub use base::linux::*; }
 
 /// A buffered reader.
-pub struct BufReader<'a, R: Read> {
+pub struct BufReader<'a, R, Heap = alloc::Heap>
+    where R: Read,
+          Heap: Allocator,
+{
     data: *mut u8,
     cap: usize,
     start: usize,
     end: usize,
     read: R,
-    allocated: bool,
-    _marker: PhantomData<&'a ()>,
+    _marker: PhantomData<(&'a (), Heap)>,
 }
 
-impl<'a, R: Read> BufReader<'a, R> {
+impl<'a, R, H> BufReader<'a, R, H>
+    where R: Read,
+          H: Allocator,
+{
     /// Allocates at least `size` bytes on the heap for buffering.
     ///
     /// Note that `size` will be increased to the next power of two.
-    pub fn allocate(read: R, size: usize) -> Result<BufReader<'static, R>> {
+    pub fn allocate(read: R, size: usize) -> Result<BufReader<'static, R, H>> {
         let size = match size.checked_next_power_of_two() {
             Some(n) => n,
             _ => return Err(error::NoMemory),
         };
-        let ptr = unsafe { allocate_array(size) };
-        if ptr.is_null() {
-            return Err(error::NoMemory);
-        }
+        let ptr = unsafe { try!(H::allocate_array(size)) };
         Ok(BufReader {
             data: ptr,
             cap: size,
             start: 0,
             end: 0,
             read: read,
-            allocated: true,
             _marker: PhantomData,
         })
     }
@@ -62,7 +63,7 @@ impl<'a, R: Read> BufReader<'a, R> {
     /// Uses `buf` as a buffer.
     ///
     /// Note that the length of `buf` will be decreased to the previous power of two.
-    pub fn new(read: R, buf: &'a mut [u8]) -> BufReader<'a, R> {
+    pub fn new(read: R, buf: &'a mut [u8]) -> BufReader<'a, R, NoHeap> {
         let size = match buf.len() {
             0 => 0,
             n => 1 << (num::usize::BITS - n.leading_zeros() - 1),
@@ -73,7 +74,6 @@ impl<'a, R: Read> BufReader<'a, R> {
             start: 0,
             end: 0,
             read: read,
-            allocated: false,
             _marker: PhantomData,
         }
     }
@@ -132,7 +132,10 @@ impl<'a, R: Read> BufReader<'a, R> {
     }
 }
 
-impl<'a, R: Read> Read for BufReader<'a, R> {
+impl<'a, R, H> Read for BufReader<'a, R, H>
+    where R: Read,
+          H: Allocator,
+{
     fn read(&mut self, mut buf: &mut [u8]) -> Result<usize> {
         if self.available() == 0 {
             self.start = 0;
@@ -165,15 +168,19 @@ impl<'a, R: Read> Read for BufReader<'a, R> {
     }
 }
 
-impl<'a, R: Read> Drop for BufReader<'a, R> {
+impl<'a, R, H> Drop for BufReader<'a, R, H>
+    where R: Read,
+          H: Allocator,
+{
     fn drop(&mut self) {
-        if self.allocated {
-            unsafe { free_array(self.data, self.cap); }
-        }
+        unsafe { H::free_array(self.data, self.cap); }
     }
 }
 
-impl<'a, R: Read> BufRead for BufReader<'a, R> {
+impl<'a, R, H> BufRead for BufReader<'a, R, H>
+    where R: Read,
+          H: Allocator,
+{
     fn copy_until<W: Write>(&mut self, dst: &mut W, b: u8) -> Result<usize> {
         let mut len = 0;
         if self.available() == 0 {

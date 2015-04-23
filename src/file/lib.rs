@@ -32,7 +32,7 @@ extern crate linux_time_base as time_base;
 #[prelude_import] use base::prelude::*;
 mod linux { pub use vec::linux::*; pub use {cty}; }
 
-use vec::{Vec};
+use vec::{SVec};
 use core::{mem};
 use io::{Read};
 use base::rmo::{AsRef, AsMut};
@@ -219,7 +219,7 @@ pub fn read_link_buf<P>(link: P, buf: &mut [u8]) -> Result<&mut NoNullStr>
 /// Reads the target of the symbolic link `link`.
 ///
 /// Relative paths will be interpreted relative to the current working directory.
-pub fn read_link<P>(link: P) -> Result<NoNullString>
+pub fn read_link<P>(link: P) -> Result<NoNullString<'static>>
     where P: ToCString,
 {
     File::current_dir().rel_read_link(link)
@@ -331,7 +331,7 @@ pub fn get_attr_no_follow_buf<P, S, V>(path: P, name: S, mut val: V) -> Result<u
     rv!(lgetxattr(&path, &name, val.as_mut()), -> usize)
 }
 
-fn get_attr_common<F>(mut f: F) -> Result<Vec<u8>>
+fn get_attr_common<F>(mut f: F) -> Result<SVec<u8>>
     where F: FnMut(&mut [u8]) -> ssize_t,
 {
     let mut vec = vec!();
@@ -356,7 +356,7 @@ fn get_attr_common<F>(mut f: F) -> Result<Vec<u8>>
 /// Gets an attribute of a file.
 ///
 /// Relative paths will be interpreted relative to the current working directory.
-pub fn get_attr<P, S>(path: P, name: S) -> Result<Vec<u8>>
+pub fn get_attr<P, S>(path: P, name: S) -> Result<SVec<u8>>
     where P: ToCString, S: ToCString,
 {
     let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
@@ -370,7 +370,7 @@ pub fn get_attr<P, S>(path: P, name: S) -> Result<Vec<u8>>
 ///
 /// Relative paths will be interpreted relative to the current working directory. If
 /// `path` is a symbolic link, then the attribute of the symbolic link is set.
-pub fn get_attr_no_follow<P, S>(path: P, name: S) -> Result<Vec<u8>>
+pub fn get_attr_no_follow<P, S>(path: P, name: S) -> Result<SVec<u8>>
     where P: ToCString, S: ToCString,
 {
     let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
@@ -774,7 +774,7 @@ impl File {
     }
 
     /// Returns the path of the file that was used to open this file.
-    pub fn filename(&self) -> Result<NoNullString> {
+    pub fn filename(&self) -> Result<NoNullString<'static>> {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
         self.filename_buf(&mut buf).chain(|f| f.to_owned())
     }
@@ -861,7 +861,7 @@ impl File {
     }
 
     /// Gets an attribute of this file.
-    pub fn get_attr<S>(&self, name: S) -> Result<Vec<u8>>
+    pub fn get_attr<S>(&self, name: S) -> Result<SVec<u8>>
         where S: ToCString,
     {
         let mut buf: [u8; 128] = unsafe { mem::uninit() };
@@ -1152,7 +1152,7 @@ impl File {
     ///
     /// If `link` is relative, then `self` has to be a directory and `link` will be
     /// interpreted relative to `self`.
-    pub fn rel_read_link<P>(&self, link: P) -> Result<NoNullString>
+    pub fn rel_read_link<P>(&self, link: P) -> Result<NoNullString<'static>>
         where P: ToCString,
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
@@ -1379,14 +1379,14 @@ impl<'a> Iterator for ListAttrIter<'a> {
 }
 
 pub struct ListAttrIterator {
-    buf: Vec<u8>,
+    buf: SVec<u8>,
     pos: usize,
 }
 
 impl Iterator for ListAttrIterator {
-    type Item = ByteString;
+    type Item = ByteString<'static>;
 
-    fn next(&mut self) -> Option<ByteString> {
+    fn next(&mut self) -> Option<ByteString<'static>> {
         if self.pos == self.buf.len() {
             return None;
         }

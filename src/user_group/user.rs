@@ -13,6 +13,7 @@ use str_two::{ByteString};
 use cty::alias::{UserId, GroupId};
 use parse::{Parse};
 use file::{File};
+use vec::{Vec};
 use rmo::{ToOwned};
 use iter::{IteratorExt};
 
@@ -92,13 +93,13 @@ impl<'a> Debug for Info<'a> {
 /// Struct holding allocated user info.
 #[derive(Clone, Eq)]
 pub struct Information {
-    name:     ByteString,
-    password: ByteString,
+    name:     ByteString<'static>,
+    password: ByteString<'static>,
     user_id:  UserId,
     group_id: GroupId,
-    comment:  ByteString,
-    home:     ByteString,
-    shell:    ByteString,
+    comment:  ByteString<'static>,
+    home:     ByteString<'static>,
+    shell:    ByteString<'static>,
 }
 
 impl Information {
@@ -209,7 +210,7 @@ impl<'a> InformationIter<'a> {
             *err = Err(e);
         }
         InformationIter {
-            file: BufReader::new(File::invalid(), &mut []),
+            file: BufReader::allocate(File::invalid(), 0).unwrap(),
             err: None,
         }
     }
@@ -225,7 +226,7 @@ impl<'a> Iterator for InformationIter<'a> {
     type Item = Information;
 
     fn next(&mut self) -> Option<Information> {
-        let mut buf = vec!();
+        let mut buf: Vec<u8> = Vec::new();
         if let Err(e) = self.file.copy_until(&mut buf, b'\n') {
             self.set_err(e);
             None

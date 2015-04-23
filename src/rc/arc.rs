@@ -8,28 +8,33 @@ use core::{mem, ptr};
 use base::clone::{Clone};
 use atomic::{AtomicUsize};
 use fmt::{Debug, Write};
-use {alloc};
+use alloc::{self, Allocator};
 
-struct Inner<T: Send+Sync> {
+struct Inner<T> {
     count: AtomicUsize,
     val: T,
 }
 
-pub struct Arc<T: Send+Sync> {
+pub struct Arc<T, Heap = alloc::Heap>
+    where Heap: Allocator,
+{
     data: *mut Inner<T>,
+    _marker: PhantomData<Heap>,
 }
 
-impl<T: Send+Sync> Arc<T> {
+impl<T, H> Arc<T, H>
+    where H: Allocator,
+{
     pub fn new(val: T) -> Result<Arc<T>, T> {
         unsafe {
-            let data_ptr = alloc::allocate::<Inner<T>>();
-            if data_ptr.is_null() {
-                return Err(val);
-            }
+            let data_ptr = match H::allocate::<Inner<T>>() {
+                Ok(p) => p,
+                _ => return Err(val),
+            };
             let mut data = &mut *data_ptr;
             data.count.store(1);
             ptr::write(&mut data.val, val);
-            Ok(Arc { data: data_ptr })
+            Ok(Arc { data: data_ptr, _marker: PhantomData })
         }
     }
 
@@ -42,7 +47,9 @@ impl<T: Send+Sync> Arc<T> {
     }
 }
 
-impl<T: Send+Sync> Drop for Arc<T> {
+impl<T, H> Drop for Arc<T, H>
+    where H: Allocator,
+{
     fn drop(&mut self) {
         unsafe {
             let data = &mut *self.data;
@@ -50,13 +57,15 @@ impl<T: Send+Sync> Drop for Arc<T> {
                 if mem::needs_drop::<T>() {
                     ptr::read(&data.val);
                 }
-                alloc::free(self.data);
+                H::free(self.data);
             }
         }
     }
 }
 
-impl<T: Send+Sync> Deref for Arc<T> {
+impl<T, H> Deref for Arc<T, H>
+    where H: Allocator,
+{
     type Target = T;
 
     fn deref(&self) -> &T {
@@ -64,17 +73,22 @@ impl<T: Send+Sync> Deref for Arc<T> {
     }
 }
 
-impl<T: Send+Sync> Clone for Arc<T> {
-    fn clone(&self) -> Result<Arc<T>> {
+impl<T, H> Clone for Arc<T, H>
+    where H: Allocator,
+{
+    fn clone(&self) -> Result<Arc<T, H>> {
         unsafe {
             let data = &mut *self.data;
             data.count.add(1);
-            Ok(Arc { data: self.data })
+            Ok(Arc { data: self.data, _marker: PhantomData })
         }
     }
 }
 
-impl<T: Send+Sync+Debug> Debug for Arc<T> {
+impl<T, H> Debug for Arc<T, H>
+    where T: Debug,
+          H: Allocator,
+{
     fn fmt<W: Write+?Sized>(&self, mut w: &mut W) -> Result {
         write!(w, "Arc {{ data: {:?} }}", self.deref())
     }

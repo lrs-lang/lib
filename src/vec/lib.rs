@@ -28,35 +28,48 @@ use core::ops::{Eq, Deref, DerefMut};
 use core::iter::{IntoIterator};
 use io::{Read, Write};
 use fmt::{Debug};
-use alloc::{allocate_array, reallocate_array, free_array, empty_ptr};
-use base::{error};
+use alloc::{Allocator, empty_ptr};
 use base::rmo::{AsRef, AsMut};
 use str_one::byte_str::{ByteStr, AsByteStr, AsMutByteStr};
 use str_one::c_str::{CStr, AsCStr, AsMutCStr, ToCStr};
 use str_one::no_null_str::{NoNullStr, AsMutNoNullStr, AsNoNullStr};
 
-pub struct Vec<T> {
+pub type SVec<T, Heap = alloc::Heap> = Vec<'static, T, Heap>;
+
+pub struct Vec<'a, T, Heap = alloc::Heap>
+    where Heap: Allocator,
+{
     ptr: *mut T,
     len: usize,
     cap: usize,
+    _marker: PhantomData<(&'a (), Heap)>,
 }
 
-impl<T> Vec<T> {
-    pub fn new() -> Vec<T> {
-        Vec { ptr: empty_ptr(), len: 0, cap: 0 }
+impl<'a, T> Vec<'a, T, alloc::NoHeap> {
+    pub fn buffered(_buf: &'a mut [u8]) -> Vec<'a, T, alloc::NoHeap> {
+        loop { }
+    }
+}
+
+impl<T, H> SVec<T, H>
+    where H: Allocator,
+{
+    pub fn new() -> SVec<T, H> {
+        Vec { ptr: empty_ptr(), len: 0, cap: 0, _marker: PhantomData, }
     }
 
-    pub fn with_capacity(cap: usize) -> Result<Vec<T>> {
+    pub fn with_capacity(cap: usize) -> Result<SVec<T, H>> {
         if cap == 0 || mem::size_of::<T>() == 0 {
-            return Ok(Vec { ptr: empty_ptr(), len: 0, cap: cap });
+            return Ok(Vec { ptr: empty_ptr(), len: 0, cap: cap, _marker: PhantomData });
         }
-        let ptr = unsafe { allocate_array(cap) };
-        if ptr.is_null() {
-            return Err(error::NoMemory);
-        }
-        Ok(Vec { ptr: ptr, len: 0, cap: cap })
+        let ptr = unsafe { try!(H::allocate_array(cap)) };
+        Ok(Vec { ptr: ptr, len: 0, cap: cap, _marker: PhantomData })
     }
+}
 
+impl<'a, T, H> Vec<'a, T, H>
+    where H: Allocator,
+{
     pub fn len(&self) -> usize {
         self.len
     }
@@ -76,17 +89,13 @@ impl<T> Vec<T> {
 
         let new_cap = self.len + cmp::max(n, self.cap / 2 + 1);
         let ptr = if self.ptr == empty_ptr() {
-            unsafe { allocate_array(new_cap) }
+            unsafe { H::allocate_array(new_cap) }
         } else {
-            unsafe { reallocate_array(self.ptr, self.cap, new_cap) }
+            unsafe { H::reallocate_array(self.ptr, self.cap, new_cap) }
         };
-        if ptr.is_null() {
-            Err(error::NoMemory)
-        } else {
-            self.ptr = ptr;
-            self.cap = new_cap;
-            Ok(())
-        }
+        self.ptr = try!(ptr);
+        self.cap = new_cap;
+        Ok(())
     }
 
     pub fn push(&mut self, val: T) {
@@ -148,8 +157,12 @@ impl<T> Vec<T> {
     }
 }
 
-impl Vec<u8> {
-    pub fn read_to_eof<R: Read>(&mut self, r: &mut R) -> Result<usize> {
+impl<'a, H> Vec<'a, u8, H>
+    where H: Allocator,
+{
+    pub fn read_to_eof<R>(&mut self, mut r: R) -> Result<usize>
+        where R: Read,
+    {
         const BUF_READ_STEP_SIZE: usize = 4096;
 
         let mut len = 0;
@@ -171,7 +184,9 @@ impl Vec<u8> {
     }
 }
 
-impl<T> Drop for Vec<T> {
+impl<'a, T, H> Drop for Vec<'a, T, H>
+    where H: Allocator,
+{
     fn drop(&mut self) {
         unsafe {
             if mem::needs_drop::<T>() {
@@ -180,42 +195,54 @@ impl<T> Drop for Vec<T> {
                 }
             }
             if self.ptr != empty_ptr() {
-                free_array(self.ptr, self.cap);
+                H::free_array(self.ptr, self.cap);
             }
         }
     }
 }
 
-impl<T: Eq> Eq for Vec<T> {
-    fn eq(&self, other: &Vec<T>) -> bool {
+impl<'a, T, H> Eq for Vec<'a, T, H>
+    where T: Eq,
+          H: Allocator,
+{
+    fn eq(&self, other: &Vec<T, H>) -> bool {
         self.deref().eq(other.deref())
     }
-    fn ne(&self, other: &Vec<T>) -> bool {
+    fn ne(&self, other: &Vec<T, H>) -> bool {
         self.deref().ne(other.deref())
     }
 }
 
-impl<T> Deref for Vec<T> {
+impl<'a, T, H> Deref for Vec<'a, T, H>
+    where H: Allocator,
+{
     type Target = [T];
     fn deref(&self) -> &[T] {
         unsafe { slice::from_ptr(self.ptr, self.len) }
     }
 }
 
-impl<T> DerefMut for Vec<T> {
+impl<'a, T, H> DerefMut for Vec<'a, T, H>
+    where H: Allocator,
+{
     fn deref_mut(&mut self) -> &mut [T] {
         unsafe { slice::from_ptr(self.ptr, self.len) }
     }
 }
 
-impl<T: Debug> Debug for Vec<T> {
+impl<'a, T, H> Debug for Vec<'a, T, H>
+    where T: Debug,
+          H: Allocator,
+{
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
         self.deref().fmt(w)
     }
 }
 
-impl<T: Clone> Clone for Vec<T> {
-    fn clone(&self) -> Result<Vec<T>> {
+impl<T: Clone, H> Clone for SVec<T, H>
+    where H: Allocator,
+{
+    fn clone(&self) -> Result<SVec<T, H>> {
         let mut vec = try!(Vec::with_capacity(self.len()));
         for i in 0..self.len() {
             vec.push(try!(self[i].clone()));
@@ -224,7 +251,9 @@ impl<T: Clone> Clone for Vec<T> {
     }
 }
 
-impl<'a, T> IntoIterator for &'a Vec<T> {
+impl<'a, T, H> IntoIterator for &'a Vec<'a, T, H>
+    where H: Allocator,
+{
     type Item = &'a T;
     type IntoIter = slice::Items<'a, T>;
     fn into_iter(self) -> slice::Items<'a, T> { self.iter() }
@@ -232,39 +261,57 @@ impl<'a, T> IntoIterator for &'a Vec<T> {
 
 // Maybe these aren't really needed. We can just let the user manually deref.
 
-impl AsRef<[u8]> for Vec<u8> {
+impl<'a, H> AsRef<[u8]> for Vec<'a, u8, H>
+    where H: Allocator,
+{
     fn as_ref(&self) -> &[u8] {
         self.deref()
     }
 }
-impl AsMut<[u8]> for Vec<u8> {
+
+impl<'a, H> AsMut<[u8]> for Vec<'a, u8, H>
+    where H: Allocator,
+{
     fn as_mut(&mut self) -> &mut [u8] {
         self.deref_mut()
     }
 }
 
-impl AsByteStr for Vec<u8> {
+impl<'a, H> AsByteStr for Vec<'a, u8, H>
+    where H: Allocator,
+{
     fn as_byte_str(&self) -> &ByteStr {
         self.deref().as_byte_str()
     }
 }
-impl AsMutByteStr for Vec<u8> {
+
+impl<'a, H> AsMutByteStr for Vec<'a, u8, H>
+    where H: Allocator,
+{
     fn as_mut_byte_str(&mut self) -> &mut ByteStr {
         self.deref_mut().as_mut_byte_str()
     }
 }
 
-impl AsCStr for Vec<u8> {
+impl<'a, H> AsCStr for Vec<'a, u8, H>
+    where H: Allocator,
+{
     fn as_cstr(&self) -> Result<&CStr> {
         self.deref().as_cstr()
     }
 }
-impl AsMutCStr for Vec<u8> {
+
+impl<'a, H> AsMutCStr for Vec<'a, u8, H>
+    where H: Allocator,
+{
     fn as_mut_cstr(&mut self) -> Result<&mut CStr> {
         self.deref_mut().as_mut_cstr()
     }
 }
-impl ToCStr for Vec<u8> {
+
+impl<'b, H> ToCStr for Vec<'b, u8, H>
+    where H: Allocator,
+{
     fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
         self.deref().to_cstr(buf)
     }
@@ -278,18 +325,25 @@ impl ToCStr for Vec<u8> {
     }
 }
 
-impl AsNoNullStr for Vec<u8> {
+impl<'a, H> AsNoNullStr for Vec<'a, u8, H>
+    where H: Allocator,
+{
     fn as_no_null_str(&self) -> Result<&NoNullStr> {
         self.deref().as_no_null_str()
     }
 }
-impl AsMutNoNullStr for Vec<u8> {
+
+impl<'a, H> AsMutNoNullStr for Vec<'a, u8, H>
+    where H: Allocator,
+{
     fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
         self.deref_mut().as_mut_no_null_str()
     }
 }
 
-impl Write for Vec<u8> {
+impl<'a, H> Write for Vec<'a, u8, H>
+    where H: Allocator,
+{
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         try!(self.reserve(buf.len()));
         let len = self.len();

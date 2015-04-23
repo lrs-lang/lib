@@ -9,8 +9,8 @@ use str_two::c_string::{CString};
 use {ToOwned};
 
 impl ToOwned for CStr {
-    type Owned = CString;
-    fn to_owned(&self) -> Result<CString> {
+    type Owned = CString<'static>;
+    fn to_owned(&self) -> Result<CString<'static>> {
         self.as_ref().to_owned().map(|o| unsafe { CString::from_bytes_unchecked(o) })
     }
 }

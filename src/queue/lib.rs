@@ -19,7 +19,7 @@ extern crate linux_alloc as alloc;
 
 #[prelude_import] use base::prelude::*;
 use base::{error};
-use alloc::{allocate_array, free_array, empty_ptr};
+use alloc::{Allocator, empty_ptr};
 use arch_fns::{spin};
 use atomic::{AtomicUsize};
 use cell::cell::{Cell};
@@ -29,7 +29,9 @@ use lock::{Lock, LockGuard, RawCondvar, LOCK_INIT, RAW_CONDVAR_INIT};
 pub mod linux { pub use base::linux::*; }
 
 /// A queue.
-pub struct Queue<T> {
+pub struct Queue<T, Heap = alloc::Heap>
+    where Heap: Allocator,
+{
     // The buffer we store the massages in.
     buf: *mut Cell<T>,
     // One less than the capacity of the channel. Note that the capacity is a power of
@@ -58,22 +60,23 @@ pub struct Queue<T> {
 
     // Mutex that protects the two atomic variables above.
     sleep_lock: Lock,
+
+    _marker: PhantomData<Heap>,
 }
 
-impl<T> Queue<T> {
+impl<T, H> Queue<T, H>
+    where H: Allocator,
+{
     /// Creates a new queue with capacity at least `cap`.
-    pub fn new(cap: usize) -> Result<Queue<T>> {
+    pub fn new(cap: usize) -> Result<Queue<T, H>> {
         let cap = match cap.checked_next_power_of_two() {
             Some(c) => c,
             _ => return Err(error::NoMemory),
         };
         let buf = match mem::size_of::<T>() {
             0 => empty_ptr(),
-            _ => unsafe { allocate_array(cap) },
+            _ => unsafe { try!(H::allocate_array(cap)) },
         };
-        if buf.is_null() {
-            return Err(error::NoMemory);
-        }
         Ok(Queue {
             buf: buf,
             cap_mask: cap - 1,
@@ -91,6 +94,8 @@ impl<T> Queue<T> {
             recv_condvar:       RAW_CONDVAR_INIT,
 
             sleep_lock: LOCK_INIT,
+
+            _marker: PhantomData,
         })
     }
 
@@ -261,10 +266,12 @@ impl<T> Queue<T> {
     }
 }
 
-unsafe impl<T: Send> Send for Queue<T> { }
-unsafe impl<T: Send> Sync for Queue<T> { }
+unsafe impl<T: Send, H> Send for Queue<T, H> { }
+unsafe impl<T: Send, H> Sync for Queue<T, H> { }
 
-impl<T> Drop for Queue<T> {
+impl<T, H> Drop for Queue<T, H>
+    where H: Allocator,
+{
     fn drop(&mut self) {
         unsafe {
             if mem::needs_drop::<T>() {
@@ -276,7 +283,7 @@ impl<T> Drop for Queue<T> {
             }
 
             if mem::size_of::<T>() > 0 {
-                free_array(self.buf, self.cap_mask + 1);
+                H::free_array(self.buf, self.cap_mask + 1);
             }
         }
     }

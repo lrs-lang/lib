@@ -23,3 +23,7 @@ extern {
     pub fn realloc(ptr: *mut u8, size: usize) -> *mut u8;
     pub fn strlen(s: *const u8) -> usize;
 }
+
+pub fn errno() -> i32 {
+    unsafe { *__errno_location() }
+}

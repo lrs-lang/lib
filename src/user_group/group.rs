@@ -116,10 +116,10 @@ impl<'a> Debug for Info<'a> {
 /// Struct holding allocated group info.
 #[derive(Clone, Eq)]
 pub struct Information {
-    name:     ByteString,
-    password: ByteString,
+    name:     ByteString<'static>,
+    password: ByteString<'static>,
     id:       GroupId,
-    members:  Vec<ByteString>,
+    members:  Vec<'static, ByteString<'static>>,
 }
 
 impl Information {
@@ -212,7 +212,7 @@ impl<'a> GroupInfo<'a> for Information {
 
 /// Iterator over the members in allocated group data.
 pub struct InformationMemberIter<'a> {
-    iter: slice::Items<'a, ByteString>,
+    iter: slice::Items<'a, ByteString<'static>>,
 }
 
 impl<'a> Iterator for InformationMemberIter<'a> {
@@ -256,7 +256,7 @@ impl<'a> InformationIter<'a> {
             *err = Err(e);
         }
         InformationIter {
-            file: BufReader::new(File::invalid(), &mut []),
+            file: BufReader::allocate(File::invalid(), 0).unwrap(),
             err: None,
         }
     }
@@ -272,7 +272,7 @@ impl<'a> Iterator for InformationIter<'a> {
     type Item = Information;
 
     fn next(&mut self) -> Option<Information> {
-        let mut buf = vec!();
+        let mut buf: Vec<u8> = Vec::new();
         if let Err(e) = self.file.copy_until(&mut buf, b'\n') {
             self.set_err(e);
             None
@@ -281,7 +281,8 @@ impl<'a> Iterator for InformationIter<'a> {
                 Some(&b'\n') => &buf[..buf.len()-1],
                 _ => &buf[..],
             };
-            let parts = buf.split(|&c| c == b':').collect();
+            let mut parts = vec!();
+            buf.split(|&c| c == b':').collect(&mut parts);
             if parts.len() != 4 {
                 self.set_err(error::ProtocolError);
                 None

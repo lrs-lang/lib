@@ -25,7 +25,7 @@ pub use time_base::{Time};
 
 use base::rmo::{AsRef};
 use fmt::{Debug, Write};
-use vec::{Vec};
+use vec::{SVec, Vec};
 use str_one::{AsNoNullStr};
 use file::{File};
 
@@ -79,17 +79,17 @@ impl Debug for DateTime {
 #[derive(Clone, Eq)]
 pub struct Zone {
     /// (UTC offset, summer time) (at least one exists in every zone)
-    states: Vec<(i64, bool)>,
+    states: SVec<(i64, bool)>,
     /// (transition time, index into states)
-    transitions: Vec<(i64, usize)>,
+    transitions: SVec<(i64, usize)>,
     /// (leap second time, number of leap seconds)
-    leap_seconds: Vec<(i64, i64)>,
+    leap_seconds: SVec<(i64, i64)>,
 }
 
 impl Zone {
     fn load_from(zone: &[u8]) -> Result<Zone> {
         let mut file = try!(File::open_read(&zone));
-        let mut data = vec!();
+        let mut data: Vec<u8> = Vec::new();
         try!(data.read_to_eof(&mut file));
         let mut input = &data[..];
         parse::parse(&mut input)
@@ -104,7 +104,7 @@ impl Zone {
     {
         const PREFIX: &'static [u8] = b"/usr/share/zoneinfo/";
         let path = try!(zone.as_no_null_str());
-        let mut vec = try!(Vec::with_capacity(PREFIX.len() + path.len() + 1));
+        let mut vec: Vec<u8> = try!(Vec::with_capacity(PREFIX.len() + path.len() + 1));
         vec.push_all(PREFIX);
         vec.push_all(path.as_ref());
         vec.push(0);

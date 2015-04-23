@@ -8,28 +8,33 @@ use core::{mem, ptr};
 use base::clone::{Clone};
 use cell::copy_cell::{CopyCell};
 use fmt::{Debug, Write};
-use alloc::{allocate, free};
+use alloc::{self, Allocator};
 
 struct Inner<T> {
     count: CopyCell<usize>,
     val: T,
 }
 
-pub struct Rc<T> {
+pub struct Rc<T, Heap = alloc::Heap>
+    where Heap: Allocator,
+{
     data: *mut Inner<T>,
+    _marker: PhantomData<Heap>,
 }
 
-impl<T> Rc<T> {
-    pub fn new(val: T) -> Result<Rc<T>, T> {
+impl<T, H> Rc<T, H>
+    where H: Allocator,
+{
+    pub fn new(val: T) -> Result<Rc<T, H>, T> {
         unsafe {
-            let data_ptr = allocate::<Inner<T>>();
-            if data_ptr.is_null() {
-                return Err(val);
-            }
+            let data_ptr = match H::allocate::<Inner<T>>() {
+                Ok(p) => p,
+                _ => return Err(val),
+            };
             let mut data = &mut *data_ptr;
             data.count.set(1);
             ptr::write(&mut data.val, val);
-            Ok(Rc { data: data_ptr })
+            Ok(Rc { data: data_ptr, _marker: PhantomData, })
         }
     }
 
@@ -42,9 +47,11 @@ impl<T> Rc<T> {
     }
 }
 
-impl<T> !Send for Rc<T> { }
+impl<T, H> !Send for Rc<T, H> { }
 
-impl<T> Drop for Rc<T> {
+impl<T, H> Drop for Rc<T, H>
+    where H: Allocator,
+{
     fn drop(&mut self) {
         unsafe {
             let data = &mut *self.data;
@@ -54,13 +61,15 @@ impl<T> Drop for Rc<T> {
                 if mem::needs_drop::<T>() {
                     ptr::read(&data.val);
                 }
-                free(self.data);
+                H::free(self.data);
             }
         }
     }
 }
 
-impl<T> Deref for Rc<T> {
+impl<T, H> Deref for Rc<T, H>
+    where H: Allocator,
+{
     type Target = T;
 
     fn deref(&self) -> &T {
@@ -68,17 +77,22 @@ impl<T> Deref for Rc<T> {
     }
 }
 
-impl<T> Clone for Rc<T> {
-    fn clone(&self) -> Result<Rc<T>> {
+impl<T, H> Clone for Rc<T, H>
+    where H: Allocator,
+{
+    fn clone(&self) -> Result<Rc<T, H>> {
         unsafe {
             let data = &mut *self.data;
             data.count.set(data.count.get() + 1);
-            Ok(Rc { data: self.data })
+            Ok(Rc { data: self.data, _marker: PhantomData })
         }
     }
 }
 
-impl<T: Debug> Debug for Rc<T> {
+impl<T, H> Debug for Rc<T, H>
+    where T: Debug,
+          H: Allocator,
+{
     fn fmt<W: Write+?Sized>(&self, mut w: &mut W) -> Result {
         write!(w, "Rc {{ data: {:?} }}", self.deref())
     }

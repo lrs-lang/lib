@@ -8,42 +8,42 @@ use str_one::no_null_str::{NoNullStr, AsNoNullStr, AsMutNoNullStr};
 use vec::{Vec};
 use fmt::{Debug, Write};
 
-pub struct NoNullString {
-    data: Vec<u8>,
+pub struct NoNullString<'a> {
+    data: Vec<'a, u8>,
 }
 
-impl NoNullString {
+impl<'a> NoNullString<'a> {
     /// Casts the byte vector directly to a `NoNullString` without checking it for validity.
-    pub unsafe fn from_bytes_unchecked(bytes: Vec<u8>) -> NoNullString {
+    pub unsafe fn from_bytes_unchecked(bytes: Vec<'a, u8>) -> NoNullString<'a> {
         NoNullString { data: bytes }
     }
 }
 
-impl AsRef<NoNullStr> for NoNullString {
+impl<'a> AsRef<NoNullStr> for NoNullString<'a> {
     fn as_ref(&self) -> &NoNullStr {
         unsafe { NoNullStr::from_bytes_unchecked(&self.data) }
     }
 }
 
-impl AsMut<NoNullStr> for NoNullString {
+impl<'a> AsMut<NoNullStr> for NoNullString<'a> {
     fn as_mut(&mut self) -> &mut NoNullStr {
         unsafe { NoNullStr::from_bytes_unchecked_mut(&mut self.data) }
     }
 }
 
-impl AsNoNullStr for NoNullString {
+impl<'a> AsNoNullStr for NoNullString<'a> {
     fn as_no_null_str(&self) -> Result<&NoNullStr> {
         unsafe { Ok(NoNullStr::from_bytes_unchecked(&self.data)) }
     }
 }
 
-impl AsMutNoNullStr for NoNullString {
+impl<'a> AsMutNoNullStr for NoNullString<'a> {
     fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
         unsafe { Ok(NoNullStr::from_bytes_unchecked_mut(&mut self.data)) }
     }
 }
 
-impl Debug for NoNullString {
+impl<'a> Debug for NoNullString<'a> {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
         self.as_ref().fmt(w)
     }

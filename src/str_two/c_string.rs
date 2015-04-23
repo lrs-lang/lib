@@ -9,37 +9,37 @@ use str_one::c_str::{CStr};
 use fmt::{Debug, Write};
 use vec::{Vec};
 
-pub struct CString {
-    data: Vec<u8>,
+pub struct CString<'a> {
+    data: Vec<'a, u8>,
 }
 
-impl CString {
+impl<'a> CString<'a> {
     /// Casts the byte vector directly to a `CString` without checking it for validity.
-    pub unsafe fn from_bytes_unchecked(bytes: Vec<u8>) -> CString {
+    pub unsafe fn from_bytes_unchecked(bytes: Vec<'a, u8>) -> CString<'a> {
         CString { data: bytes }
     }
 }
 
-impl Deref for CString {
+impl<'a> Deref for CString<'a> {
     type Target = CStr;
     fn deref(&self) -> &CStr {
         unsafe { mem::cast(self.data.deref()) }
     }
 }
 
-impl Debug for CString {
+impl<'a> Debug for CString<'a> {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
         Debug::fmt(self.deref(), w)
     }
 }
 
-impl AsRef<CStr> for CString {
+impl<'a> AsRef<CStr> for CString<'a> {
     fn as_ref(&self) -> &CStr {
         unsafe { CStr::from_bytes_unchecked(&self.data[..]) }
     }
 }
 
-impl AsMut<CStr> for CString {
+impl<'a> AsMut<CStr> for CString<'a> {
     fn as_mut(&mut self) -> &mut CStr {
         unsafe { CStr::from_bytes_unchecked_mut(&mut self.data[..]) }
     }

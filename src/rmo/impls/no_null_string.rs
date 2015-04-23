@@ -9,8 +9,8 @@ use str_two::no_null_string::{NoNullString};
 use {ToOwned};
 
 impl ToOwned for NoNullStr {
-    type Owned = NoNullString;
-    fn to_owned(&self) -> Result<NoNullString> {
+    type Owned = NoNullString<'static>;
+    fn to_owned(&self) -> Result<NoNullString<'static>> {
         self.as_ref().to_owned().map(|o| unsafe { NoNullString::from_bytes_unchecked(o) })
     }
 }

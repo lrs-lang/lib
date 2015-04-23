@@ -9,8 +9,8 @@ use str_two::byte_string::{ByteString};
 use {ToOwned};
 
 impl ToOwned for ByteStr {
-    type Owned = ByteString;
-    fn to_owned(&self) -> Result<ByteString> {
+    type Owned = ByteString<'static>;
+    fn to_owned(&self) -> Result<ByteString<'static>> {
         self.as_ref().to_owned().map(|o| ByteString::from_vec(o))
     }
 }

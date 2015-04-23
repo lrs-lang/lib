@@ -11,60 +11,60 @@ use str_one::byte_str::{ByteStr};
 use fmt::{Debug, Write};
 use vec::{Vec};
 
-pub struct ByteString {
-    data: Vec<u8>,
+pub struct ByteString<'a> {
+    data: Vec<'a, u8>,
 }
 
-impl ByteString {
-    pub fn from_vec(v: Vec<u8>) -> ByteString {
+impl<'a> ByteString<'a> {
+    pub fn from_vec(v: Vec<'a, u8>) -> ByteString<'a> {
         ByteString { data: v }
     }
 }
 
-impl Deref for ByteString {
+impl<'a> Deref for ByteString<'a> {
     type Target = ByteStr;
     fn deref(&self) -> &ByteStr {
         unsafe { mem::cast(self.data.deref()) }
     }
 }
 
-impl DerefMut for ByteString {
+impl<'a> DerefMut for ByteString<'a> {
     fn deref_mut(&mut self) -> &mut ByteStr {
         unsafe { mem::cast(self.data.deref_mut()) }
     }
 }
 
-impl Debug for ByteString {
+impl<'a> Debug for ByteString<'a> {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
         Debug::fmt(self.deref(), w)
     }
 }
 
-impl AsRef<ByteStr> for ByteString {
+impl<'a> AsRef<ByteStr> for ByteString<'a> {
     fn as_ref(&self) -> &ByteStr {
         self.deref()
     }
 }
 
-impl AsMut<ByteStr> for ByteString {
+impl<'a> AsMut<ByteStr> for ByteString<'a> {
     fn as_mut(&mut self) -> &mut ByteStr {
         self.deref_mut()
     }
 }
 
-impl Clone for ByteString {
-    fn clone(&self) -> Result<ByteString> {
+impl Clone for ByteString<'static> {
+    fn clone(&self) -> Result<ByteString<'static>> {
         self.data.clone().map(|o| ByteString { data: o })
     }
 }
 
-impl Eq for ByteString {
-    fn eq(&self, other: &ByteString) -> bool {
+impl<'a> Eq for ByteString<'a> {
+    fn eq(&self, other: &ByteString<'a>) -> bool {
         self.data == other.data
     }
 }
 
-impl Eq<str> for ByteString {
+impl<'a> Eq<str> for ByteString<'a> {
     fn eq(&self, other: &str) -> bool {
         self.as_ref().eq(other)
     }

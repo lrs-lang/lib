@@ -10,9 +10,10 @@
 
 #[macro_use]
 extern crate linux_core as core;
+extern crate linux_base as base;
 extern crate linux_vec as vec;
 
-#[prelude_import] use core::prelude::*;
+#[prelude_import] use base::prelude::*;
 use core::ops::{Add};
 use core::iter::{Iterator};
 use vec::{Vec};
@@ -38,10 +39,9 @@ impl<T: Iterator> IteratorExt for T { }
 
 /// Extensions for the `Iterator` trait.
 pub trait IteratorExt : Iterator+Sized {
-    fn collect(self) -> Vec<Self::Item> {
-        let mut vec = Vec::new();
+    fn collect(self, vec: &mut Vec<Self::Item>) -> Result {
         vec.extend(self);
-        vec
+        Ok(())
     }
 
     /// Sums all elements in the iterator, starting with `start`.
