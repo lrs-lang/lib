@@ -30,7 +30,7 @@ mod bda;
 mod jemalloc;
 
 /// The default allocator
-pub type Heap = Bda;
+pub type Heap = LibcHeap;
 
 /// The maximum size of an allocation
 pub const MAX_SIZE: usize = num::isize::MAX as usize;

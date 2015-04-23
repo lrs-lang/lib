@@ -24,7 +24,10 @@ extern {
     fn je_sdallocx(ptr: *mut u8, size: usize, flags: c_int) -> *mut u8;
 }
 
-/// The jemalloc allocator.
+/// The jemalloc allocator
+///
+/// To use this you have to compile a recent version of jemalloc with the `je_` prefix and
+/// add `-L path_to_jemalloc` to your compiler invocation.
 pub struct JeMalloc;
 
 impl Allocator for JeMalloc {

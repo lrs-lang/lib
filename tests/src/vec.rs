@@ -5,6 +5,7 @@
 #![feature(plugin, no_std)]
 #![plugin(linux_core_plugin)]
 #![no_std]
+#![allow(unused_imports)]
 
 #[macro_use] extern crate linux;
 mod core { pub use linux::core::*; }
