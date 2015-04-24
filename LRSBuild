@@ -14,7 +14,6 @@ obj fmt        core base io
 
 obj cell       core base
 obj str_one    core cty_base base arch_fns fmt parse
-obj c_ptr_ptr  core base cty_base str_one
 
 obj rt         core libc base str_one
 
@@ -30,6 +29,7 @@ obj lock       core base cell io fmt atomic syscall cty
 obj alloc      core base cty syscall libc
 obj queue      core base cell arch_fns atomic lock alloc
 
+obj c_ptr_ptr  core base cty_base str_one alloc
 obj buf_reader core arch_fns base io alloc
 obj rc         core base fmt cell alloc atomic
 
@@ -41,7 +41,7 @@ obj rmo        core base fmt str_one vec str_two
 obj str_three  core arch_fns base str_one str_two rmo
 
 obj fs         core base fmt cty syscall rv str_three
-obj process    core base syscall cty fmt str_one str_three c_ptr_ptr
+obj process    core base syscall cty fmt str_one str_three c_ptr_ptr alloc
 obj socket     core base
 
 obj time_base  core base cty syscall fmt fd rv

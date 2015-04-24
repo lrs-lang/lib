@@ -9,15 +9,16 @@ use cty::{PATH_MAX, AT_FDCWD};
 use str_one::{ToCStr};
 use str_three::{ToCString};
 use syscall::{execveat};
+use alloc::{NoHeap};
 
 pub struct Command<'a> {
-    builder: CPtrPtr<'a>,
+    builder: CPtrPtr<'a, NoHeap>,
 }
 
 impl<'a> Command<'a> {
     pub fn new(buf: &'a mut [u8]) -> Command<'a> {
         Command {
-            builder: CPtrPtr::new(buf),
+            builder: CPtrPtr::buffered(buf),
         }
     }
 
@@ -33,6 +34,6 @@ impl<'a> Command<'a> {
         let args = try!(self.builder.finish());
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
         let path = try!(path.rmo_cstr(&mut buf));
-        rv!(execveat(AT_FDCWD, &path, args, 0 as *const _, 0))
+        rv!(execveat(AT_FDCWD, &path, args.as_ptr(), 0 as *const _, 0))
     }
 }

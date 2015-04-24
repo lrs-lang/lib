@@ -12,6 +12,7 @@
 extern crate linux_core as core;
 extern crate linux_cty_base as cty_base;
 extern crate linux_base as base;
+extern crate linux_alloc as alloc;
 extern crate linux_str_one as str_one;
 
 #[prelude_import] use base::prelude::*;
@@ -19,6 +20,7 @@ use base::{error};
 use cty_base::types::{c_char};
 use core::{slice};
 use str_one::{ToCStr};
+use alloc::{Allocator};
 
 mod linux { pub use base::linux::*; }
 
@@ -29,15 +31,20 @@ macro_rules! usize_align {
     ($val:expr) => { ($val + USIZE_MASK) & !USIZE_MASK }
 }
 
-pub struct CPtrPtr<'a> {
+pub type SCPtrPtr<Heap = alloc::Heap> = CPtrPtr<'static, Heap>;
+
+pub struct CPtrPtr<'a, Heap = alloc::Heap>
+    where Heap: Allocator,
+{
     buf: *mut usize,
     pos: usize,
     cap: usize,
-    _marker: PhantomData<&'a ()>,
+    num: usize,
+    _marker: PhantomData<(&'a (), Heap)>,
 }
 
-impl<'a> CPtrPtr<'a> {
-    pub fn new(buf: &'a mut [u8]) -> CPtrPtr<'a> {
+impl<'a> CPtrPtr<'a, alloc::NoHeap> {
+    pub fn buffered(buf: &'a mut [u8]) -> CPtrPtr<'a, alloc::NoHeap> {
         let (ptr, cap) = if buf.len() < USIZE_BYTES {
             (buf.as_mut_ptr(), 0)
         } else {
@@ -50,15 +57,42 @@ impl<'a> CPtrPtr<'a> {
             buf: ptr as *mut usize,
             pos: 0,
             cap: cap,
+            num: 0,
             _marker: PhantomData,
         }
     }
+}
+
+impl<Heap> CPtrPtr<'static, Heap>
+    where Heap: Allocator,
+{
+    pub fn new() -> Result<CPtrPtr<'static, Heap>> {
+        const DEFAULT_CAP: usize = 32;
+        Ok(CPtrPtr {
+            buf: try!(unsafe { Heap::allocate_array(DEFAULT_CAP) }),
+            pos: 0,
+            cap: DEFAULT_CAP,
+            num: 0,
+            _marker: PhantomData,
+        })
+    }
+}
+
+impl<'a, Heap> CPtrPtr<'a, Heap>
+    where Heap: Allocator,
+{
+    fn double(&mut self) -> Result {
+        let new_cap = self.cap + self.cap / 2 + 1;
+        self.buf = try!(unsafe { Heap::reallocate_array(self.buf, self.cap, new_cap) });
+        self.cap = new_cap;
+        Ok(())
+    }
 
     fn slot(&mut self) -> Result<(&mut usize, &mut [u8])> {
+        if self.cap == self.pos {
+            try!(self.double());
+        }
         unsafe {
-            if self.pos >= self.cap {
-                return Err(error::NoMemory);
-            }
             let usize_ptr = self.buf.add(self.pos);
             let slice_ptr = usize_ptr.add(1) as *mut u8;
             let slice = slice::from_ptr(slice_ptr,
@@ -67,51 +101,63 @@ impl<'a> CPtrPtr<'a> {
         }
     }
 
-    fn ptr_ptr_slice(&mut self) -> Result<(*const usize, *const usize, &mut [usize])> {
-        unsafe {
-            let len = match self.cap - self.pos {
-                0 => return Err(error::NoMemory),
-                n => n,
-            };
-            let slice_ptr = self.buf.add(self.pos);
-            let slice = slice::from_ptr(slice_ptr, len);
-            Ok((self.buf as *const usize, slice_ptr as *const usize, slice))
+    fn ptr_slice(&mut self) -> Result<(*const usize, &mut [*const c_char])> {
+        if self.cap - self.pos <= self.num {
+            try!(self.double());
         }
+        assert!(self.cap - self.pos > self.num);
+        unsafe {
+            let slice_ptr = self.buf.add(self.pos) as *mut *const c_char;
+            let slice = slice::from_ptr(slice_ptr, self.num + 1);
+            Ok((self.buf, slice))
+        }
+    }
+
+    fn push_int<S>(&mut self, s: S) -> Result<usize>
+        where S: ToCStr,
+    {
+        let (next, buf) = try!(self.slot());
+        let buf_addr = buf.as_ptr() as usize;
+        let cstr = try!(s.to_cstr(buf));
+        if cstr.as_ptr() as usize != buf_addr {
+            return Err(error::InvalidArgument);
+        }
+        *next = 1 + usize_align!(cstr.len() + 1) / USIZE_BYTES;
+        Ok(*next)
     }
 
     pub fn push<S>(&mut self, s: S) -> Result
         where S: ToCStr,
     {
         self.pos += {
-            let (next, buf) = try!(self.slot());
-            let buf_addr = buf.as_ptr() as usize;
-            let cstr = try!(s.to_cstr(buf));
-            if cstr.as_ptr() as usize != buf_addr {
-                return Err(error::InvalidArgument);
+            let mut inc = None;
+            while inc.is_none() {
+                match self.push_int(&s) {
+                    Ok(i) => inc = Some(i),
+                    Err(error::NoMemory) => try!(self.double()),
+                    Err(e) => return Err(e),
+                }
             }
-            *next = 1 + usize_align!(cstr.len() + 1) / USIZE_BYTES;
-            *next
+            inc.unwrap()
         };
+        self.num += 1;
         Ok(())
     }
 
-    pub fn finish(&mut self) -> Result<&*const c_char> {
-        let (mut iter, slice_ptr, mut slice) = try!(self.ptr_ptr_slice());
+    pub fn finish(&mut self) -> Result<&mut [*const c_char]> {
+        let (mut iter, mut slice) = try!(self.ptr_slice());
         unsafe {
-            while iter != slice_ptr {
-                if slice.len() == 0 {
-                    return Err(error::NoMemory);
-                }
-                slice[0] = iter.add(1) as usize;
-                let tmp = slice;
-                slice = &mut tmp[1..];
+            for i in 0..slice.len()-1 {
+                slice[i] = iter.add(1) as *const c_char;
                 iter = iter.add(*iter);
             }
-            if slice.len() == 0 {
-                return Err(error::NoMemory);
-            }
-            slice[0] = 0;
-            Ok(&*(slice_ptr as *const *const c_char))
+            slice[slice.len()-1] = 0 as *const c_char;
+            Ok(slice)
         }
+    }
+
+    pub fn truncate(&mut self) {
+        self.pos = 0;
+        self.num = 0;
     }
 }

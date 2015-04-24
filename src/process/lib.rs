@@ -17,6 +17,7 @@ extern crate linux_cty as cty;
 extern crate linux_fmt as fmt;
 extern crate linux_str_one as str_one;
 extern crate linux_str_three as str_three;
+extern crate linux_alloc as alloc;
 extern crate linux_c_ptr_ptr as c_ptr_ptr;
 
 mod linux {

@@ -17,20 +17,20 @@ extern {
 }
 
 fn main() {
-    let mut buf = [0; 1024];
-    let mut builder = CPtrPtr::new(&mut buf);
-    for i in 0..20 {
+    let mut builder: CPtrPtr<linux::alloc::Bda> = CPtrPtr::new().unwrap();
+    for i in 0..200000 {
         builder.push("hello");
         builder.push("world");
     }
-    let mut ptr: *const *mut i8 = match builder.finish() {
+    let mut ptr = match builder.finish() {
         Ok(ptr) => ptr,
         Err(e) => { println!("Error: {}", e.desc()); loop { } },
     };
     unsafe {
-        while !(*ptr).is_null() {
-            puts(*ptr);
-            ptr = ptr.add(1);
+        for &addr in &ptr[..ptr.len()-1] {
+            puts(addr);
         }
     }
+
+    println!("{}", ptr.len());
 }
