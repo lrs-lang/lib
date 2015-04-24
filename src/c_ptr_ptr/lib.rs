@@ -43,8 +43,8 @@ pub struct CPtrPtr<'a, Heap = alloc::Heap>
     _marker: PhantomData<(&'a (), Heap)>,
 }
 
-impl<'a> CPtrPtr<'a, alloc::NoHeap> {
-    pub fn buffered(buf: &'a mut [u8]) -> CPtrPtr<'a, alloc::NoHeap> {
+impl<'a> CPtrPtr<'a, alloc::NoMem> {
+    pub fn buffered(buf: &'a mut [u8]) -> CPtrPtr<'a, alloc::NoMem> {
         let (ptr, cap) = if buf.len() < USIZE_BYTES {
             (buf.as_mut_ptr(), 0)
         } else {

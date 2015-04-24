@@ -9,9 +9,9 @@ use {Allocator};
 /// Heap without memory backing it
 ///
 /// Always returns that there is no memory available.
-pub struct NoHeap;
+pub struct NoMem;
 
-impl Allocator for NoHeap {
+impl Allocator for NoMem {
     unsafe fn allocate_raw(_: usize, _: usize) -> Result<*mut u8> {
         Err(error::NoMemory)
     }

@@ -19,6 +19,8 @@ extern crate linux_str_three as str_three;
 extern crate linux_rv as rv;
 extern crate linux_time_base as time_base;
 extern crate linux_iter as iter;
+extern crate linux_rmo as rmo;
+extern crate linux_alloc as alloc;
 
 #[prelude_import] use base::prelude::*;
 mod linux {
@@ -37,6 +39,8 @@ use str_three::{ToCString};
 use base::rmo::{AsRef};
 use rv::{retry};
 use iter::{IteratorExt};
+use rmo::{Rmo};
+use alloc::{FbHeap};
 
 use time_base::{Time};
 
@@ -270,7 +274,7 @@ pub fn enable_accounting<P>(path: P) -> Result
     where P: ToCString,
 {
     let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let path = try!(path.rmo_cstr(&mut buf));
+    let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
     rv!(acct(&path))
 }
 

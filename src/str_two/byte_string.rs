@@ -10,61 +10,83 @@ use base::rmo::{AsRef, AsMut};
 use str_one::byte_str::{ByteStr};
 use fmt::{Debug, Write};
 use vec::{Vec};
+use alloc::{self, Allocator};
 
-pub struct ByteString<'a> {
-    data: Vec<'a, u8>,
+pub struct ByteString<'a, Heap = alloc::Heap>
+    where Heap: Allocator,
+{
+    data: Vec<'a, u8, Heap>,
 }
 
-impl<'a> ByteString<'a> {
-    pub fn from_vec(v: Vec<'a, u8>) -> ByteString<'a> {
+impl<'a, H> ByteString<'a, H>
+    where H: Allocator,
+{
+    pub fn from_vec(v: Vec<'a, u8, H>) -> ByteString<'a, H> {
         ByteString { data: v }
     }
 }
 
-impl<'a> Deref for ByteString<'a> {
+impl<'a, H> Deref for ByteString<'a, H>
+    where H: Allocator,
+{
     type Target = ByteStr;
     fn deref(&self) -> &ByteStr {
         unsafe { mem::cast(self.data.deref()) }
     }
 }
 
-impl<'a> DerefMut for ByteString<'a> {
+impl<'a, H> DerefMut for ByteString<'a, H>
+    where H: Allocator,
+{
     fn deref_mut(&mut self) -> &mut ByteStr {
         unsafe { mem::cast(self.data.deref_mut()) }
     }
 }
 
-impl<'a> Debug for ByteString<'a> {
+impl<'a, H> Debug for ByteString<'a, H>
+    where H: Allocator,
+{
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
         Debug::fmt(self.deref(), w)
     }
 }
 
-impl<'a> AsRef<ByteStr> for ByteString<'a> {
+impl<'a, H> AsRef<ByteStr> for ByteString<'a, H>
+    where H: Allocator,
+{
     fn as_ref(&self) -> &ByteStr {
         self.deref()
     }
 }
 
-impl<'a> AsMut<ByteStr> for ByteString<'a> {
+impl<'a, H> AsMut<ByteStr> for ByteString<'a, H>
+    where H: Allocator,
+{
     fn as_mut(&mut self) -> &mut ByteStr {
         self.deref_mut()
     }
 }
 
-impl Clone for ByteString<'static> {
-    fn clone(&self) -> Result<ByteString<'static>> {
+impl<H> Clone for ByteString<'static, H>
+    where H: Allocator,
+{
+    fn clone(&self) -> Result<ByteString<'static, H>> {
         self.data.clone().map(|o| ByteString { data: o })
     }
 }
 
-impl<'a> Eq for ByteString<'a> {
-    fn eq(&self, other: &ByteString<'a>) -> bool {
+impl<'a, H1, H2> Eq<ByteString<'a, H1>> for ByteString<'a, H2>
+    where H1: Allocator,
+          H2: Allocator,
+{
+    fn eq(&self, other: &ByteString<'a, H1>) -> bool {
         self.data == other.data
     }
 }
 
-impl<'a> Eq<str> for ByteString<'a> {
+impl<'a, H> Eq<str> for ByteString<'a, H>
+    where H: Allocator,
+{
     fn eq(&self, other: &str) -> bool {
         self.as_ref().eq(other)
     }

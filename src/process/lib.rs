@@ -22,6 +22,7 @@ extern crate linux_alloc as alloc;
 extern crate linux_c_ptr_ptr as c_ptr_ptr;
 extern crate linux_rt as rt;
 extern crate linux_file as file;
+extern crate linux_rmo as rmo;
 extern crate linux_env as env;
 
 mod linux {
@@ -34,11 +35,12 @@ use core::{mem};
 use base::{error};
 use syscall::{getpid, getppid, exit_group, execveat};
 use cty::alias::{ProcessId};
-use cty::{AT_FDCWD, PATH_MAX, c_char};
+use cty::{AT_FDCWD, PATH_MAX, c_char, c_int};
 use str_one::{AsMutCStr, CStr};
 use str_two::{NoNullString};
 use str_three::{ToCString};
 use rt::{raw_env};
+use rmo::{Rmo};
 use alloc::{Allocator, FbHeap};
 
 pub mod ids;
@@ -54,7 +56,7 @@ pub fn parent_process_id() -> ProcessId {
 }
 
 /// Exits the process.
-pub fn exit(code: i32) -> ! {
+pub fn exit(code: c_int) -> ! {
     exit_group(code);
 }
 
@@ -66,7 +68,7 @@ pub fn exec<P>(path: P, args: &[*const c_char]) -> Result
     where P: ToCString,
 {
     let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let file = try!(path.rmo_cstr(&mut buf));
+    let file: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
     if file.len() == 0 {
         return Err(error::InvalidArgument);
     } else if file[0] == b'/' {

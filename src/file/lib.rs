@@ -25,6 +25,7 @@ extern crate linux_vec       as vec;
 extern crate linux_rmo       as rmo;
 extern crate linux_parse     as parse;
 extern crate linux_fd        as fd;
+extern crate linux_alloc     as alloc;
 extern crate linux_dev       as dev;
 extern crate linux_fs        as fs;
 extern crate linux_time_base as time_base;
@@ -60,7 +61,8 @@ use arch_fns::{memchr};
 use rv::{retry};
 use cty::alias::{UserId, GroupId};
 use fd::{FDContainer};
-use rmo::{ToOwned};
+use rmo::{Rmo, ToOwned};
+use alloc::{FbHeap};
 
 use time_base::{Time, time_to_timespec};
 
@@ -120,7 +122,7 @@ pub fn set_len<P>(path: P, len: u64) -> Result
     where P: ToCString,
 {
     let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let path = try!(path.rmo_cstr(&mut buf));
+    let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
     try!(retry(|| truncate(&path, len as loff_t)));
     Ok(())
 }
@@ -134,8 +136,8 @@ pub fn link<P, Q>(old: P, new: Q) -> Result
 {
     let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let old = try!(old.rmo_cstr(&mut buf1));
-    let new = try!(new.rmo_cstr(&mut buf2));
+    let old: Rmo<_, FbHeap> = try!(old.rmo_cstr(&mut buf1));
+    let new: Rmo<_, FbHeap> = try!(new.rmo_cstr(&mut buf2));
     rv!(linkat(AT_FDCWD, &old, AT_FDCWD, &new, 0))
 }
 
@@ -285,8 +287,8 @@ pub fn set_attr<P, S, V>(path: P, name: S, val: V) -> Result
 {
     let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let mut buf2: [u8; 128] = unsafe { mem::uninit() };
-    let path = try!(path.rmo_cstr(&mut buf1));
-    let name = try!(name.rmo_cstr(&mut buf2));
+    let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf1));
+    let name: Rmo<_, FbHeap> = try!(name.rmo_cstr(&mut buf2));
     rv!(setxattr(&path, &name, val.as_ref(), 0))
 }
 
@@ -299,8 +301,8 @@ pub fn set_attr_no_follow<P, S, V>(path: P, name: S, val: V) -> Result
 {
     let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let mut buf2: [u8; 128] = unsafe { mem::uninit() };
-    let path = try!(path.rmo_cstr(&mut buf1));
-    let name = try!(name.rmo_cstr(&mut buf2));
+    let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf1));
+    let name: Rmo<_, FbHeap> = try!(name.rmo_cstr(&mut buf2));
     rv!(lsetxattr(&path, &name, val.as_ref(), 0))
 }
 
@@ -312,8 +314,8 @@ pub fn get_attr_buf<P, S, V>(path: P, name: S, mut val: V) -> Result<usize>
 {
     let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let mut buf2: [u8; 128] = unsafe { mem::uninit() };
-    let path = try!(path.rmo_cstr(&mut buf1));
-    let name = try!(name.rmo_cstr(&mut buf2));
+    let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf1));
+    let name: Rmo<_, FbHeap> = try!(name.rmo_cstr(&mut buf2));
     rv!(getxattr(&path, &name, val.as_mut()), -> usize)
 }
 
@@ -326,8 +328,8 @@ pub fn get_attr_no_follow_buf<P, S, V>(path: P, name: S, mut val: V) -> Result<u
 {
     let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let mut buf2: [u8; 128] = unsafe { mem::uninit() };
-    let path = try!(path.rmo_cstr(&mut buf1));
-    let name = try!(name.rmo_cstr(&mut buf2));
+    let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf1));
+    let name: Rmo<_, FbHeap> = try!(name.rmo_cstr(&mut buf2));
     rv!(lgetxattr(&path, &name, val.as_mut()), -> usize)
 }
 
@@ -361,8 +363,8 @@ pub fn get_attr<P, S>(path: P, name: S) -> Result<SVec<u8>>
 {
     let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let mut buf2: [u8; 128] = unsafe { mem::uninit() };
-    let path = try!(path.rmo_cstr(&mut buf1));
-    let name = try!(name.rmo_cstr(&mut buf2));
+    let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf1));
+    let name: Rmo<_, FbHeap> = try!(name.rmo_cstr(&mut buf2));
     get_attr_common(|buf| getxattr(&path, &name, buf))
 }
 
@@ -375,8 +377,8 @@ pub fn get_attr_no_follow<P, S>(path: P, name: S) -> Result<SVec<u8>>
 {
     let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let mut buf2: [u8; 128] = unsafe { mem::uninit() };
-    let path = try!(path.rmo_cstr(&mut buf1));
-    let name = try!(name.rmo_cstr(&mut buf2));
+    let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf1));
+    let name: Rmo<_, FbHeap> = try!(name.rmo_cstr(&mut buf2));
     get_attr_common(|buf| lgetxattr(&path, &name, buf))
 }
 
@@ -388,8 +390,8 @@ pub fn remove_attr<P, S>(path: P, name: S) -> Result
 {
     let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let mut buf2: [u8; 128] = unsafe { mem::uninit() };
-    let path = try!(path.rmo_cstr(&mut buf1));
-    let name = try!(name.rmo_cstr(&mut buf2));
+    let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf1));
+    let name: Rmo<_, FbHeap> = try!(name.rmo_cstr(&mut buf2));
     rv!(removexattr(&path, &name))
 }
 
@@ -402,8 +404,8 @@ pub fn remove_attr_no_follow<P, S>(path: P, name: S) -> Result
 {
     let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let mut buf2: [u8; 128] = unsafe { mem::uninit() };
-    let path = try!(path.rmo_cstr(&mut buf1));
-    let name = try!(name.rmo_cstr(&mut buf2));
+    let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf1));
+    let name: Rmo<_, FbHeap> = try!(name.rmo_cstr(&mut buf2));
     rv!(lremovexattr(&path, &name))
 }
 
@@ -414,7 +416,7 @@ pub fn list_attr_size<P>(path: P) -> Result<usize>
     where P: ToCString,
 {
     let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let path = try!(path.rmo_cstr(&mut buf));
+    let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
     rv!(listxattr(&path, &mut []), -> usize)
 }
 
@@ -426,7 +428,7 @@ pub fn list_attr_size_no_follow<P>(path: P) -> Result<usize>
     where P: ToCString,
 {
     let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let path = try!(path.rmo_cstr(&mut buf));
+    let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
     rv!(llistxattr(&path, &mut []), -> usize)
 }
 
@@ -437,7 +439,7 @@ pub fn list_attr_buf<'a, P>(path: P, buf: &'a mut [u8]) -> Result<ListAttrIter<'
     where P: ToCString,
 {
     let mut pbuf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let path = try!(path.rmo_cstr(&mut pbuf));
+    let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut pbuf));
     let len = try!(rv!(listxattr(&path, buf), -> usize));
     Ok(ListAttrIter { buf: &buf[..len], pos: 0 })
 }
@@ -451,7 +453,7 @@ pub fn list_attr_buf_no_follow<'a, P>(path: P,
     where P: ToCString,
 {
     let mut pbuf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let path = try!(path.rmo_cstr(&mut pbuf));
+    let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut pbuf));
     let len = try!(rv!(llistxattr(&path, buf), -> usize));
     Ok(ListAttrIter { buf: &buf[..len], pos: 0 })
 }
@@ -485,7 +487,7 @@ pub fn list_attr<P>(path: P) -> Result<ListAttrIterator>
     where P: ToCString,
 {
     let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let path = try!(path.rmo_cstr(&mut buf));
+    let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
     list_attr_common(|buf| listxattr(&path, buf))
 }
 
@@ -497,7 +499,7 @@ pub fn list_attr_no_follow<P>(path: P) -> Result<ListAttrIterator>
     where P: ToCString,
 {
     let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let path = try!(path.rmo_cstr(&mut buf));
+    let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
     list_attr_common(|buf| llistxattr(&path, buf))
 }
 
@@ -740,7 +742,7 @@ impl File {
         where P: ToCString,
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let path = try!(path.rmo_cstr(&mut buf));
+        let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
         rv!(linkat(self.fd, CStr::empty(), AT_FDCWD, &path, AT_EMPTY_PATH))
     }
 
@@ -751,7 +753,7 @@ impl File {
         where P: ToCString,
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let path = try!(path.rmo_cstr(&mut buf));
+        let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
         rv!(linkat(self.fd, CStr::empty(), dir.fd, &path, AT_EMPTY_PATH))
     }
 
@@ -847,7 +849,7 @@ impl File {
         where S: ToCString, V: AsRef<[u8]>,
     {
         let mut buf: [u8; 128] = unsafe { mem::uninit() };
-        let name = try!(name.rmo_cstr(&mut buf));
+        let name: Rmo<_, FbHeap> = try!(name.rmo_cstr(&mut buf));
         rv!(fsetxattr(self.fd, &name, val.as_ref(), 0))
     }
 
@@ -856,7 +858,7 @@ impl File {
         where S: ToCString, V: AsMut<[u8]>,
     {
         let mut buf: [u8; 128] = unsafe { mem::uninit() };
-        let name = try!(name.rmo_cstr(&mut buf));
+        let name: Rmo<_, FbHeap> = try!(name.rmo_cstr(&mut buf));
         rv!(fgetxattr(self.fd, &name, val.as_mut()), -> usize)
     }
 
@@ -865,7 +867,7 @@ impl File {
         where S: ToCString,
     {
         let mut buf: [u8; 128] = unsafe { mem::uninit() };
-        let name = try!(name.rmo_cstr(&mut buf));
+        let name: Rmo<_, FbHeap> = try!(name.rmo_cstr(&mut buf));
         get_attr_common(|buf| fgetxattr(self.fd, &name, buf))
     }
 
@@ -874,7 +876,7 @@ impl File {
         where S: ToCString,
     {
         let mut buf: [u8; 128] = unsafe { mem::uninit() };
-        let name = try!(name.rmo_cstr(&mut buf));
+        let name: Rmo<_, FbHeap> = try!(name.rmo_cstr(&mut buf));
         rv!(fremovexattr(self.fd, &name))
     }
 
@@ -941,7 +943,7 @@ impl File {
         where P: ToCString,
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let path = try!(path.rmo_cstr(&mut buf));
+        let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
         let mode = flags.mode().map(|m| mode_to_int(m)).unwrap_or(0);
         let fd = match retry(|| openat(self.fd, &path,
                                        flags_to_int(flags) | cty::O_LARGEFILE, mode)) {
@@ -966,7 +968,7 @@ impl File {
         where P: ToCString,
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let path = try!(path.rmo_cstr(&mut buf));
+        let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
         let mut stat = unsafe  { mem::zeroed() };
         try!(rv!(fstatat(self.fd, &path, &mut stat, 0)));
         Ok(info_from_stat(stat))
@@ -981,7 +983,7 @@ impl File {
         where P: ToCString,
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let path = try!(path.rmo_cstr(&mut buf));
+        let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
         let mut stat = unsafe  { mem::zeroed() };
         try!(rv!(fstatat(self.fd, &path, &mut stat, AT_SYMLINK_NOFOLLOW)));
         Ok(info_from_stat(stat))
@@ -995,7 +997,7 @@ impl File {
         where P: ToCString,
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let path = try!(path.rmo_cstr(&mut buf));
+        let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
         let res = faccessat(self.fd, &path, 0);
         if res >= 0 {
             Ok(true)
@@ -1016,7 +1018,7 @@ impl File {
         where P: ToCString,
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let path = try!(path.rmo_cstr(&mut buf));
+        let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
         let res = faccessat(self.fd, &path, access_mode_to_int(mode));
         if res >= 0 {
             Ok(true)
@@ -1039,7 +1041,7 @@ impl File {
         where P: ToCString,
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let path = try!(path.rmo_cstr(&mut buf));
+        let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
         let times = [time_change_to_timespec(access),
                      time_change_to_timespec(modification)];
         rv!(utimensat(self.fd, Some(&path), &times, 0))
@@ -1055,7 +1057,7 @@ impl File {
         where P: ToCString,
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let path = try!(path.rmo_cstr(&mut buf));
+        let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
         let times = [time_change_to_timespec(access),
                      time_change_to_timespec(modification)];
         rv!(utimensat(self.fd, Some(&path), &times, AT_SYMLINK_NOFOLLOW))
@@ -1070,8 +1072,8 @@ impl File {
     {
         let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
         let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let one = try!(one.rmo_cstr(&mut buf1));
-        let two = try!(two.rmo_cstr(&mut buf2));
+        let one: Rmo<_, FbHeap> = try!(one.rmo_cstr(&mut buf1));
+        let two: Rmo<_, FbHeap> = try!(two.rmo_cstr(&mut buf2));
         rv!(renameat(self.fd, &one, self.fd, &two, RENAME_EXCHANGE))
     }
 
@@ -1085,8 +1087,8 @@ impl File {
     {
         let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
         let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let one = try!(one.rmo_cstr(&mut buf1));
-        let two = try!(two.rmo_cstr(&mut buf2));
+        let one: Rmo<_, FbHeap> = try!(one.rmo_cstr(&mut buf1));
+        let two: Rmo<_, FbHeap> = try!(two.rmo_cstr(&mut buf2));
         let flag = if replace { 0 } else { RENAME_NOREPLACE };
         rv!(renameat(self.fd, &one, self.fd, &two, flag))
     }
@@ -1099,7 +1101,7 @@ impl File {
         where P: ToCString,
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let path = try!(path.rmo_cstr(&mut buf));
+        let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
         rv!(mkdirat(self.fd, &path, mode_to_int(mode)))
     }
 
@@ -1112,7 +1114,7 @@ impl File {
         where P: ToCString,
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let path = try!(path.rmo_cstr(&mut buf));
+        let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
         let mut ret = unlinkat(self.fd, &path, 0);
         if Errno(-ret) == error::IsADirectory {
             ret = unlinkat(self.fd, &path, AT_REMOVEDIR);
@@ -1129,8 +1131,8 @@ impl File {
     {
         let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
         let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let target = try!(target.rmo_cstr(&mut buf1));
-        let link = try!(link.rmo_cstr(&mut buf2));
+        let target: Rmo<_, FbHeap> = try!(target.rmo_cstr(&mut buf1));
+        let link: Rmo<_, FbHeap> = try!(link.rmo_cstr(&mut buf2));
         rv!(symlinkat(&target, self.fd, &link))
     }
 
@@ -1143,7 +1145,7 @@ impl File {
         where P: ToCString,
     {
         let mut pbuf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let link = try!(link.rmo_cstr(&mut pbuf));
+        let link: Rmo<_, FbHeap> = try!(link.rmo_cstr(&mut pbuf));
         let len = try!(rv!(readlinkat(self.fd, &link, buf), -> usize));
         Ok(unsafe { NoNullStr::from_bytes_unchecked_mut(&mut buf[..len]) })
     }
@@ -1167,7 +1169,7 @@ impl File {
         where P: ToCString,
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let path = try!(path.rmo_cstr(&mut buf));
+        let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
         rv!(fchownat(self.fd, &path, user, group, 0))
     }
 
@@ -1181,7 +1183,7 @@ impl File {
         where P: ToCString,
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let path = try!(path.rmo_cstr(&mut buf));
+        let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
         rv!(fchownat(self.fd, &path, user, group, AT_SYMLINK_NOFOLLOW))
     }
 
@@ -1193,7 +1195,7 @@ impl File {
         where P: ToCString,
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let path = try!(path.rmo_cstr(&mut buf));
+        let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
         rv!(fchmodat(self.fd, &path, mode_to_int(mode)))
     }
 
@@ -1215,7 +1217,7 @@ impl File {
             _ => return Err(error::InvalidArgument),
         }
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let path = try!(path.rmo_cstr(&mut buf));
+        let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
         rv!(mknodat(self.fd, &path, file_type_to_mode(ty) | mode_to_int(mode), 0))
     }
 
@@ -1231,7 +1233,7 @@ impl File {
             DeviceType::Block     => Type::BlockDevice,
         };
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let path = try!(path.rmo_cstr(&mut buf));
+        let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
         rv!(mknodat(self.fd, &path, file_type_to_mode(ty) | mode_to_int(mode), dev.id()))
     }
 }

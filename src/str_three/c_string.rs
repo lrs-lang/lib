@@ -12,32 +12,53 @@ use str_two::{CString, NoNullString};
 use alloc::{Allocator};
 
 pub trait ToCString {
-    fn to_cstring(&self) -> Result<CString<'static>>;
+    fn to_cstring<H>(&self) -> Result<CString<'static, H>> where H: Allocator;
+
     fn rmo_cstr<'a, H>(&'a self, _buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
+        where H: Allocator,
     {
         self.to_cstring().map(|r| Rmo::Owned(r))
     }
 }
 
 impl<'b, T: ToCString+?Sized> ToCString for &'b T {
-    fn to_cstring(&self) -> Result<CString<'static>> { (**self).to_cstring() }
-    fn rmo_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>> {
+    fn to_cstring<H>(&self) -> Result<CString<'static, H>>
+        where H: Allocator,
+    {
+        (**self).to_cstring()
+    }
+
+    fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
+        where H: Allocator,
+    {
         (**self).rmo_cstr(buf)
     }
 }
 
 impl<'b, T: ToCString+?Sized> ToCString for &'b mut T {
-    fn to_cstring(&self) -> Result<CString<'static>> { (**self).to_cstring() }
-    fn rmo_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>> {
+    fn to_cstring<H>(&self) -> Result<CString<'static, H>>
+        where H: Allocator,
+    {
+        (**self).to_cstring()
+    }
+
+    fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
+        where H: Allocator,
+    {
         (**self).rmo_cstr(buf)
     }
 }
 
 impl ToCString for CStr {
-    fn to_cstring(&self) -> Result<CString<'static>> {
+    fn to_cstring<H>(&self) -> Result<CString<'static, H>>
+        where H: Allocator,
+    {
         self.as_ref().to_owned().map(|o| unsafe { CString::from_bytes_unchecked(o) })
     }
-    fn rmo_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>> {
+
+    fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
+        where H: Allocator,
+    {
         let bytes = self.as_ref();
         if bytes.len() <= buf.len() {
             mem::copy(buf, bytes);
@@ -49,7 +70,9 @@ impl ToCString for CStr {
 }
 
 impl ToCString for [u8] {
-    fn to_cstring(&self) -> Result<CString<'static>> {
+    fn to_cstring<H>(&self) -> Result<CString<'static, H>>
+        where H: Allocator,
+    {
         if let Some(idx) = memchr(self, 0) {
             if idx == self.len() - 1 || all_bytes(&self[idx+1..], 0) {
                 self[..idx+1].to_owned().map(|o| unsafe { CString::from_bytes_unchecked(o) })
@@ -64,7 +87,9 @@ impl ToCString for [u8] {
         }
     }
 
-    fn rmo_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr>> {
+    fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
+        where H: Allocator,
+    {
         if let Some(idx) = memchr(self, 0) {
             if idx == self.len() - 1 || all_bytes(&self[idx+1..], 0) {
                 Ok(unsafe { Rmo::Ref(CStr::from_bytes_unchecked(&self[..idx+1])) })
@@ -87,21 +112,37 @@ impl ToCString for [u8] {
 }
 
 impl ToCString for [i8] {
-    fn to_cstring(&self) -> Result<CString<'static>> { self.as_ref().to_cstring() }
-    fn rmo_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr>> {
+    fn to_cstring<H>(&self) -> Result<CString<'static, H>>
+        where H: Allocator,
+    {
+        self.as_ref().to_cstring()
+    }
+
+    fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
+        where H: Allocator,
+    {
         self.as_ref().rmo_cstr(buf)
     }
 }
 
 impl ToCString for str {
-    fn to_cstring(&self) -> Result<CString<'static>> { self.as_ref().to_cstring() }
-    fn rmo_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr>> {
+    fn to_cstring<H>(&self) -> Result<CString<'static, H>>
+        where H: Allocator,
+    {
+        self.as_ref().to_cstring()
+    }
+
+    fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
+        where H: Allocator,
+    {
         self.as_ref().rmo_cstr(buf)
     }
 }
 
 impl ToCString for NoNullStr {
-    fn to_cstring(&self) -> Result<CString<'static>> {
+    fn to_cstring<H>(&self) -> Result<CString<'static, H>>
+        where H: Allocator,
+    {
         match self.as_ref().to_owned() {
             Ok(mut o) => {
                 try!(o.reserve(1));
@@ -112,7 +153,9 @@ impl ToCString for NoNullStr {
         }
     }
 
-    fn rmo_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr>> {
+    fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
+        where H: Allocator,
+    {
         let bytes = self.as_ref();
         if bytes.len() < buf.len() {
             mem::copy(buf, bytes);
@@ -125,8 +168,15 @@ impl ToCString for NoNullStr {
 }
 
 impl<'b> ToCString for NoNullString<'b> {
-    fn to_cstring(&self) -> Result<CString<'static>> { self.as_ref().to_cstring() }
-    fn rmo_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr>> {
+    fn to_cstring<H>(&self) -> Result<CString<'static, H>>
+        where H: Allocator,
+    {
+        self.as_ref().to_cstring()
+    }
+
+    fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
+        where H: Allocator,
+    {
         self.as_ref().rmo_cstr(buf)
     }
 }

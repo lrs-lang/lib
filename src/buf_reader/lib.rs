@@ -18,7 +18,7 @@ extern crate linux_alloc as alloc;
 #[prelude_import] use base::prelude::*;
 use core::{num, slice};
 use base::{error};
-use alloc::{NoHeap, Allocator};
+use alloc::{NoMem, Allocator};
 use io::{Read, BufRead, Write};
 use arch_fns::{memchr};
 
@@ -63,7 +63,7 @@ impl<'a, R, H> BufReader<'a, R, H>
     /// Uses `buf` as a buffer.
     ///
     /// Note that the length of `buf` will be decreased to the previous power of two.
-    pub fn new(read: R, buf: &'a mut [u8]) -> BufReader<'a, R, NoHeap> {
+    pub fn new(read: R, buf: &'a mut [u8]) -> BufReader<'a, R, NoMem> {
         let size = match buf.len() {
             0 => 0,
             n => 1 << (num::usize::BITS - n.leading_zeros() - 1),

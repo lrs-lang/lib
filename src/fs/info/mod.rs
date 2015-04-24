@@ -9,6 +9,8 @@ use cty::{PATH_MAX, statfs, c_ulong};
 use syscall::{statfs};
 use rv::{retry};
 use str_three::{ToCString};
+use alloc::{FbHeap};
+use rmo::{Rmo};
 
 use self::mount::{Flags};
 use self::types::{FileSystem};
@@ -30,7 +32,7 @@ impl FileSystemInfo {
         where P: ToCString,
     {
         let mut path_buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let path = try!(path.rmo_cstr(&mut path_buf));
+        let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut path_buf));
         let mut buf = unsafe { mem::zeroed() };
         retry(|| statfs(&path, &mut buf)).map(|_| FileSystemInfo(buf))
     }

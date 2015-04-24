@@ -5,6 +5,7 @@
 #[prelude_import] use base::prelude::*;
 use core::ops::{Deref};
 use core::{mem, ptr};
+use core::marker::{Leak};
 use base::clone::{Clone};
 use atomic::{AtomicUsize};
 use fmt::{Debug, Write};
@@ -17,6 +18,7 @@ struct Inner<T> {
 
 pub struct Arc<T, Heap = alloc::Heap>
     where Heap: Allocator,
+          T: Leak,
 {
     data: *mut Inner<T>,
     _marker: PhantomData<Heap>,
@@ -24,6 +26,7 @@ pub struct Arc<T, Heap = alloc::Heap>
 
 impl<T, H> Arc<T, H>
     where H: Allocator,
+          T: Leak,
 {
     pub fn new(val: T) -> Result<Arc<T>, T> {
         unsafe {
@@ -49,6 +52,7 @@ impl<T, H> Arc<T, H>
 
 impl<T, H> Drop for Arc<T, H>
     where H: Allocator,
+          T: Leak,
 {
     fn drop(&mut self) {
         unsafe {
@@ -65,6 +69,7 @@ impl<T, H> Drop for Arc<T, H>
 
 impl<T, H> Deref for Arc<T, H>
     where H: Allocator,
+          T: Leak,
 {
     type Target = T;
 
@@ -75,6 +80,7 @@ impl<T, H> Deref for Arc<T, H>
 
 impl<T, H> Clone for Arc<T, H>
     where H: Allocator,
+          T: Leak,
 {
     fn clone(&self) -> Result<Arc<T, H>> {
         unsafe {
@@ -86,7 +92,7 @@ impl<T, H> Clone for Arc<T, H>
 }
 
 impl<T, H> Debug for Arc<T, H>
-    where T: Debug,
+    where T: Debug + Leak,
           H: Allocator,
 {
     fn fmt<W: Write+?Sized>(&self, mut w: &mut W) -> Result {

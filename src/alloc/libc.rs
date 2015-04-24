@@ -11,15 +11,15 @@ use linux_libc as libc;
 ///
 /// Note that this allocator ignores the alignment argument and always returns maximally
 /// aligned pointers.
-pub struct LibcHeap;
+pub struct Libc;
 
-impl Allocator for LibcHeap {
+impl Allocator for Libc {
     unsafe fn allocate_raw(size: usize, alignment: usize) -> Result<*mut u8> {
-        LibcHeap::reallocate_raw(0 as *mut u8, 0, size, alignment)
+        Libc::reallocate_raw(0 as *mut u8, 0, size, alignment)
     }
 
     unsafe fn free_raw(ptr: *mut u8, size: usize, alignment: usize) {
-        LibcHeap::reallocate_raw(ptr, size, 0, alignment);
+        Libc::reallocate_raw(ptr, size, 0, alignment);
     }
 
     unsafe fn reallocate_raw(old_ptr: *mut u8, oldsize: usize, newsize: usize,

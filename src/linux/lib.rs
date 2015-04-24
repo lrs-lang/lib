@@ -34,6 +34,7 @@ extern crate linux_fd;
 extern crate linux_file;
 extern crate linux_fmt;
 extern crate linux_fs;
+extern crate linux_thread;
 extern crate linux_int;
 extern crate linux_io;
 extern crate linux_iter;
@@ -93,6 +94,8 @@ pub mod time;
 pub mod user;
 pub mod util;
 pub mod vec;
+pub mod thread;
+pub mod rc;
 
 // Annoying that these have to be top-modules.
 pub mod i8;

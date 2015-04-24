@@ -45,8 +45,8 @@ pub struct Vec<'a, T, Heap = alloc::Heap>
     _marker: PhantomData<(&'a (), Heap)>,
 }
 
-impl<'a, T> Vec<'a, T, alloc::NoHeap> {
-    pub fn buffered(buf: &'a mut [u8]) -> Vec<'a, T, alloc::NoHeap> {
+impl<'a, T> Vec<'a, T, alloc::NoMem> {
+    pub fn buffered(buf: &'a mut [u8]) -> Vec<'a, T, alloc::NoMem> {
         if mem::size_of::<T>() == 0 {
             return Vec { ptr: empty_ptr(), len: 0, cap: 0, _marker: PhantomData };
         }
@@ -217,14 +217,15 @@ impl<'a, T, H> Drop for Vec<'a, T, H>
     }
 }
 
-impl<'a, T, H> Eq for Vec<'a, T, H>
+impl<'a, T, H1, H2> Eq<Vec<'a, T, H1>> for Vec<'a, T, H2>
     where T: Eq,
-          H: Allocator,
+          H1: Allocator,
+          H2: Allocator,
 {
-    fn eq(&self, other: &Vec<T, H>) -> bool {
+    fn eq(&self, other: &Vec<T, H1>) -> bool {
         self.deref().eq(other.deref())
     }
-    fn ne(&self, other: &Vec<T, H>) -> bool {
+    fn ne(&self, other: &Vec<T, H1>) -> bool {
         self.deref().ne(other.deref())
     }
 }

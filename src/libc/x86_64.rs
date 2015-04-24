@@ -2,8 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//! Memory allocation
+pub struct pthread_t {
+    _data: [u64; 1],
+}
 
-pub use linux_alloc::{
-    MAX_SIZE, empty_ptr, Allocator, Heap, FbHeap, Libc, NoMem, Bda, JeMalloc,
-};
+pub struct pthread_attr_t {
+    _data: [u64; 7],
+}

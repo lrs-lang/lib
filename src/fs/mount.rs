@@ -11,6 +11,8 @@ use cty::{c_ulong, c_int, MS_RDONLY, MS_NOSUID, MS_NODEV, MS_NOEXEC, MS_SYNCHRON
           MNT_DETACH, MNT_EXPIRE, UMOUNT_NOFOLLOW,};
 use syscall::{self};
 use str_three::{ToCString};
+use alloc::{FbHeap};
+use rmo::{Rmo};
 
 /// Flags used when mounting a filesystem.
 pub struct MountFlags(c_ulong);
@@ -130,10 +132,10 @@ pub fn mount<P, Q, R, S>(src: P, dst: Q, ty: R, flags: MountFlags, data: S) -> R
     let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let mut buf3: [u8; 256] = unsafe { mem::uninit() };
     let mut buf4: [u8; 256] = unsafe { mem::uninit() };
-    let src = try!(src.rmo_cstr(&mut buf1));
-    let dst = try!(dst.rmo_cstr(&mut buf2));
-    let ty = try!(ty.rmo_cstr(&mut buf3));
-    let data = try!(data.rmo_cstr(&mut buf4));
+    let src  : Rmo<_, FbHeap> = try!(src.rmo_cstr(&mut  buf1));
+    let dst  : Rmo<_, FbHeap> = try!(dst.rmo_cstr(&mut  buf2));
+    let ty   : Rmo<_, FbHeap> = try!(ty.rmo_cstr(&mut   buf3));
+    let data : Rmo<_, FbHeap> = try!(data.rmo_cstr(&mut buf4));
     rv!(syscall::mount(&src, &dst, &ty, flags.0, &data))
 }
 
@@ -186,6 +188,6 @@ pub fn unmount<P>(dst: P, flags: UnmountFlags) -> Result
     where P: ToCString,
 {
     let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let dst = try!(dst.rmo_cstr(&mut buf));
+    let dst: Rmo<_, FbHeap> = try!(dst.rmo_cstr(&mut buf));
     rv!(syscall::umount(&dst, flags.0))
 }

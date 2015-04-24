@@ -20,6 +20,7 @@ extern crate linux_fd        as fd;
 extern crate linux_rmo       as rmo;
 extern crate linux_fmt       as fmt;
 extern crate linux_file      as file;
+extern crate linux_alloc     as alloc;
 extern crate linux_vec       as vec;
 
 #[prelude_import] use base::prelude::*;
@@ -36,7 +37,8 @@ use fd::{FDContainer};
 use base::rmo::{AsRef};
 use fmt::{Debug, Write};
 use core::{mem};
-use rmo::{ToOwned};
+use rmo::{Rmo, ToOwned};
+use alloc::{FbHeap};
 
 use file::{File, Seek};
 use file::flags::{Flags};
@@ -54,7 +56,8 @@ pub fn iter<'a, S>(path: S, error: Option<&'a mut Result>) -> Iter<'a>
 {
 
     let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    match path.rmo_cstr(&mut buf) {
+    let path: Result<Rmo<_, FbHeap>> = path.rmo_cstr(&mut buf);
+    match path {
         Ok(p) => Iter::new(&p, error),
         Err(e) => Iter::error_dummy(e, error),
     }

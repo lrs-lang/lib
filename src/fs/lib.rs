@@ -17,6 +17,8 @@ extern crate linux_cty       as cty;
 extern crate linux_syscall   as syscall;
 extern crate linux_rv        as rv;
 extern crate linux_str_three as str_three;
+extern crate linux_alloc as alloc;
+extern crate linux_rmo as rmo;
 
 mod linux {
     pub use fmt::linux::*;

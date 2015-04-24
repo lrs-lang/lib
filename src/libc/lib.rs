@@ -7,9 +7,27 @@
 #![feature(plugin, no_std, lang_items)]
 #![plugin(linux_core_plugin)]
 #![no_std]
+#![allow(non_camel_case_types)]
 
 #[macro_use]
 extern crate linux_core as core;
+
+use core::marker::{Copy};
+pub use arch::{pthread_attr_t, pthread_t};
+
+#[cfg(all(target_arch = "x86_64", target_pointer_width = "64"))]
+#[cfg(target_arch = "x86_64")]
+#[path = "x86_64.rs"]
+mod arch;
+
+#[cfg(all(target_arch = "x86_64", target_pointer_width = "32"))]
+#[path = "x32.rs"]
+mod arch;
+
+pub const PTHREAD_CREATE_JOINABLE: i32 = 0;
+pub const PTHREAD_CREATE_DETACHED: i32 = 1;
+
+impl Copy for pthread_t { }
 
 #[allow(improper_ctypes)]
 #[link(name = "c")]
@@ -23,6 +41,23 @@ extern {
     pub fn __errno_location() -> *mut i32;
     pub fn realloc(ptr: *mut u8, size: usize) -> *mut u8;
     pub fn strlen(s: *const u8) -> usize;
+}
+
+#[allow(improper_ctypes)]
+#[link(name = "pthread")]
+extern {
+    pub fn pthread_create(thread: *mut pthread_t, attr: *const pthread_attr_t,
+                          start: unsafe extern fn(*mut u8) -> *mut u8,
+                          arg: *mut u8) -> i32;
+    pub fn pthread_join(thread: pthread_t, retval: *mut *mut u8) -> i32;
+    pub fn pthread_attr_init(attr: *mut pthread_attr_t) -> i32;
+    pub fn pthread_attr_destroy(attr: *mut pthread_attr_t) -> i32;
+    pub fn pthread_attr_setdetachstate(attr: *mut pthread_attr_t, state: i32) -> i32;
+    pub fn pthread_attr_getdetachstate(attr: *const pthread_attr_t, state: *mut i32) -> i32;
+    pub fn pthread_attr_setguardsize(attr: *mut pthread_attr_t, size: usize) -> i32;
+    pub fn pthread_attr_getguardsize(attr: *const pthread_attr_t, size: *mut usize) -> i32;
+    pub fn pthread_attr_setstacksize(attr: *mut pthread_attr_t, size: usize) -> i32;
+    pub fn pthread_attr_getstacksize(attr: *const pthread_attr_t, size: *mut usize) -> i32;
 }
 
 pub fn errno() -> i32 {

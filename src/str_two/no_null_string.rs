@@ -24,8 +24,8 @@ impl<H> NoNullString<'static, H>
     }
 }
 
-impl<'a> NoNullString<'a, alloc::NoHeap> {
-    pub fn buffered(buf: &'a mut [u8]) -> NoNullString<'a, alloc::NoHeap> {
+impl<'a> NoNullString<'a, alloc::NoMem> {
+    pub fn buffered(buf: &'a mut [u8]) -> NoNullString<'a, alloc::NoMem> {
         NoNullString { data: Vec::buffered(buf) }
     }
 }

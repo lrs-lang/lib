@@ -19,8 +19,8 @@ extern crate linux_libc;
 use core::{num, mem};
 use base::{error};
 
-pub use libc::{LibcHeap};
-pub use no::{NoHeap};
+pub use libc::{Libc};
+pub use no::{NoMem};
 pub use bda::{Bda};
 pub use jemalloc::{JeMalloc};
 
@@ -30,7 +30,7 @@ mod bda;
 mod jemalloc;
 
 /// The default allocator
-pub type Heap = LibcHeap;
+pub type Heap = Libc;
 
 pub type FbHeap = Heap;
 

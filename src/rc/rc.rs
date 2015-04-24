@@ -4,6 +4,7 @@
 
 #[prelude_import] use base::prelude::*;
 use core::ops::{Deref};
+use core::marker::{Leak};
 use core::{mem, ptr};
 use base::clone::{Clone};
 use cell::copy_cell::{CopyCell};
@@ -17,6 +18,7 @@ struct Inner<T> {
 
 pub struct Rc<T, Heap = alloc::Heap>
     where Heap: Allocator,
+          T: Leak,
 {
     data: *mut Inner<T>,
     _marker: PhantomData<Heap>,
@@ -24,6 +26,7 @@ pub struct Rc<T, Heap = alloc::Heap>
 
 impl<T, H> Rc<T, H>
     where H: Allocator,
+          T: Leak,
 {
     pub fn new(val: T) -> Result<Rc<T, H>, T> {
         unsafe {
@@ -51,6 +54,7 @@ impl<T, H> !Send for Rc<T, H> { }
 
 impl<T, H> Drop for Rc<T, H>
     where H: Allocator,
+          T: Leak,
 {
     fn drop(&mut self) {
         unsafe {
@@ -69,6 +73,7 @@ impl<T, H> Drop for Rc<T, H>
 
 impl<T, H> Deref for Rc<T, H>
     where H: Allocator,
+          T: Leak,
 {
     type Target = T;
 
@@ -79,6 +84,7 @@ impl<T, H> Deref for Rc<T, H>
 
 impl<T, H> Clone for Rc<T, H>
     where H: Allocator,
+          T: Leak,
 {
     fn clone(&self) -> Result<Rc<T, H>> {
         unsafe {
@@ -90,7 +96,7 @@ impl<T, H> Clone for Rc<T, H>
 }
 
 impl<T, H> Debug for Rc<T, H>
-    where T: Debug,
+    where T: Debug + Leak,
           H: Allocator,
 {
     fn fmt<W: Write+?Sized>(&self, mut w: &mut W) -> Result {
