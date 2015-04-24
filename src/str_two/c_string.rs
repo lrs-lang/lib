@@ -8,38 +8,51 @@ use base::rmo::{AsRef, AsMut};
 use str_one::c_str::{CStr};
 use fmt::{Debug, Write};
 use vec::{Vec};
+use alloc::{self, Allocator};
 
-pub struct CString<'a> {
-    data: Vec<'a, u8>,
+pub struct CString<'a, Heap = alloc::Heap>
+    where Heap: Allocator,
+{
+    data: Vec<'a, u8, Heap>,
 }
 
-impl<'a> CString<'a> {
+impl<'a, H> CString<'a, H>
+    where H: Allocator,
+{
     /// Casts the byte vector directly to a `CString` without checking it for validity.
-    pub unsafe fn from_bytes_unchecked(bytes: Vec<'a, u8>) -> CString<'a> {
+    pub unsafe fn from_bytes_unchecked(bytes: Vec<'a, u8, H>) -> CString<'a, H> {
         CString { data: bytes }
     }
 }
 
-impl<'a> Deref for CString<'a> {
+impl<'a, H> Deref for CString<'a, H>
+    where H: Allocator,
+{
     type Target = CStr;
     fn deref(&self) -> &CStr {
         unsafe { mem::cast(self.data.deref()) }
     }
 }
 
-impl<'a> Debug for CString<'a> {
+impl<'a, H> Debug for CString<'a, H>
+    where H: Allocator,
+{
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
         Debug::fmt(self.deref(), w)
     }
 }
 
-impl<'a> AsRef<CStr> for CString<'a> {
+impl<'a, H> AsRef<CStr> for CString<'a, H>
+    where H: Allocator,
+{
     fn as_ref(&self) -> &CStr {
         unsafe { CStr::from_bytes_unchecked(&self.data[..]) }
     }
 }
 
-impl<'a> AsMut<CStr> for CString<'a> {
+impl<'a, H> AsMut<CStr> for CString<'a, H>
+    where H: Allocator,
+{
     fn as_mut(&mut self) -> &mut CStr {
         unsafe { CStr::from_bytes_unchecked_mut(&mut self.data[..]) }
     }

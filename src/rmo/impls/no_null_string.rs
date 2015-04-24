@@ -7,10 +7,13 @@ use base::rmo::{AsRef};
 use str_one::no_null_str::{NoNullStr};
 use str_two::no_null_string::{NoNullString};
 use {ToOwned};
+use alloc::{Allocator};
 
-impl ToOwned for NoNullStr {
-    type Owned = NoNullString<'static>;
-    fn to_owned(&self) -> Result<NoNullString<'static>> {
+impl<H> ToOwned<H> for NoNullStr
+    where H: Allocator,
+{
+    type Owned = NoNullString<'static, H>;
+    fn to_owned(&self) -> Result<NoNullString<'static, H>> {
         self.as_ref().to_owned().map(|o| unsafe { NoNullString::from_bytes_unchecked(o) })
     }
 }

@@ -15,6 +15,7 @@ extern crate linux_base  as base;
 extern crate linux_rmo      as rmo;
 extern crate linux_str_one  as str_one;
 extern crate linux_str_two  as str_two;
+extern crate linux_alloc  as alloc;
 
 pub use c_string::{ToCString};
 

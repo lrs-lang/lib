@@ -7,10 +7,13 @@ use base::rmo::{AsRef};
 use str_one::c_str::{CStr};
 use str_two::c_string::{CString};
 use {ToOwned};
+use alloc::{Allocator};
 
-impl ToOwned for CStr {
-    type Owned = CString<'static>;
-    fn to_owned(&self) -> Result<CString<'static>> {
+impl<H> ToOwned<H> for CStr
+    where H: Allocator,
+{
+    type Owned = CString<'static, H>;
+    fn to_owned(&self) -> Result<CString<'static, H>> {
         self.as_ref().to_owned().map(|o| unsafe { CString::from_bytes_unchecked(o) })
     }
 }

@@ -32,6 +32,8 @@ mod jemalloc;
 /// The default allocator
 pub type Heap = LibcHeap;
 
+pub type FbHeap = Heap;
+
 /// The maximum size of an allocation
 pub const MAX_SIZE: usize = num::isize::MAX as usize;
 

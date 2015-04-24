@@ -9,24 +9,26 @@ use base::{error};
 use rmo::{Rmo, ToOwned};
 use str_one::{CStr, NoNullStr};
 use str_two::{CString, NoNullString};
+use alloc::{Allocator};
 
 pub trait ToCString {
     fn to_cstring(&self) -> Result<CString<'static>>;
-    fn rmo_cstr<'a>(&'a self, _buf: &'a mut [u8]) -> Result<Rmo<'a, CStr>> {
+    fn rmo_cstr<'a, H>(&'a self, _buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
+    {
         self.to_cstring().map(|r| Rmo::Owned(r))
     }
 }
 
 impl<'b, T: ToCString+?Sized> ToCString for &'b T {
     fn to_cstring(&self) -> Result<CString<'static>> { (**self).to_cstring() }
-    fn rmo_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr>> {
+    fn rmo_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>> {
         (**self).rmo_cstr(buf)
     }
 }
 
 impl<'b, T: ToCString+?Sized> ToCString for &'b mut T {
     fn to_cstring(&self) -> Result<CString<'static>> { (**self).to_cstring() }
-    fn rmo_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr>> {
+    fn rmo_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>> {
         (**self).rmo_cstr(buf)
     }
 }
@@ -35,7 +37,7 @@ impl ToCString for CStr {
     fn to_cstring(&self) -> Result<CString<'static>> {
         self.as_ref().to_owned().map(|o| unsafe { CString::from_bytes_unchecked(o) })
     }
-    fn rmo_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr>> {
+    fn rmo_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>> {
         let bytes = self.as_ref();
         if bytes.len() <= buf.len() {
             mem::copy(buf, bytes);

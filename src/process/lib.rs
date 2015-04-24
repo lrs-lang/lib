@@ -39,7 +39,7 @@ use str_one::{AsMutCStr, CStr};
 use str_two::{NoNullString};
 use str_three::{ToCString};
 use rt::{raw_env};
-use alloc::{Allocator};
+use alloc::{Allocator, FbHeap};
 
 pub mod ids;
 
@@ -85,7 +85,7 @@ pub fn exec<P>(path: P, args: &[*const c_char]) -> Result
     // NoMemory can come from our stuff or execve but we can't distinguish at this point.
     // Let's just try again with dynamic allocations.
 
-    let abs_file: NoNullString = NoNullString::new();
+    let abs_file: NoNullString<FbHeap> = NoNullString::new();
     exec_rel(&file, abs_file, args)
 }
 

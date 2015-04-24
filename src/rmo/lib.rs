@@ -15,11 +15,13 @@ extern crate linux_fmt     as fmt;
 extern crate linux_str_one as str_one;
 extern crate linux_vec     as vec;
 extern crate linux_str_two as str_two;
+extern crate linux_alloc as alloc;
 
 #[prelude_import] use base::prelude::*;
 use base::rmo::{AsRef, AsMut};
 use base::error::{Errno};
 use core::ops::{Deref};
+use alloc::{Allocator};
 
 mod linux { pub use ::fmt::linux::*; }
 
@@ -33,21 +35,28 @@ mod impls {
 // We'd like to define ToOwned together with AsRef and AsMut down below but coherence
 // rules seem to make this impossible.
 
-pub trait ToOwned {
+pub trait ToOwned<H = alloc::Heap>
+    where H: Allocator,
+{
     type Owned;
     fn to_owned(&self) -> Result<Self::Owned>;
 }
 
-pub enum Rmo<'a, Ref: ToOwned+'a+?Sized>
-    where Ref::Owned: AsRef<Ref>
+/// Read/modify/own object
+pub enum Rmo<'a, Ref: ?Sized+'a, H = alloc::Heap>
+    where H: Allocator,
+          Ref: ToOwned<H>,
+          Ref::Owned: AsRef<Ref>,
 {
     Ref(&'a Ref),
     Mut(&'a mut Ref),
     Owned(Ref::Owned),
 }
 
-impl<'a, Ref: ToOwned+'a+?Sized> Rmo<'a, Ref>
-    where Ref::Owned: AsRef<Ref>
+impl<'a, Ref: ?Sized+'a, H> Rmo<'a, Ref, H>
+    where H: Allocator,
+          Ref: ToOwned<H>,
+          Ref::Owned: AsRef<Ref>,
 {
     pub fn as_mut(&mut self) -> Result<&mut Ref> where Ref::Owned: AsMut<Ref> {
         if self.is_ref() {
@@ -60,7 +69,7 @@ impl<'a, Ref: ToOwned+'a+?Sized> Rmo<'a, Ref>
         }
     }
 
-    pub fn into_owned(self) -> Result<Ref::Owned, (Errno, Rmo<'a, Ref>)> {
+    pub fn into_owned(self) -> Result<Ref::Owned, (Errno, Rmo<'a, Ref, H>)> {
         match self {
             Rmo::Ref(r) => {
                 match r.to_owned() {
@@ -86,8 +95,10 @@ impl<'a, Ref: ToOwned+'a+?Sized> Rmo<'a, Ref>
     }
 }
 
-impl<'a, Ref: ToOwned+'a+?Sized> Deref for Rmo<'a, Ref>
-    where Ref::Owned: AsRef<Ref>
+impl<'a, Ref: ?Sized+'a, H> Deref for Rmo<'a, Ref, H>
+    where H: Allocator,
+          Ref: ToOwned<H>,
+          Ref::Owned: AsRef<Ref>,
 {
     type Target = Ref;
     fn deref(&self) -> &Ref {
