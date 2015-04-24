@@ -56,6 +56,14 @@ platforms. *lrs* is already available on *x86_64*, *x32*, *arm*, and *arm64*.
 
 === Custom allocators
 
+Every allocating structure in *lrs* comes with an optional allocator argument.
+The following allocators are currently available:
+
+*Libc*:: Calls `malloc` and friends from the libc.
+*JeMalloc*:: Calls *jemalloc*'s non-standard API with size allocations and
+deallocations for better efficiency.
+*NoMem*:: This dummy allocator always reports an out-of-memory condition.
+*Bda*:: The *brain-dead allocator* 
 
 
 == License
