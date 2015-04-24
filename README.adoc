@@ -110,13 +110,11 @@ program against the Linux kernel API.
 
 === Permissive licensing
 
-:mpl: LICENSE
-
-The whole library is licensed under the {mpl}[*MPL 2.0*] license which allows
-static linking into proprietary programs. It is copy-left on a file-by-file
-basis: Changes to files licensed under the *MPL 2.0* have to be distributed
-under the same license. It also allows the code to be freely used under multiple
-(L)GPL licenses.
+The whole library is licensed under the link:LICENSE[*MPL 2.0*] license which
+allows static linking into proprietary programs. It is copy-left on a
+file-by-file basis: Changes to files licensed under the *MPL 2.0* have to be
+distributed under the same license. It also allows the code to be freely used
+under multiple (L)GPL licenses.
 
 == Building
 
