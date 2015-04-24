@@ -60,32 +60,40 @@ Every allocating structure in *lrs* comes with an optional allocator argument.
 The following allocators are currently available:
 
 *Libc*:: Calls `malloc` and friends from the libc.
-*JeMalloc*:: Calls *jemalloc*'s non-standard API with size allocations and
-deallocations for better efficiency.
+*JeMalloc*:: Calls *jemalloc*'s non-standard API with sized allocations and
+deallocations for higher efficiency.
 *NoMem*:: This dummy-allocator always reports an out-of-memory condition.
 *Bda*:: The *brain-dead allocator* only allocates in multiples of the page size.
 This is very useful for applications that have few allocations but whose size is
 unknown at compile time and can rapidly increase.
 
 To ease notation, all structures default to the *Heap* allocator which is an
-alias for one of the allocators and can be set at compile-time. That is `Vec<T>`
-is equivalent to `Vec<T, Heap>`.
+alias for one of the allocators and can be set at compile-time. That is,
+`Vec<T>` is equivalent to `Vec<T, Heap>`.
 
 The *NoMem* allocator is used to represent the state where allocating structures
 are not backed by dynamic allocations but by a borrowed chunk of memory:
 
 ----
-let mut buffer = [0; 100];
-let mut vec: Vec<usize, NoMem> = Vec::borrowed(&mut buf);
+let mut buffer = [0u8; 200];
+let mut vec: Vec<u16, NoMem> = Vec::borrowed(&mut buf);
 ----
 
 Such a vector can be use normally but when the buffer is exhausted it will
 report this condition back to the user:
 
 ----
-println!("{:?}", vec.reserve(100));
+println!("{:?}", vec.reserve(101));
 // Err(NoMemory)
 ----
+
+=== Zero allocations in the 99% case
+
+All APIs are designed to not allocate memory in the common case. For example,
+`File::open` will only allocate memory if the requested path is longer than
+`PATH_MAX`. In those cases the API uses the *FbHeap*, the *fallback allocator*.
+If you don't want it to allocate in those exceptional situations, set *FbHeap*
+to *NoMem* at compile time.
 
 == License
 
