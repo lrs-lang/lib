@@ -1,12 +1,12 @@
-= lrs
+= *lrs*
 
 :logo: assets/logo.png
 
 image::{logo}[logo,float="left"]
 
-Welcome to the home of lrs, a new Rust standard library to power a new
-generation of Linux-based devices. lrs is lightweight, fast, simple, free, and
-provides the full safety of the Rust compiler.
+Welcome to the home of *lrs*, a new Rust standard library to power a new
+generation of Linux-based devices. *lrs* is lightweight, fast, simple, free, and
+provides the full safety of the Rust programming language.
 
 == Acknowledgements
 
@@ -18,7 +18,20 @@ also provides a clean documentation of the Linux kernel API.
 
 == Features
 
-test
+=== No unwinding
+
+*lrs* guarantees that a sequence of function calls
+
+----
+{
+    f();
+    g();
+    h();
+}
+----
+
+executes in this order before and if the control flow returns to the surrounding
+block.
 
 == License
 
