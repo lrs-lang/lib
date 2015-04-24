@@ -87,7 +87,7 @@ println!("{:?}", vec.reserve(101));
 // Err(NoMemory)
 ----
 
-=== Zero allocations in the 99% case
+=== No allocations in the 99.9% case
 
 All APIs are designed to not allocate memory in the common case. For example,
 `File::open` will only allocate memory if the requested path is longer than
@@ -95,20 +95,32 @@ All APIs are designed to not allocate memory in the common case. For example,
 If you don't want it to allocate in those exceptional situations, set *FbHeap*
 to *NoMem* at compile time.
 
-== License
+=== Accessible development
+
+*lrs* split into many small crates and provides the best version of incremental
+compilation known to Rust developers. Compiling a single crate during
+development usually takes less than a second. To this end, *lrs* comes with its
+own built-system, *lrs_build*, which ensures that only the minimal amount of
+work is done by the compiler.
+
+=== Extensive Linux API coverage
+
+The goal of *lrs* is nothing less than to provide the best and safest way to
+program against the Linux kernel API.
+
+=== Permissive licensing
 
 :mpl: LICENSE
 
-The project is licensed under the {mpl}[MPL 2.0] license. Copyright belongs to
-the individual contributors.
+The whole library is licensed under the {mpl}[*MPL 2.0*] license which allows
+static linking into proprietary programs. It is copy-left on a file-by-file
+basis: Changes to files licensed under the *MPL 2.0* have to be distributed
+under the same license. It also allows the code to be freely used under multiple
+(L)GPL licenses.
 
-=== tl;dr
+== Building
 
-- Can be used in proprietary projects.
-- Files can be mixed with files under other licenses.
-- Changes to MPL licensed files must be published under the MPL.
-- Code can freely be copied and used in GPL 2.0+, AGPL 3.0+, and LGPL 2.1+
-  projects.
+== Using
 
 == Logo
 
