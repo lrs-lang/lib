@@ -32,7 +32,7 @@ also provides a clean documentation of the Linux kernel API.
 
 executes in this order before and if the flow of control returns to the
 surrounding block. This makes it much easier to reason about unsafe code and
-allows us to write clearer and faster code.
+allows us to write clearer and faster programs.
 
 === glibc, musl, or no libc at all
 
@@ -46,11 +46,11 @@ For the same reason it is feasible to use *lrs* without any libc at all.
 === Small executables
 
 Compiling a "Hello World" statically against *lrs* and musl libc creates a
-*4.5kb* binary with no dynamic dependencies.
+*4.5 KB* binary with no dynamic dependencies.
 
 === Portable
 
-The platform-dependent part of *lrs* mirrors the `asm` and `asm-generic`
+The platform-dependent part of *lrs* mirrors the *asm* and *asm-generic*
 directories in the Linux kernel tree which makes it easy to port it to new
 platforms. *lrs* is already available on *x86_64*, *x32*, *arm*, and *arm64*.
 
