@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use core::ops::{Index, Eq};
+use core::ops::{Index, IndexMut, Eq, RangeFrom};
 use core::{mem, slice};
 use base::rmo::{AsRef, AsMut};
 use base::{error};
@@ -67,6 +67,21 @@ impl Index<usize> for CStr {
     }
 }
 
+impl Index<RangeFrom<usize>> for CStr {
+    type Output = CStr;
+    fn index(&self, idx: RangeFrom<usize>) -> &CStr {
+        assert!(idx.start < self.data.len());
+        unsafe { CStr::from_bytes_unchecked(&self.data[idx]) }
+    }
+}
+
+impl IndexMut<RangeFrom<usize>> for CStr {
+    fn index_mut(&mut self, idx: RangeFrom<usize>) -> &mut CStr {
+        assert!(idx.start < self.data.len());
+        unsafe { CStr::from_bytes_unchecked_mut(&mut self.data[idx]) }
+    }
+}
+
 impl AsRef<[u8]> for CStr {
     fn as_ref(&self) -> &[u8] {
         &self.data
@@ -106,6 +121,12 @@ impl Eq for CStr {
 
 impl Eq<str> for CStr {
     fn eq(&self, other: &str) -> bool {
+        self.as_byte_str() == other
+    }
+}
+
+impl Eq<ByteStr> for CStr {
+    fn eq(&self, other: &ByteStr) -> bool {
         self.as_byte_str() == other
     }
 }

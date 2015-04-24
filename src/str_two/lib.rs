@@ -11,8 +11,9 @@
 #[macro_use]
 extern crate linux_core     as core;
 extern crate linux_arch_fns as arch_fns;
-extern crate linux_base  as base;
+extern crate linux_base     as base;
 extern crate linux_str_one  as str_one;
+extern crate linux_alloc    as alloc;
 extern crate linux_fmt      as fmt;
 extern crate linux_vec      as vec;
 

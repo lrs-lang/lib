@@ -63,6 +63,10 @@ impl Iterator for ArgsIter {
     }
 }
 
+pub fn raw_env() -> *const *const c_char {
+    unsafe { libc::environ as *const _ }
+}
+
 pub fn env() -> EnvIter {
     unsafe { ArgsIter { argv: libc::environ } }
 }

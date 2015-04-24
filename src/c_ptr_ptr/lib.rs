@@ -129,19 +129,17 @@ impl<'a, Heap> CPtrPtr<'a, Heap>
     pub fn push<S>(&mut self, s: S) -> Result
         where S: ToCStr,
     {
-        self.pos += {
-            let mut inc = None;
-            while inc.is_none() {
-                match self.push_int(&s) {
-                    Ok(i) => inc = Some(i),
-                    Err(error::NoMemory) => try!(self.double()),
-                    Err(e) => return Err(e),
-                }
+        loop {
+            match self.push_int(&s) {
+                Ok(i) => {
+                    self.pos += i;
+                    self.num += 1;
+                    return Ok(());
+                },
+                Err(error::NoMemory) => try!(self.double()),
+                Err(e) => return Err(e),
             }
-            inc.unwrap()
-        };
-        self.num += 1;
-        Ok(())
+        }
     }
 
     pub fn finish(&mut self) -> Result<&mut [*const c_char]> {

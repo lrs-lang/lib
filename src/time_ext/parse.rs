@@ -52,7 +52,7 @@ pub fn parse(ip: &mut &[u8]) -> Result<Zone> {
     if ip.len() < 5 {
         return Err(error::InvalidSequence);
     }
-    if &ip[..4] != b"TZif" {
+    if &ip[..4] != "TZif" {
         return Err(error::InvalidSequence);
     }
     let version = match ip[4] {

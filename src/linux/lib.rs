@@ -27,6 +27,7 @@ extern crate linux_buf_reader;
 extern crate linux_cell;
 extern crate linux_cty;
 extern crate linux_cty_base;
+extern crate linux_env;
 extern crate linux_dev;
 extern crate linux_dir;
 extern crate linux_fd;

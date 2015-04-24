@@ -10,17 +10,20 @@
 mod core { pub use linux::core::*; }
 #[prelude_import] use linux::prelude::*;
 
-use linux::process::{fork, Command};
+use linux::string::{CPtrPtr};
+use linux::process::{fork, exec};
 
 fn main() {
     let pid = fork(|| {
         let mut buf = [0; 1024];
-        let mut cmd = Command::new(&mut buf);
-        cmd.arg("-V");
-        if let Err(e) = cmd.exec("/usr/local/bin/rustc") {
+        let mut args = CPtrPtr::buffered(&mut buf);
+        args.push("echo").unwrap();
+        args.push("hello").unwrap();
+        args.push("world").unwrap();
+        let args = args.finish().unwrap();
+        if let Err(e) = exec("echo", args) {
             println!("Error {:?}", e);
         }
     });
-    println!("child pid: {}", pid);
-    loop { }
+    println!("child pid: {:?}", pid);
 }

@@ -16,6 +16,7 @@ obj cell       core base
 obj str_one    core cty_base base arch_fns fmt parse
 
 obj rt         core libc base str_one
+obj env        core base str_one rt
 
 obj atomic     core base cell
 obj cty        core base cty_base
@@ -36,12 +37,11 @@ obj rc         core base fmt cell alloc atomic
 obj vec        core base str_one io fmt alloc
 obj iter       core base vec
 
-obj str_two    core arch_fns base str_one fmt vec
+obj str_two    core arch_fns base str_one fmt vec alloc
 obj rmo        core base fmt str_one vec str_two
 obj str_three  core arch_fns base str_one str_two rmo
 
 obj fs         core base fmt cty syscall rv str_three
-obj process    core base syscall cty fmt str_one str_three c_ptr_ptr alloc
 obj socket     core base
 
 obj time_base  core base cty syscall fmt fd rv
@@ -51,6 +51,8 @@ obj poll       core base cty syscall fd rv saturating fmt time_base
 
 obj dev        core base fmt cty
 obj file       core base io cty fmt int syscall str_one str_two str_three arch_fns rv parse fd dev fs time_base vec rmo
+
+obj process    core base syscall cty fmt str_one str_two str_three c_ptr_ptr alloc rt env file
 obj time_ext   core base fmt str_one file time_base io vec
 
 obj dir        core base cty str_one str_two str_three syscall fd fmt file vec rmo

@@ -7,8 +7,8 @@ use arch_fns::{memchr, all_bytes};
 use core::{mem};
 use base::{error};
 use rmo::{Rmo, ToOwned};
-use str_one::c_str::{CStr};
-use str_two::c_string::{CString};
+use str_one::{CStr, NoNullStr};
+use str_two::{CString, NoNullString};
 
 pub trait ToCString {
     fn to_cstring(&self) -> Result<CString<'static>>;
@@ -18,6 +18,13 @@ pub trait ToCString {
 }
 
 impl<'b, T: ToCString+?Sized> ToCString for &'b T {
+    fn to_cstring(&self) -> Result<CString<'static>> { (**self).to_cstring() }
+    fn rmo_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr>> {
+        (**self).rmo_cstr(buf)
+    }
+}
+
+impl<'b, T: ToCString+?Sized> ToCString for &'b mut T {
     fn to_cstring(&self) -> Result<CString<'static>> { (**self).to_cstring() }
     fn rmo_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr>> {
         (**self).rmo_cstr(buf)
@@ -85,6 +92,37 @@ impl ToCString for [i8] {
 }
 
 impl ToCString for str {
+    fn to_cstring(&self) -> Result<CString<'static>> { self.as_ref().to_cstring() }
+    fn rmo_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr>> {
+        self.as_ref().rmo_cstr(buf)
+    }
+}
+
+impl ToCString for NoNullStr {
+    fn to_cstring(&self) -> Result<CString<'static>> {
+        match self.as_ref().to_owned() {
+            Ok(mut o) => {
+                try!(o.reserve(1));
+                o.push(0);
+                Ok(unsafe { CString::from_bytes_unchecked(o) })
+            },
+            Err(e) => Err(e),
+        }
+    }
+
+    fn rmo_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr>> {
+        let bytes = self.as_ref();
+        if bytes.len() < buf.len() {
+            mem::copy(buf, bytes);
+            buf[bytes.len()] = 0;
+            Ok(Rmo::Ref(unsafe { CStr::from_bytes_unchecked(&buf[..bytes.len()]) }))
+        } else {
+            self.to_cstring().map(|o| Rmo::Owned(o))
+        }
+    }
+}
+
+impl<'b> ToCString for NoNullString<'b> {
     fn to_cstring(&self) -> Result<CString<'static>> { self.as_ref().to_cstring() }
     fn rmo_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr>> {
         self.as_ref().rmo_cstr(buf)

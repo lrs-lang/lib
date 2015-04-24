@@ -120,6 +120,12 @@ impl Eq<str> for ByteStr {
     }
 }
 
+impl Eq<ByteStr> for [u8] {
+    fn eq(&self, other: &ByteStr) -> bool {
+        self.eq(&other.data)
+    }
+}
+
 impl Debug for ByteStr {
     fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
         let mut bytes = self.as_ref();

@@ -163,11 +163,11 @@ impl<'a> Iterator for Iter<'a> {
             let ent_len = ent.d_reclen as usize;
             self.buf_pos += ent_len;
             let ty = file_type_from_mode((ent.d_type as umode_t) << MODE_TYPE_SHIFT);
-            let name = CStr::from_ptr(ent.d_name.as_ptr()).as_ref();
-            if name == b"." || name == b".." {
+            let name = CStr::from_ptr(ent.d_name.as_ptr());
+            if name == "." || name == ".." {
                 self.next()
             } else {
-                match name.to_owned() {
+                match name.as_ref().to_owned() {
                     Ok(n) => Some(Entry {
                         inode: ent.d_ino,
                         ty:    ty,

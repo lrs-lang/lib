@@ -15,6 +15,7 @@ use linux::alloc::{LibcHeap, Bda, NoHeap, JeMalloc};
 
 const NUM: usize = 10000000;
 
+// About 700MB on 64 bit
 static mut BUF: [usize; NUM] = [0; NUM];
 
 // Stats:
@@ -24,11 +25,13 @@ static mut BUF: [usize; NUM] = [0; NUM];
 // jemalloc: 0.6s
 
 fn main() {
-    // let mut vec: Vec<usize, Bda> = vec!();
-    let mut vec = Vec::buffered(unsafe { BUF.as_mut() });
+    let mut vec: Vec<_, Bda> = vec!();
+    // let mut vec = Vec::buffered(unsafe { BUF.as_mut() });
     for i in 0..NUM {
         vec.push(i);
     }
     println!("size: {}", vec.len());
     println!("cap: {}", vec.capacity());
 }
+
+

@@ -30,6 +30,9 @@ mod impls {
     mod no_null_string;
 }
 
+// We'd like to define ToOwned together with AsRef and AsMut down below but coherence
+// rules seem to make this impossible.
+
 pub trait ToOwned {
     type Owned;
     fn to_owned(&self) -> Result<Self::Owned>;

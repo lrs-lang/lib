@@ -3,3 +3,4 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 pub use linux_rt::{args, arg_count, env};
+pub use linux_env::{var, path};
