@@ -30,12 +30,37 @@ also provides a clean documentation of the Linux kernel API.
 }
 ----
 
-executes in this order before and if the control flow returns to the surrounding
-block.
+executes in this order before and if the flow of control returns to the
+surrounding block. This makes it much easier to reason about unsafe code and
+allows us to write clearer and faster code.
+
+=== glibc, musl, or no libc at all
+
+*lrs* is written directly against the Linux kernel API, meaning that it does
+most of its syscalls from Rust code. The remaining libc interface that is
+necessary to use the libc runtime is so small that it is almost trivial to port
+it to different C libraries.
+
+For the same reason it is feasible to use *lrs* without any libc at all.
+
+=== Small executables
+
+Compiling a "Hello World" statically against *lrs* and musl libc creates a
+*4.5kb* binary with no dynamic dependencies.
+
+=== Portable
+
+The platform-dependent part of *lrs* mirrors the `asm` and `asm-generic`
+directories in the Linux kernel tree which makes it easy to port it to new
+platforms. *lrs* is already available on *x86_64*, *x32*, *arm*, and *arm64*.
+
+=== Custom allocators
+
+
 
 == License
 
-:mpl: https://www.mozilla.org/MPL/2.0/
+:mpl: LICENSE
 
 The project is licensed under the {mpl}[MPL 2.0] license. Copyright belongs to
 the individual contributors.
