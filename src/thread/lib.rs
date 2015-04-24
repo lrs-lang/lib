@@ -118,11 +118,13 @@ impl Builder {
         unsafe {
             try!(rv!(-libc::pthread_attr_setdetachstate(&mut self.attr,
                                                         PTHREAD_CREATE_DETACHED)));
-            let res = self.spawn_inner(&f).ignore_ok();
-            // The other thread now has ownership of `f` if we succeeded. The API
-            // currently doesn't return `f` in the failure case.
-            intrinsics::forget(f);
-            res
+            match self.spawn_inner(&f) {
+                Ok(_) => {
+                    intrinsics::forget(f);
+                    Ok(())
+                },
+                Err(e) => Err(e),
+            }
         }
     }
 
@@ -131,9 +133,13 @@ impl Builder {
         where F: FnOnce() + Send + 'a
     {
         unsafe {
-            let res = self.spawn_inner(&f);
-            intrinsics::forget(f);
-            res.map(|thread| JoinGuard { thread: thread, _marker: PhantomData })
+            match self.spawn_inner(&f) {
+                Ok(thread) => {
+                    intrinsics::forget(f);
+                    Ok(JoinGuard { thread: thread, _marker: PhantomData })
+                },
+                Err(e) => Err(e),
+            }
         }
     }
 
