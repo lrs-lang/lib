@@ -4,6 +4,6 @@
 
 //! Type markers
 
-pub use linux_base::marker::{
+pub use linux_core::marker::{
     Sized, Copy, Sync, NoSync, Send, NoSend, Leak, PhantomData,
 };

@@ -86,6 +86,7 @@ pub mod process;
 pub mod ptr;
 pub mod repr;
 pub mod result;
+pub mod marker;
 pub mod share;
 pub mod slice;
 pub mod string;
