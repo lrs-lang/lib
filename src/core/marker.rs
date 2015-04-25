@@ -162,6 +162,11 @@ impl !Send for NoSend { }
 /// ```
 /// 
 /// where `Inner<T>` is an allocated object that contains the `T` and the reference count.
+///
+/// The simple criterion is as follows:
+///
+/// **If the destructor of your object calls the destructor of the contained object only
+/// if a certain condition is met, add the `Leak` bound.**
 pub unsafe trait Leak { }
 
 unsafe impl Leak for .. { }

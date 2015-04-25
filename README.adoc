@@ -37,9 +37,9 @@ allows us to write clearer and faster programs.
 === glibc, musl, or no libc at all
 
 *lrs* is written directly against the Linux kernel API, meaning that it does
-most of its syscalls from Rust code. The remaining libc interface that is
-necessary to use the libc runtime is so small that it is almost trivial to port
-it to different C libraries.
+most of its syscalls from Rust code. The remaining libc interface, which we have
+to use to support the libc runtime, is so small that it is almost trivial to
+port it to different libc implementations.
 
 For the same reason it is feasible to use *lrs* without any libc at all.
 
@@ -110,11 +110,24 @@ program against the Linux kernel API.
 
 === Permissive licensing
 
-The whole library is licensed under the link:LICENSE[*MPL 2.0*] license which
+:license: link:LICENSE
+
+The whole library is licensed under the {license}[*MPL 2.0*] license which
 allows static linking into proprietary programs. It is copy-left on a
 file-by-file basis: Changes to files licensed under the *MPL 2.0* have to be
 distributed under the same license. It also allows the code to be freely used
-under multiple (L)GPL licenses.
+under several (L)GPL licenses.
+
+=== Concise documentation
+
+[quote, Gary Bernhardt]
+We need docs in proportion to design flaws.
+
+*lrs* docs do not try to be a Rust tutorial and are kept short and to the point,
+with the expectation that most APIs are designed well enough to be understood
+without any help. When appropriate, we reference Linux manual pages. On the
+other hand, unsafe APIs and those that are used in unsafe code are explained in
+great detail.
 
 == Building
 
