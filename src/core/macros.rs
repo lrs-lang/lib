@@ -5,7 +5,7 @@
 /// Aborts the process.
 #[macro_export]
 macro_rules! abort {
-    () => { ::linux::intrinsics::linux_abort() }
+    () => { ::lrs::intrinsics::lrs_abort() }
 }
 
 /// Asserts that a condition is satisfied. Aborts the process otherwise.
@@ -20,8 +20,8 @@ macro_rules! assert {
 macro_rules! try {
     ($val:expr) => {
         match $val {
-            ::linux::result::Result::Ok(v) => v,
-            ::linux::result::Result::Err(e) => return ::linux::result::Result::Err(e),
+            ::lrs::result::Result::Ok(v) => v,
+            ::lrs::result::Result::Err(e) => return ::lrs::result::Result::Err(e),
         }
     }
 }
@@ -32,10 +32,10 @@ macro_rules! try {
 #[macro_export]
 macro_rules! println {
     ($fmt:expr) => {
-        write!(::linux::fd::STDOUT, concat!($fmt, "\n"))
+        write!(::lrs::fd::STDOUT, concat!($fmt, "\n"))
     };
     ($fmt:expr, $($arg:tt)*) => {
-        write!(::linux::fd::STDOUT, concat!($fmt, "\n"), $($arg)*)
+        write!(::lrs::fd::STDOUT, concat!($fmt, "\n"), $($arg)*)
     };
 }
 
@@ -43,10 +43,10 @@ macro_rules! println {
 #[macro_export]
 macro_rules! errln {
     ($fmt:expr) => {
-        write!(::linux::fd::STDERR, concat!($fmt, "\n"))
+        write!(::lrs::fd::STDERR, concat!($fmt, "\n"))
     };
     ($fmt:expr, $($arg:tt)*) => {
-        write!(::linux::fd::STDERR, concat!($fmt, "\n"), $($arg)*)
+        write!(::lrs::fd::STDERR, concat!($fmt, "\n"), $($arg)*)
     };
 }
 
@@ -56,7 +56,7 @@ macro_rules! format {
     ($fmt:expr, $($arg:tt)*) => {{
         let mut vec = Vec::new();
         write!(vec, $fmt, $($arg)*);
-        ::linux::string::ByteString::from_vec(vec)
+        ::lrs::string::ByteString::from_vec(vec)
     }};
 }
 
@@ -71,15 +71,15 @@ macro_rules! format {
 #[macro_export]
 macro_rules! vec {
     ($elem:expr; $n:expr) => {
-        ::linux::vec::Vec::from_elem($elem, $n)
+        ::lrs::vec::Vec::from_elem($elem, $n)
     };
     ($($x:expr),*) => {
         {
             let base = [$($x),*];
-            let mut vec = ::linux::vec::Vec::with_capacity(base.len()).unwrap();
+            let mut vec = ::lrs::vec::Vec::with_capacity(base.len()).unwrap();
             unsafe {
                 vec.unsafe_push_all(&base[..]);
-                ::linux::mem::forget(base);
+                ::lrs::mem::forget(base);
             }
             vec
         }
@@ -91,16 +91,16 @@ macro_rules! vec {
 macro_rules! rv {
     ($x:expr) => {
         if $x < 0 {
-            ::linux::result::Result::Err(::linux::error::Errno(-$x as ::linux::cty::c_int))
+            ::lrs::result::Result::Err(::lrs::error::Errno(-$x as ::lrs::cty::c_int))
         } else {
-            ::linux::result::Result::Ok(())
+            ::lrs::result::Result::Ok(())
         }
     };
     ($x:expr, -> $t:ty) => {
         if $x < 0 {
-            ::linux::result::Result::Err(::linux::error::Errno(-$x as ::linux::cty::c_int))
+            ::lrs::result::Result::Err(::lrs::error::Errno(-$x as ::lrs::cty::c_int))
         } else {
-            ::linux::result::Result::Ok($x as $t)
+            ::lrs::result::Result::Ok($x as $t)
         }
     };
 }

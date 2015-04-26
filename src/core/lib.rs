@@ -2,11 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_core"]
+#![crate_name = "lrs_core"]
 #![crate_type = "lib"]
 #![feature(no_std, lang_items, intrinsics, asm, plugin, unboxed_closures,
            optin_builtin_traits)]
-#![plugin(linux_core_plugin)]
+#![plugin(lrs_core_plugin)]
 #![no_std]
 
 #[macro_use]
@@ -32,7 +32,7 @@ pub mod str;
 
 mod sort;
 
-pub mod linux {
+pub mod lrs {
     pub use ::{marker, ops, intrinsics, option, mem};
 }
 

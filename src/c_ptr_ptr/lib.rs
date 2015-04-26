@@ -2,18 +2,18 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_c_ptr_ptr"]
+#![crate_name = "lrs_c_ptr_ptr"]
 #![crate_type = "lib"]
 #![feature(plugin, no_std)]
-#![plugin(linux_core_plugin)]
+#![plugin(lrs_core_plugin)]
 #![no_std]
 
 #[macro_use]
-extern crate linux_core as core;
-extern crate linux_cty_base as cty_base;
-extern crate linux_base as base;
-extern crate linux_alloc as alloc;
-extern crate linux_str_one as str_one;
+extern crate lrs_core as core;
+extern crate lrs_cty_base as cty_base;
+extern crate lrs_base as base;
+extern crate lrs_alloc as alloc;
+extern crate lrs_str_one as str_one;
 
 #[prelude_import] use base::prelude::*;
 use base::{error};
@@ -22,7 +22,7 @@ use core::{slice};
 use str_one::{ToCStr};
 use alloc::{Allocator};
 
-mod linux { pub use base::linux::*; }
+mod lrs { pub use base::lrs::*; }
 
 const USIZE_MASK: usize = core::num::usize::BYTES - 1;
 const USIZE_BYTES: usize = core::num::usize::BYTES;

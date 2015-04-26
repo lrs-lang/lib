@@ -2,17 +2,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_cty"]
+#![crate_name = "lrs_cty"]
 #![crate_type = "lib"]
 #![feature(negate_unsigned, plugin, no_std, custom_derive)]
-#![plugin(linux_core_plugin)]
+#![plugin(lrs_core_plugin)]
 #![no_std]
 #![allow(non_camel_case_types, raw_pointer_derive, overflowing_literals, non_snake_case,
          non_upper_case_globals, dead_code)]
 
-extern crate linux_core as core;
-extern crate linux_cty_base as cty_base;
-extern crate linux_base as base;
+extern crate lrs_core as core;
+extern crate lrs_cty_base as cty_base;
+extern crate lrs_base as base;
 
 pub use self::arch::*;
 pub use cty_base::errno::*;
@@ -25,7 +25,7 @@ pub mod alias {
     pub type ProcessId = ::pid_t;
 }
 
-mod linux { pub use ::base::linux::*; }
+mod lrs { pub use ::base::lrs::*; }
 
 mod gen;
 

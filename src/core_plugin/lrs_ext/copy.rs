@@ -10,7 +10,7 @@ use ptr::{P};
 
 pub fn derive_marker(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Item,
                      push: &mut FnMut(P<Item>), name: &str) {
-    let path = Path::new(vec!("linux", "marker", name));
+    let path = Path::new(vec!("lrs", "marker", name));
 
     let trait_def = TraitDef {
         span: span,

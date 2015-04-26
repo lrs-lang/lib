@@ -2,18 +2,18 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_base"]
+#![crate_name = "lrs_base"]
 #![crate_type = "lib"]
 #![feature(plugin, no_std, custom_derive)]
-#![plugin(linux_core_plugin)]
+#![plugin(lrs_core_plugin)]
 #![no_std]
 
 #[macro_use]
-extern crate linux_core as core;
-extern crate linux_cty_base as cty_base;
+extern crate lrs_core as core;
+extern crate lrs_cty_base as cty_base;
 
-pub mod linux {
-    pub use core::linux::*;
+pub mod lrs {
+    pub use core::lrs::*;
     pub use {clone, result, error};
 }
 

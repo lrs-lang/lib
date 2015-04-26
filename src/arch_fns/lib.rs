@@ -2,15 +2,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_arch_fns"]
+#![crate_name = "lrs_arch_fns"]
 #![crate_type = "lib"]
 #![feature(plugin, no_std, asm, lang_items)]
-#![plugin(linux_core_plugin)]
+#![plugin(lrs_core_plugin)]
 #![no_std]
 
 #[macro_use]
-extern crate linux_core as core;
-extern crate linux_libc as libc;
+extern crate lrs_core as core;
+extern crate lrs_libc as libc;
 #[prelude_import] use core::prelude::*;
 
 /// Returns the first occurrence of a byte in a slice if any.

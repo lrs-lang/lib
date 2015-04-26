@@ -207,6 +207,6 @@ pub unsafe fn bswap8(x: u8) -> u8 { x }
 /// optimization enabled.
 #[no_mangle]
 #[inline]
-pub fn linux_abort() -> ! {
+pub fn lrs_abort() -> ! {
     unsafe { abort() }
 }

@@ -52,7 +52,7 @@ pub struct __kernel_fsid_t {
 
 // errno-base.h & errno.h
 
-// XXX: lives in linux_error
+// XXX: lives in lrs_error
 
 // stat.h
 

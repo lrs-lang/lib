@@ -5,7 +5,7 @@
 #[prelude_import] use base::prelude::*;
 use base::{error};
 use {Allocator, MAX_SIZE};
-use linux_libc as libc;
+use lrs_libc as libc;
 
 /// The libc heap
 ///

@@ -2,26 +2,26 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_str_one"]
+#![crate_name = "lrs_str_one"]
 #![crate_type = "lib"]
 #![feature(plugin, no_std)]
-#![plugin(linux_core_plugin)]
+#![plugin(lrs_core_plugin)]
 #![no_std]
 
 #[macro_use]
-extern crate linux_core as core;
-extern crate linux_cty_base as cty_base;
-extern crate linux_base as base;
-extern crate linux_arch_fns as arch_fns;
-extern crate linux_parse as parse;
-extern crate linux_fmt as fmt;
+extern crate lrs_core as core;
+extern crate lrs_cty_base as cty_base;
+extern crate lrs_base as base;
+extern crate lrs_arch_fns as arch_fns;
+extern crate lrs_parse as parse;
+extern crate lrs_fmt as fmt;
 
 pub use byte_str::{ByteStr, AsByteStr, AsMutByteStr};
 pub use no_null_str::{NoNullStr, AsNoNullStr, AsMutNoNullStr};
 pub use c_str::{CStr, AsCStr, AsMutCStr, ToCStr};
 
-pub mod linux {
-    pub use ::base::linux::*;
+pub mod lrs {
+    pub use ::base::lrs::*;
 }
 
 pub mod byte_str;

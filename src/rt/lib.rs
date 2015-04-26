@@ -2,18 +2,18 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_rt"]
+#![crate_name = "lrs_rt"]
 #![crate_type = "lib"]
 #![feature(plugin, no_std, lang_items)]
-#![plugin(linux_core_plugin)]
+#![plugin(lrs_core_plugin)]
 #![no_std]
 
 #[macro_use]
-extern crate linux_core as core;
-extern crate linux_base as base;
-extern crate linux_cty_base as cty_base;
-extern crate linux_str_one as str_one;
-extern crate linux_libc as libc;
+extern crate lrs_core as core;
+extern crate lrs_base as base;
+extern crate lrs_cty_base as cty_base;
+extern crate lrs_str_one as str_one;
+extern crate lrs_libc as libc;
 
 #[prelude_import] use base::prelude::*;
 use core::{mem};
@@ -21,7 +21,7 @@ use core::iter::{Iterator};
 use str_one::{CStr};
 use cty_base::types::{c_char};
 
-mod linux { pub use base::linux::*; }
+mod lrs { pub use base::lrs::*; }
 
 static mut ARGC: isize = 0;
 static mut ARGV: *const *const u8 = 0 as *const *const u8;

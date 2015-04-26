@@ -2,24 +2,24 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_time_ext"]
+#![crate_name = "lrs_time_ext"]
 #![crate_type = "lib"]
 #![feature(plugin, no_std, negate_unsigned, custom_derive)]
-#![plugin(linux_core_plugin)]
+#![plugin(lrs_core_plugin)]
 #![no_std]
 
 #[macro_use]
-extern crate linux_core      as core;
-extern crate linux_base      as base;
-extern crate linux_fmt       as fmt;
-extern crate linux_str_one   as str_one;
-extern crate linux_file      as file;
-extern crate linux_time_base as time_base;
-extern crate linux_io        as io;
-extern crate linux_vec       as vec;
+extern crate lrs_core      as core;
+extern crate lrs_base      as base;
+extern crate lrs_fmt       as fmt;
+extern crate lrs_str_one   as str_one;
+extern crate lrs_file      as file;
+extern crate lrs_time_base as time_base;
+extern crate lrs_io        as io;
+extern crate lrs_vec       as vec;
 
 #[prelude_import] use base::prelude::*;
-mod linux { pub use vec::linux::*; }
+mod lrs { pub use vec::lrs::*; }
 
 pub use time_base::{Time};
 

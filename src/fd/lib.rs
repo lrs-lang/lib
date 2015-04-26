@@ -2,19 +2,19 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_fd"]
+#![crate_name = "lrs_fd"]
 #![crate_type = "lib"]
 #![feature(plugin, no_std, custom_derive)]
-#![plugin(linux_core_plugin)]
+#![plugin(lrs_core_plugin)]
 #![no_std]
 
 #[macro_use]
-extern crate linux_core as core;
-extern crate linux_base as base;
-extern crate linux_cty as cty;
-extern crate linux_syscall as syscall;
-extern crate linux_rv as rv;
-extern crate linux_io as io;
+extern crate lrs_core as core;
+extern crate lrs_base as base;
+extern crate lrs_cty as cty;
+extern crate lrs_syscall as syscall;
+extern crate lrs_rv as rv;
+extern crate lrs_io as io;
 
 #[prelude_import] use base::prelude::*;
 use io::{Write, Read};
@@ -22,7 +22,7 @@ use cty::{c_int};
 use syscall::{writev, readv};
 use rv::{retry};
 
-mod linux { pub use base::linux::*; }
+mod lrs { pub use base::lrs::*; }
 
 /// FdIo wrapping `1`.
 pub const STDOUT: FdIo = FdIo(1);

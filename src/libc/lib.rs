@@ -2,15 +2,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_libc"]
+#![crate_name = "lrs_libc"]
 #![crate_type = "lib"]
 #![feature(plugin, no_std, lang_items)]
-#![plugin(linux_core_plugin)]
+#![plugin(lrs_core_plugin)]
 #![no_std]
 #![allow(non_camel_case_types)]
 
 #[macro_use]
-extern crate linux_core as core;
+extern crate lrs_core as core;
 
 use core::marker::{Pod, Copy};
 pub use arch::{pthread_attr_t, pthread_t};

@@ -2,30 +2,30 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_user_group"]
+#![crate_name = "lrs_user_group"]
 #![crate_type = "lib"]
 #![feature(plugin, no_std, negate_unsigned)]
-#![plugin(linux_core_plugin)]
+#![plugin(lrs_core_plugin)]
 #![no_std]
 
 #[macro_use]
-extern crate linux_core       as core;
-extern crate linux_base       as base;
-extern crate linux_arch_fns   as arch_fns;
-extern crate linux_io         as io;
-extern crate linux_buf_reader as buf_reader;
-extern crate linux_fmt        as fmt;
-extern crate linux_str_one    as str_one;
-extern crate linux_str_two    as str_two;
-extern crate linux_cty        as cty;
-extern crate linux_parse      as parse;
-extern crate linux_file       as file;
-extern crate linux_vec        as vec;
-extern crate linux_rmo        as rmo;
-extern crate linux_iter       as iter;
+extern crate lrs_core       as core;
+extern crate lrs_base       as base;
+extern crate lrs_arch_fns   as arch_fns;
+extern crate lrs_io         as io;
+extern crate lrs_buf_reader as buf_reader;
+extern crate lrs_fmt        as fmt;
+extern crate lrs_str_one    as str_one;
+extern crate lrs_str_two    as str_two;
+extern crate lrs_cty        as cty;
+extern crate lrs_parse      as parse;
+extern crate lrs_file       as file;
+extern crate lrs_vec        as vec;
+extern crate lrs_rmo        as rmo;
+extern crate lrs_iter       as iter;
 
 #[prelude_import] use base::prelude::*;
-mod linux { pub use vec::linux::*; }
+mod lrs { pub use vec::lrs::*; }
 
 use core::{mem};
 use core::ptr::{memmove};

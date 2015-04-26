@@ -2,15 +2,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_r_syscall"]
+#![crate_name = "lrs_r_syscall"]
 #![crate_type = "lib"]
 #![feature(asm, plugin, no_std)]
-#![plugin(linux_core_plugin)]
+#![plugin(lrs_core_plugin)]
 #![no_std]
 #![allow(dead_code)]
 
-extern crate linux_core as core;
-extern crate linux_cty as cty;
+extern crate lrs_core as core;
+extern crate lrs_cty as cty;
 
 pub use ::arch::{
     read, write, open, close, stat, fstat, lstat, poll, lseek, mmap, mprotect, munmap,

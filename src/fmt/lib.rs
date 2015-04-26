@@ -2,24 +2,24 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_fmt"]
+#![crate_name = "lrs_fmt"]
 #![crate_type = "lib"]
 #![feature(plugin, no_std)]
-#![plugin(linux_core_plugin)]
+#![plugin(lrs_core_plugin)]
 #![no_std]
 
 #[macro_use]
-extern crate linux_core as core;
-extern crate linux_base as base;
-extern crate linux_io as io;
+extern crate lrs_core as core;
+extern crate lrs_base as base;
+extern crate lrs_io as io;
 
 #[prelude_import] use base::prelude::*;
 
 pub use io::{Write};
 pub use impls::num::{format_u64};
 
-pub mod linux {
-    pub use ::base::linux::*;
+pub mod lrs {
+    pub use ::base::lrs::*;
     pub mod fmt { pub use {LowerHex, UpperHex, Debug, Display}; }
 }
 

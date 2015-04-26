@@ -2,36 +2,36 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_file"]
+#![crate_name = "lrs_file"]
 #![crate_type = "lib"]
 #![feature(plugin, no_std, negate_unsigned, custom_derive)]
-#![plugin(linux_core_plugin)]
+#![plugin(lrs_core_plugin)]
 #![no_std]
 
 #[macro_use]
-extern crate linux_core      as core;
-extern crate linux_base      as base;
-extern crate linux_io        as io;
-extern crate linux_cty       as cty;
-extern crate linux_int       as int;
-extern crate linux_syscall   as syscall;
-extern crate linux_str_one   as str_one;
-extern crate linux_str_two   as str_two;
-extern crate linux_str_three as str_three;
-extern crate linux_arch_fns  as arch_fns;
-extern crate linux_rv        as rv;
-extern crate linux_fmt       as fmt;
-extern crate linux_vec       as vec;
-extern crate linux_rmo       as rmo;
-extern crate linux_parse     as parse;
-extern crate linux_fd        as fd;
-extern crate linux_alloc     as alloc;
-extern crate linux_dev       as dev;
-extern crate linux_fs        as fs;
-extern crate linux_time_base as time_base;
+extern crate lrs_core      as core;
+extern crate lrs_base      as base;
+extern crate lrs_io        as io;
+extern crate lrs_cty       as cty;
+extern crate lrs_int       as int;
+extern crate lrs_syscall   as syscall;
+extern crate lrs_str_one   as str_one;
+extern crate lrs_str_two   as str_two;
+extern crate lrs_str_three as str_three;
+extern crate lrs_arch_fns  as arch_fns;
+extern crate lrs_rv        as rv;
+extern crate lrs_fmt       as fmt;
+extern crate lrs_vec       as vec;
+extern crate lrs_rmo       as rmo;
+extern crate lrs_parse     as parse;
+extern crate lrs_fd        as fd;
+extern crate lrs_alloc     as alloc;
+extern crate lrs_dev       as dev;
+extern crate lrs_fs        as fs;
+extern crate lrs_time_base as time_base;
 
 #[prelude_import] use base::prelude::*;
-mod linux { pub use vec::linux::*; pub use {cty}; }
+mod lrs { pub use vec::lrs::*; pub use {cty}; }
 
 use vec::{SVec};
 use core::{mem};

@@ -2,20 +2,20 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_queue"]
+#![crate_name = "lrs_queue"]
 #![crate_type = "lib"]
 #![feature(plugin, no_std, optin_builtin_traits)]
-#![plugin(linux_core_plugin)]
+#![plugin(lrs_core_plugin)]
 #![no_std]
 
 #[macro_use]
-extern crate linux_core as core;
-extern crate linux_base as base;
-extern crate linux_cell as cell;
-extern crate linux_arch_fns as arch_fns;
-extern crate linux_atomic as atomic;
-extern crate linux_lock as lock;
-extern crate linux_alloc as alloc;
+extern crate lrs_core as core;
+extern crate lrs_base as base;
+extern crate lrs_cell as cell;
+extern crate lrs_arch_fns as arch_fns;
+extern crate lrs_atomic as atomic;
+extern crate lrs_lock as lock;
+extern crate lrs_alloc as alloc;
 
 #[prelude_import] use base::prelude::*;
 use base::{error};
@@ -26,7 +26,7 @@ use cell::cell::{Cell};
 use core::{ptr, mem};
 use lock::{Lock, LockGuard, RawCondvar, LOCK_INIT, RAW_CONDVAR_INIT};
 
-pub mod linux { pub use base::linux::*; }
+pub mod lrs { pub use base::lrs::*; }
 
 /// A queue.
 pub struct Queue<T, Heap = alloc::Heap>

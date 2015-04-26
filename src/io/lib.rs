@@ -2,14 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_io"]
+#![crate_name = "lrs_io"]
 #![crate_type = "lib"]
 #![feature(plugin, no_std)]
-#![plugin(linux_core_plugin)]
+#![plugin(lrs_core_plugin)]
 #![no_std]
 
-extern crate linux_core as core;
-extern crate linux_base as base;
+extern crate lrs_core as core;
+extern crate lrs_base as base;
 
 #[prelude_import] use base::prelude::*;
 use core::{mem};

@@ -22,7 +22,7 @@ use parse::token::{InternedString, Eof};
 
 fn expr_ok(cx: &ExtCtxt, sp: Span, expr: P<Expr>) -> P<Expr> {
     let ok = vec!(
-        cx.ident_of("linux"),
+        cx.ident_of("lrs"),
         cx.ident_of("result"),
         cx.ident_of("Result"),
         cx.ident_of("Ok"));
@@ -31,14 +31,14 @@ fn expr_ok(cx: &ExtCtxt, sp: Span, expr: P<Expr>) -> P<Expr> {
 
 fn expr_try(cx: &ExtCtxt, sp: Span, head: P<Expr>) -> P<Expr> {
     let ok = vec!(
-        cx.ident_of("linux"),
+        cx.ident_of("lrs"),
         cx.ident_of("result"),
         cx.ident_of("Result"),
         cx.ident_of("Ok")
     );
     let ok_path = cx.path_global(sp, ok);
     let err = vec!(
-        cx.ident_of("linux"),
+        cx.ident_of("lrs"),
         cx.ident_of("result"),
         cx.ident_of("Result"),
         cx.ident_of("Err")
@@ -74,14 +74,14 @@ fn cs_clone(name: &str, cx: &mut ExtCtxt, trait_span: Span,
     let all_fields;
 
     let fn_path = vec!(
-        cx.ident_of("linux"),
+        cx.ident_of("lrs"),
         cx.ident_of("clone"),
         cx.ident_of("Clone"),
         cx.ident_of("clone"),
     );
 
     let subcall = |field: &FieldInfo| {
-        // ::linux::clone::Clone::clone(&field)
+        // ::lrs::clone::Clone::clone(&field)
         let call = {
             let args = vec![cx.expr_addr_of(field.span, field.self_.clone())];
             cx.expr_call_global(field.span, fn_path.clone(), args)
@@ -146,7 +146,7 @@ pub fn derive_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Item,
     let inline = cx.meta_word(span, InternedString::new("inline"));
     let attrs = vec!(cx.attribute(span, inline));
     let ret_ty = Ty::Literal(Path {
-        path: vec!("linux", "result", "Result"),
+        path: vec!("lrs", "result", "Result"),
         lifetime: None,
         params: vec!(box Ty::Self_),
         global: true,
@@ -154,7 +154,7 @@ pub fn derive_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Item,
     let trait_def = TraitDef {
         span: span,
         attributes: Vec::new(),
-        path: path_std!(cx, linux::clone::Clone),
+        path: path_std!(cx, lrs::clone::Clone),
         additional_bounds: Vec::new(),
         generics: LifetimeBounds::empty(),
         methods: vec!(
@@ -190,9 +190,9 @@ pub fn derive_clone_for_copy(cx: &mut ExtCtxt, span: Span, _mitem: &MetaItem,
         let impl_item = quote_item!(cx,
             #[automatically_derived]
             #[inline(always)]
-            impl $generics ::linux::clone::Clone for $ty $generics {
-                fn clone(&self) -> ::linux::result::Result<$ty $generics> {
-                    ::linux::result::Result::Ok(*self)
+            impl $generics ::lrs::clone::Clone for $ty $generics {
+                fn clone(&self) -> ::lrs::result::Result<$ty $generics> {
+                    ::lrs::result::Result::Ok(*self)
                 }
             }
         ).unwrap();
@@ -213,9 +213,9 @@ pub fn derive_copy_clone_for<'cx>(cx: &'cx mut ExtCtxt, sp: Span,
     let item = quote_item!(cx,
         #[automatically_derived]
         #[inline(always)]
-        impl ::linux::clone::Clone for $dest {
-            fn clone(&self) -> ::linux::result::Result<$dest> {
-                ::linux::result::Result::Ok(*self)
+        impl ::lrs::clone::Clone for $dest {
+            fn clone(&self) -> ::lrs::result::Result<$dest> {
+                ::lrs::result::Result::Ok(*self)
             }
         }
     ).unwrap();

@@ -2,18 +2,18 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_alloc"]
+#![crate_name = "lrs_alloc"]
 #![crate_type = "lib"]
 #![feature(plugin, no_std)]
-#![plugin(linux_core_plugin)]
+#![plugin(lrs_core_plugin)]
 #![no_std]
 
 #[macro_use]
-extern crate linux_core as core;
-extern crate linux_base as base;
-extern crate linux_cty as cty;
-extern crate linux_syscall as syscall;
-extern crate linux_libc;
+extern crate lrs_core as core;
+extern crate lrs_base as base;
+extern crate lrs_cty as cty;
+extern crate lrs_syscall as syscall;
+extern crate lrs_libc;
 
 #[prelude_import] use base::prelude::*;
 use core::{num, mem};

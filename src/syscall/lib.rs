@@ -2,19 +2,19 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_syscall"]
+#![crate_name = "lrs_syscall"]
 #![crate_type = "lib"]
 #![feature(plugin, no_std)]
-#![plugin(linux_core_plugin)]
+#![plugin(lrs_core_plugin)]
 #![no_std]
 
 #[macro_use]
-extern crate linux_core       as core;
-extern crate linux_saturating as saturating;
-extern crate linux_base    as base;
-extern crate linux_str_one    as str_one;
-extern crate linux_cty        as cty;
-extern crate linux_r_syscall  as r;
+extern crate lrs_core       as core;
+extern crate lrs_saturating as saturating;
+extern crate lrs_base    as base;
+extern crate lrs_str_one    as str_one;
+extern crate lrs_cty        as cty;
+extern crate lrs_r_syscall  as r;
 
 #[prelude_import] use base::prelude::*;
 use core::{mem};

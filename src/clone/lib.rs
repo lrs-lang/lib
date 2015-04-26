@@ -2,18 +2,18 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "linux_clone"]
+#![crate_name = "lrs_clone"]
 #![crate_type = "lib"]
 #![feature(plugin, no_std)]
-#![plugin(linux_core_plugin)]
+#![plugin(lrs_core_plugin)]
 #![no_std]
 
 #[macro_use]
-extern crate linux_core as core;
-extern crate linux_base as base;
-extern crate linux_cty as cty;
-extern crate linux_syscall as syscall;
-extern crate linux_libc as libc;
+extern crate lrs_core as core;
+extern crate lrs_base as base;
+extern crate lrs_cty as cty;
+extern crate lrs_syscall as syscall;
+extern crate lrs_libc as libc;
 
 #[prelude_import] use base::prelude::*;
 use base::{error};
@@ -21,7 +21,7 @@ use core::ops::{FnOnce};
 use cty::alias::{ProcessId};
 use syscall::{exit_group};
 
-mod linux { pub use base::linux::*; }
+mod lrs { pub use base::lrs::*; }
 
 pub fn fork<F>(f: F) -> Result<ProcessId>
     where F: FnOnce()

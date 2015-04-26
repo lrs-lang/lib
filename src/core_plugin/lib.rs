@@ -1,6 +1,6 @@
 #![feature(custom_derive, plugin, plugin_registrar, rustc_private, unboxed_closures,
            slice_patterns, box_syntax, box_patterns, libc, quote)]
-#![crate_name = "linux_core_plugin"]
+#![crate_name = "lrs_core_plugin"]
 #![crate_type = "dylib"]
 
 #[macro_use]
