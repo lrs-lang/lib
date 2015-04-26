@@ -33,8 +33,15 @@ impl Copy for pthread_t { }
 impl Pod for pthread_attr_t { }
 impl Copy for pthread_attr_t { }
 
+#[cfg(not(no_link_args))]
+#[link(name = "c")]
+extern { }
+
+#[cfg(not(no_link_args))]
+#[link(name = "pthread")]
+extern { }
+
 #[allow(improper_ctypes)]
-// #[link(name = "c")]
 extern {
     pub static mut environ: *const *const u8;
 
@@ -48,7 +55,6 @@ extern {
 }
 
 #[allow(improper_ctypes)]
-// #[link(name = "pthread")]
 extern {
     pub fn pthread_create(thread: *mut pthread_t, attr: *const pthread_attr_t,
                           start: unsafe extern fn(*mut u8) -> *mut u8,

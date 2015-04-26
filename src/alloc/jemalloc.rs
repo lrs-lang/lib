@@ -16,8 +16,11 @@ macro_rules! mallocx_align {
     ($val:expr) => { if $val < MIN_ALIGN { 0 } else { $val.trailing_zeros() as c_int } }
 }
 
+#[cfg(not(no_link_args))]
+#[link(name = "jemalloc")]
+extern { }
+
 #[allow(improper_ctypes)]
-// #[link(name = "jemalloc")]
 extern {
     fn je_mallocx(size: usize, flags: c_int) -> *mut u8;
     fn je_rallocx(ptr: *mut u8, size: usize, flags: c_int) -> *mut u8;

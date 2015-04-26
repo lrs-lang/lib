@@ -14,6 +14,8 @@ extern crate lrs_core as core;
 extern crate lrs_cty_base as cty_base;
 extern crate lrs_base as base;
 
+use core::{mem};
+
 pub use self::arch::*;
 pub use cty_base::errno::*;
 
@@ -2705,3 +2707,381 @@ pub const __WCLONE    : c_int = 0x80000000;
 pub const P_ALL       : c_int = 0;
 pub const P_PID       : c_int = 1;
 pub const P_PGID      : c_int = 2;
+
+// un.h
+
+pub const UNIX_PATH_MAX : usize = 108;
+
+#[repr(C)]
+#[derive(Pod)]
+pub struct sockaddr_un {
+    pub sun_family: __kernel_sa_family_t,
+    pub sun_path: [c_char; UNIX_PATH_MAX],
+}
+
+// in.h
+
+pub const IPPROTO_IP      : c_int = 0;
+pub const IPPROTO_ICMP    : c_int = 1;
+pub const IPPROTO_IGMP    : c_int = 2;
+pub const IPPROTO_IPIP    : c_int = 4;
+pub const IPPROTO_TCP     : c_int = 6;
+pub const IPPROTO_EGP     : c_int = 8;
+pub const IPPROTO_PUP     : c_int = 12;
+pub const IPPROTO_UDP     : c_int = 17;
+pub const IPPROTO_IDP     : c_int = 22;
+pub const IPPROTO_TP      : c_int = 29;
+pub const IPPROTO_DCCP    : c_int = 33;
+pub const IPPROTO_IPV6    : c_int = 41;
+pub const IPPROTO_RSVP    : c_int = 46;
+pub const IPPROTO_GRE     : c_int = 47;
+pub const IPPROTO_ESP     : c_int = 50;
+pub const IPPROTO_AH      : c_int = 51;
+pub const IPPROTO_MTP     : c_int = 92;
+pub const IPPROTO_BEETPH  : c_int = 94;
+pub const IPPROTO_ENCAP   : c_int = 98;
+pub const IPPROTO_PIM     : c_int = 103;
+pub const IPPROTO_COMP    : c_int = 108;
+pub const IPPROTO_SCTP    : c_int = 132;
+pub const IPPROTO_UDPLITE : c_int = 136;
+pub const IPPROTO_RAW     : c_int = 255;
+pub const IPPROTO_MAX     : c_int = 256;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct in_addr {
+    pub s_addr: __be32,
+}
+
+pub const BYTES_PER_IN_ADDR: usize = 4;
+
+pub const IP_TOS                    : c_int = 1;
+pub const IP_TTL                    : c_int = 2;
+pub const IP_HDRINCL                : c_int = 3;
+pub const IP_OPTIONS                : c_int = 4;
+pub const IP_ROUTER_ALERT           : c_int = 5;
+pub const IP_RECVOPTS               : c_int = 6;
+pub const IP_RETOPTS                : c_int = 7;
+pub const IP_PKTINFO                : c_int = 8;
+pub const IP_PKTOPTIONS             : c_int = 9;
+pub const IP_MTU_DISCOVER           : c_int = 10;
+pub const IP_RECVERR                : c_int = 11;
+pub const IP_RECVTTL                : c_int = 12;
+pub const IP_RECVTOS                : c_int = 13;
+pub const IP_MTU                    : c_int = 14;
+pub const IP_FREEBIND               : c_int = 15;
+pub const IP_IPSEC_POLICY           : c_int = 16;
+pub const IP_XFRM_POLICY            : c_int = 17;
+pub const IP_PASSSEC                : c_int = 18;
+pub const IP_TRANSPARENT            : c_int = 19;
+pub const IP_RECVRETOPTS            : c_int = IP_RETOPTS;
+pub const IP_ORIGDSTADDR            : c_int = 20;
+pub const IP_RECVORIGDSTADDR        : c_int = IP_ORIGDSTADDR;
+pub const IP_MINTTL                 : c_int = 21;
+pub const IP_NODEFRAG               : c_int = 22;
+pub const IP_CHECKSUM               : c_int = 23;
+pub const IP_PMTUDISC_DONT          : c_int = 0;
+pub const IP_PMTUDISC_WANT          : c_int = 1;
+pub const IP_PMTUDISC_DO            : c_int = 2;
+pub const IP_PMTUDISC_PROBE         : c_int = 3;
+pub const IP_PMTUDISC_INTERFACE     : c_int = 4;
+pub const IP_PMTUDISC_OMIT          : c_int = 5;
+pub const IP_MULTICAST_IF           : c_int = 32;
+pub const IP_MULTICAST_TTL          : c_int = 33;
+pub const IP_MULTICAST_LOOP         : c_int = 34;
+pub const IP_ADD_MEMBERSHIP         : c_int = 35;
+pub const IP_DROP_MEMBERSHIP        : c_int = 36;
+pub const IP_UNBLOCK_SOURCE         : c_int = 37;
+pub const IP_BLOCK_SOURCE           : c_int = 38;
+pub const IP_ADD_SOURCE_MEMBERSHIP  : c_int = 39;
+pub const IP_DROP_SOURCE_MEMBERSHIP : c_int = 40;
+pub const IP_MSFILTER               : c_int = 41;
+pub const MCAST_JOIN_GROUP          : c_int = 42;
+pub const MCAST_BLOCK_SOURCE        : c_int = 43;
+pub const MCAST_UNBLOCK_SOURCE      : c_int = 44;
+pub const MCAST_LEAVE_GROUP         : c_int = 45;
+pub const MCAST_JOIN_SOURCE_GROUP   : c_int = 46;
+pub const MCAST_LEAVE_SOURCE_GROUP  : c_int = 47;
+pub const MCAST_MSFILTER            : c_int = 48;
+pub const IP_MULTICAST_ALL          : c_int = 49;
+pub const IP_UNICAST_IF             : c_int = 50;
+pub const MCAST_EXCLUDE             : c_int = 0;
+pub const MCAST_INCLUDE             : c_int = 1;
+pub const IP_DEFAULT_MULTICAST_TTL  : c_int = 1;
+pub const IP_DEFAULT_MULTICAST_LOOP : c_int = 1;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ip_mreq {
+    pub imr_multiaddr: in_addr,
+    pub imr_interface: in_addr,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ip_mreqn {
+    pub imr_multiaddr: in_addr,
+    pub imr_address:   in_addr,
+    pub imr_ifindex:   c_int,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ip_mreq_source {
+    pub imr_multiaddr:  __be32,
+    pub imr_interface:  __be32,
+    pub imr_sourceaddr: __be32,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ip_msfilter {
+    pub imsf_multiaddr: __be32,
+    pub imsf_interface: __be32,
+    pub imsf_fmode:     __u32,
+    pub imsf_numsrc:    __u32,
+    pub imsf_slist: [__be32; 1],
+}
+
+pub fn IP_MSFILTER_SIZE(numsrc: usize) -> usize {
+	mem::size_of::<ip_msfilter>() - mem::size_of::<__u32>()
+                + numsrc * mem::size_of::<__u32>()
+}
+
+#[repr(C)]
+#[derive(Pod)]
+pub struct group_req {
+    pub gr_interface: __u32,
+    pub gr_group:     __kernel_sockaddr_storage,
+}
+
+#[repr(C)]
+#[derive(Pod)]
+pub struct group_source_req {
+    pub gsr_interface: __u32,
+    pub gsr_group:     __kernel_sockaddr_storage,
+    pub gsr_source:    __kernel_sockaddr_storage,
+}
+
+#[repr(C)]
+#[derive(Pod)]
+pub struct group_filter {
+    pub gf_interface: __u32,
+    pub gf_group:     __kernel_sockaddr_storage,
+    pub gf_fmode:     __u32,
+    pub gf_numsrc:    __u32,
+    pub gf_slist:     [__kernel_sockaddr_storage; 1],
+}
+
+pub fn GROUP_FILTER_SIZE(numsrc: usize ) -> usize {
+	mem::size_of::<group_filter>() - mem::size_of::<__kernel_sockaddr_storage>()
+            + numsrc * mem::size_of::<__kernel_sockaddr_storage>()
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct in_pktinfo {
+    pub ipi_ifindex:  c_int,
+    pub ipi_spec_dst: in_addr,
+    pub ipi_addr:     in_addr,
+}
+
+pub const __SOCK_SIZE__: usize = 16;
+
+#[repr(C)]
+#[derive(Pod)]
+pub struct sockaddr_in {
+    pub sin_family: __kernel_sa_family_t,
+    pub sin_port:   __be16,
+    pub sin_addr:   in_addr,
+    pub __pad: [c_uchar; __SOCK_SIZE__ - BYTES_PER_SHORT - BYTES_PER_SHORT - BYTES_PER_IN_ADDR],
+}
+
+pub fn IN_CLASSA(a: u32) -> bool { (a & 0x80000000) == 0 }
+pub const IN_CLASSA_NET    : u32 = 0xff000000;
+pub const IN_CLASSA_NSHIFT : u32 = 24;
+pub const IN_CLASSA_HOST   : u32 = 0xffffffff & !IN_CLASSA_NET;
+pub const IN_CLASSA_MAX    : u32 = 128;
+
+pub fn IN_CLASSB(a: u32) -> bool { (a & 0xc0000000) == 0x80000000 }
+pub const IN_CLASSB_NET    : u32 = 0xffff0000;
+pub const IN_CLASSB_NSHIFT : u32 = 16;
+pub const IN_CLASSB_HOST   : u32 = 0xffffffff & !IN_CLASSB_NET;
+pub const IN_CLASSB_MAX    : u32 = 65536;
+
+pub fn IN_CLASSC(a: u32) -> bool { (a & 0xe0000000) == 0xc0000000 }
+pub const IN_CLASSC_NET		: u32 = 0xffffff00;
+pub const IN_CLASSC_NSHIFT	: u32 = 8;
+pub const IN_CLASSC_HOST	: u32 = 0xffffffff & !IN_CLASSC_NET;
+
+pub fn IN_CLASSD(a: u32) -> bool { (a & 0xf0000000) == 0xe0000000 }
+pub fn IN_MULTICAST(a: u32) -> bool { IN_CLASSD(a) }
+pub const IN_MULTICAST_NET	: u32 = 0xF0000000;
+
+pub fn IN_EXPERIMENTAL(a: u32) -> bool { (a & 0xf0000000) == 0xf0000000 }
+pub fn IN_BADCLASS(a: u32) -> bool { IN_EXPERIMENTAL(a) }
+
+pub const INADDR_ANY       : u32 = 0x00000000;
+pub const INADDR_BROADCAST : u32 = 0xffffffff;
+pub const INADDR_NONE      : u32 = 0xffffffff;
+pub const IN_LOOPBACKNET   : u32 = 127;
+pub const INADDR_LOOPBACK  : u32 = 0x7f000001;
+
+pub fn IN_LOOPBACK(a: u32) -> bool { (a & 0xff000000) == 0x7f000000 }
+
+pub const INADDR_UNSPEC_GROUP    : u32 = 0xe0000000;
+pub const INADDR_ALLHOSTS_GROUP  : u32 = 0xe0000001;
+pub const INADDR_ALLRTRS_GROUP   : u32 = 0xe0000002;
+pub const INADDR_MAX_LOCAL_GROUP : u32 = 0xe00000ff;
+
+// in6.h
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct in6_addr {
+    pub u6_addr16: [__be16; 8],
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct sockaddr_in6 {
+    pub sin6_family:   c_ushort,
+    pub sin6_port:     __be16,
+    pub sin6_flowinfo: __be32,
+    pub sin6_addr:     in6_addr,
+    pub sin6_scope_id: __u32,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ipv6_mreq {
+    pub ipv6mr_multiaddr: in6_addr,
+    pub ipv6mr_ifindex:   c_int,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct in6_flowlabel_req {
+    pub flr_dst:     in6_addr,
+    pub flr_label:   __be32,
+    pub flr_action:  __u8,
+    pub flr_share:   __u8,
+    pub flr_flags:   __u16,
+    pub flr_expires: __u16,
+    pub flr_linger:  __u16,
+    pub __flr_pad:   __u32,
+}
+
+pub const IPV6_FL_A_GET     : __u8 = 0;
+pub const IPV6_FL_A_PUT     : __u8 = 1;
+pub const IPV6_FL_A_RENEW   : __u8 = 2;
+pub const IPV6_FL_F_CREATE  : __u8 = 1;
+pub const IPV6_FL_F_EXCL    : __u8 = 2;
+pub const IPV6_FL_F_REFLECT : __u8 = 4;
+pub const IPV6_FL_F_REMOTE  : __u8 = 8;
+pub const IPV6_FL_S_NONE    : __u8 = 0;
+pub const IPV6_FL_S_EXCL    : __u8 = 1;
+pub const IPV6_FL_S_PROCESS : __u8 = 2;
+pub const IPV6_FL_S_USER    : __u8 = 3;
+pub const IPV6_FL_S_ANY     : __u8 = 255;
+
+pub const IPV6_FLOWINFO_FLOWLABEL : __le32 = 0x000fffff;
+pub const IPV6_FLOWINFO_PRIORITY  : __le32 = 0x0ff00000;
+
+pub const IPV6_PRIORITY_UNCHARACTERIZED : c_int = 0x0000;
+pub const IPV6_PRIORITY_FILLER          : c_int = 0x0100;
+pub const IPV6_PRIORITY_UNATTENDED      : c_int = 0x0200;
+pub const IPV6_PRIORITY_RESERVED1       : c_int = 0x0300;
+pub const IPV6_PRIORITY_BULK            : c_int = 0x0400;
+pub const IPV6_PRIORITY_RESERVED2       : c_int = 0x0500;
+pub const IPV6_PRIORITY_INTERACTIVE     : c_int = 0x0600;
+pub const IPV6_PRIORITY_CONTROL         : c_int = 0x0700;
+pub const IPV6_PRIORITY_8               : c_int = 0x0800;
+pub const IPV6_PRIORITY_9               : c_int = 0x0900;
+pub const IPV6_PRIORITY_10              : c_int = 0x0a00;
+pub const IPV6_PRIORITY_11              : c_int = 0x0b00;
+pub const IPV6_PRIORITY_12              : c_int = 0x0c00;
+pub const IPV6_PRIORITY_13              : c_int = 0x0d00;
+pub const IPV6_PRIORITY_14              : c_int = 0x0e00;
+pub const IPV6_PRIORITY_15              : c_int = 0x0f00;
+
+pub const IPPROTO_HOPOPTS  : c_int = 0;
+pub const IPPROTO_ROUTING  : c_int = 43;
+pub const IPPROTO_FRAGMENT : c_int = 44;
+pub const IPPROTO_ICMPV6   : c_int = 58;
+pub const IPPROTO_NONE     : c_int = 59;
+pub const IPPROTO_DSTOPTS  : c_int = 60;
+pub const IPPROTO_MH       : c_int = 135;
+
+pub const IPV6_TLV_PAD1        : c_int = 0;
+pub const IPV6_TLV_PADN        : c_int = 1;
+pub const IPV6_TLV_ROUTERALERT : c_int = 5;
+pub const IPV6_TLV_JUMBO       : c_int = 194;
+pub const IPV6_TLV_HAO         : c_int = 201;
+
+pub const IPV6_ADDRFORM           : c_int = 1;
+pub const IPV6_2292PKTINFO        : c_int = 2;
+pub const IPV6_2292HOPOPTS        : c_int = 3;
+pub const IPV6_2292DSTOPTS        : c_int = 4;
+pub const IPV6_2292RTHDR          : c_int = 5;
+pub const IPV6_2292PKTOPTIONS     : c_int = 6;
+pub const IPV6_CHECKSUM           : c_int = 7;
+pub const IPV6_2292HOPLIMIT       : c_int = 8;
+pub const IPV6_NEXTHOP            : c_int = 9;
+pub const IPV6_AUTHHDR            : c_int = 10;
+pub const IPV6_FLOWINFO           : c_int = 11;
+pub const IPV6_UNICAST_HOPS       : c_int = 16;
+pub const IPV6_MULTICAST_IF       : c_int = 17;
+pub const IPV6_MULTICAST_HOPS     : c_int = 18;
+pub const IPV6_MULTICAST_LOOP     : c_int = 19;
+pub const IPV6_ADD_MEMBERSHIP     : c_int = 20;
+pub const IPV6_DROP_MEMBERSHIP    : c_int = 21;
+pub const IPV6_ROUTER_ALERT       : c_int = 22;
+pub const IPV6_MTU_DISCOVER       : c_int = 23;
+pub const IPV6_MTU                : c_int = 24;
+pub const IPV6_RECVERR            : c_int = 25;
+pub const IPV6_V6ONLY             : c_int = 26;
+pub const IPV6_JOIN_ANYCAST       : c_int = 27;
+pub const IPV6_LEAVE_ANYCAST      : c_int = 28;
+pub const IPV6_PMTUDISC_DONT      : c_int = 0;
+pub const IPV6_PMTUDISC_WANT      : c_int = 1;
+pub const IPV6_PMTUDISC_DO        : c_int = 2;
+pub const IPV6_PMTUDISC_PROBE     : c_int = 3;
+pub const IPV6_PMTUDISC_INTERFACE : c_int = 4;
+pub const IPV6_PMTUDISC_OMIT      : c_int = 5;
+pub const IPV6_FLOWLABEL_MGR      : c_int = 32;
+pub const IPV6_FLOWINFO_SEND      : c_int = 33;
+pub const IPV6_IPSEC_POLICY       : c_int = 34;
+pub const IPV6_XFRM_POLICY        : c_int = 35;
+
+pub const IPV6_RECVPKTINFO  : c_int = 49;
+pub const IPV6_PKTINFO      : c_int = 50;
+pub const IPV6_RECVHOPLIMIT : c_int = 51;
+pub const IPV6_HOPLIMIT     : c_int = 52;
+pub const IPV6_RECVHOPOPTS  : c_int = 53;
+pub const IPV6_HOPOPTS      : c_int = 54;
+pub const IPV6_RTHDRDSTOPTS : c_int = 55;
+pub const IPV6_RECVRTHDR    : c_int = 56;
+pub const IPV6_RTHDR        : c_int = 57;
+pub const IPV6_RECVDSTOPTS  : c_int = 58;
+pub const IPV6_DSTOPTS      : c_int = 59;
+pub const IPV6_RECVPATHMTU  : c_int = 60;
+pub const IPV6_PATHMTU      : c_int = 61;
+pub const IPV6_DONTFRAG     : c_int = 62;
+
+pub const IPV6_RECVTCLASS                : c_int = 66;
+pub const IPV6_TCLASS                    : c_int = 67;
+pub const IPV6_AUTOFLOWLABEL             : c_int = 70;
+pub const IPV6_ADDR_PREFERENCES          : c_int = 72;
+pub const IPV6_PREFER_SRC_TMP            : c_int = 0x0001;
+pub const IPV6_PREFER_SRC_PUBLIC         : c_int = 0x0002;
+pub const IPV6_PREFER_SRC_PUBTMP_DEFAULT : c_int = 0x0100;
+pub const IPV6_PREFER_SRC_COA            : c_int = 0x0004;
+pub const IPV6_PREFER_SRC_HOME           : c_int = 0x0400;
+pub const IPV6_PREFER_SRC_CGA            : c_int = 0x0008;
+pub const IPV6_PREFER_SRC_NONCGA         : c_int = 0x0800;
+pub const IPV6_MINHOPCOUNT               : c_int = 73;
+pub const IPV6_ORIGDSTADDR               : c_int = 74;
+pub const IPV6_RECVORIGDSTADDR           : c_int = IPV6_ORIGDSTADDR;
+pub const IPV6_TRANSPARENT               : c_int = 75;
+pub const IPV6_UNICAST_IF                : c_int = 76;

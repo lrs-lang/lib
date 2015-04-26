@@ -11,5 +11,10 @@
 #[macro_use]
 extern crate lrs_core as core;
 extern crate lrs_base as base;
+extern crate lrs_cty as cty;
+extern crate lrs_arch_fns as arch_fns;
+extern crate lrs_str_one as str_one;
 
 mod lrs { pub use base::lrs::*; }
+
+pub mod addr;

@@ -24,6 +24,7 @@ pub mod rmo;
 
 pub mod prelude {
     pub use core::prelude::*;
+    pub use core::bool::{BoolExt};
     pub use result::{Result};
     pub use result::Result::{Ok, Err};
     pub use rmo::{AsRef, AsMut};
