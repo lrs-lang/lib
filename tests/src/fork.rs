@@ -11,7 +11,8 @@ mod core { pub use linux::core::*; }
 #[prelude_import] use linux::prelude::*;
 
 use linux::string::{CPtrPtr};
-use linux::process::{fork, exec};
+use linux::process::{fork, exec, wait_all, wait_id, WAIT_EXITED, WAIT_DONT_REAP,
+                     WAIT_NON_BLOCKING};
 
 fn main() {
     let pid = fork(|| {
@@ -26,4 +27,6 @@ fn main() {
         }
     });
     println!("child pid: {:?}", pid);
+    println!("wait result: {:?}", wait_id(pid.unwrap(), WAIT_EXITED | WAIT_DONT_REAP));
+    println!("wait result: {:?}", wait_all(WAIT_EXITED | WAIT_NON_BLOCKING));
 }

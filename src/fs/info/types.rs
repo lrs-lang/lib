@@ -7,7 +7,7 @@ use fmt::{Debug, Write};
 use cty::{c_ulong};
 
 /// A filesystem type.
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct FileSystem(pub c_ulong);
 
 macro_rules! create {

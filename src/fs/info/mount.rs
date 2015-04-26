@@ -8,7 +8,7 @@ use cty::{ST_RDONLY, ST_NOSUID, ST_NODEV, ST_NOEXEC, ST_SYNCHRONOUS, ST_MANDLOCK
           ST_NOATIME, ST_NODIRATIME, ST_RELATIME, c_ulong};
 
 /// Mount flags of a filesystem.
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct Flags(pub c_ulong);
 
 impl Flags {

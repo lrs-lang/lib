@@ -30,7 +30,7 @@ pub use ::arch::{
     sched_get_priority_min, sched_rr_get_interval, mlock, munlock, mlockall, munlockall,
     vhangup, pivot_root, prctl, adjtimex, setrlimit, chroot, sync,
     acct, settimeofday, mount, umount, swapon, swapoff, reboot, sethostname,
-    setdomainname, iopl, init_module, delete_module, quotactl, 
+    setdomainname, iopl, init_module, delete_module, quotactl, waitid,
     gettid, readahead, setxattr, lsetxattr, fsetxattr,
     getxattr, lgetxattr, fgetxattr, listxattr, llistxattr, flistxattr, removexattr,
     lremovexattr, fremovexattr, tkill, time, futex, sched_setaffinity, sched_getaffinity,

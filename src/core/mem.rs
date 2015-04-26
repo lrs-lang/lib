@@ -4,7 +4,7 @@
 
 use intrinsics::{self};
 use ptr::{self};
-use marker::{Copy, Leak};
+use marker::{Pod, Copy, Leak};
 use cmp::{self};
 
 pub use intrinsics::{
@@ -14,7 +14,16 @@ pub use intrinsics::{
 pub use intrinsics::transmute as cast;
 
 /// Creates an object that has all bytes set to zero.
-pub unsafe fn zeroed<T>() -> T { intrinsics::init() }
+pub fn zeroed<T>() -> T
+    where T: Pod,
+{
+    unsafe { intrinsics::init() }
+}
+
+/// Like `zeroed` but works for arbitrary types.
+pub unsafe fn unsafe_zeroed<T>() -> T {
+    intrinsics::init()
+}
 
 /// Copies an object and casts the result to another type.
 ///

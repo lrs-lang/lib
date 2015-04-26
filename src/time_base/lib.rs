@@ -4,7 +4,7 @@
 
 #![crate_name = "linux_time_base"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std)]
+#![feature(plugin, no_std, custom_derive)]
 #![plugin(linux_core_plugin)]
 #![no_std]
 #![allow(trivial_numeric_casts)]
@@ -24,7 +24,8 @@ mod linux {
     pub use {cty};
 }
 
-use core::ops::{Add, Sub};
+use core::ops::{Add, Sub, PartialOrd, Ordering};
+use core::cmp::{Ord};
 use cty::{timespec, time_t, k_long};
 use fmt::{Debug, Write};
 
@@ -57,7 +58,7 @@ const SECS_PER_DAY: i64 = 24 * SECS_PER_HOUR;
 /// A time.
 ///
 /// This can have various meanings.
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct Time {
     pub seconds: i64,
     pub nanoseconds: i64,
@@ -148,5 +149,19 @@ impl Sub for Time {
             nanoseconds: one.nanoseconds - two.nanoseconds,
         };
         time.normalize()
+    }
+}
+
+impl PartialOrd for Time {
+    fn partial_cmp(&self, other: &Time) -> Option<Ordering> {
+        Some(self.cmp(&other))
+    }
+}
+
+impl Ord for Time {
+    fn cmp(&self, other: &Time) -> Ordering {
+        let one = self.normalize();
+        let two = other.normalize();
+        (one.seconds, one.nanoseconds).cmp(&(two.seconds, two.nanoseconds))
     }
 }

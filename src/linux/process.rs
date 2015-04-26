@@ -5,7 +5,12 @@
 //! Process handling.
 
 pub use linux_cty::alias::{ProcessId};
-pub use linux_process::{this_process_id, parent_process_id, exit, exec};
+pub use linux_process::{this_process_id, parent_process_id, exit};
+pub use linux_process::exec::{exec};
+pub use linux_process::wait::{
+    ChildStatus, WaitFlags, WAIT_EXITED, WAIT_STOPPED, WAIT_CONTINUED, WAIT_NON_BLOCKING,
+    WAIT_DONT_REAP, wait_all, wait_id,
+};
 pub use linux_process::ids::{UserIds, GroupIds, user_drop_privileges,
                              group_drop_privileges, user_set_effective_ids,
                              group_set_effective_ids, num_supplementary_groups,

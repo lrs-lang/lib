@@ -28,7 +28,7 @@ impl<T, H> Arc<T, H>
     where H: Allocator,
           T: Leak,
 {
-    pub fn new(val: T) -> Result<Arc<T>, T> {
+    pub fn new(val: T) -> Result<Arc<T, H>, T> {
         unsafe {
             let data_ptr = match H::allocate::<Inner<T>>() {
                 Ok(p) => p,
@@ -48,7 +48,18 @@ impl<T, H> Arc<T, H>
             _ => None,
         }
     }
+
+    pub fn new_ref(&self) -> Arc<T, H> {
+        unsafe {
+            let data = &mut *self.data;
+            data.count.add(1);
+            Arc { data: self.data, _marker: PhantomData }
+        }
+    }
 }
+
+unsafe impl<T, H> Send for Arc<T, H> where T: Sync+Send, H: Sync { }
+unsafe impl<T, H> Sync for Arc<T, H> where T: Sync { }
 
 impl<T, H> Drop for Arc<T, H>
     where H: Allocator,
@@ -83,11 +94,7 @@ impl<T, H> Clone for Arc<T, H>
           T: Leak,
 {
     fn clone(&self) -> Result<Arc<T, H>> {
-        unsafe {
-            let data = &mut *self.data;
-            data.count.add(1);
-            Ok(Arc { data: self.data, _marker: PhantomData })
-        }
+        Ok(self.new_ref())
     }
 }
 

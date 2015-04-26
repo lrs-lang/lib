@@ -23,7 +23,7 @@ pub fn from_statfs(s: statfs) -> FileSystemInfo {
 }
 
 /// Filesystem information.
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct FileSystemInfo(statfs);
 
 impl FileSystemInfo {
@@ -33,7 +33,7 @@ impl FileSystemInfo {
     {
         let mut path_buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
         let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut path_buf));
-        let mut buf = unsafe { mem::zeroed() };
+        let mut buf = mem::zeroed();
         retry(|| statfs(&path, &mut buf)).map(|_| FileSystemInfo(buf))
     }
 

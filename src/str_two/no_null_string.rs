@@ -5,7 +5,8 @@
 #[prelude_import] use base::prelude::*;
 use base::rmo::{AsRef, AsMut};
 use core::{mem};
-use str_one::{NoNullStr, AsNoNullStr, AsMutNoNullStr, AsMutCStr, CStr};
+use core::ops::{Eq};
+use str_one::{NoNullStr, AsNoNullStr, AsMutNoNullStr, AsMutCStr, CStr, ByteStr};
 use vec::{Vec};
 use fmt::{Debug, Write};
 use alloc::{self, Allocator};
@@ -42,6 +43,22 @@ impl<'a, H> NoNullString<'a, H>
         self.data.truncate(0);
     }
 
+    pub fn truncate(&mut self, size: usize) {
+        self.data.truncate(size);
+    }
+
+    pub fn reserve(&mut self, size: usize) -> Result {
+        self.data.reserve(size)
+    }
+
+    pub fn unused(&mut self) -> &mut [u8] {
+        self.data.unused()
+    }
+
+    pub unsafe fn set_len(&mut self, size: usize) {
+        self.data.set_len(size);
+    }
+
     pub fn push_file<F>(&mut self, name: F) -> Result
         where F: AsNoNullStr,
     {
@@ -51,6 +68,19 @@ impl<'a, H> NoNullString<'a, H>
         self.data.try_push_all(bytes)
     }
 
+    pub fn pop_file(&mut self) -> &mut NoNullStr {
+        if self.len() == 0 {
+            return &mut self[..];
+        }
+
+        let dir_len = self.dir().len();
+        unsafe {
+            let file: &'static mut NoNullStr = mem::cast(&mut self[dir_len + 1..]);
+            self.data.set_len(dir_len);
+            file
+        }
+    }
+
     pub fn set_path<F>(&mut self, path: F) -> Result
         where F: AsNoNullStr,
     {
@@ -58,6 +88,31 @@ impl<'a, H> NoNullString<'a, H>
         self.clear();
         try!(self.data.reserve(bytes.len()));
         self.data.try_push_all(bytes)
+    }
+}
+
+impl<'a, H> Deref for NoNullString<'a, H>
+    where H: Allocator,
+{
+    type Target = NoNullStr;
+    fn deref(&self) -> &NoNullStr {
+        self.as_ref()
+    }
+}
+
+impl<'a, H> DerefMut for NoNullString<'a, H>
+    where H: Allocator,
+{
+    fn deref_mut(&mut self) -> &mut NoNullStr {
+        self.as_mut()
+    }
+}
+
+impl<'a, H> AsRef<[u8]> for NoNullString<'a, H>
+    where H: Allocator,
+{
+    fn as_ref(&self) -> &[u8] {
+        &self.data
     }
 }
 
@@ -97,7 +152,8 @@ impl<'a, H> Debug for NoNullString<'a, H>
     where H: Allocator,
 {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
-        self.as_ref().fmt(w)
+        let nns: &NoNullStr = self.as_ref();
+        nns.fmt(w)
     }
 }
 
@@ -115,5 +171,14 @@ impl<'a, H> AsMutCStr for NoNullString<'a, H>
         };
         unsafe { self.data.set_len(cstr.len()); }
         Ok(cstr)
+    }
+}
+
+impl<'a, H> Eq<ByteStr> for NoNullString<'a, H>
+    where H: Allocator,
+{
+    fn eq(&self, other: &ByteStr) -> bool {
+        let bytes: &[u8] = self.as_ref();
+        bytes == other.as_ref()
     }
 }

@@ -52,8 +52,8 @@ impl<T> Mutex<T> {
     }
 }
 
-unsafe impl<T: Sync> Sync for Mutex<T> { }
-unsafe impl<T: Send> Send for Mutex<T> { }
+unsafe impl<T> Sync for Mutex<T> where T: Sync { }
+unsafe impl<T> Send for Mutex<T> where T: Send { }
 
 pub struct MutexGuard<'a, T: 'a> {
     guard: LockGuard<'a>,
@@ -79,8 +79,8 @@ impl<'a, T> MutexGuard<'a, T> {
     }
 }
 
-unsafe impl<'a, T: Sync> Sync for MutexGuard<'a, T> { }
-unsafe impl<'a, T: Sync> Send for MutexGuard<'a, T> { }
+unsafe impl<'a, T> Sync for MutexGuard<'a, T> where T: Sync { }
+unsafe impl<'a, T> Send for MutexGuard<'a, T> where T: Sync { }
 
 impl<'a, T> Deref for MutexGuard<'a, T> {
     type Target = T;

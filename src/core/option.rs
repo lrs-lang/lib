@@ -47,6 +47,15 @@ impl<T> Option<T> {
         }
     }
 
+    pub fn chain<U, F>(self, f: F) -> Option<U>
+        where F: FnOnce(T) -> Option<U>
+    {
+        match self {
+            Some(v) => f(v),
+            _ => None,
+        }
+    }
+
     /// Returns an `Option` with containing an immutable reference to the value (if any.)
     pub fn as_ref(&self) -> Option<&T> {
         match *self {

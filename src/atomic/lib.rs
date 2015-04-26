@@ -51,6 +51,7 @@ macro_rules! impl_atomic {
 
         pub const $init: $name = $name { val: Cell { data: 0 } };
 
+        impl Pod for $name { }
         impl Copy for $name { }
 
         unsafe impl Sync for $name { }

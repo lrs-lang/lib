@@ -5,7 +5,7 @@
 #[prelude_import] use base::prelude::*;
 use core::{mem};
 use base::rmo::{AsRef, AsMut};
-use str_one::c_str::{CStr};
+use str_one::c_str::{CStr, ToCStr};
 use fmt::{Debug, Write};
 use vec::{Vec};
 use alloc::{self, Allocator};
@@ -55,5 +55,13 @@ impl<'a, H> AsMut<CStr> for CString<'a, H>
 {
     fn as_mut(&mut self) -> &mut CStr {
         unsafe { CStr::from_bytes_unchecked_mut(&mut self.data[..]) }
+    }
+}
+
+impl<'b, H> ToCStr for CString<'b, H>
+    where H: Allocator,
+{
+    fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
+        self.deref().to_cstr(buf)
     }
 }

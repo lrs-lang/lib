@@ -52,7 +52,7 @@ impl RawCondvar {
 
     unsafe fn unsafe_wait<'a, 'b>(&self, user_lock: &'a Lock,
                                   user_guard: LockGuard<'b>) -> LockGuard<'a> { 
-        let mut node: Node = mem::zeroed();
+        let mut node: Node = mem::unsafe_zeroed();
 
         {
             let _cvguard = self.lock.lock();

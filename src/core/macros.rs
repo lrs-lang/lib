@@ -39,6 +39,17 @@ macro_rules! println {
     };
 }
 
+/// Like `println` but write to stder.
+#[macro_export]
+macro_rules! errln {
+    ($fmt:expr) => {
+        write!(::linux::fd::STDERR, concat!($fmt, "\n"))
+    };
+    ($fmt:expr, $($arg:tt)*) => {
+        write!(::linux::fd::STDERR, concat!($fmt, "\n"), $($arg)*)
+    };
+}
+
 /// Formats a value into a `ByteString`.
 #[macro_export]
 macro_rules! format {

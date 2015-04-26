@@ -48,6 +48,14 @@ impl<T, H> Rc<T, H>
             _ => None,
         }
     }
+
+    pub fn new_ref(&self) -> Rc<T, H> {
+        unsafe {
+            let data = &mut *self.data;
+            data.count.set(data.count.get() + 1);
+            Rc { data: self.data, _marker: PhantomData }
+        }
+    }
 }
 
 impl<T, H> !Send for Rc<T, H> { }
@@ -87,11 +95,7 @@ impl<T, H> Clone for Rc<T, H>
           T: Leak,
 {
     fn clone(&self) -> Result<Rc<T, H>> {
-        unsafe {
-            let data = &mut *self.data;
-            data.count.set(data.count.get() + 1);
-            Ok(Rc { data: self.data, _marker: PhantomData })
-        }
+        Ok(self.new_ref())
     }
 }
 

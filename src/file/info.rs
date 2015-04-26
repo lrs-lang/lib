@@ -77,7 +77,7 @@ impl Debug for Type {
 }
 
 /// Information about a file.
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct Info(stat);
 
 impl Info {

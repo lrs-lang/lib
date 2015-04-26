@@ -7,8 +7,8 @@ use arch_fns::{memchr, all_bytes};
 use core::{mem};
 use base::{error};
 use rmo::{Rmo, ToOwned};
-use str_one::{CStr, NoNullStr};
-use str_two::{CString, NoNullString};
+use str_one::{CStr, NoNullStr, ByteStr, AsByteStr};
+use str_two::{CString, NoNullString, ByteString};
 use alloc::{Allocator};
 
 pub trait ToCString {
@@ -167,7 +167,23 @@ impl ToCString for NoNullStr {
     }
 }
 
-impl<'b> ToCString for NoNullString<'b> {
+impl<'b, A> ToCString for NoNullString<'b, A>
+    where A: Allocator,
+{
+    fn to_cstring<H>(&self) -> Result<CString<'static, H>>
+        where H: Allocator,
+    {
+        self.deref().to_cstring()
+    }
+
+    fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
+        where H: Allocator,
+    {
+        self.deref().rmo_cstr(buf)
+    }
+}
+
+impl ToCString for ByteStr {
     fn to_cstring<H>(&self) -> Result<CString<'static, H>>
         where H: Allocator,
     {
@@ -178,5 +194,21 @@ impl<'b> ToCString for NoNullString<'b> {
         where H: Allocator,
     {
         self.as_ref().rmo_cstr(buf)
+    }
+}
+
+impl<'b, A> ToCString for ByteString<'b, A>
+    where A: Allocator,
+{
+    fn to_cstring<H>(&self) -> Result<CString<'static, H>>
+        where H: Allocator,
+    {
+        self.as_byte_str().to_cstring()
+    }
+
+    fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
+        where H: Allocator,
+    {
+        self.as_byte_str().rmo_cstr(buf)
     }
 }

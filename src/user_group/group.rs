@@ -281,8 +281,7 @@ impl<'a> Iterator for InformationIter<'a> {
                 Some(&b'\n') => &buf[..buf.len()-1],
                 _ => &buf[..],
             };
-            let mut parts = vec!();
-            buf.split(|&c| c == b':').collect(&mut parts);
+            let parts = buf.split(|&c| c == b':').collect();
             if parts.len() != 4 {
                 self.set_err(error::ProtocolError);
                 None

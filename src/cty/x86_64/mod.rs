@@ -282,7 +282,7 @@ pub fn bf64_set(f: u64, start: usize, width: usize, val: u64) -> u64 {
 // stat.h
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct stat {
     pub st_dev:        __kernel_ulong_t,
     pub st_ino:        __kernel_ulong_t,
@@ -307,7 +307,7 @@ pub struct stat {
 // x86_64 doesn't need a stat64. we (don't) use the genric one.
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct __old_kernel_stat {
     pub st_dev:   c_ushort,
     pub st_ino:   c_ushort,
@@ -331,7 +331,7 @@ pub type __fsword_t = __statfs_word;
 pub type fsblkcnt_t = __statfs_word;
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct statfs64 {
     pub f_type:     __statfs_word,
     pub f_bsize:    __statfs_word,
@@ -350,7 +350,7 @@ pub struct statfs64 {
 // eventpoll.h
 
 #[repr(C, packed)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct epoll_event {
     pub events: __u32,
     pub data:   __u64,
@@ -361,7 +361,7 @@ pub struct epoll_event {
 pub const NSIG : usize = 64;
 
 #[repr(C, packed)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct sigset_t {
     pub sig: [c_ulong; _NSIG / BITS_PER_C_ULONG],
 }
@@ -414,7 +414,7 @@ pub const SA_ONESHOT   : c_int = SA_RESETHAND;
 pub const SA_RESTORER  : c_int = 0x04000000;
 
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Pod)]
 pub struct sigaction {
     pub sa_handler: __sighandler_t,
     pub sa_flags: c_ulong, // this must be c_ulong because on x32 we usa a compat syscall
@@ -423,7 +423,7 @@ pub struct sigaction {
 }
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct sigaltstack {
     pub ss_sp: *mut c_void,
     pub ss_flags: c_int,
@@ -813,7 +813,7 @@ impl ::bpf_insn {
 // msgbuf.h
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct msqid64_ds {
     pub msg_perm:   ipc64_perm,
     pub msg_stime:  __kernel_time_t,
@@ -831,7 +831,7 @@ pub struct msqid64_ds {
 // sembuf.h
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct semid64_ds {
     pub sem_perm:  ipc64_perm,
     pub sem_otime: __kernel_time_t,
@@ -846,7 +846,7 @@ pub struct semid64_ds {
 // shmbuf.h
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct shmid64_ds {
     pub shm_perm:   ipc64_perm,
     pub shm_segsz:  __kernel_size_t, // XXX: was: size_t
@@ -868,7 +868,7 @@ pub const LDT_ENTRIES    : c_int = 8192;
 pub const LDT_ENTRY_SIZE : c_int = 8;
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct user_desc {
     pub entry_number: c_uint,
     pub base_addr:    c_uint,
@@ -904,13 +904,13 @@ impl user_desc {
 // siginfo.h
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct siginfo_t {
     data: [u64; SI_MAX_SIZE / 8],
 }
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct siginfo_sigfault {
     pub _addr: *mut c_void,
     pub _addr_lsb: c_short,

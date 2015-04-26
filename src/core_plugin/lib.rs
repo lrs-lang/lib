@@ -101,6 +101,10 @@ pub fn plugin_registrar(reg: &mut Registry) {
         Decorator(Box::new(lrs_ext::derive_copy_and_clone)));
 
     reg.register_syntax_extension(
+        token::intern("derive_Pod"),
+        Decorator(Box::new(lrs_ext::derive_pod_copy_and_clone)));
+
+    reg.register_syntax_extension(
         token::intern("derive_Eq"),
         Decorator(Box::new(lrs_ext::derive_eq)));
 

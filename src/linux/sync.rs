@@ -2,8 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//! Type markers
-
-pub use linux_core::marker::{
-    Sized, Pod, Copy, Sync, NoSync, Send, NoSend, Leak, PhantomData,
+pub use linux_lock::{
+    RawCondvar, RAW_CONDVAR_INIT, Lock, LockGuard, LOCK_INIT, DUMMY, Mutex,
+    MutexGuard, Condvar, CONDVAR_INIT,
+};
+pub use linux_queue::{
+    Queue,
 };

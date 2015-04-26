@@ -4,7 +4,7 @@
 
 #![crate_name = "linux_process"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, negate_unsigned)]
+#![feature(plugin, no_std, negate_unsigned, custom_derive)]
 #![plugin(linux_core_plugin)]
 #![no_std]
 #![allow(trivial_numeric_casts)]
@@ -23,6 +23,7 @@ extern crate linux_c_ptr_ptr as c_ptr_ptr;
 extern crate linux_rt as rt;
 extern crate linux_file as file;
 extern crate linux_rmo as rmo;
+extern crate linux_rv as rv;
 extern crate linux_env as env;
 
 mod linux {
@@ -35,10 +36,9 @@ use syscall::{getpid, getppid, exit_group};
 use cty::alias::{ProcessId};
 use cty::{c_int};
 
-pub use exec::{exec};
-
 pub mod ids;
-mod exec;
+pub mod exec;
+pub mod wait;
 
 /// Returns the process id of this process.
 pub fn this_process_id() -> ProcessId {

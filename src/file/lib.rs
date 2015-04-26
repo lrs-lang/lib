@@ -4,7 +4,7 @@
 
 #![crate_name = "linux_file"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, negate_unsigned)]
+#![feature(plugin, no_std, negate_unsigned, custom_derive)]
 #![plugin(linux_core_plugin)]
 #![no_std]
 
@@ -569,7 +569,7 @@ impl File {
 
     /// Returns information about the file.
     pub fn info(&self) -> Result<Info> {
-        let mut stat = unsafe { mem::zeroed() };
+        let mut stat = mem::zeroed();
         try!(rv!(fstatat(self.fd, CStr::empty(), &mut stat, AT_EMPTY_PATH)));
         Ok(info_from_stat(stat))
     }
@@ -731,7 +731,7 @@ impl File {
 
     /// Returns information about the file system of this file.
     pub fn fs_info(&self) -> Result<FileSystemInfo> {
-        let mut buf = unsafe { mem::zeroed() };
+        let mut buf = mem::zeroed();
         retry(|| fstatfs(self.fd, &mut buf)).map(|_| from_statfs(buf))
     }
 
@@ -969,7 +969,7 @@ impl File {
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
         let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
-        let mut stat = unsafe  { mem::zeroed() };
+        let mut stat = mem::zeroed();
         try!(rv!(fstatat(self.fd, &path, &mut stat, 0)));
         Ok(info_from_stat(stat))
     }
@@ -984,7 +984,7 @@ impl File {
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
         let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
-        let mut stat = unsafe  { mem::zeroed() };
+        let mut stat = mem::zeroed();
         try!(rv!(fstatat(self.fd, &path, &mut stat, AT_SYMLINK_NOFOLLOW)));
         Ok(info_from_stat(stat))
     }

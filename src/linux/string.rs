@@ -10,6 +10,7 @@ pub use linux_str_one::{
 };
 pub use linux_str_two::{
     ByteString, NoNullString, CString, String,
+    SByteString, SNoNullString, SCString, SString,
 };
 pub use linux_str_three::{
     ToCString,

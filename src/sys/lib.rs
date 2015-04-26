@@ -4,7 +4,7 @@
 
 #![crate_name = "linux_sys"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std)]
+#![feature(plugin, no_std, custom_derive)]
 #![plugin(linux_core_plugin)]
 #![no_std]
 
@@ -53,7 +53,7 @@ pub fn cpu_count() -> usize {
 }
 
 /// Returns information about the system in form of strings.
-#[derive(Copy)]
+#[derive(Pod)]
 pub struct StrInfo {
     buf: new_utsname,
     sysname_len:    u8,
@@ -71,7 +71,7 @@ impl StrInfo {
     /// it.
     #[inline(always)]
     pub fn new() -> StrInfo {
-        unsafe { mem::zeroed() }
+        mem::zeroed()
     }
 
     /// Retrieves information from the system and stores it in the Strinfo.
@@ -149,7 +149,7 @@ impl fmt::Debug for StrInfo {
 /// Returns information about the system in form of numbers.
 ///
 /// Someone should find out what the undocumented fields mean.
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct NumInfo {
     data: sysinfo,
 }
@@ -161,7 +161,7 @@ impl NumInfo {
     /// it.
     #[inline(always)]
     pub fn new() -> NumInfo {
-        unsafe { mem::zeroed() }
+        mem::zeroed()
     }
 
     /// Retrieves information from the system and stores it in the NumInfo.

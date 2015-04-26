@@ -45,7 +45,7 @@ pub type __kernel_uid16_t     = ::c_ushort;
 pub type __kernel_gid16_t     = ::c_ushort;
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct __kernel_fsid_t {
     pub val: [::c_int; 2],
 }
@@ -59,7 +59,7 @@ pub struct __kernel_fsid_t {
 pub const STAT_HAVE_NSEC: ::c_int = 1;
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct stat {
     pub st_dev:        ::c_ulong,
     pub st_ino:        ::c_ulong,
@@ -84,7 +84,7 @@ pub struct stat {
 }
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct stat64 {
     pub st_dev:        ::c_ulonglong,
     pub st_ino:        ::c_ulonglong,
@@ -109,7 +109,7 @@ pub struct stat64 {
 }
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct statfs {
     pub f_type:    ::__statfs_word,
     pub f_bsize:   ::__statfs_word,
@@ -199,7 +199,7 @@ pub const MINSIGSTKSZ : usize = 2048;
 pub const SIGSTKSZ    : usize = 8192;
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct sigset_t {
     pub sig: [::c_ulong; ::_NSIG_WORDS],
 }
@@ -207,7 +207,7 @@ pub struct sigset_t {
 pub type old_sigset_t = ::c_ulong;
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct sigaltstack {
     pub ss_sp: *mut ::c_void,
     pub ss_flags: ::c_int,
@@ -336,7 +336,7 @@ pub const F_OWNER_PID     : ::c_uint = 1;
 pub const F_OWNER_PGRP    : ::c_uint = 2;
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct f_owner_ex {
     pub type_: ::c_int,
     pub pid: ::__kernel_pid_t,
@@ -361,7 +361,7 @@ pub const LOCK_RW               : ::c_int = 192;
 // ipcbuf.h
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct ipc64_perm {
     pub key:  ::__kernel_key_t,
     pub uid:  ::__kernel_uid32_t,
@@ -540,7 +540,7 @@ pub type tcflag_t = ::c_uint;
 pub const NCCS : usize = 19;
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct termios {
     pub c_iflag:    ::tcflag_t,
     pub c_oflag:    ::tcflag_t,
@@ -551,7 +551,7 @@ pub struct termios {
 }
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct termios2 {
     pub c_iflag:    ::tcflag_t,
     pub c_oflag:    ::tcflag_t,
@@ -564,7 +564,7 @@ pub struct termios2 {
 }
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct ktermios {
     pub c_iflag:    ::tcflag_t,
     pub c_oflag:    ::tcflag_t,
@@ -728,7 +728,7 @@ pub const TCSAFLUSH : ::c_uint = 2;
 // termios.h
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct winsize {
     pub ws_row:    ::c_ushort,
     pub ws_col:    ::c_ushort,
@@ -739,7 +739,7 @@ pub struct winsize {
 pub const NCC : usize = 8;
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct termio {
     pub c_iflag:   ::c_ushort,
     pub c_oflag:   ::c_ushort,
@@ -783,7 +783,7 @@ pub const POLLFREE       : ::c_uint = 0x4000;
 pub const POLL_BUSY_LOOP : ::c_uint = 0x8000;
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct pollfd {
     pub fd:      ::c_int,
     pub events:  ::c_short,
@@ -814,7 +814,7 @@ pub const RLIM_INFINITY     : ::c_ulong = !0;
 // shmbuf.h
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct shminfo64 {
     pub shmmax:    ::__kernel_ulong_t,
     pub shmmin:    ::__kernel_ulong_t,
@@ -830,7 +830,7 @@ pub struct shminfo64 {
 // eventpoll.h
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct epoll_event {
     pub events: ::__u32,
     pub data:   ::__u64,
@@ -845,7 +845,7 @@ pub const POSIX_FADV_NOREUSE  : ::c_int = 5;
 
 // XXX: Assumes that usize == *void >= int
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct sigval_t {
     _data: usize,
 }
@@ -869,14 +869,14 @@ pub type __ARCH_SI_CLOCK_T = ::__kernel_clock_t;
 pub const BYTES_PER_ARCH_SI_UID_T: usize = ::BYTES_PER_INT;
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct siginfo_kill {
     pub _pid: ::__kernel_pid_t,
     pub _uid: ::__ARCH_SI_UID_T,
 }
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct siginfo_timer {
     pub _tid: ::__kernel_timer_t,
     pub _overrun: ::c_int,
@@ -886,7 +886,7 @@ pub struct siginfo_timer {
 }
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct siginfo_rt {
     pub _pid: ::__kernel_pid_t,
     pub _uid: ::__ARCH_SI_UID_T,
@@ -894,7 +894,7 @@ pub struct siginfo_rt {
 }
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct siginfo_sigchld {
     pub _pid: ::__kernel_pid_t,
     pub _uid: ::__ARCH_SI_UID_T,
@@ -904,21 +904,21 @@ pub struct siginfo_sigchld {
 }
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct siginfo_addr_bnd {
     pub _lower: *mut ::c_void,
     pub _upper: *mut ::c_void,
 }
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct siginfo_sigpoll {
     pub _band: ::__ARCH_SI_BAND_T,
     pub _fd: ::c_int,
 }
 
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct siginfo_sigsys {
     pub _call_addr: *mut ::c_void,
     pub _syscall: ::c_int,
@@ -926,48 +926,68 @@ pub struct siginfo_sigsys {
 }
 
 impl ::siginfo_t {
+    pub fn si_signo(&self) -> ::c_int {
+        unsafe { *(self as *const _ as *const ::c_int) }
+    }
+
     pub fn si_signo_mut(&mut self) -> &mut ::c_int {
         unsafe { &mut *(self as *mut _ as *mut ::c_int) }
+    }
+
+    pub fn si_errno(&self) -> ::c_int {
+        unsafe { *(self as *const _ as *const ::c_int).add(1) }
     }
 
     pub fn si_errno_mut(&mut self) -> &mut ::c_int {
         unsafe { &mut *(self as *mut _ as *mut ::c_int).add(1) }
     }
 
+    pub fn si_code(&self) -> ::c_int {
+        unsafe { *(self as *const _ as *const ::c_int).add(2) }
+    }
+
     pub fn si_code_mut(&mut self) -> &mut ::c_int {
         unsafe { &mut *(self as *mut _ as *mut ::c_int).add(2) }
     }
 
-    fn data(&mut self) -> *mut u8 {
+    fn data(&self) -> *const u8 {
+        unsafe { (self as *const _ as *const u8).add(::__ARCH_SI_PREAMBLE_SIZE) }
+    }
+
+    fn data_mut(&mut self) -> *mut u8 {
         unsafe { (self as *mut _ as *mut u8).add(::__ARCH_SI_PREAMBLE_SIZE) }
     }
 
     pub fn _kill_mut(&mut self) -> &mut ::siginfo_kill {
-        unsafe { &mut *(self.data() as *mut _) }
+        unsafe { &mut *(self.data_mut() as *mut _) }
     }
 
     pub fn _timer_mut(&mut self) -> &mut ::siginfo_timer {
-        unsafe { &mut *(self.data() as *mut _) }
+        unsafe { &mut *(self.data_mut() as *mut _) }
     }
 
     pub fn _rt_mut(&mut self) -> &mut ::siginfo_rt {
-        unsafe { &mut *(self.data() as *mut _) }
+        unsafe { &mut *(self.data_mut() as *mut _) }
+    }
+
+    pub fn _sigchld(&self) -> &::siginfo_sigchld {
+        unsafe { &*(self.data() as *const _) }
     }
 
     pub fn _sigchld_mut(&mut self) -> &mut ::siginfo_sigchld {
-        unsafe { &mut *(self.data() as *mut _) }
+        unsafe { &mut *(self.data_mut() as *mut _) }
     }
 
     pub fn _sigfault_mut(&mut self) -> &mut ::siginfo_sigfault {
-        unsafe { &mut *(self.data() as *mut _) }
+        unsafe { &mut *(self.data_mut() as *mut _) }
     }
 
     pub fn _sigpoll_mut(&mut self) -> &mut ::siginfo_sigpoll {
-        unsafe { &mut *(self.data() as *mut _) }
+        unsafe { &mut *(self.data_mut() as *mut _) }
     }
 
     pub fn _sigsys_mut(&mut self) -> &mut ::siginfo_sigsys {
-        unsafe { &mut *(self.data() as *mut _) }
+        unsafe { &mut *(self.data_mut() as *mut _) }
     }
 }
 

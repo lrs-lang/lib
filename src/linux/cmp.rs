@@ -7,7 +7,6 @@
 //! This module provides structures and functions that operate on objects in a partial or
 //! total order.
 
-pub use linux_base::cmp::{
+pub use linux_core::cmp::{
     PartialOrd, Ord, Ordering, min, min_ref, min_mut, max, max_ref, max_mut,
 };
-pub use linux_base::sort::{sort, sort_by};

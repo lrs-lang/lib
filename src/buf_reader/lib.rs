@@ -37,7 +37,7 @@ pub struct BufReader<'a, R, Heap = alloc::Heap>
     _marker: PhantomData<(&'a (), Heap)>,
 }
 
-impl<'a, R, H> BufReader<'a, R, H>
+impl<R, H> BufReader<'static, R, H>
     where R: Read,
           H: Allocator,
 {
@@ -59,7 +59,11 @@ impl<'a, R, H> BufReader<'a, R, H>
             _marker: PhantomData,
         })
     }
+}
 
+impl<'a, R> BufReader<'a, R, NoMem>
+    where R: Read,
+{
     /// Uses `buf` as a buffer.
     ///
     /// Note that the length of `buf` will be decreased to the previous power of two.
@@ -77,7 +81,12 @@ impl<'a, R, H> BufReader<'a, R, H>
             _marker: PhantomData,
         }
     }
+}
 
+impl<'a, R, H> BufReader<'a, R, H>
+    where R: Read,
+          H: Allocator,
+{
     /// The number of currently buffered bytes.
     pub fn available(&self) -> usize {
         self.end.wrapping_sub(self.start)

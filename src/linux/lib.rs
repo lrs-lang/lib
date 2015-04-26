@@ -17,7 +17,7 @@
 #![no_std]
 
 #[macro_use]
-#[macro_reexport(abort, assert, try, println, vec, format)]
+#[macro_reexport(abort, assert, try, println, errln, vec, format)]
 extern crate linux_core;
 extern crate linux_alloc;
 extern crate linux_arch_fns;
@@ -50,7 +50,6 @@ extern crate linux_rt;
 extern crate linux_rv;
 extern crate linux_saturating;
 extern crate linux_socket;
-extern crate linux_sort;
 extern crate linux_str_one;
 extern crate linux_str_three;
 extern crate linux_str_two;
@@ -97,6 +96,8 @@ pub mod util;
 pub mod vec;
 pub mod thread;
 pub mod rc;
+pub mod sync;
+pub mod cmp;
 
 // Annoying that these have to be top-modules.
 pub mod i8;
@@ -113,9 +114,12 @@ pub mod usize;
 pub mod prelude {
     //! The prelude.
 
+    pub use linux_core::cmp::{PartialOrd, Ord};
     pub use linux_base::prelude::*;
+    pub use linux_base::clone::{Clone};
     pub use linux_parse::{Parse};
     pub use linux_vec::{Vec};
+    pub use linux_rmo::{ToOwned};
 }
 
 pub mod core {

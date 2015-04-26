@@ -6,6 +6,7 @@ use ops::{
     Eq, Add, Sub, Mul, Div, Rem, BitOr, BitAnd, BitXor, Shl, Shr, Range, RangeFrom,
     RangeTo, Ordering, PartialOrd,
 };
+use marker::{Pod};
 use cmp::{Ord};
 use iter::{Iterator, IntoIterator};
 use option::{Option};
@@ -34,7 +35,7 @@ macro_rules! int_impls {
         impl $t {
             /// Adds `other` and `self` without triggering overflow checking.
             pub fn wrapping_add(self, other: $t) -> $t {
-                unsafe { intrinsics::overflowing_sub(self, other) }
+                unsafe { intrinsics::overflowing_add(self, other) }
             }
 
             /// Like `wrapping_add`.
@@ -437,6 +438,8 @@ macro_rules! int_impls {
             type IntoIter = Range<$t>;
             fn into_iter(self) -> Range<$t> { Range { start: $t::MIN, end: self.end } }
         }
+
+        impl Pod for $t { }
     }
 }
 

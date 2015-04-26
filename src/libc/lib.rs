@@ -12,7 +12,7 @@
 #[macro_use]
 extern crate linux_core as core;
 
-use core::marker::{Copy};
+use core::marker::{Pod, Copy};
 pub use arch::{pthread_attr_t, pthread_t};
 
 #[cfg(all(target_arch = "x86_64", target_pointer_width = "64"))]
@@ -27,10 +27,14 @@ mod arch;
 pub const PTHREAD_CREATE_JOINABLE: i32 = 0;
 pub const PTHREAD_CREATE_DETACHED: i32 = 1;
 
+impl Pod for pthread_t { }
 impl Copy for pthread_t { }
 
+impl Pod for pthread_attr_t { }
+impl Copy for pthread_attr_t { }
+
 #[allow(improper_ctypes)]
-#[link(name = "c")]
+// #[link(name = "c")]
 extern {
     pub static mut environ: *const *const u8;
 
@@ -44,7 +48,7 @@ extern {
 }
 
 #[allow(improper_ctypes)]
-#[link(name = "pthread")]
+// #[link(name = "pthread")]
 extern {
     pub fn pthread_create(thread: *mut pthread_t, attr: *const pthread_attr_t,
                           start: unsafe extern fn(*mut u8) -> *mut u8,

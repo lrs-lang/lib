@@ -26,6 +26,7 @@ use cty::{
     timespec, dev_t, c_void, clockid_t, itimerspec, epoll_event, sigset_t, new_utsname,
     sysinfo, c_uint, c_ulong, umode_t, k_uint, loff_t, k_ulong, F_DUPFD_CLOEXEC, F_GETFL,
     F_SETFL, F_GETFD, F_SETFD, sockaddr, user_msghdr, mmsghdr, FUTEX_WAIT, FUTEX_WAKE,
+    siginfo_t, rusage,
 };
 
 // XXX: iovec _MUST_ be the same as &mut [u8]
@@ -620,4 +621,18 @@ pub fn mremap(addr: usize, old_len: usize, new_len: usize, flags: c_int,
         r::mremap(addr as k_ulong, old_len as k_ulong, new_len as k_ulong,
                   flags as k_ulong, new_addr as k_ulong) as isize
     }
+}
+
+pub fn waitid(which: c_int, upid: pid_t, infop: &mut siginfo_t, options: c_int,
+              ru: Option<&mut rusage>) -> c_int {
+    let ru = ru.map(|r| r as *mut _).unwrap_or(0 as *mut _);
+    unsafe { r::waitid(which, upid, infop, options, ru) }
+}
+
+pub fn getcwd(buf: &mut [u8]) -> c_int {
+    unsafe { r::getcwd(buf.as_mut_ptr() as *mut c_char, buf.len() as k_ulong) }
+}
+
+pub fn chdir(path: &CStr) -> c_int {
+    unsafe { r::chdir(path.as_ptr()) }
 }

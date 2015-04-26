@@ -4,7 +4,7 @@
 
 #![crate_name = "linux_thread"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, optin_builtin_traits)]
+#![feature(plugin, no_std, optin_builtin_traits, custom_derive)]
 #![plugin(linux_core_plugin)]
 #![no_std]
 
@@ -69,6 +69,7 @@ impl<'a> !Leak for JoinGuard<'a> { }
 /// A thread-builder
 ///
 /// This can be used to modify properties of the thread before spawning it.
+#[derive(Pod)]
 pub struct Builder {
     attr: pthread_attr_t,
 }

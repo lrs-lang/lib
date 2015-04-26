@@ -4,7 +4,7 @@
 
 #![crate_name = "linux_poll"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std)]
+#![feature(plugin, no_std, custom_derive)]
 #![plugin(linux_core_plugin)]
 #![no_std]
 
@@ -33,7 +33,7 @@ use fmt::{Debug, Write};
 use time_base::{Time};
 
 /// Flags for modifying a polled file descriptor.
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct Flags(u32);
 
 impl Flags {
@@ -80,7 +80,7 @@ pub const EMPTY_EVENT: Event = Event { data: epoll_event { events: 0, data: 0 } 
 
 /// An event returned from a `wait` call.
 #[repr(C)]
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct Event {
     data: epoll_event,
 }

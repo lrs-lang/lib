@@ -9,7 +9,7 @@ use cty::alias::{UserId, GroupId};
 use fmt::{Debug, Write};
 
 /// User ids of a process.
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct UserIds {
     /// Real id
     pub real:      UserId,
@@ -45,7 +45,7 @@ impl Debug for UserIds {
 }
 
 /// Group ids of a process.
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct GroupIds {
     /// Real id
     pub real:      GroupId,

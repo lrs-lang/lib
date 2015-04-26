@@ -5,9 +5,11 @@
 use mem::{self};
 use repr::{Slice, Repr};
 use ops::{Eq, Index, IndexMut, Range, RangeTo, RangeFrom, RangeFull, FnMut, Ordering};
+use cmp::{Ord};
 use option::{Option};
 use option::Option::{None, Some};
 use iter::{Iterator};
+use sort::{sort};
 
 /// Creates a slice from a pointer and a length.
 ///
@@ -108,6 +110,36 @@ impl<T> [T] {
         let right = unsafe { from_ptr(repr.ptr.add(at), repr.len - at) };
         (left, right)
     }
+
+    pub fn starts_with(&self, other: &[T]) -> bool
+        where T: Eq,
+    {
+        if self.len() < other.len() {
+            return false;
+        }
+
+        for i in 0..other.len() {
+            if self[i] != other[i] {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    /// Sorts the slice in-place.
+    pub fn sort(&mut self)
+        where T: Ord,
+    {
+        self.sort_by(|one, two| one.cmp(two));
+    }
+
+    /// Sorts the slice in-place with the provided comparison function.
+    pub fn sort_by<F>(&mut self, mut f: F)
+        where F: FnMut(&T, &T) -> Ordering
+    {
+        unsafe { sort(self, &mut f); }
+    }
 }
 
 /// See the `iter` documentation.
@@ -139,15 +171,19 @@ impl<'a, T, F> Iterator for Split<'a, T, F>
 
         let mut i = 0;
         while i < self.slice.len() {
-            i += 1;
-            if (self.f)(&self.slice[i-1]) {
+            if (self.f)(&self.slice[i]) {
                 break;
             }
+            i += 1;
         }
 
-        let (left, right) = self.slice.split_at(i);
-        self.slice = right;
-        Some(&left[..left.len() - 1])
+        if i < self.slice.len() {
+            let (left, right) = self.slice.split_at(i + 1);
+            self.slice = right;
+            Some(&left[..left.len() - 1])
+        } else {
+            Some(mem::replace(&mut self.slice, &[]))
+        }
     }
 }
 

@@ -20,7 +20,7 @@ pub struct Timer {
 impl Timer {
     /// Disables the timer.
     pub fn disable(&self) -> Result {
-        let arg = unsafe { mem::zeroed() };
+        let arg = mem::zeroed();
         rv!(timerfd_settime(self.fd, 0, &arg, None))
     }
 
@@ -54,7 +54,7 @@ impl Timer {
     /// Sets the timer to expire once at the absolute `when`.
     pub fn once_at(&self, when: Time) -> Result {
         let arg = itimerspec {
-            it_interval: unsafe { mem::zeroed() },
+            it_interval: mem::zeroed(),
             it_value: time_to_timespec(when),
         };
         rv!(timerfd_settime(self.fd, TFD_TIMER_ABSTIME, &arg, None))
@@ -63,7 +63,7 @@ impl Timer {
     /// Sets the timer to expire in `when` time units.
     pub fn once_in(&self, when: Time) -> Result {
         let arg = itimerspec {
-            it_interval: unsafe { mem::zeroed() },
+            it_interval: mem::zeroed(),
             it_value: time_to_timespec(when),
         };
         rv!(timerfd_settime(self.fd, 0, &arg, None))
@@ -73,7 +73,7 @@ impl Timer {
     ///
     /// TODO: Document this.
     pub fn status(&self) -> Result<(Time, Time)> {
-        let mut arg = unsafe { mem::zeroed() };
+        let mut arg = mem::zeroed();
         try!(rv!(timerfd_gettime(self.fd, &mut arg)));
         Ok((time_from_timespec(arg.it_interval), time_from_timespec(arg.it_value)))
     }

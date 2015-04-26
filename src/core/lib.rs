@@ -30,6 +30,8 @@ pub mod repr;
 pub mod slice;
 pub mod str;
 
+mod sort;
+
 pub mod linux {
     pub use ::{marker, ops, intrinsics, option, mem};
 }
@@ -39,7 +41,7 @@ mod core {
 }
 
 pub mod prelude {
-    pub use marker::{Sized, Copy, Send, Sync, NoSend, NoSync, PhantomData};
+    pub use marker::{Sized, Copy, Pod, Send, Sync, NoSend, NoSync, PhantomData};
 
     pub use option::{Option};
     pub use option::Option::{Some, None};

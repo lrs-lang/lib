@@ -4,7 +4,7 @@
 
 #![crate_name = "linux_fs"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std)]
+#![feature(plugin, no_std, custom_derive)]
 #![plugin(linux_core_plugin)]
 #![no_std]
 #![allow(trivial_numeric_casts)]

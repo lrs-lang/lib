@@ -9,7 +9,7 @@ use parse::{Parsable};
 use cty::{self, c_int, umode_t, S_IROTH, S_IWOTH, S_IXOTH};
 
 /// Flags for opening and modifying a file.
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct Flags {
     flags: c_int,
     mode: umode_t,
@@ -175,7 +175,7 @@ pub fn flags_to_int(f: Flags) -> c_int {
 }
 
 /// The permissions of a file.
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct Mode {
     mode: umode_t,
 }
@@ -452,7 +452,7 @@ impl Parsable for Mode {
 ///
 /// This type is used to check whether a file can be accessed with a certain set of
 /// permissions.
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct AccessMode {
     mode: umode_t,
 }

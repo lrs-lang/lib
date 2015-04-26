@@ -8,7 +8,7 @@ pub use cty_base::{errno};
 pub use cty_base::types::{c_int};
 
 /// A standard error.
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct Errno(pub c_int);
 
 macro_rules! create {

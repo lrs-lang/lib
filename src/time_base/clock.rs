@@ -16,7 +16,7 @@ use super::{Time, time_from_timespec, time_to_timespec};
 use timer::{Timer};
 
 /// A clock that can be used to measure time.
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct Clock(clockid_t);
 
 /// Real ("wall time") clock that measures the time since 1970-01-01T00:00:00+00:00.
@@ -47,7 +47,7 @@ pub const CLOCK_TAI                : Clock = Clock(11);
 impl Clock {
     /// Returns the current time of the clock.
     pub fn get_time(self) -> Result<Time> {
-        let mut timespec = unsafe { mem::zeroed() };
+        let mut timespec = mem::zeroed();
         try!(rv!(clock_gettime(self.0, &mut timespec)));
         Ok(time_from_timespec(timespec))
     }
@@ -60,7 +60,7 @@ impl Clock {
 
     /// Returns the resolution of the clock.
     pub fn resolution(self) -> Result<Time> {
-        let mut timespec = unsafe { mem::zeroed() };
+        let mut timespec = mem::zeroed();
         try!(rv!(clock_getres(self.0, &mut timespec)));
         Ok(time_from_timespec(timespec))
     }
@@ -68,7 +68,7 @@ impl Clock {
     /// Sleeps to the specified absolute time.
     pub fn sleep_to(self, t: Time) -> Result {
         let time = time_to_timespec(t);
-        let mut rem = unsafe { mem::zeroed() };
+        let mut rem = mem::zeroed();
         retry(|| clock_nanosleep(self.0, TIMER_ABSTIME, &time, &mut rem)).map(|_| ())
     }
 

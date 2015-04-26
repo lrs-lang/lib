@@ -17,7 +17,7 @@ macro_rules! mallocx_align {
 }
 
 #[allow(improper_ctypes)]
-#[link(name = "jemalloc")]
+// #[link(name = "jemalloc")]
 extern {
     fn je_mallocx(size: usize, flags: c_int) -> *mut u8;
     fn je_rallocx(ptr: *mut u8, size: usize, flags: c_int) -> *mut u8;

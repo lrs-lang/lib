@@ -22,6 +22,11 @@ pub use no_null_string::{NoNullString};
 pub use c_string::{CString};
 pub use string::{String};
 
+pub type SByteString   <H = alloc::Heap> = ByteString   <'static, H>;
+pub type SNoNullString <H = alloc::Heap> = NoNullString <'static, H>;
+pub type SCString      <H = alloc::Heap> = CString      <'static, H>;
+pub type SString       <H = alloc::Heap> = String       <'static, H>;
+
 mod linux { pub use fmt::linux::*; }
 
 pub mod byte_string;

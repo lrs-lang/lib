@@ -39,9 +39,10 @@ impl<T: Iterator> IteratorExt for T { }
 
 /// Extensions for the `Iterator` trait.
 pub trait IteratorExt : Iterator+Sized {
-    fn collect(self, vec: &mut Vec<Self::Item>) -> Result {
+    fn collect(self) -> Vec<'static, Self::Item> {
+        let mut vec = Vec::new();
         vec.extend(self);
-        Ok(())
+        vec
     }
 
     /// Sums all elements in the iterator, starting with `start`.
@@ -58,6 +59,12 @@ pub trait IteratorExt : Iterator+Sized {
         where F: FnMut(Self::Item) -> T,
     {
         Map { iter: self, f: f }
+    }
+
+    fn filter<F>(self, f: F) -> Filter<F, Self>
+        where F: FnMut(&Self::Item) -> bool,
+    {
+        Filter { iter: self, f: f }
     }
 
     /// Runs the iterator and places the elements into the buffer until the buffer or the
@@ -95,5 +102,31 @@ impl<T, F, I> Iterator for Map<T, F, I>
     type Item = T;
     fn next(&mut self) -> Option<T> {
         self.iter.next().map(|i| (self.f)(i))
+    }
+}
+
+/// See `filter`.
+pub struct Filter<F, I>
+    where I: Iterator,
+          F: FnMut(&I::Item) -> bool,
+{
+    iter: I,
+    f: F,
+}
+
+impl<F, I> Iterator for Filter<F, I>
+    where I: Iterator,
+          F: FnMut(&I::Item) -> bool,
+{
+    type Item = I::Item;
+    fn next(&mut self) -> Option<I::Item> {
+        loop {
+            match self.iter.next() {
+                Some(t) => if (self.f)(&t) {
+                    return Some(t);
+                },
+                _ => return None,
+            }
+        }
     }
 }

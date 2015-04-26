@@ -32,7 +32,10 @@ also provides a clean documentation of the Linux kernel API.
 
 executes in this order before and if the flow of control returns to the
 surrounding block. This makes it much easier to reason about unsafe code and
-allows us to write clearer and faster programs.
+allows us to write clearer and faster programs. In particular, it fixes the
+inversion of safety that existed between C and unsafe Rust code.
+
+The presence 
 
 === glibc, musl, or no libc at all
 

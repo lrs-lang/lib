@@ -8,9 +8,9 @@ use ext::deriving::generic::ty::{Path, LifetimeBounds};
 
 use ptr::{P};
 
-pub fn derive_copy(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Item,
-                       push: &mut FnMut(P<Item>)) {
-    let path = Path::new(vec!("linux", "marker", "Copy"));
+pub fn derive_marker(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Item,
+                     push: &mut FnMut(P<Item>), name: &str) {
+    let path = Path::new(vec!("linux", "marker", name));
 
     let trait_def = TraitDef {
         span: span,
@@ -25,8 +25,19 @@ pub fn derive_copy(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Item,
     trait_def.expand(cx, mitem, item, push)
 }
 
+pub fn derive_copy(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Item,
+                   push: &mut FnMut(P<Item>)) {
+    derive_marker(cx, span, mitem, item, push, "Copy");
+}
+
 pub fn derive_copy_and_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem,
                                  item: &Item, push: &mut FnMut(P<Item>)) {
     derive_copy(cx, span, mitem, item, push);
     super::clone::derive_clone_for_copy(cx, span, mitem, item, push);
+}
+
+pub fn derive_pod_copy_and_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem,
+                                 item: &Item, push: &mut FnMut(P<Item>)) {
+    derive_marker(cx, span, mitem, item, push, "Pod");
+    derive_copy_and_clone(cx, span, mitem, item, push);
 }

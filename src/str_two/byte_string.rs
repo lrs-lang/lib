@@ -7,8 +7,9 @@ use core::{mem};
 use core::ops::{Eq};
 use base::clone::{Clone};
 use base::rmo::{AsRef, AsMut};
-use str_one::byte_str::{ByteStr};
-use fmt::{Debug, Write};
+use str_one::{ByteStr, ToCStr, CStr, AsByteStr};
+use no_null_string::{NoNullString};
+use fmt::{Debug, Display, Write};
 use vec::{Vec};
 use alloc::{self, Allocator};
 
@@ -23,6 +24,10 @@ impl<'a, H> ByteString<'a, H>
 {
     pub fn from_vec(v: Vec<'a, u8, H>) -> ByteString<'a, H> {
         ByteString { data: v }
+    }
+
+    pub fn unwrap(self) -> Vec<'a, u8, H> {
+        self.data
     }
 }
 
@@ -51,19 +56,27 @@ impl<'a, H> Debug for ByteString<'a, H>
     }
 }
 
-impl<'a, H> AsRef<ByteStr> for ByteString<'a, H>
+impl<'a, H> Display for ByteString<'a, H>
     where H: Allocator,
 {
-    fn as_ref(&self) -> &ByteStr {
-        self.deref()
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
+        Display::fmt(self.deref(), w)
     }
 }
 
-impl<'a, H> AsMut<ByteStr> for ByteString<'a, H>
+impl<'a, H> AsRef<[u8]> for ByteString<'a, H>
     where H: Allocator,
 {
-    fn as_mut(&mut self) -> &mut ByteStr {
-        self.deref_mut()
+    fn as_ref(&self) -> &[u8] {
+        &self.data[..]
+    }
+}
+
+impl<'a, H> AsMut<[u8]> for ByteString<'a, H>
+    where H: Allocator,
+{
+    fn as_mut(&mut self) -> &mut [u8] {
+        &mut self.data[..]
     }
 }
 
@@ -88,6 +101,32 @@ impl<'a, H> Eq<str> for ByteString<'a, H>
     where H: Allocator,
 {
     fn eq(&self, other: &str) -> bool {
-        self.as_ref().eq(other)
+        let bytes: &[u8] = self.as_ref();
+        bytes.eq(other)
+    }
+}
+
+impl<'a, H> Eq<ByteStr> for ByteString<'a, H>
+    where H: Allocator,
+{
+    fn eq(&self, other: &ByteStr) -> bool {
+        self.as_ref() == other
+    }
+}
+
+impl<'a, 'b, H1, H2> Eq<NoNullString<'b, H1>> for ByteString<'a, H2>
+    where H1: Allocator,
+          H2: Allocator,
+{
+    fn eq(&self, other: &NoNullString<'b, H1>) -> bool {
+        self.deref() == other.as_byte_str()
+    }
+}
+
+impl<'b, H> ToCStr for ByteString<'b, H>
+    where H: Allocator,
+{
+    fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
+        self.data.to_cstr(buf)
     }
 }

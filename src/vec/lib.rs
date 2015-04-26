@@ -169,6 +169,7 @@ impl<'a, T, H> Vec<'a, T, H>
     }
 
     pub unsafe fn set_len(&mut self, len: usize) {
+        assert!(len <= self.cap);
         self.len = len;
     }
 }
@@ -199,6 +200,9 @@ impl<'a, H> Vec<'a, u8, H>
         Ok(len)
     }
 }
+
+unsafe impl<'a, T, H> Sync for Vec<'a, T, H> where T: Sync, H: Allocator, { }
+unsafe impl<'a, T, H> Send for Vec<'a, T, H> where T: Send, H: Allocator+Send { }
 
 impl<'a, T, H> Drop for Vec<'a, T, H>
     where H: Allocator,
@@ -372,10 +376,18 @@ impl<'a, H> Write for Vec<'a, u8, H>
 
     fn gather_write(&mut self, mut buf: &[&[u8]]) -> Result<usize> {
         let mut sum = 0;
-        while self.len() > 0 && buf.len() > 0 {
+        while buf.len() > 0 {
             sum += try!(self.write(&buf[0]));
             buf = &buf[1..];
         }
         Ok(sum)
+    }
+}
+
+impl<'a, H> Vec<'a, u8, H>
+    where H: Allocator,
+{
+    pub fn unused(&mut self) -> &mut [u8] {
+        unsafe { slice::from_ptr(self.ptr.add(self.len), self.cap - self.len) }
     }
 }

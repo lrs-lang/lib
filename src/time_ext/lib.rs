@@ -4,7 +4,7 @@
 
 #![crate_name = "linux_time_ext"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, negate_unsigned)]
+#![feature(plugin, no_std, negate_unsigned, custom_derive)]
 #![plugin(linux_core_plugin)]
 #![no_std]
 

@@ -24,7 +24,7 @@ pub use ::common::{
     vhangup, pivot_root, prctl, adjtimex, setrlimit, chroot, sync,
     acct, settimeofday, mount, umount, swapon, swapoff, reboot, sethostname,
     setdomainname, init_module, delete_module, quotactl,
-    gettid, readahead, setxattr, lsetxattr, fsetxattr,
+    gettid, readahead, setxattr, lsetxattr, fsetxattr, waitid,
     getxattr, lgetxattr, fgetxattr, listxattr, llistxattr, flistxattr, removexattr,
     lremovexattr, fremovexattr, tkill, time, futex, sched_setaffinity, sched_getaffinity,
     io_destroy, io_getevents, io_cancel, lookup_dcookie, epoll_create, remap_file_pages,

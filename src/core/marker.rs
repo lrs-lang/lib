@@ -12,7 +12,17 @@ pub trait Sized { }
 
 impl Sized for .. { }
 
+/// Objects that are safe to use if they contain a random bit pattern
+///
+/// That is, types without invarints. For example, immutable slices are not `Pod` for the
+/// same reason `slice::from_ptr` is not safe. Note that only structs and primitives can
+/// be `Pod`.
+pub trait Pod : Copy { }
+
 /// Objects that can safely be copied via `memcpy`
+///
+/// That is, objects which you can copy and use both the copy and the original. For
+/// example, immutable slices are `Copy`. This is a weaker form of `Pod`.
 #[lang = "copy"]
 pub trait Copy { }
 

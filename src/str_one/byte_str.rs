@@ -7,7 +7,7 @@ use core::ops::{Index, IndexMut, Range, RangeFrom, RangeTo, RangeFull};
 use core::{mem, str};
 use core::ops::{Eq};
 use base::rmo::{AsRef, AsMut};
-use fmt::{self, Debug, UpperHex, Write};
+use fmt::{self, Debug, Display, UpperHex, Write};
 use parse::{Parse, Parsable};
 
 use c_str::{CStr, ToCStr};
@@ -145,6 +145,12 @@ impl Debug for ByteStr {
         }
         try!(w.write_all(b"\""));
         Ok(())
+    }
+}
+
+impl Display for ByteStr {
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
+        w.write_all(&self.data).ignore_ok()
     }
 }
 

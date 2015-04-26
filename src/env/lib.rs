@@ -9,18 +9,30 @@
 #![no_std]
 
 #[macro_use]
-extern crate linux_core as core;
-extern crate linux_base as base;
-extern crate linux_str_one as str_one;
-extern crate linux_rt as rt;
+extern crate linux_core      as core;
+extern crate linux_base      as base;
+extern crate linux_str_one   as str_one;
+extern crate linux_str_two   as str_two;
+extern crate linux_str_three as str_three;
+extern crate linux_rt        as rt;
+extern crate linux_cty       as cty;
+extern crate linux_rmo       as rmo;
+extern crate linux_alloc     as alloc;
+extern crate linux_syscall   as syscall;
 
 #[prelude_import] use base::prelude::*;
 use core::slice::{Split};
+use core::{mem};
 use str_one::{AsByteStr, CStr, NoNullStr};
+use str_two::{NoNullString};
+use str_three::{ToCString};
+use alloc::{Allocator, FbHeap};
 use rt::{env};
 use base::{error};
+use cty::{PATH_MAX};
+use rmo::{Rmo};
 
-mod linux { pub use base::linux::*; }
+mod linux { pub use base::linux::*; pub use cty; }
 
 pub fn var<S>(name: S) -> Result<&'static CStr>
     where S: AsByteStr,
@@ -55,4 +67,31 @@ impl Iterator for PathIter {
     fn next(&mut self) -> Option<&'static NoNullStr> {
         self.path.next().map(|p| unsafe { NoNullStr::from_bytes_unchecked(p) })
     }
+}
+
+pub fn cwd<H>(buf: &mut NoNullString<H>) -> Result
+    where H: Allocator,
+{
+    for &res in &[0, 128, 256, 512, 1024, 2048, 4096][..] {
+        try!(buf.reserve(res));
+        let size = match rv!(syscall::getcwd(buf.unused()), -> usize) {
+            Ok(s) => s,
+            Err(error::RangeError) => continue,
+            Err(e) => return Err(e),
+        };
+        let buf_len = buf.len();
+        unsafe { buf.set_len(buf_len + size - 1); }
+        return Ok(());
+    }
+    // This should never happen because the kernel returns PathTooLong if the cwd doesn't
+    // fit in one page = 4096 bytes which is the last thing we try above.
+    abort!();
+}
+
+pub fn set_cwd<P>(path: P) -> Result
+    where P: ToCString,
+{
+    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+    let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
+    rv!(syscall::chdir(&path))
 }

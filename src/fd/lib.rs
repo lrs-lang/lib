@@ -4,7 +4,7 @@
 
 #![crate_name = "linux_fd"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, macro_reexport)]
+#![feature(plugin, no_std, custom_derive)]
 #![plugin(linux_core_plugin)]
 #![no_std]
 
@@ -31,7 +31,7 @@ pub const STDOUT: FdIo = FdIo(1);
 pub const STDERR: FdIo = FdIo(2);
 
 /// A read/write wrapper for raw file descriptors.
-#[derive(Copy, Eq)]
+#[derive(Pod, Eq)]
 pub struct FdIo(pub c_int);
 
 impl Write for FdIo {
