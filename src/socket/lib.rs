@@ -9,12 +9,16 @@
 #![no_std]
 
 #[macro_use]
-extern crate lrs_core as core;
-extern crate lrs_base as base;
-extern crate lrs_cty as cty;
+extern crate lrs_core     as core;
+extern crate lrs_base     as base;
+extern crate lrs_cty      as cty;
 extern crate lrs_arch_fns as arch_fns;
-extern crate lrs_str_one as str_one;
+extern crate lrs_str_one  as str_one;
+extern crate lrs_fmt      as fmt;
 
-mod lrs { pub use base::lrs::*; }
+pub use addr::{SockAddr, AddrType};
+pub use addr::unix::{UnixSockAddr, UnixAddrType};
 
-pub mod addr;
+mod lrs { pub use fmt::lrs::*; }
+
+mod addr;

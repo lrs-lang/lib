@@ -5,12 +5,13 @@
 #[prelude_import] use base::prelude::*;
 use core::{mem};
 use arch_fns::{memchr};
-use str_one::{ToCStr, CStr};
+use str_one::{ToCStr, CStr, AsByteStr};
 use cty::{
     BYTES_PER_SHORT, AF_UNIX, AF_INET, AF_INET6, sa_family_t, c_int, sockaddr_in,
     sockaddr_in6, UNIX_PATH_MAX,
 };
 use base::{error};
+use fmt::{Debug, Write};
 
 use addr::{SockAddr};
 
@@ -49,6 +50,14 @@ impl UnixSockAddr {
 
     pub fn from_mut_bytes(bytes: &mut [u8]) -> Result<&mut UnixSockAddr> {
         validate(bytes).map(|l| unsafe { mem::cast(&mut bytes[..l]) })
+    }
+
+    pub unsafe fn from_bytes_unchecked(bytes: &[u8]) -> &UnixSockAddr {
+        unsafe { mem::cast(bytes) }
+    }
+
+    pub unsafe fn from_mut_bytes_unchecked(bytes: &mut [u8]) -> &mut UnixSockAddr {
+        unsafe { mem::cast(bytes) }
     }
 
     pub fn new_unnamed(buf: &mut [u8]) -> Result<&mut UnixSockAddr> {
@@ -154,5 +163,20 @@ impl AsRef<SockAddr> for UnixSockAddr {
 impl AsMut<SockAddr> for UnixSockAddr {
     fn as_mut(&mut self) -> &mut SockAddr {
         unsafe { mem::cast(self) }
+    }
+}
+
+impl Debug for UnixSockAddr {
+    fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
+        match self.addr_type() {
+            UnixAddrType::Path => {
+                write!(w, "UnixSockAddr {{ path: {:?} }}", self.as_path().unwrap())
+            },
+            UnixAddrType::Unnamed => w.write(b"UnixSockAddr { unnamed }").ignore_ok(),
+            UnixAddrType::Abstract => {
+                write!(w, "UnixSockAddr {{ abstract: {:?} }}",
+                       self.as_abstract().unwrap().as_byte_str())
+            },
+        }
     }
 }

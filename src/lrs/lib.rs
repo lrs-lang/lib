@@ -98,6 +98,7 @@ pub mod thread;
 pub mod rc;
 pub mod sync;
 pub mod cmp;
+pub mod socket;
 
 // Annoying that these have to be top-modules.
 pub mod i8;
