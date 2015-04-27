@@ -87,11 +87,12 @@ impl Display for u32   { fn fmt<W: Write>(&self, w: &mut W) -> Result { Debug::f
 impl Display for u64   { fn fmt<W: Write>(&self, w: &mut W) -> Result { Debug::fmt(self, w) } }
 impl Display for usize { fn fmt<W: Write>(&self, w: &mut W) -> Result { Debug::fmt(self, w) } }
 
-fn hex_fmt<W: Write>(val: u64, w: &mut W, base: u8) -> Result {
+fn hex_fmt<W: Write>(mut val: u64, w: &mut W, base: u8) -> Result {
     let mut buf = [0; 16];
     let width = cmp::max(64 - val.leading_zeros() + 3, 4) / 4;
     for i in 0..width {
         let rem = (val % 16) as u8;
+        val /= 16;
         buf[width - i - 1] = match rem {
             0...9 => b'0' + rem,
             _ => base + rem - 10,

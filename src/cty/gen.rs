@@ -1112,3 +1112,18 @@ pub const MAP_STACK      : ::c_int = 0x20000;
 pub const MAP_HUGETLB    : ::c_int = 0x40000;
 pub const MCL_CURRENT    : ::c_int = 1;
 pub const MCL_FUTURE     : ::c_int = 2;
+
+// net.h      NOTE: This is not in asm-generic but is still arch dependent because MIPS
+//                  defines other constants
+
+pub const SOCK_STREAM    : ::c_int = 1;
+pub const SOCK_DGRAM     : ::c_int = 2;
+pub const SOCK_RAW       : ::c_int = 3;
+pub const SOCK_RDM       : ::c_int = 4;
+pub const SOCK_SEQPACKET : ::c_int = 5;
+pub const SOCK_DCCP      : ::c_int = 6;
+pub const SOCK_PACKET    : ::c_int = 10;
+pub const SOCK_MAX       : ::c_int = SOCK_PACKET + 1;
+pub const SOCK_TYPE_MASK : ::c_int = 0xf;
+pub const SOCK_CLOEXEC   : ::c_int = O_CLOEXEC;
+pub const SOCK_NONBLOCK  : ::c_int = O_NONBLOCK;

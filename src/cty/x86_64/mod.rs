@@ -191,6 +191,11 @@ pub use gen::{
     MAP_NONBLOCK, MAP_STACK, MAP_HUGETLB, MCL_CURRENT, MCL_FUTURE,
 };
 
+pub use gen::{
+    SOCK_STREAM, SOCK_DGRAM, SOCK_RAW, SOCK_RDM, SOCK_SEQPACKET, SOCK_DCCP, SOCK_PACKET,
+    SOCK_MAX, SOCK_TYPE_MASK, SOCK_CLOEXEC, SOCK_NONBLOCK,
+};
+
 pub use self::abi::{
     __kernel_old_uid_t, __kernel_old_gid_t, __kernel_old_dev_t, __kernel_long_t,
     __kernel_ulong_t, c_long, c_ulong,

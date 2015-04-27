@@ -26,7 +26,9 @@ pub trait Pod : Copy { }
 #[lang = "copy"]
 pub trait Copy { }
 
-/// Objects that can safely be accessed immutable from multiple threads concurrently
+/// Objects that allow immutable access from threads other than their owning thread
+///
+/// For example, `RefCell` is `!Sync`.
 #[lang = "sync"]
 pub unsafe trait Sync { }
 
@@ -40,7 +42,10 @@ pub struct NoSync;
 
 impl !Sync for NoSync { }
 
-/// Objects whose ownership can safely be moved from one thread to another
+/// Objects whose ownership can be moved from one thread to another
+///
+/// For example, types using a thread-local allocator are often `Sync` but never `Send`
+/// because they must be destroyed in the thread they were created in. 
 pub unsafe trait Send { }
 
 unsafe impl Send for .. { }

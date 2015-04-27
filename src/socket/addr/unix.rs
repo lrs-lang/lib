@@ -7,8 +7,7 @@ use core::{mem};
 use arch_fns::{memchr};
 use str_one::{ToCStr, CStr, AsByteStr};
 use cty::{
-    BYTES_PER_SHORT, AF_UNIX, AF_INET, AF_INET6, sa_family_t, c_int, sockaddr_in,
-    sockaddr_in6, UNIX_PATH_MAX,
+    BYTES_PER_SHORT, AF_UNIX, sa_family_t, UNIX_PATH_MAX,
 };
 use base::{error};
 use fmt::{Debug, Write};
@@ -53,14 +52,14 @@ impl UnixSockAddr {
     }
 
     pub unsafe fn from_bytes_unchecked(bytes: &[u8]) -> &UnixSockAddr {
-        unsafe { mem::cast(bytes) }
+        mem::cast(bytes)
     }
 
     pub unsafe fn from_mut_bytes_unchecked(bytes: &mut [u8]) -> &mut UnixSockAddr {
-        unsafe { mem::cast(bytes) }
+        mem::cast(bytes)
     }
 
-    pub fn new_unnamed(buf: &mut [u8]) -> Result<&mut UnixSockAddr> {
+    pub fn from_unnamed(buf: &mut [u8]) -> Result<&mut UnixSockAddr> {
         if buf.len() >= BYTES_PER_SHORT {
             mem::copy(buf, (AF_UNIX as sa_family_t).as_ref());
             Ok(unsafe { mem::cast(&mut buf[..BYTES_PER_SHORT]) })
@@ -69,7 +68,7 @@ impl UnixSockAddr {
         }
     }
 
-    pub fn new_abstract<T>(buf: &mut [u8], name: T) -> Result<&mut UnixSockAddr>
+    pub fn from_abstract<T>(buf: &mut [u8], name: T) -> Result<&mut UnixSockAddr>
         where T: AsRef<[u8]>
     {
         let name = name.as_ref();
@@ -86,7 +85,7 @@ impl UnixSockAddr {
         }
     }
 
-    pub fn new_path<T>(buf: &mut [u8], path: T) -> Result<&mut UnixSockAddr>
+    pub fn from_path<T>(buf: &mut [u8], path: T) -> Result<&mut UnixSockAddr>
         where T: ToCStr,
     {
         if buf.len() < BYTES_PER_SHORT {

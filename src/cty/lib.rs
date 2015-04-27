@@ -3085,3 +3085,48 @@ pub const IPV6_ORIGDSTADDR               : c_int = 74;
 pub const IPV6_RECVORIGDSTADDR           : c_int = IPV6_ORIGDSTADDR;
 pub const IPV6_TRANSPARENT               : c_int = 75;
 pub const IPV6_UNICAST_IF                : c_int = 76;
+
+// uapi/linux/net.h
+
+pub const NPROTO          : c_int = AF_MAX;
+pub const SYS_SOCKET      : c_int = 1;
+pub const SYS_BIND        : c_int = 2;
+pub const SYS_CONNECT     : c_int = 3;
+pub const SYS_LISTEN      : c_int = 4;
+pub const SYS_ACCEPT      : c_int = 5;
+pub const SYS_GETSOCKNAME : c_int = 6;
+pub const SYS_GETPEERNAME : c_int = 7;
+pub const SYS_SOCKETPAIR  : c_int = 8;
+pub const SYS_SEND        : c_int = 9;
+pub const SYS_RECV        : c_int = 10;
+pub const SYS_SENDTO      : c_int = 11;
+pub const SYS_RECVFROM    : c_int = 12;
+pub const SYS_SHUTDOWN    : c_int = 13;
+pub const SYS_SETSOCKOPT  : c_int = 14;
+pub const SYS_GETSOCKOPT  : c_int = 15;
+pub const SYS_SENDMSG     : c_int = 16;
+pub const SYS_RECVMSG     : c_int = 17;
+pub const SYS_ACCEPT4     : c_int = 18;
+pub const SYS_RECVMMSG    : c_int = 19;
+pub const SYS_SENDMMSG    : c_int = 20;
+
+pub const SS_FREE          : c_int = 0;
+pub const SS_UNCONNECTED   : c_int = 1;
+pub const SS_CONNECTING    : c_int = 2;
+pub const SS_CONNECTED     : c_int = 3;
+pub const SS_DISCONNECTING : c_int = 4;
+
+pub const __SO_ACCEPTCON : c_int = 1 << 16;
+
+// net.h
+
+pub const SOCK_ASYNC_NOSPACE        : c_int = 0;
+pub const SOCK_ASYNC_WAITDATA       : c_int = 1;
+pub const SOCK_NOSPACE              : c_int = 2;
+pub const SOCK_PASSCRED             : c_int = 3;
+pub const SOCK_PASSSEC              : c_int = 4;
+pub const SOCK_EXTERNALLY_ALLOCATED : c_int = 5;
+
+pub const SHUT_RD   : ::c_int = 0;
+pub const SHUT_WR   : ::c_int = 1;
+pub const SHUT_RDWR : ::c_int = 2;

@@ -475,11 +475,13 @@ pub fn recvmmsg(sockfd: c_int, msgvec: &mut [mmsghdr], flags: c_uint,
 
 pub fn sendto(sockfd: c_int, buf: &[u8], flags: c_int,
               dst_addr: Option<&[u8]>) -> ssize_t {
-    let dst_addr = dst_addr.unwrap_or(&[]);
+    let (dst_ptr, dst_len) = match dst_addr {
+        Some(addr) => (addr.as_ptr(), addr.len()),
+        _ => (0 as *const u8, 0),
+    };
     unsafe {
         r::sendto(sockfd, buf.as_ptr() as *mut c_void, buf.len().saturating_cast(),
-                  flags as k_uint, dst_addr.as_ptr() as *mut sockaddr,
-                  dst_addr.len().saturating_cast())
+                  flags as k_uint, dst_ptr as *mut sockaddr, dst_len.saturating_cast())
     }
 }
 
@@ -504,8 +506,8 @@ pub fn bind(sockfd: c_int, addr: &[u8]) -> c_int {
     }
 }
 
-pub fn listen(sockfd: c_int, backlog: c_int) -> c_int {
-    unsafe { r::listen(sockfd, backlog) }
+pub fn listen(sockfd: c_int, backlog: u32) -> c_int {
+    unsafe { r::listen(sockfd, backlog.saturating_cast()) }
 }
 
 pub fn getsockname(sockfd: c_int, addr: &mut [u8], addrlen: &mut usize) -> c_int {

@@ -10,20 +10,72 @@
 mod core { pub use lrs::core::*; }
 #[allow(unused_imports)] #[prelude_import] use lrs::prelude::*;
 
-use lrs::socket::{UnixSockAddr};
+use lrs::socket::{
+    UnixSockAddr, Ipv4Addr, Ipv4SockAddr, Ipv6Addr, Ipv6SockAddr, Socket, Type,
+};
 
 fn main() {
     let mut buf = [0; 128];
     {
-        let addr = UnixSockAddr::new_path(&mut buf, "/tmp/socket").unwrap();
+        let addr = UnixSockAddr::from_path(&mut buf, "/tmp/socket").unwrap();
         println!("{:?}", addr);
     }
     {
-        let addr = UnixSockAddr::new_unnamed(&mut buf).unwrap();
+        let addr = UnixSockAddr::from_unnamed(&mut buf).unwrap();
         println!("{:?}", addr);
     }
     {
-        let addr = UnixSockAddr::new_abstract(&mut buf, "hurr\0durr").unwrap();
+        let addr = UnixSockAddr::from_abstract(&mut buf, "hurr\0durr").unwrap();
         println!("{:?}", addr);
     }
+
+    {
+        let addr = Ipv4SockAddr::from_addr_port(&mut buf, Ipv4Addr(128, 0, 0, 1),
+                                                567).unwrap();
+        println!("{:?}", addr);
+    }
+
+    {
+        let addr = Ipv6SockAddr::from_addr_port(&mut buf,
+                                                Ipv6Addr(0xffef, 0, 1, 1, 55, 1, 1, 1),
+                                                567).unwrap();
+        println!("{:?}", addr);
+    }
+
+    {
+        let addr = Ipv6SockAddr::from_addr_port(&mut buf,
+                                                Ipv6Addr(0, 0, 0, 0, 0, 0, 0xeeee, 0xeeee),
+                                                0).unwrap();
+        println!("{:?}", addr);
+    }
+
+    {
+        let addr = Ipv6SockAddr::from_addr_port(&mut buf,
+                                                Ipv6Addr(0, 0, 0, 0, 0, 0xffff, 0xeeee, 0xeeee),
+                                                0).unwrap();
+        println!("{:?}", addr);
+    }
+
+    {
+        let addr = Ipv6SockAddr::from_addr_port(&mut buf,
+                                                Ipv6Addr(0, 0, 0, 0, 0xffff, 0, 0xffee, 0xffee),
+                                                0).unwrap();
+        println!("{:?}", addr);
+    }
+
+    let socket = Socket::new_ipv6(Type::Stream).unwrap();
+    {
+        let addr = Ipv6SockAddr::from_addr_port(&mut buf,
+                                                Ipv6Addr::unspecified(), 0).unwrap();
+        println!("{:?}", socket.bind(&addr));
+    }
+    {
+        let addr = socket.get_addr(&mut buf).unwrap();
+        println!("{:?}", addr);
+    }
+
+
+
+    loop { }
+
 }

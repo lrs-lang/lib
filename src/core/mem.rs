@@ -6,11 +6,13 @@ use intrinsics::{self};
 use ptr::{self};
 use marker::{Pod, Copy, Leak};
 use cmp::{self};
+use slice::{self};
 
 pub use intrinsics::{
     uninit,
 };
 
+// TODO: We need a safe version of cast for Pod
 pub use intrinsics::transmute as cast;
 
 /// Creates an object that has all bytes set to zero.
@@ -18,6 +20,21 @@ pub fn zeroed<T>() -> T
     where T: Pod,
 {
     unsafe { intrinsics::init() }
+}
+
+/// Returns the in-memory representation of `val`.
+pub fn as_bytes<T>(val: &T) -> &[u8] {
+    unsafe { slice::from_ptr(val as *const _ as *const u8, size_of::<T>()) }
+}
+
+/// Like `as_bytes`.
+///
+/// This only accepts `Pod` data because the return value can be used to store arbitrary
+/// data in `val`.
+pub fn as_mut_bytes<T>(val: &mut T) -> &mut [u8]
+    where T: Pod,
+{
+    unsafe { slice::from_ptr(val as *mut _ as *const u8, size_of::<T>()) }
 }
 
 /// Like `zeroed` but works for arbitrary types.

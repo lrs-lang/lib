@@ -216,7 +216,7 @@ macro_rules! int_impls {
             }
 
             /// Interprets `self` as a value in big-endian representation and returns
-            /// the value in little-endian representation.
+            /// the value in host-endian representation.
             ///
             /// # Example on a little-endian machine.
             ///
@@ -230,7 +230,7 @@ macro_rules! int_impls {
             }
 
             /// Interprets `self` as a value in big-endian representation and returns
-            /// the value in little-endian representation.
+            /// the value in host-endian representation.
             ///
             /// # Example on a little-endian machine.
             ///
@@ -248,6 +248,28 @@ macro_rules! int_impls {
             /// Like `from_be`.
             #[cfg(target_endian = "big")]
             pub fn from_le(self) -> $t {
+                unsafe { intrinsics::$bswap(self as $pop_ty) as $t }
+            }
+
+            /// Interprets `self` as a value in host-endian representation and returns the
+            /// value in big-endian representation.
+            #[cfg(target_endian = "little")]
+            pub fn to_be(self) -> $t {
+                unsafe { intrinsics::$bswap(self as $pop_ty) as $t }
+            }
+
+            /// Interprets `self` as a value in host-endian representation and returns the
+            /// value in big-endian representation.
+            #[cfg(target_endian = "big")]
+            pub fn to_be(self) -> $t { self }
+
+            /// Like `to_be`.
+            #[cfg(target_endian = "little")]
+            pub fn to_le(self) -> $t { self }
+
+            /// Like `to_be`.
+            #[cfg(target_endian = "big")]
+            pub fn to_le(self) -> $t {
                 unsafe { intrinsics::$bswap(self as $pop_ty) as $t }
             }
 
