@@ -1,4 +1,4 @@
-use ast::{Generics, MetaItem, Item, Expr, ExprRet, TokenTree};
+use ast::{Generics, MetaItem, Item, Expr, ExprRet, TokenTree, LifetimeDef};
 
 use codemap::{Span};
 
@@ -18,7 +18,7 @@ use ext::build::{AstBuilder};
 
 use ptr::{P};
 
-use parse::token::{InternedString, Eof};
+use parse::token::{InternedString, Eof, Token, BinOpToken};
 
 fn expr_ok(cx: &ExtCtxt, sp: Span, expr: P<Expr>) -> P<Expr> {
     let ok = vec!(
@@ -184,14 +184,36 @@ pub fn derive_clone_for_copy(cx: &mut ExtCtxt, span: Span, _mitem: &MetaItem,
         _ => cx.bug("expected ItemStruct or ItemEnum in #[derive(Copy)]")
     };
 
+    struct Lts<'a>(&'a [LifetimeDef], Span);
+
+    impl<'a> Lts<'a> {
+        fn to_tokens(&self, cx: &ExtCtxt) -> Vec<TokenTree> {
+            let mut vec = Vec::new();
+            vec.push(TokenTree::TtToken(self.1, Token::Lt));
+            for lt in self.0 {
+                vec.push(TokenTree::TtToken(self.1, Token::Lifetime(lt.lifetime.name.ident())));
+                if lt.bounds.len() > 0 {
+                    vec.push(TokenTree::TtToken(self.1, Token::Colon));
+                    vec.push(TokenTree::TtToken(self.1, Token::Lifetime(lt.bounds[0].name.ident())));
+                    for lt in &lt.bounds[1..] {
+                        vec.push(TokenTree::TtToken(self.1, Token::BinOp(BinOpToken::Plus)));
+                        vec.push(TokenTree::TtToken(self.1, Token::Lifetime(lt.name.ident())));
+                    }
+                }
+                vec.push(TokenTree::TtToken(self.1, Token::Comma));
+            }
+            vec.push(TokenTree::TtToken(self.1, Token::Gt));
+            vec
+        }
+    }
+
     if generics.ty_params.len() == 0 {
         let ty = item.ident;
+        let lts = Lts(&generics.lifetimes, span);
 
         let impl_item = quote_item!(cx,
-            #[automatically_derived]
-            #[inline(always)]
-            impl $generics ::lrs::clone::Clone for $ty $generics {
-                fn clone(&self) -> ::lrs::result::Result<$ty $generics> {
+            impl $lts ::lrs::clone::Clone for $ty $lts {
+                fn clone(&self) -> ::lrs::result::Result<$ty $lts> {
                     ::lrs::result::Result::Ok(*self)
                 }
             }
