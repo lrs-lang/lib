@@ -4,6 +4,8 @@
 
 //! Compiler intrinsics
 //!
+//! = Description
+//!
 //! This module provides direct access to compiler built-in functions. They are all unsafe
 //! and have safe wrappers in other modules.
 

@@ -19,6 +19,14 @@ pub struct ByteString<'a, Heap = alloc::Heap>
     data: Vec<'a, u8, Heap>,
 }
 
+impl<H> ByteString<'static, H>
+    where H: Allocator,
+{
+    pub fn new() -> ByteString<'static, H> {
+        ByteString { data: Vec::new() }
+    }
+}
+
 impl<'a, H> ByteString<'a, H>
     where H: Allocator,
 {
@@ -101,6 +109,15 @@ impl<'a, H> Eq<str> for ByteString<'a, H>
     where H: Allocator,
 {
     fn eq(&self, other: &str) -> bool {
+        let bytes: &[u8] = self.as_ref();
+        bytes.eq(other)
+    }
+}
+
+impl<'a, H> Eq<[u8]> for ByteString<'a, H>
+    where H: Allocator,
+{
+    fn eq(&self, other: &[u8]) -> bool {
         let bytes: &[u8] = self.as_ref();
         bytes.eq(other)
     }

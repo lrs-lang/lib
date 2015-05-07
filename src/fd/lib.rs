@@ -24,6 +24,9 @@ use rv::{retry};
 
 mod lrs { pub use base::lrs::*; }
 
+/// FdIo wrapping `0`.
+pub const STDIN: FdIo = FdIo(0);
+
 /// FdIo wrapping `1`.
 pub const STDOUT: FdIo = FdIo(1);
 

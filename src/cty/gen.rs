@@ -7,283 +7,67 @@
 // XXX: Only use fully qualified types here!!! The types in here might be overridden by
 // the types in the non-generic files, therefore we can't use them directly.
 
-pub type __s8  = ::c_schar;
-pub type __u8  = ::c_uchar;
-pub type __s16 = ::c_short;
-pub type __u16 = ::c_ushort;
-pub type __s32 = ::c_int;
-pub type __u32 = ::c_uint;
-pub type __s64 = ::c_longlong;
-pub type __u64 = ::c_ulonglong;
-
-pub const __BITS_PER_LONG : usize = 32;
 pub const BYTES_PER_KERNEL_MODE_T : usize = ::BYTES_PER_INT;
 
-pub type __kernel_long_t      = ::c_long;
-pub type __kernel_ulong_t     = ::c_ulong;
-pub type __kernel_ino_t       = ::__kernel_ulong_t;
-pub type __kernel_mode_t      = ::c_uint;
-pub type __kernel_pid_t       = ::c_int;
-pub type __kernel_ipc_pid_t   = ::c_int;
-pub type __kernel_uid_t       = ::c_uint;
-pub type __kernel_gid_t       = ::c_uint;
-pub type __kernel_suseconds_t = ::__kernel_long_t;
-pub type __kernel_daddr_t     = ::c_int;
-pub type __kernel_uid32_t     = ::c_uint;
-pub type __kernel_gid32_t     = ::c_uint;
-pub type __kernel_old_uid_t   = ::__kernel_uid_t;
-pub type __kernel_old_gid_t   = ::__kernel_gid_t;
-pub type __kernel_old_dev_t   = ::c_uint;
-pub type __kernel_off_t       = ::__kernel_long_t;
-pub type __kernel_loff_t      = ::c_longlong;
-pub type __kernel_time_t      = ::__kernel_long_t;
-pub type __kernel_clock_t     = ::__kernel_long_t;
-pub type __kernel_timer_t     = ::c_int;
-pub type __kernel_clockid_t   = ::c_int;
-pub type __kernel_caddr_t     = *mut ::c_char;
-pub type __kernel_uid16_t     = ::c_ushort;
-pub type __kernel_gid16_t     = ::c_ushort;
+/////////////////////////////////
+// include/uapi/linux/eventpoll.h
+/////////////////////////////////
 
+// XXX: This is the epoll_event for all platforms except x86_64
 #[repr(C)]
 #[derive(Pod, Eq)]
-pub struct __kernel_fsid_t {
-    pub val: [::c_int; 2],
+pub struct epoll_event {
+    pub events: ::__u32,
+    pub data:   ::__u64,
 }
 
-// errno-base.h & errno.h
+///////////////////////////////
+// include/uapi/linux/fadvise.h
+///////////////////////////////
+
+// NOTE: These are for all platforms except s390x
+pub const POSIX_FADV_DONTNEED : ::c_int = 4;
+pub const POSIX_FADV_NOREUSE  : ::c_int = 5;
+
+
+//////////////////////
+// include/linux/net.h
+//////////////////////
+
+// NOTE: These are for all platforms except MIPS
+pub const SOCK_STREAM    : ::c_int = 1;
+pub const SOCK_DGRAM     : ::c_int = 2;
+pub const SOCK_RAW       : ::c_int = 3;
+pub const SOCK_RDM       : ::c_int = 4;
+pub const SOCK_SEQPACKET : ::c_int = 5;
+pub const SOCK_DCCP      : ::c_int = 6;
+pub const SOCK_PACKET    : ::c_int = 10;
+pub const SOCK_MAX       : ::c_int = ::SOCK_PACKET + 1;
+pub const SOCK_TYPE_MASK : ::c_int = 0xf;
+pub const SOCK_CLOEXEC   : ::c_int = ::O_CLOEXEC;
+pub const SOCK_NONBLOCK  : ::c_int = ::O_NONBLOCK;
+
+/////////////////////////////////////////
+// include/uapi/asm-generic/bitsperlong.h
+/////////////////////////////////////////
+
+pub const __BITS_PER_LONG: usize = 32;
+
+////////////////////////////////////////
+// include/uapi/asm-generic/errno-base.h
+////////////////////////////////////////
 
 // XXX: lives in lrs_error
 
-// stat.h
+///////////////////////////////////
+// include/uapi/asm-generic/errno.h
+///////////////////////////////////
 
-pub const STAT_HAVE_NSEC: ::c_int = 1;
+// XXX: lives in lrs_error
 
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct stat {
-    pub st_dev:        ::c_ulong,
-    pub st_ino:        ::c_ulong,
-    pub st_mode:       ::c_uint,
-    pub st_nlink:      ::c_uint,
-    pub st_uid:        ::c_uint,
-    pub st_gid:        ::c_uint,
-    pub st_rdev:       ::c_ulong,
-    pub __pad1:        ::c_ulong,
-    pub st_size:       ::c_long,
-    pub st_blksize:    ::c_int,
-    pub __pad2:        ::c_int,
-    pub st_blocks:     ::c_long,
-    pub st_atime:      ::c_long,
-    pub st_atime_nsec: ::c_ulong,
-    pub st_mtime:      ::c_long,
-    pub st_mtime_nsec: ::c_ulong,
-    pub st_ctime:      ::c_long,
-    pub st_ctime_nsec: ::c_ulong,
-    pub __unused4:     ::c_uint,
-    pub __unused5:     ::c_uint,
-}
-
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct stat64 {
-    pub st_dev:        ::c_ulonglong,
-    pub st_ino:        ::c_ulonglong,
-    pub st_mode:       ::c_uint,
-    pub st_nlink:      ::c_uint,
-    pub st_uid:        ::c_uint,
-    pub st_gid:        ::c_uint,
-    pub st_rdev:       ::c_ulonglong,
-    pub __pad1:        ::c_ulonglong,
-    pub st_size:       ::c_longlong,
-    pub st_blksize:    ::c_int,
-    pub __pad2:        ::c_int,
-    pub st_blocks:     ::c_longlong,
-    pub st_atime:      ::c_int,
-    pub st_atime_nsec: ::c_uint,
-    pub st_mtime:      ::c_int,
-    pub st_mtime_nsec: ::c_uint,
-    pub st_ctime:      ::c_int,
-    pub st_ctime_nsec: ::c_uint,
-    pub __unused4:     ::c_uint,
-    pub __unused5:     ::c_uint,
-}
-
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct statfs {
-    pub f_type:    ::__statfs_word,
-    pub f_bsize:   ::__statfs_word,
-    pub f_blocks:  ::__statfs_word,
-    pub f_bfree:   ::__statfs_word,
-    pub f_bavail:  ::__statfs_word,
-    pub f_files:   ::__statfs_word,
-    pub f_ffree:   ::__statfs_word,
-    pub f_fsid:    ::__kernel_fsid_t,
-    pub f_namelen: ::__statfs_word,
-    pub f_frsize:  ::__statfs_word,
-    pub f_flags:   ::__statfs_word,
-    pub f_spare:   [::__statfs_word; 4],
-}
-
-// signal-defs.h
-
-pub const SIG_BLOCK   : ::c_int = 0;
-pub const SIG_UNBLOCK : ::c_int = 1;
-pub const SIG_SETMASK : ::c_int = 2;
-
-// can't write this in Rust
-// type __signalfn_t = *(extern fn(c_int));
-pub type __sighandler_t = extern fn(::c_int);
-
-// can't write this in Rust
-// type __restorefn_t = *(extern fn());
-pub type __sigrestore_t = extern fn();
-
-pub const SIG_DFL : usize = 0;
-pub const SIG_IGN : usize = 1;
-pub const SIG_ERR : usize = !0;
-
-// signal.h
-
-pub const _NSIG       : usize = 64;
-pub const _NSIG_BPW   : usize = ::__BITS_PER_LONG;
-pub const _NSIG_WORDS : usize = ::_NSIG / ::_NSIG_BPW;
-
-pub const SIGHUP    : ::c_int = 1;
-pub const SIGINT    : ::c_int = 2;
-pub const SIGQUIT   : ::c_int = 3;
-pub const SIGILL    : ::c_int = 4;
-pub const SIGTRAP   : ::c_int = 5;
-pub const SIGABRT   : ::c_int = 6;
-pub const SIGIOT    : ::c_int = 6;
-pub const SIGBUS    : ::c_int = 7;
-pub const SIGFPE    : ::c_int = 8;
-pub const SIGKILL   : ::c_int = 9;
-pub const SIGUSR1   : ::c_int = 10;
-pub const SIGSEGV   : ::c_int = 11;
-pub const SIGUSR2   : ::c_int = 12;
-pub const SIGPIPE   : ::c_int = 13;
-pub const SIGALRM   : ::c_int = 14;
-pub const SIGTERM   : ::c_int = 15;
-pub const SIGSTKFLT : ::c_int = 16;
-pub const SIGCHLD   : ::c_int = 17;
-pub const SIGCONT   : ::c_int = 18;
-pub const SIGSTOP   : ::c_int = 19;
-pub const SIGTSTP   : ::c_int = 20;
-pub const SIGTTIN   : ::c_int = 21;
-pub const SIGTTOU   : ::c_int = 22;
-pub const SIGURG    : ::c_int = 23;
-pub const SIGXCPU   : ::c_int = 24;
-pub const SIGXFSZ   : ::c_int = 25;
-pub const SIGVTALRM : ::c_int = 26;
-pub const SIGPROF   : ::c_int = 27;
-pub const SIGWINCH  : ::c_int = 28;
-pub const SIGIO     : ::c_int = 29;
-pub const SIGPOLL   : ::c_int = ::SIGIO;
-pub const SIGPWR    : ::c_int = 30;
-pub const SIGSYS    : ::c_int = 31;
-pub const SIGUNUSED : ::c_int = 31;
-
-pub const SA_NOCLDSTOP : ::c_int = 0x00000001;
-pub const SA_NOCLDWAIT : ::c_int = 0x00000002;
-pub const SA_SIGINFO   : ::c_int = 0x00000004;
-pub const SA_ONSTACK   : ::c_int = 0x08000000;
-pub const SA_RESTART   : ::c_int = 0x10000000;
-pub const SA_NODEFER   : ::c_int = 0x40000000;
-#[allow(overflowing_literals)]
-pub const SA_RESETHAND : ::c_int = 0x80000000;
-pub const SA_NOMASK    : ::c_int = ::SA_NODEFER;
-pub const SA_ONESHOT   : ::c_int = ::SA_RESETHAND;
-
-pub const MINSIGSTKSZ : usize = 2048;
-pub const SIGSTKSZ    : usize = 8192;
-
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct sigset_t {
-    pub sig: [::c_ulong; ::_NSIG_WORDS],
-}
-
-pub type old_sigset_t = ::c_ulong;
-
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct sigaltstack {
-    pub ss_sp: *mut ::c_void,
-    pub ss_flags: ::c_int,
-    pub ss_size: ::size_t,
-}
-
-pub type stack_t = ::sigaltstack;
-
-// sockios.h
-
-pub const FIOSETOWN    : ::c_int = 0x8901;
-pub const SIOCSPGRP    : ::c_int = 0x8902;
-pub const FIOGETOWN    : ::c_int = 0x8903;
-pub const SIOCGPGRP    : ::c_int = 0x8904;
-pub const SIOCATMARK   : ::c_int = 0x8905;
-pub const SIOCGSTAMP   : ::c_int = 0x8906;
-pub const SIOCGSTAMPNS : ::c_int = 0x8907;
-
-// socket.h
-
-pub const SOL_SOCKET                       : ::c_int = 1;
-pub const SO_DEBUG                         : ::c_int = 1;
-pub const SO_REUSEADDR                     : ::c_int = 2;
-pub const SO_TYPE                          : ::c_int = 3;
-pub const SO_ERROR                         : ::c_int = 4;
-pub const SO_DONTROUTE                     : ::c_int = 5;
-pub const SO_BROADCAST                     : ::c_int = 6;
-pub const SO_SNDBUF                        : ::c_int = 7;
-pub const SO_RCVBUF                        : ::c_int = 8;
-pub const SO_SNDBUFFORCE                   : ::c_int = 32;
-pub const SO_RCVBUFFORCE                   : ::c_int = 33;
-pub const SO_KEEPALIVE                     : ::c_int = 9;
-pub const SO_OOBINLINE                     : ::c_int = 10;
-pub const SO_NO_CHECK                      : ::c_int = 11;
-pub const SO_PRIORITY                      : ::c_int = 12;
-pub const SO_LINGER                        : ::c_int = 13;
-pub const SO_BSDCOMPAT                     : ::c_int = 14;
-pub const SO_REUSEPORT                     : ::c_int = 15;
-pub const SO_PASSCRED                      : ::c_int = 16;
-pub const SO_PEERCRED                      : ::c_int = 17;
-pub const SO_RCVLOWAT                      : ::c_int = 18;
-pub const SO_SNDLOWAT                      : ::c_int = 19;
-pub const SO_RCVTIMEO                      : ::c_int = 20;
-pub const SO_SNDTIMEO                      : ::c_int = 21;
-pub const SO_SECURITY_AUTHENTICATION       : ::c_int = 22;
-pub const SO_SECURITY_ENCRYPTION_TRANSPORT : ::c_int = 23;
-pub const SO_SECURITY_ENCRYPTION_NETWORK   : ::c_int = 24;
-pub const SO_BINDTODEVICE                  : ::c_int = 25;
-pub const SO_ATTACH_FILTER                 : ::c_int = 26;
-pub const SO_DETACH_FILTER                 : ::c_int = 27;
-pub const SO_GET_FILTER                    : ::c_int = SO_ATTACH_FILTER;
-pub const SO_PEERNAME                      : ::c_int = 28;
-pub const SO_TIMESTAMP                     : ::c_int = 29;
-pub const SCM_TIMESTAMP                    : ::c_int = SO_TIMESTAMP;
-pub const SO_ACCEPTCONN                    : ::c_int = 30;
-pub const SO_PEERSEC                       : ::c_int = 31;
-pub const SO_PASSSEC                       : ::c_int = 34;
-pub const SO_TIMESTAMPNS                   : ::c_int = 35;
-pub const SCM_TIMESTAMPNS                  : ::c_int = SO_TIMESTAMPNS;
-pub const SO_MARK                          : ::c_int = 36;
-pub const SO_TIMESTAMPING                  : ::c_int = 37;
-pub const SCM_TIMESTAMPING                 : ::c_int = SO_TIMESTAMPING;
-pub const SO_PROTOCOL                      : ::c_int = 38;
-pub const SO_DOMAIN                        : ::c_int = 39;
-pub const SO_RXQ_OVFL                      : ::c_int = 40;
-pub const SO_WIFI_STATUS                   : ::c_int = 41;
-pub const SCM_WIFI_STATUS                  : ::c_int = SO_WIFI_STATUS;
-pub const SO_PEEK_OFF                      : ::c_int = 42;
-pub const SO_NOFCS                         : ::c_int = 43;
-pub const SO_LOCK_FILTER                   : ::c_int = 44;
-pub const SO_SELECT_ERR_QUEUE              : ::c_int = 45;
-pub const SO_BUSY_POLL                     : ::c_int = 46;
-pub const SO_MAX_PACING_RATE               : ::c_int = 47;
-pub const SO_BPF_EXTENSIONS                : ::c_int = 48;
-
-// fcntl.h
+///////////////////////////////////
+// include/uapi/asm-generic/fcntl.h
+///////////////////////////////////
 
 pub const O_ACCMODE       : ::c_int = 0o0000003;
 pub const O_RDONLY        : ::c_int = 0o0000000;
@@ -304,12 +88,12 @@ pub const O_NOFOLLOW      : ::c_int = 0o0400000;
 pub const O_NOATIME       : ::c_int = 0o1000000;
 pub const O_CLOEXEC       : ::c_int = 0o2000000;
 pub const __O_SYNC        : ::c_int = 0o4000000;
-pub const O_SYNC          : ::c_int = __O_SYNC|O_DSYNC;
+pub const O_SYNC          : ::c_int = ::__O_SYNC | ::O_DSYNC;
 pub const O_PATH          : ::c_int = 0o10000000;
 pub const __O_TMPFILE     : ::c_int = 0o20000000;
-pub const O_TMPFILE       : ::c_int = __O_TMPFILE|O_DIRECTORY;
-pub const O_TMPFILE_MASK  : ::c_int = __O_TMPFILE|O_DIRECTORY|O_CREAT;
-pub const O_NDELAY        : ::c_int = O_NONBLOCK;
+pub const O_TMPFILE       : ::c_int = ::__O_TMPFILE | ::O_DIRECTORY;
+pub const O_TMPFILE_MASK  : ::c_int = ::__O_TMPFILE | ::O_DIRECTORY | ::O_CREAT;
+pub const O_NDELAY        : ::c_int = ::O_NONBLOCK;
 pub const F_DUPFD         : ::c_uint = 0;
 pub const F_GETFD         : ::c_uint = 1;
 pub const F_SETFD         : ::c_uint = 2;
@@ -358,25 +142,22 @@ pub const LOCK_READ             : ::c_int = 64;
 pub const LOCK_WRITE            : ::c_int = 128;
 pub const LOCK_RW               : ::c_int = 192;
 
-// ipcbuf.h
+//////////////////////////////////////
+// include/uapi/asm-generic/int-ll64.h
+//////////////////////////////////////
 
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct ipc64_perm {
-    pub key:  ::__kernel_key_t,
-    pub uid:  ::__kernel_uid32_t,
-    pub gid:  ::__kernel_gid32_t,
-    pub cuid: ::__kernel_uid32_t,
-    pub cgid: ::__kernel_gid32_t,
-    pub mode: ::__kernel_mode_t,
-    pub __pad1: [::c_uchar; 4 - ::BYTES_PER_KERNEL_MODE_T],
-    pub seq:       ::c_ushort,
-    pub __pad2:    ::c_ushort,
-    pub __unused1: ::__kernel_ulong_t,
-    pub __unused2: ::__kernel_ulong_t,
-}
+pub type __s8  = ::c_schar;
+pub type __u8  = ::c_uchar;
+pub type __s16 = ::c_short;
+pub type __u16 = ::c_ushort;
+pub type __s32 = ::c_int;
+pub type __u32 = ::c_uint;
+pub type __s64 = ::c_longlong;
+pub type __u64 = ::c_ulonglong;
 
-// ioctl.h
+///////////////////////////////////
+// include/uapi/asm-generic/ioctl.h
+///////////////////////////////////
 
 pub const _IOC_NRBITS   : ::c_uint = 8;
 pub const _IOC_TYPEBITS : ::c_uint = 8;
@@ -438,13 +219,15 @@ pub fn _IOC_TYPE(nr: ::c_uint) -> ::c_uint { (nr >> ::_IOC_TYPESHIFT) & ::_IOC_T
 pub fn _IOC_NR(nr:   ::c_uint) -> ::c_uint { (nr >> ::_IOC_NRSHIFT)   & ::_IOC_NRMASK   }
 pub fn _IOC_SIZE(nr: ::c_uint) -> ::c_uint { (nr >> ::_IOC_SIZESHIFT) & ::_IOC_SIZEMASK }
 
-pub const IOC_IN        : ::c_uint = _IOC_WRITE             << _IOC_DIRSHIFT;
-pub const IOC_OUT       : ::c_uint = _IOC_READ              << _IOC_DIRSHIFT;
-pub const IOC_INOUT     : ::c_uint = (_IOC_WRITE|_IOC_READ) << _IOC_DIRSHIFT;
-pub const IOCSIZE_MASK  : ::c_uint = _IOC_SIZEMASK          << _IOC_SIZESHIFT;
-pub const IOCSIZE_SHIFT : ::c_uint = _IOC_SIZESHIFT;
+pub const IOC_IN        : ::c_uint = ::_IOC_WRITE             << ::_IOC_DIRSHIFT;
+pub const IOC_OUT       : ::c_uint = ::_IOC_READ              << ::_IOC_DIRSHIFT;
+pub const IOC_INOUT     : ::c_uint = (::_IOC_WRITE | ::_IOC_READ) << ::_IOC_DIRSHIFT;
+pub const IOCSIZE_MASK  : ::c_uint = ::_IOC_SIZEMASK          << ::_IOC_SIZESHIFT;
+pub const IOCSIZE_SHIFT : ::c_uint = ::_IOC_SIZESHIFT;
 
-// ioctls.h
+////////////////////////////////////
+// include/uapi/asm-generic/ioctls.h
+////////////////////////////////////
 
 pub const TCGETS             : ::c_uint = 0x5401;
 pub const TCSETS             : ::c_uint = 0x5402;
@@ -473,7 +256,7 @@ pub const TIOCMSET           : ::c_uint = 0x5418;
 pub const TIOCGSOFTCAR       : ::c_uint = 0x5419;
 pub const TIOCSSOFTCAR       : ::c_uint = 0x541A;
 pub const FIONREAD           : ::c_uint = 0x541B;
-pub const TIOCINQ            : ::c_uint = FIONREAD;
+pub const TIOCINQ            : ::c_uint = ::FIONREAD;
 pub const TIOCLINUX          : ::c_uint = 0x541C;
 pub const TIOCCONS           : ::c_uint = 0x541D;
 pub const TIOCGSERIAL        : ::c_uint = 0x541E;
@@ -531,240 +314,121 @@ pub fn TIOCGPKT()   -> ::c_uint { _IOR::<::c_int>(b'T'    as ::c_uint, 0x38) }
 pub fn TIOCGPTLCK() -> ::c_uint { _IOR::<::c_int>(b'T'    as ::c_uint, 0x39) }
 pub fn TIOCGEXCL()  -> ::c_uint { _IOR::<::c_int>(b'T'    as ::c_uint, 0x40) }
 
-// termbits.h
-
-pub type cc_t     = ::c_uchar;
-pub type speed_t  = ::c_uint;
-pub type tcflag_t = ::c_uint;
-
-pub const NCCS : usize = 19;
+////////////////////////////////////
+// include/uapi/asm-generic/ipcbuf.h
+////////////////////////////////////
 
 #[repr(C)]
 #[derive(Pod, Eq)]
-pub struct termios {
-    pub c_iflag:    ::tcflag_t,
-    pub c_oflag:    ::tcflag_t,
-    pub c_cflag:    ::tcflag_t,
-    pub c_lflag:    ::tcflag_t,
-    pub c_line:     ::cc_t,
-    pub c_cc: [::cc_t; ::NCCS],
+pub struct ipc64_perm {
+    pub key:  ::__kernel_key_t,
+    pub uid:  ::__kernel_uid32_t,
+    pub gid:  ::__kernel_gid32_t,
+    pub cuid: ::__kernel_uid32_t,
+    pub cgid: ::__kernel_gid32_t,
+    pub mode: ::__kernel_mode_t,
+    pub __pad1: [::c_uchar; 4 - ::BYTES_PER_KERNEL_MODE_T],
+    pub seq:       ::c_ushort,
+    pub __pad2:    ::c_ushort,
+    pub __unused1: ::__kernel_ulong_t,
+    pub __unused2: ::__kernel_ulong_t,
 }
 
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct termios2 {
-    pub c_iflag:    ::tcflag_t,
-    pub c_oflag:    ::tcflag_t,
-    pub c_cflag:    ::tcflag_t,
-    pub c_lflag:    ::tcflag_t,
-    pub c_line:     ::cc_t,
-    pub c_cc: [::cc_t; ::NCCS],
-    pub c_ispeed:   ::speed_t,
-    pub c_ospeed:   ::speed_t,
-}
+/////////////////////////////////////////
+// include/uapi/asm-generic/mman-common.h
+/////////////////////////////////////////
 
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct ktermios {
-    pub c_iflag:    ::tcflag_t,
-    pub c_oflag:    ::tcflag_t,
-    pub c_cflag:    ::tcflag_t,
-    pub c_lflag:    ::tcflag_t,
-    pub c_line:     ::cc_t,
-    pub c_cc: [::cc_t; ::NCCS],
-    pub c_ispeed:   ::speed_t,
-    pub c_ospeed:   ::speed_t,
-}
+pub const PROT_READ         : ::c_int = 0x1;
+pub const PROT_WRITE        : ::c_int = 0x2;
+pub const PROT_EXEC         : ::c_int = 0x4;
+pub const PROT_SEM          : ::c_int = 0x8;
+pub const PROT_NONE         : ::c_int = 0x0;
+pub const PROT_GROWSDOWN    : ::c_int = 0x01000000;
+pub const PROT_GROWSUP      : ::c_int = 0x02000000;
+pub const MAP_SHARED        : ::c_int = 0x01;
+pub const MAP_PRIVATE       : ::c_int = 0x02;
+pub const MAP_TYPE          : ::c_int = 0x0f;
+pub const MAP_FIXED         : ::c_int = 0x10;
+pub const MAP_ANONYMOUS     : ::c_int = 0x20;
+pub const MAP_UNINITIALIZED : ::c_int = 0x4000000;
+pub const MS_ASYNC          : ::c_int = 1;
+pub const MS_INVALIDATE     : ::c_int = 2;
+pub const MS_SYNC           : ::c_int = 4;
+pub const MADV_NORMAL       : ::c_int = 0;
+pub const MADV_RANDOM       : ::c_int = 1;
+pub const MADV_SEQUENTIAL   : ::c_int = 2;
+pub const MADV_WILLNEED     : ::c_int = 3;
+pub const MADV_DONTNEED     : ::c_int = 4;
+pub const MADV_REMOVE       : ::c_int = 9;
+pub const MADV_DONTFORK     : ::c_int = 10;
+pub const MADV_DOFORK       : ::c_int = 11;
+pub const MADV_HWPOISON     : ::c_int = 100;
+pub const MADV_SOFT_OFFLINE : ::c_int = 101;
+pub const MADV_MERGEABLE    : ::c_int = 12;
+pub const MADV_UNMERGEABLE  : ::c_int = 13;
+pub const MADV_HUGEPAGE     : ::c_int = 14;
+pub const MADV_NOHUGEPAGE   : ::c_int = 15;
+pub const MADV_DONTDUMP     : ::c_int = 16;
+pub const MADV_DODUMP       : ::c_int = 17;
+pub const MAP_FILE          : ::c_int = 0;
+pub const MAP_HUGE_SHIFT    : ::c_int = 26;
+pub const MAP_HUGE_MASK     : ::c_int = 0x3f;
 
-pub const VINTR    : ::cc_t = 0;
-pub const VQUIT    : ::cc_t = 1;
-pub const VERASE   : ::cc_t = 2;
-pub const VKILL    : ::cc_t = 3;
-pub const VEOF     : ::cc_t = 4;
-pub const VTIME    : ::cc_t = 5;
-pub const VMIN     : ::cc_t = 6;
-pub const VSWTC    : ::cc_t = 7;
-pub const VSTART   : ::cc_t = 8;
-pub const VSTOP    : ::cc_t = 9;
-pub const VSUSP    : ::cc_t = 10;
-pub const VEOL     : ::cc_t = 11;
-pub const VREPRINT : ::cc_t = 12;
-pub const VDISCARD : ::cc_t = 13;
-pub const VWERASE  : ::cc_t = 14;
-pub const VLNEXT   : ::cc_t = 15;
-pub const VEOL2    : ::cc_t = 16;
+//////////////////////////////////
+// include/uapi/asm-generic/mman.h
+//////////////////////////////////
 
-pub const IGNBRK  : ::tcflag_t = 0o000001;
-pub const BRKINT  : ::tcflag_t = 0o000002;
-pub const IGNPAR  : ::tcflag_t = 0o000004;
-pub const PARMRK  : ::tcflag_t = 0o000010;
-pub const INPCK   : ::tcflag_t = 0o000020;
-pub const ISTRIP  : ::tcflag_t = 0o000040;
-pub const INLCR   : ::tcflag_t = 0o000100;
-pub const IGNCR   : ::tcflag_t = 0o000200;
-pub const ICRNL   : ::tcflag_t = 0o000400;
-pub const IUCLC   : ::tcflag_t = 0o001000;
-pub const IXON    : ::tcflag_t = 0o002000;
-pub const IXANY   : ::tcflag_t = 0o004000;
-pub const IXOFF   : ::tcflag_t = 0o010000;
-pub const IMAXBEL : ::tcflag_t = 0o020000;
-pub const IUTF8   : ::tcflag_t = 0o040000;
+pub const MAP_GROWSDOWN  : ::c_int = 0x0100;
+pub const MAP_DENYWRITE  : ::c_int = 0x0800;
+pub const MAP_EXECUTABLE : ::c_int = 0x1000;
+pub const MAP_LOCKED     : ::c_int = 0x2000;
+pub const MAP_NORESERVE  : ::c_int = 0x4000;
+pub const MAP_POPULATE   : ::c_int = 0x8000;
+pub const MAP_NONBLOCK   : ::c_int = 0x10000;
+pub const MAP_STACK      : ::c_int = 0x20000;
+pub const MAP_HUGETLB    : ::c_int = 0x40000;
+pub const MCL_CURRENT    : ::c_int = 1;
+pub const MCL_FUTURE     : ::c_int = 2;
 
-pub const OPOST  : ::tcflag_t = 0o000001;
-pub const OLCUC  : ::tcflag_t = 0o000002;
-pub const ONLCR  : ::tcflag_t = 0o000004;
-pub const OCRNL  : ::tcflag_t = 0o000010;
-pub const ONOCR  : ::tcflag_t = 0o000020;
-pub const ONLRET : ::tcflag_t = 0o000040;
-pub const OFILL  : ::tcflag_t = 0o000100;
-pub const OFDEL  : ::tcflag_t = 0o000200;
-pub const NLDLY  : ::tcflag_t = 0o000400;
-pub const NL0    : ::tcflag_t = 0o000000;
-pub const NL1    : ::tcflag_t = 0o000400;
-pub const CRDLY  : ::tcflag_t = 0o003000;
-pub const CR0    : ::tcflag_t = 0o000000;
-pub const CR1    : ::tcflag_t = 0o001000;
-pub const CR2    : ::tcflag_t = 0o002000;
-pub const CR3    : ::tcflag_t = 0o003000;
-pub const TABDLY : ::tcflag_t = 0o014000;
-pub const TAB0   : ::tcflag_t = 0o000000;
-pub const TAB1   : ::tcflag_t = 0o004000;
-pub const TAB2   : ::tcflag_t = 0o010000;
-pub const TAB3   : ::tcflag_t = 0o014000;
-pub const XTABS  : ::tcflag_t = 0o014000;
-pub const BSDLY  : ::tcflag_t = 0o020000;
-pub const BS0    : ::tcflag_t = 0o000000;
-pub const BS1    : ::tcflag_t = 0o020000;
-pub const VTDLY  : ::tcflag_t = 0o040000;
-pub const VT0    : ::tcflag_t = 0o000000;
-pub const VT1    : ::tcflag_t = 0o040000;
-pub const FFDLY  : ::tcflag_t = 0o100000;
-pub const FF0    : ::tcflag_t = 0o000000;
-pub const FF1    : ::tcflag_t = 0o100000;
+////////////////////////////////////
+// include/uapi/asm-generic/msgbuf.h
+////////////////////////////////////
 
-pub const CBAUD    : ::tcflag_t = 0o010017;
-pub const B0       : ::tcflag_t = 0o000000;
-pub const B50      : ::tcflag_t = 0o000001;
-pub const B75      : ::tcflag_t = 0o000002;
-pub const B110     : ::tcflag_t = 0o000003;
-pub const B134     : ::tcflag_t = 0o000004;
-pub const B150     : ::tcflag_t = 0o000005;
-pub const B200     : ::tcflag_t = 0o000006;
-pub const B300     : ::tcflag_t = 0o000007;
-pub const B600     : ::tcflag_t = 0o000010;
-pub const B1200    : ::tcflag_t = 0o000011;
-pub const B1800    : ::tcflag_t = 0o000012;
-pub const B2400    : ::tcflag_t = 0o000013;
-pub const B4800    : ::tcflag_t = 0o000014;
-pub const B9600    : ::tcflag_t = 0o000015;
-pub const B19200   : ::tcflag_t = 0o000016;
-pub const B38400   : ::tcflag_t = 0o000017;
-pub const EXTA     : ::tcflag_t = ::B19200;
-pub const EXTB     : ::tcflag_t = ::B38400;
-pub const CSIZE    : ::tcflag_t = 0o000060;
-pub const CS5      : ::tcflag_t = 0o000000;
-pub const CS6      : ::tcflag_t = 0o000020;
-pub const CS7      : ::tcflag_t = 0o000040;
-pub const CS8      : ::tcflag_t = 0o000060;
-pub const CSTOPB   : ::tcflag_t = 0o000100;
-pub const CREAD    : ::tcflag_t = 0o000200;
-pub const PARENB   : ::tcflag_t = 0o000400;
-pub const PARODD   : ::tcflag_t = 0o001000;
-pub const HUPCL    : ::tcflag_t = 0o002000;
-pub const CLOCAL   : ::tcflag_t = 0o004000;
-pub const CBAUDEX  : ::tcflag_t = 0o010000;
-pub const BOTHER   : ::tcflag_t = 0o010000;
-pub const B57600   : ::tcflag_t = 0o010001;
-pub const B115200  : ::tcflag_t = 0o010002;
-pub const B230400  : ::tcflag_t = 0o010003;
-pub const B460800  : ::tcflag_t = 0o010004;
-pub const B500000  : ::tcflag_t = 0o010005;
-pub const B576000  : ::tcflag_t = 0o010006;
-pub const B921600  : ::tcflag_t = 0o010007;
-pub const B1000000 : ::tcflag_t = 0o010010;
-pub const B1152000 : ::tcflag_t = 0o010011;
-pub const B1500000 : ::tcflag_t = 0o010012;
-pub const B2000000 : ::tcflag_t = 0o010013;
-pub const B2500000 : ::tcflag_t = 0o010014;
-pub const B3000000 : ::tcflag_t = 0o010015;
-pub const B3500000 : ::tcflag_t = 0o010016;
-pub const B4000000 : ::tcflag_t = 0o010017;
-pub const CIBAUD   : ::tcflag_t = 0o02003600000;
-pub const CMSPAR   : ::tcflag_t = 0o10000000000;
-pub const CRTSCTS  : ::tcflag_t = 0o20000000000;
+// struct msqid64_ds {
+//         struct ipc64_perm msg_perm;
+//         __kernel_time_t msg_stime;        /* last msgsnd time */
+// #if __BITS_PER_LONG != 64
+//         unsigned long        __unused1;
+// #endif
+//         __kernel_time_t msg_rtime;        /* last msgrcv time */
+// #if __BITS_PER_LONG != 64
+//         unsigned long        __unused2;
+// #endif
+//         __kernel_time_t msg_ctime;        /* last change time */
+// #if __BITS_PER_LONG != 64
+//         unsigned long        __unused3;
+// #endif
+//         __kernel_ulong_t msg_cbytes;        /* current number of bytes on queue */
+//         __kernel_ulong_t msg_qnum;        /* number of messages in queue */
+//         __kernel_ulong_t msg_qbytes;        /* max number of bytes on queue */
+//         __kernel_pid_t msg_lspid;        /* pid of last msgsnd */
+//         __kernel_pid_t msg_lrpid;        /* last receive pid */
+//         __kernel_ulong_t __unused4;
+//         __kernel_ulong_t __unused5;
+// };
 
-pub const IBSHIFT : ::tcflag_t = 16;
+///////////////////////////////////
+// include/uapi/asm-generic/param.h
+///////////////////////////////////
 
-pub const ISIG    : ::tcflag_t = 0o000001;
-pub const ICANON  : ::tcflag_t = 0o000002;
-pub const XCASE   : ::tcflag_t = 0o000004;
-pub const ECHO    : ::tcflag_t = 0o000010;
-pub const ECHOE   : ::tcflag_t = 0o000020;
-pub const ECHOK   : ::tcflag_t = 0o000040;
-pub const ECHONL  : ::tcflag_t = 0o000100;
-pub const NOFLSH  : ::tcflag_t = 0o000200;
-pub const TOSTOP  : ::tcflag_t = 0o000400;
-pub const ECHOCTL : ::tcflag_t = 0o001000;
-pub const ECHOPRT : ::tcflag_t = 0o002000;
-pub const ECHOKE  : ::tcflag_t = 0o004000;
-pub const FLUSHO  : ::tcflag_t = 0o010000;
-pub const PENDIN  : ::tcflag_t = 0o040000;
-pub const IEXTEN  : ::tcflag_t = 0o100000;
-pub const EXTPROC : ::tcflag_t = 0o200000;
+pub const HZ             : usize = 100;
+pub const EXEC_PAGESIZE  : usize = 4096;
+pub const NOGROUP        : usize = !0; // XXX: Not sure about the type of this
+pub const MAXHOSTNAMELEN : usize = 64;
 
-pub const TCOOFF : ::c_uint = 0;
-pub const TCOON  : ::c_uint = 1;
-pub const TCIOFF : ::c_uint = 2;
-pub const TCION  : ::c_uint = 3;
-
-pub const TCIFLUSH  : ::c_uint = 0;
-pub const TCOFLUSH  : ::c_uint = 1;
-pub const TCIOFLUSH : ::c_uint = 2;
-
-pub const TCSANOW   : ::c_uint = 0;
-pub const TCSADRAIN : ::c_uint = 1;
-pub const TCSAFLUSH : ::c_uint = 2;
-
-// termios.h
-
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct winsize {
-    pub ws_row:    ::c_ushort,
-    pub ws_col:    ::c_ushort,
-    pub ws_xpixel: ::c_ushort,
-    pub ws_ypixel: ::c_ushort,
-}
-
-pub const NCC : usize = 8;
-
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct termio {
-    pub c_iflag:   ::c_ushort,
-    pub c_oflag:   ::c_ushort,
-    pub c_cflag:   ::c_ushort,
-    pub c_lflag:   ::c_ushort,
-    pub c_line:    ::c_uchar,
-    pub c_cc: [::c_uchar; ::NCC],
-}
-
-pub const TIOCM_LE   : ::c_uint = 0x001;
-pub const TIOCM_DTR  : ::c_uint = 0x002;
-pub const TIOCM_RTS  : ::c_uint = 0x004;
-pub const TIOCM_ST   : ::c_uint = 0x008;
-pub const TIOCM_SR   : ::c_uint = 0x010;
-pub const TIOCM_CTS  : ::c_uint = 0x020;
-pub const TIOCM_CAR  : ::c_uint = 0x040;
-pub const TIOCM_RNG  : ::c_uint = 0x080;
-pub const TIOCM_DSR  : ::c_uint = 0x100;
-pub const TIOCM_CD   : ::c_uint = ::TIOCM_CAR;
-pub const TIOCM_RI   : ::c_uint = ::TIOCM_RNG;
-pub const TIOCM_OUT1 : ::c_uint = 0x2000;
-pub const TIOCM_OUT2 : ::c_uint = 0x4000;
-pub const TIOCM_LOOP : ::c_uint = 0x8000;
-
-// poll.h
+//////////////////////////////////
+// include/uapi/asm-generic/poll.h
+//////////////////////////////////
 
 pub const POLLIN         : ::c_uint = 0x0001;
 pub const POLLPRI        : ::c_uint = 0x0002;
@@ -790,7 +454,44 @@ pub struct pollfd {
     pub revents: ::c_short,
 }
 
-// resource.h
+/////////////////////////////////////////
+// include/uapi/asm-generic/posix_types.h
+/////////////////////////////////////////
+
+pub type __kernel_long_t      = ::c_long;
+pub type __kernel_ulong_t     = ::c_ulong;
+pub type __kernel_ino_t       = ::__kernel_ulong_t;
+pub type __kernel_mode_t      = ::c_uint;
+pub type __kernel_pid_t       = ::c_int;
+pub type __kernel_ipc_pid_t   = ::c_int;
+pub type __kernel_uid_t       = ::c_uint;
+pub type __kernel_gid_t       = ::c_uint;
+pub type __kernel_suseconds_t = ::__kernel_long_t;
+pub type __kernel_daddr_t     = ::c_int;
+pub type __kernel_uid32_t     = ::c_uint;
+pub type __kernel_gid32_t     = ::c_uint;
+pub type __kernel_old_uid_t   = ::__kernel_uid_t;
+pub type __kernel_old_gid_t   = ::__kernel_gid_t;
+pub type __kernel_old_dev_t   = ::c_uint;
+pub type __kernel_off_t       = ::__kernel_long_t;
+pub type __kernel_loff_t      = ::c_longlong;
+pub type __kernel_time_t      = ::__kernel_long_t;
+pub type __kernel_clock_t     = ::__kernel_long_t;
+pub type __kernel_timer_t     = ::c_int;
+pub type __kernel_clockid_t   = ::c_int;
+pub type __kernel_caddr_t     = *mut ::c_char;
+pub type __kernel_uid16_t     = ::c_ushort;
+pub type __kernel_gid16_t     = ::c_ushort;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct __kernel_fsid_t {
+    pub val: [::c_int; 2],
+}
+
+//////////////////////////////////////
+// include/uapi/asm-generic/resource.h
+//////////////////////////////////////
 
 pub const RLIMIT_CPU        : ::c_ulong = 0;
 pub const RLIMIT_FSIZE      : ::c_ulong = 1;
@@ -811,7 +512,56 @@ pub const RLIMIT_RTTIME     : ::c_ulong = 15;
 pub const RLIM_NLIMITS      : ::c_ulong = 16;
 pub const RLIM_INFINITY     : ::c_ulong = !0;
 
-// shmbuf.h
+////////////////////////////////////
+// include/uapi/asm-generic/sembuf.h
+////////////////////////////////////
+
+// struct semid64_ds {
+//         struct ipc64_perm sem_perm;        /* permissions .. see ipc.h */
+//         __kernel_time_t        sem_otime;        /* last semop time */
+// #if __BITS_PER_LONG != 64
+//         unsigned long        __unused1;
+// #endif
+//         __kernel_time_t        sem_ctime;        /* last change time */
+// #if __BITS_PER_LONG != 64
+//         unsigned long        __unused2;
+// #endif
+//         unsigned long        sem_nsems;        /* no. of semaphores in array */
+//         unsigned long        __unused3;
+//         unsigned long        __unused4;
+// };
+
+///////////////////////////////////
+// include/uapi/asm-generic/setup.h
+///////////////////////////////////
+
+pub const COMMAND_LINE_SIZE : usize = 512;
+
+////////////////////////////////////
+// include/uapi/asm-generic/shmbuf.h
+////////////////////////////////////
+
+// struct shmid64_ds {
+//         struct ipc64_perm        shm_perm;        /* operation perms */
+//         size_t                        shm_segsz;        /* size of segment (bytes) */
+//         __kernel_time_t                shm_atime;        /* last attach time */
+// #if __BITS_PER_LONG != 64
+//         unsigned long                __unused1;
+// #endif
+//         __kernel_time_t                shm_dtime;        /* last detach time */
+// #if __BITS_PER_LONG != 64
+//         unsigned long                __unused2;
+// #endif
+//         __kernel_time_t                shm_ctime;        /* last change time */
+// #if __BITS_PER_LONG != 64
+//         unsigned long                __unused3;
+// #endif
+//         __kernel_pid_t                shm_cpid;        /* pid of creator */
+//         __kernel_pid_t                shm_lpid;        /* pid of last operator */
+//         __kernel_ulong_t        shm_nattch;        /* no. of current attaches */
+//         __kernel_ulong_t        __unused4;
+//         __kernel_ulong_t        __unused5;
+// };
 
 #[repr(C)]
 #[derive(Pod, Eq)]
@@ -827,21 +577,15 @@ pub struct shminfo64 {
     pub __unused4: ::__kernel_ulong_t,
 }
 
-// eventpoll.h
+//////////////////////////////////////
+// include/uapi/asm-generic/shmparam.h
+//////////////////////////////////////
 
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct epoll_event {
-    pub events: ::__u32,
-    pub data:   ::__u64,
-}
+// pub const SHMLBA : usize = ::PAGE_SIZE;
 
-// fadvise.h
-
-pub const POSIX_FADV_DONTNEED : ::c_int = 4;
-pub const POSIX_FADV_NOREUSE  : ::c_int = 5;
-
-// siginfo.h
+/////////////////////////////////////
+// include/uapi/asm-generic/siginfo.h
+/////////////////////////////////////
 
 // XXX: Assumes that usize == *void >= int
 #[repr(C)]
@@ -1061,69 +805,505 @@ pub const SIGEV_NONE      : ::c_int = 1;
 pub const SIGEV_THREAD    : ::c_int = 2;
 pub const SIGEV_THREAD_ID : ::c_int = 4;
 
-// mman-common.h
+/////////////////////////////////////////
+// include/uapi/asm-generic/signal-defs.h
+/////////////////////////////////////////
 
-pub const PROT_READ         : ::c_int = 0x1;
-pub const PROT_WRITE        : ::c_int = 0x2;
-pub const PROT_EXEC         : ::c_int = 0x4;
-pub const PROT_SEM          : ::c_int = 0x8;
-pub const PROT_NONE         : ::c_int = 0x0;
-pub const PROT_GROWSDOWN    : ::c_int = 0x01000000;
-pub const PROT_GROWSUP      : ::c_int = 0x02000000;
-pub const MAP_SHARED        : ::c_int = 0x01;
-pub const MAP_PRIVATE       : ::c_int = 0x02;
-pub const MAP_TYPE          : ::c_int = 0x0f;
-pub const MAP_FIXED         : ::c_int = 0x10;
-pub const MAP_ANONYMOUS     : ::c_int = 0x20;
-pub const MAP_UNINITIALIZED : ::c_int = 0x4000000;
-pub const MS_ASYNC          : ::c_int = 1;
-pub const MS_INVALIDATE     : ::c_int = 2;
-pub const MS_SYNC           : ::c_int = 4;
-pub const MADV_NORMAL       : ::c_int = 0;
-pub const MADV_RANDOM       : ::c_int = 1;
-pub const MADV_SEQUENTIAL   : ::c_int = 2;
-pub const MADV_WILLNEED     : ::c_int = 3;
-pub const MADV_DONTNEED     : ::c_int = 4;
-pub const MADV_REMOVE       : ::c_int = 9;
-pub const MADV_DONTFORK     : ::c_int = 10;
-pub const MADV_DOFORK       : ::c_int = 11;
-pub const MADV_HWPOISON     : ::c_int = 100;
-pub const MADV_SOFT_OFFLINE : ::c_int = 101;
-pub const MADV_MERGEABLE    : ::c_int = 12;
-pub const MADV_UNMERGEABLE  : ::c_int = 13;
-pub const MADV_HUGEPAGE     : ::c_int = 14;
-pub const MADV_NOHUGEPAGE   : ::c_int = 15;
-pub const MADV_DONTDUMP     : ::c_int = 16;
-pub const MADV_DODUMP       : ::c_int = 17;
-pub const MAP_FILE          : ::c_int = 0;
-pub const MAP_HUGE_SHIFT    : ::c_int = 26;
-pub const MAP_HUGE_MASK     : ::c_int = 0x3f;
+pub const SIG_BLOCK   : ::c_int = 0;
+pub const SIG_UNBLOCK : ::c_int = 1;
+pub const SIG_SETMASK : ::c_int = 2;
 
-// mman.h
+// can't write this
+// type __signalfn_t = *(extern fn(c_int));
+pub type __sighandler_t = extern fn(::c_int);
 
-pub const MAP_GROWSDOWN  : ::c_int = 0x0100;
-pub const MAP_DENYWRITE  : ::c_int = 0x0800;
-pub const MAP_EXECUTABLE : ::c_int = 0x1000;
-pub const MAP_LOCKED     : ::c_int = 0x2000;
-pub const MAP_NORESERVE  : ::c_int = 0x4000;
-pub const MAP_POPULATE   : ::c_int = 0x8000;
-pub const MAP_NONBLOCK   : ::c_int = 0x10000;
-pub const MAP_STACK      : ::c_int = 0x20000;
-pub const MAP_HUGETLB    : ::c_int = 0x40000;
-pub const MCL_CURRENT    : ::c_int = 1;
-pub const MCL_FUTURE     : ::c_int = 2;
+// can't write this
+// type __restorefn_t = *(extern fn());
+pub type __sigrestore_t = extern fn();
 
-// net.h      NOTE: This is not in asm-generic but is still arch dependent because MIPS
-//                  defines other constants
+pub const SIG_DFL : usize = 0;
+pub const SIG_IGN : usize = 1;
+pub const SIG_ERR : usize = !0;
 
-pub const SOCK_STREAM    : ::c_int = 1;
-pub const SOCK_DGRAM     : ::c_int = 2;
-pub const SOCK_RAW       : ::c_int = 3;
-pub const SOCK_RDM       : ::c_int = 4;
-pub const SOCK_SEQPACKET : ::c_int = 5;
-pub const SOCK_DCCP      : ::c_int = 6;
-pub const SOCK_PACKET    : ::c_int = 10;
-pub const SOCK_MAX       : ::c_int = SOCK_PACKET + 1;
-pub const SOCK_TYPE_MASK : ::c_int = 0xf;
-pub const SOCK_CLOEXEC   : ::c_int = O_CLOEXEC;
-pub const SOCK_NONBLOCK  : ::c_int = O_NONBLOCK;
+////////////////////////////////////
+// include/uapi/asm-generic/signal.h
+////////////////////////////////////
+
+pub const _NSIG       : usize = 64;
+pub const _NSIG_BPW   : usize = ::__BITS_PER_LONG;
+pub const _NSIG_WORDS : usize = ::_NSIG / ::_NSIG_BPW;
+
+pub const SIGHUP    : ::c_int = 1;
+pub const SIGINT    : ::c_int = 2;
+pub const SIGQUIT   : ::c_int = 3;
+pub const SIGILL    : ::c_int = 4;
+pub const SIGTRAP   : ::c_int = 5;
+pub const SIGABRT   : ::c_int = 6;
+pub const SIGIOT    : ::c_int = 6;
+pub const SIGBUS    : ::c_int = 7;
+pub const SIGFPE    : ::c_int = 8;
+pub const SIGKILL   : ::c_int = 9;
+pub const SIGUSR1   : ::c_int = 10;
+pub const SIGSEGV   : ::c_int = 11;
+pub const SIGUSR2   : ::c_int = 12;
+pub const SIGPIPE   : ::c_int = 13;
+pub const SIGALRM   : ::c_int = 14;
+pub const SIGTERM   : ::c_int = 15;
+pub const SIGSTKFLT : ::c_int = 16;
+pub const SIGCHLD   : ::c_int = 17;
+pub const SIGCONT   : ::c_int = 18;
+pub const SIGSTOP   : ::c_int = 19;
+pub const SIGTSTP   : ::c_int = 20;
+pub const SIGTTIN   : ::c_int = 21;
+pub const SIGTTOU   : ::c_int = 22;
+pub const SIGURG    : ::c_int = 23;
+pub const SIGXCPU   : ::c_int = 24;
+pub const SIGXFSZ   : ::c_int = 25;
+pub const SIGVTALRM : ::c_int = 26;
+pub const SIGPROF   : ::c_int = 27;
+pub const SIGWINCH  : ::c_int = 28;
+pub const SIGIO     : ::c_int = 29;
+pub const SIGPOLL   : ::c_int = ::SIGIO;
+pub const SIGPWR    : ::c_int = 30;
+pub const SIGSYS    : ::c_int = 31;
+pub const SIGUNUSED : ::c_int = 31;
+
+pub const SA_NOCLDSTOP : ::c_int = 0x00000001;
+pub const SA_NOCLDWAIT : ::c_int = 0x00000002;
+pub const SA_SIGINFO   : ::c_int = 0x00000004;
+pub const SA_ONSTACK   : ::c_int = 0x08000000;
+pub const SA_RESTART   : ::c_int = 0x10000000;
+pub const SA_NODEFER   : ::c_int = 0x40000000;
+#[allow(overflowing_literals)]
+pub const SA_RESETHAND : ::c_int = 0x80000000;
+pub const SA_NOMASK    : ::c_int = ::SA_NODEFER;
+pub const SA_ONESHOT   : ::c_int = ::SA_RESETHAND;
+
+pub const MINSIGSTKSZ : usize = 2048;
+pub const SIGSTKSZ    : usize = 8192;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct sigset_t {
+    pub sig: [::c_ulong; ::_NSIG_WORDS],
+}
+
+pub type old_sigset_t = ::c_ulong;
+
+// struct sigaction {
+//         __sighandler_t sa_handler;
+//         unsigned long sa_flags;
+// #ifdef SA_RESTORER
+//         __sigrestore_t sa_restorer;
+// #endif
+//         sigset_t sa_mask;                /* mask last for extensibility */
+// };
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct sigaltstack {
+    pub ss_sp: *mut ::c_void,
+    pub ss_flags: ::c_int,
+    pub ss_size: ::size_t,
+}
+
+pub type stack_t = ::sigaltstack;
+
+////////////////////////////////////
+// include/uapi/asm-generic/socket.h
+////////////////////////////////////
+
+pub const SOL_SOCKET                       : ::c_int = 1;
+pub const SO_DEBUG                         : ::c_int = 1;
+pub const SO_REUSEADDR                     : ::c_int = 2;
+pub const SO_TYPE                          : ::c_int = 3;
+pub const SO_ERROR                         : ::c_int = 4;
+pub const SO_DONTROUTE                     : ::c_int = 5;
+pub const SO_BROADCAST                     : ::c_int = 6;
+pub const SO_SNDBUF                        : ::c_int = 7;
+pub const SO_RCVBUF                        : ::c_int = 8;
+pub const SO_SNDBUFFORCE                   : ::c_int = 32;
+pub const SO_RCVBUFFORCE                   : ::c_int = 33;
+pub const SO_KEEPALIVE                     : ::c_int = 9;
+pub const SO_OOBINLINE                     : ::c_int = 10;
+pub const SO_NO_CHECK                      : ::c_int = 11;
+pub const SO_PRIORITY                      : ::c_int = 12;
+pub const SO_LINGER                        : ::c_int = 13;
+pub const SO_BSDCOMPAT                     : ::c_int = 14;
+pub const SO_REUSEPORT                     : ::c_int = 15;
+pub const SO_PASSCRED                      : ::c_int = 16;
+pub const SO_PEERCRED                      : ::c_int = 17;
+pub const SO_RCVLOWAT                      : ::c_int = 18;
+pub const SO_SNDLOWAT                      : ::c_int = 19;
+pub const SO_RCVTIMEO                      : ::c_int = 20;
+pub const SO_SNDTIMEO                      : ::c_int = 21;
+pub const SO_SECURITY_AUTHENTICATION       : ::c_int = 22;
+pub const SO_SECURITY_ENCRYPTION_TRANSPORT : ::c_int = 23;
+pub const SO_SECURITY_ENCRYPTION_NETWORK   : ::c_int = 24;
+pub const SO_BINDTODEVICE                  : ::c_int = 25;
+pub const SO_ATTACH_FILTER                 : ::c_int = 26;
+pub const SO_DETACH_FILTER                 : ::c_int = 27;
+pub const SO_GET_FILTER                    : ::c_int = ::SO_ATTACH_FILTER;
+pub const SO_PEERNAME                      : ::c_int = 28;
+pub const SO_TIMESTAMP                     : ::c_int = 29;
+pub const SCM_TIMESTAMP                    : ::c_int = ::SO_TIMESTAMP;
+pub const SO_ACCEPTCONN                    : ::c_int = 30;
+pub const SO_PEERSEC                       : ::c_int = 31;
+pub const SO_PASSSEC                       : ::c_int = 34;
+pub const SO_TIMESTAMPNS                   : ::c_int = 35;
+pub const SCM_TIMESTAMPNS                  : ::c_int = ::SO_TIMESTAMPNS;
+pub const SO_MARK                          : ::c_int = 36;
+pub const SO_TIMESTAMPING                  : ::c_int = 37;
+pub const SCM_TIMESTAMPING                 : ::c_int = ::SO_TIMESTAMPING;
+pub const SO_PROTOCOL                      : ::c_int = 38;
+pub const SO_DOMAIN                        : ::c_int = 39;
+pub const SO_RXQ_OVFL                      : ::c_int = 40;
+pub const SO_WIFI_STATUS                   : ::c_int = 41;
+pub const SCM_WIFI_STATUS                  : ::c_int = ::SO_WIFI_STATUS;
+pub const SO_PEEK_OFF                      : ::c_int = 42;
+pub const SO_NOFCS                         : ::c_int = 43;
+pub const SO_LOCK_FILTER                   : ::c_int = 44;
+pub const SO_SELECT_ERR_QUEUE              : ::c_int = 45;
+pub const SO_BUSY_POLL                     : ::c_int = 46;
+pub const SO_MAX_PACING_RATE               : ::c_int = 47;
+pub const SO_BPF_EXTENSIONS                : ::c_int = 48;
+
+/////////////////////////////////////
+// include/uapi/asm-generic/sockios.h
+/////////////////////////////////////
+
+pub const FIOSETOWN    : ::c_int = 0x8901;
+pub const SIOCSPGRP    : ::c_int = 0x8902;
+pub const FIOGETOWN    : ::c_int = 0x8903;
+pub const SIOCGPGRP    : ::c_int = 0x8904;
+pub const SIOCATMARK   : ::c_int = 0x8905;
+pub const SIOCGSTAMP   : ::c_int = 0x8906;
+pub const SIOCGSTAMPNS : ::c_int = 0x8907;
+
+////////////////////////////////////
+// include/uapi/asm-generic/statfs.h
+////////////////////////////////////
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct statfs {
+    pub f_type:    ::__statfs_word,
+    pub f_bsize:   ::__statfs_word,
+    pub f_blocks:  ::__statfs_word,
+    pub f_bfree:   ::__statfs_word,
+    pub f_bavail:  ::__statfs_word,
+    pub f_files:   ::__statfs_word,
+    pub f_ffree:   ::__statfs_word,
+    pub f_fsid:    ::__kernel_fsid_t,
+    pub f_namelen: ::__statfs_word,
+    pub f_frsize:  ::__statfs_word,
+    pub f_flags:   ::__statfs_word,
+    pub f_spare:   [::__statfs_word; 4],
+}
+
+//////////////////////////////////
+// include/uapi/asm-generic/stat.h
+//////////////////////////////////
+
+pub const STAT_HAVE_NSEC: ::c_int = 1;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct stat {
+    pub st_dev:        ::c_ulong,
+    pub st_ino:        ::c_ulong,
+    pub st_mode:       ::c_uint,
+    pub st_nlink:      ::c_uint,
+    pub st_uid:        ::c_uint,
+    pub st_gid:        ::c_uint,
+    pub st_rdev:       ::c_ulong,
+    pub __pad1:        ::c_ulong,
+    pub st_size:       ::c_long,
+    pub st_blksize:    ::c_int,
+    pub __pad2:        ::c_int,
+    pub st_blocks:     ::c_long,
+    pub st_atime:      ::c_long,
+    pub st_atime_nsec: ::c_ulong,
+    pub st_mtime:      ::c_long,
+    pub st_mtime_nsec: ::c_ulong,
+    pub st_ctime:      ::c_long,
+    pub st_ctime_nsec: ::c_ulong,
+    pub __unused4:     ::c_uint,
+    pub __unused5:     ::c_uint,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct stat64 {
+    pub st_dev:        ::c_ulonglong,
+    pub st_ino:        ::c_ulonglong,
+    pub st_mode:       ::c_uint,
+    pub st_nlink:      ::c_uint,
+    pub st_uid:        ::c_uint,
+    pub st_gid:        ::c_uint,
+    pub st_rdev:       ::c_ulonglong,
+    pub __pad1:        ::c_ulonglong,
+    pub st_size:       ::c_longlong,
+    pub st_blksize:    ::c_int,
+    pub __pad2:        ::c_int,
+    pub st_blocks:     ::c_longlong,
+    pub st_atime:      ::c_int,
+    pub st_atime_nsec: ::c_uint,
+    pub st_mtime:      ::c_int,
+    pub st_mtime_nsec: ::c_uint,
+    pub st_ctime:      ::c_int,
+    pub st_ctime_nsec: ::c_uint,
+    pub __unused4:     ::c_uint,
+    pub __unused5:     ::c_uint,
+}
+
+//////////////////////////////////////
+// include/uapi/asm-generic/termbits.h
+//////////////////////////////////////
+
+pub type cc_t     = ::c_uchar;
+pub type speed_t  = ::c_uint;
+pub type tcflag_t = ::c_uint;
+
+pub const NCCS : usize = 19;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct termios {
+    pub c_iflag:    ::tcflag_t,
+    pub c_oflag:    ::tcflag_t,
+    pub c_cflag:    ::tcflag_t,
+    pub c_lflag:    ::tcflag_t,
+    pub c_line:     ::cc_t,
+    pub c_cc: [::cc_t; ::NCCS],
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct termios2 {
+    pub c_iflag:    ::tcflag_t,
+    pub c_oflag:    ::tcflag_t,
+    pub c_cflag:    ::tcflag_t,
+    pub c_lflag:    ::tcflag_t,
+    pub c_line:     ::cc_t,
+    pub c_cc: [::cc_t; ::NCCS],
+    pub c_ispeed:   ::speed_t,
+    pub c_ospeed:   ::speed_t,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ktermios {
+    pub c_iflag:    ::tcflag_t,
+    pub c_oflag:    ::tcflag_t,
+    pub c_cflag:    ::tcflag_t,
+    pub c_lflag:    ::tcflag_t,
+    pub c_line:     ::cc_t,
+    pub c_cc: [::cc_t; ::NCCS],
+    pub c_ispeed:   ::speed_t,
+    pub c_ospeed:   ::speed_t,
+}
+
+pub const VINTR    : ::cc_t = 0;
+pub const VQUIT    : ::cc_t = 1;
+pub const VERASE   : ::cc_t = 2;
+pub const VKILL    : ::cc_t = 3;
+pub const VEOF     : ::cc_t = 4;
+pub const VTIME    : ::cc_t = 5;
+pub const VMIN     : ::cc_t = 6;
+pub const VSWTC    : ::cc_t = 7;
+pub const VSTART   : ::cc_t = 8;
+pub const VSTOP    : ::cc_t = 9;
+pub const VSUSP    : ::cc_t = 10;
+pub const VEOL     : ::cc_t = 11;
+pub const VREPRINT : ::cc_t = 12;
+pub const VDISCARD : ::cc_t = 13;
+pub const VWERASE  : ::cc_t = 14;
+pub const VLNEXT   : ::cc_t = 15;
+pub const VEOL2    : ::cc_t = 16;
+
+pub const IGNBRK  : ::tcflag_t = 0o000001;
+pub const BRKINT  : ::tcflag_t = 0o000002;
+pub const IGNPAR  : ::tcflag_t = 0o000004;
+pub const PARMRK  : ::tcflag_t = 0o000010;
+pub const INPCK   : ::tcflag_t = 0o000020;
+pub const ISTRIP  : ::tcflag_t = 0o000040;
+pub const INLCR   : ::tcflag_t = 0o000100;
+pub const IGNCR   : ::tcflag_t = 0o000200;
+pub const ICRNL   : ::tcflag_t = 0o000400;
+pub const IUCLC   : ::tcflag_t = 0o001000;
+pub const IXON    : ::tcflag_t = 0o002000;
+pub const IXANY   : ::tcflag_t = 0o004000;
+pub const IXOFF   : ::tcflag_t = 0o010000;
+pub const IMAXBEL : ::tcflag_t = 0o020000;
+pub const IUTF8   : ::tcflag_t = 0o040000;
+
+pub const OPOST  : ::tcflag_t = 0o000001;
+pub const OLCUC  : ::tcflag_t = 0o000002;
+pub const ONLCR  : ::tcflag_t = 0o000004;
+pub const OCRNL  : ::tcflag_t = 0o000010;
+pub const ONOCR  : ::tcflag_t = 0o000020;
+pub const ONLRET : ::tcflag_t = 0o000040;
+pub const OFILL  : ::tcflag_t = 0o000100;
+pub const OFDEL  : ::tcflag_t = 0o000200;
+pub const NLDLY  : ::tcflag_t = 0o000400;
+pub const NL0    : ::tcflag_t = 0o000000;
+pub const NL1    : ::tcflag_t = 0o000400;
+pub const CRDLY  : ::tcflag_t = 0o003000;
+pub const CR0    : ::tcflag_t = 0o000000;
+pub const CR1    : ::tcflag_t = 0o001000;
+pub const CR2    : ::tcflag_t = 0o002000;
+pub const CR3    : ::tcflag_t = 0o003000;
+pub const TABDLY : ::tcflag_t = 0o014000;
+pub const TAB0   : ::tcflag_t = 0o000000;
+pub const TAB1   : ::tcflag_t = 0o004000;
+pub const TAB2   : ::tcflag_t = 0o010000;
+pub const TAB3   : ::tcflag_t = 0o014000;
+pub const XTABS  : ::tcflag_t = 0o014000;
+pub const BSDLY  : ::tcflag_t = 0o020000;
+pub const BS0    : ::tcflag_t = 0o000000;
+pub const BS1    : ::tcflag_t = 0o020000;
+pub const VTDLY  : ::tcflag_t = 0o040000;
+pub const VT0    : ::tcflag_t = 0o000000;
+pub const VT1    : ::tcflag_t = 0o040000;
+pub const FFDLY  : ::tcflag_t = 0o100000;
+pub const FF0    : ::tcflag_t = 0o000000;
+pub const FF1    : ::tcflag_t = 0o100000;
+
+pub const CBAUD    : ::tcflag_t = 0o010017;
+pub const B0       : ::tcflag_t = 0o000000;
+pub const B50      : ::tcflag_t = 0o000001;
+pub const B75      : ::tcflag_t = 0o000002;
+pub const B110     : ::tcflag_t = 0o000003;
+pub const B134     : ::tcflag_t = 0o000004;
+pub const B150     : ::tcflag_t = 0o000005;
+pub const B200     : ::tcflag_t = 0o000006;
+pub const B300     : ::tcflag_t = 0o000007;
+pub const B600     : ::tcflag_t = 0o000010;
+pub const B1200    : ::tcflag_t = 0o000011;
+pub const B1800    : ::tcflag_t = 0o000012;
+pub const B2400    : ::tcflag_t = 0o000013;
+pub const B4800    : ::tcflag_t = 0o000014;
+pub const B9600    : ::tcflag_t = 0o000015;
+pub const B19200   : ::tcflag_t = 0o000016;
+pub const B38400   : ::tcflag_t = 0o000017;
+pub const EXTA     : ::tcflag_t = ::B19200;
+pub const EXTB     : ::tcflag_t = ::B38400;
+pub const CSIZE    : ::tcflag_t = 0o000060;
+pub const CS5      : ::tcflag_t = 0o000000;
+pub const CS6      : ::tcflag_t = 0o000020;
+pub const CS7      : ::tcflag_t = 0o000040;
+pub const CS8      : ::tcflag_t = 0o000060;
+pub const CSTOPB   : ::tcflag_t = 0o000100;
+pub const CREAD    : ::tcflag_t = 0o000200;
+pub const PARENB   : ::tcflag_t = 0o000400;
+pub const PARODD   : ::tcflag_t = 0o001000;
+pub const HUPCL    : ::tcflag_t = 0o002000;
+pub const CLOCAL   : ::tcflag_t = 0o004000;
+pub const CBAUDEX  : ::tcflag_t = 0o010000;
+pub const BOTHER   : ::tcflag_t = 0o010000;
+pub const B57600   : ::tcflag_t = 0o010001;
+pub const B115200  : ::tcflag_t = 0o010002;
+pub const B230400  : ::tcflag_t = 0o010003;
+pub const B460800  : ::tcflag_t = 0o010004;
+pub const B500000  : ::tcflag_t = 0o010005;
+pub const B576000  : ::tcflag_t = 0o010006;
+pub const B921600  : ::tcflag_t = 0o010007;
+pub const B1000000 : ::tcflag_t = 0o010010;
+pub const B1152000 : ::tcflag_t = 0o010011;
+pub const B1500000 : ::tcflag_t = 0o010012;
+pub const B2000000 : ::tcflag_t = 0o010013;
+pub const B2500000 : ::tcflag_t = 0o010014;
+pub const B3000000 : ::tcflag_t = 0o010015;
+pub const B3500000 : ::tcflag_t = 0o010016;
+pub const B4000000 : ::tcflag_t = 0o010017;
+pub const CIBAUD   : ::tcflag_t = 0o02003600000;
+pub const CMSPAR   : ::tcflag_t = 0o10000000000;
+pub const CRTSCTS  : ::tcflag_t = 0o20000000000;
+
+pub const IBSHIFT : ::tcflag_t = 16;
+
+pub const ISIG    : ::tcflag_t = 0o000001;
+pub const ICANON  : ::tcflag_t = 0o000002;
+pub const XCASE   : ::tcflag_t = 0o000004;
+pub const ECHO    : ::tcflag_t = 0o000010;
+pub const ECHOE   : ::tcflag_t = 0o000020;
+pub const ECHOK   : ::tcflag_t = 0o000040;
+pub const ECHONL  : ::tcflag_t = 0o000100;
+pub const NOFLSH  : ::tcflag_t = 0o000200;
+pub const TOSTOP  : ::tcflag_t = 0o000400;
+pub const ECHOCTL : ::tcflag_t = 0o001000;
+pub const ECHOPRT : ::tcflag_t = 0o002000;
+pub const ECHOKE  : ::tcflag_t = 0o004000;
+pub const FLUSHO  : ::tcflag_t = 0o010000;
+pub const PENDIN  : ::tcflag_t = 0o040000;
+pub const IEXTEN  : ::tcflag_t = 0o100000;
+pub const EXTPROC : ::tcflag_t = 0o200000;
+
+pub const TCOOFF : ::c_uint = 0;
+pub const TCOON  : ::c_uint = 1;
+pub const TCIOFF : ::c_uint = 2;
+pub const TCION  : ::c_uint = 3;
+
+pub const TCIFLUSH  : ::c_uint = 0;
+pub const TCOFLUSH  : ::c_uint = 1;
+pub const TCIOFLUSH : ::c_uint = 2;
+
+pub const TCSANOW   : ::c_uint = 0;
+pub const TCSADRAIN : ::c_uint = 1;
+pub const TCSAFLUSH : ::c_uint = 2;
+
+/////////////////////////////////////
+// include/uapi/asm-generic/termios.h
+/////////////////////////////////////
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct winsize {
+    pub ws_row:    ::c_ushort,
+    pub ws_col:    ::c_ushort,
+    pub ws_xpixel: ::c_ushort,
+    pub ws_ypixel: ::c_ushort,
+}
+
+pub const NCC : usize = 8;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct termio {
+    pub c_iflag:   ::c_ushort,
+    pub c_oflag:   ::c_ushort,
+    pub c_cflag:   ::c_ushort,
+    pub c_lflag:   ::c_ushort,
+    pub c_line:    ::c_uchar,
+    pub c_cc: [::c_uchar; ::NCC],
+}
+
+pub const TIOCM_LE   : ::c_uint = 0x001;
+pub const TIOCM_DTR  : ::c_uint = 0x002;
+pub const TIOCM_RTS  : ::c_uint = 0x004;
+pub const TIOCM_ST   : ::c_uint = 0x008;
+pub const TIOCM_SR   : ::c_uint = 0x010;
+pub const TIOCM_CTS  : ::c_uint = 0x020;
+pub const TIOCM_CAR  : ::c_uint = 0x040;
+pub const TIOCM_RNG  : ::c_uint = 0x080;
+pub const TIOCM_DSR  : ::c_uint = 0x100;
+pub const TIOCM_CD   : ::c_uint = ::TIOCM_CAR;
+pub const TIOCM_RI   : ::c_uint = ::TIOCM_RNG;
+pub const TIOCM_OUT1 : ::c_uint = 0x2000;
+pub const TIOCM_OUT2 : ::c_uint = 0x4000;
+pub const TIOCM_LOOP : ::c_uint = 0x8000;
+
+//////////////////////////////////////
+// include/uapi/asm-generic/ucontext.h
+//////////////////////////////////////
+
+// #[repr(C)]
+// #[derive(Pod, Eq)]
+// pub struct ucontext {
+//     pub uc_flags:    ::c_ulong,
+//     pub uc_link:     *mut ::ucontext,
+//     pub uc_stack:    ::stack_t,
+//     pub uc_mcontext: ::sigcontext,
+//     pub uc_sigmask:  ::sigset_t,
+// }

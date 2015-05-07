@@ -4,6 +4,8 @@
 
 //! Experimental Linux standard library.
 //!
+//! = Description
+//!
 //! This library tries to create a rust standard library on top of the Linux API. It is
 //! not bound by any other standards. In particular, it does not try to create a
 //! POSIX-like api or an API that can easily be ported to other platforms.
@@ -28,6 +30,7 @@ extern crate lrs_cell;
 extern crate lrs_cty;
 extern crate lrs_cty_base;
 extern crate lrs_env;
+extern crate lrs_box;
 extern crate lrs_dev;
 extern crate lrs_dir;
 extern crate lrs_fd;
@@ -96,9 +99,12 @@ pub mod util;
 pub mod vec;
 pub mod thread;
 pub mod rc;
+pub mod clone;
 pub mod sync;
 pub mod cmp;
 pub mod socket;
+pub mod bx;
+pub mod cell;
 
 // Annoying that these have to be top-modules.
 pub mod i8;

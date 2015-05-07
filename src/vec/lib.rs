@@ -67,7 +67,7 @@ impl<'a, T> Vec<'a, T, alloc::NoMem> {
     }
 }
 
-impl<T, H> SVec<T, H>
+impl<T, H> Vec<'static, T, H>
     where H: Allocator,
 {
     pub fn new() -> SVec<T, H> {
@@ -90,7 +90,7 @@ impl<'a, T, H> Vec<'a, T, H>
         self.cap
     }
 
-    pub fn availabel(&self) -> usize {
+    pub fn available(&self) -> usize {
         self.cap - self.len
     }
 
@@ -122,16 +122,21 @@ impl<'a, T, H> Vec<'a, T, H>
         self.len += 1;
     }
 
-    pub fn push_all(&mut self, vals: &[T]) where T: Copy {
-        unsafe { self.unsafe_push_all(vals); }
+    pub fn try_push(&mut self, val: T) -> Result where T: Copy {
+        if self.cap == self.len {
+            try!(self.reserve(1));
+        }
+        unsafe { ptr::write(self.ptr.add(self.len), val); }
+        self.len += 1;
+        Ok(())
+    }
+
+    pub fn push_all(&mut self, vals: &[T]) -> Result where T: Copy {
+        unsafe { self.try_unsafe_push_all(vals) }
     }
 
     pub unsafe fn unsafe_push_all(&mut self, vals: &[T]) {
         self.try_unsafe_push_all(vals).unwrap();
-    }
-
-    pub fn try_push_all(&mut self, vals: &[T]) -> Result where T: Copy {
-        unsafe { self.try_unsafe_push_all(vals) }
     }
 
     pub unsafe fn try_unsafe_push_all(&mut self, vals: &[T]) -> Result {
@@ -231,6 +236,18 @@ impl<'a, T, H1, H2> Eq<Vec<'a, T, H1>> for Vec<'a, T, H2>
     }
     fn ne(&self, other: &Vec<T, H1>) -> bool {
         self.deref().ne(other.deref())
+    }
+}
+
+impl<'a, T, H> Eq<[T]> for Vec<'a, T, H>
+    where T: Eq,
+          H: Allocator,
+{
+    fn eq(&self, other: &[T]) -> bool {
+        self.deref().eq(other)
+    }
+    fn ne(&self, other: &[T]) -> bool {
+        self.deref().ne(other)
     }
 }
 

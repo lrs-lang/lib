@@ -4,6 +4,8 @@
 
 //! Ordering comparisons
 //!
+//! = Description
+//!
 //! This module provides structures and functions that operate on objects in a partial or
 //! total order.
 

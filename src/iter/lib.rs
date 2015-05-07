@@ -67,6 +67,10 @@ pub trait IteratorExt : Iterator+Sized {
         Filter { iter: self, f: f }
     }
 
+    fn enumerate(self) -> Enumerate<Self> {
+        Enumerate { iter: self, pos: 0 }
+    }
+
     /// Runs the iterator and places the elements into the buffer until the buffer or the
     /// iterator are exhausted.
     ///
@@ -124,6 +128,31 @@ impl<F, I> Iterator for Filter<F, I>
             match self.iter.next() {
                 Some(t) => if (self.f)(&t) {
                     return Some(t);
+                },
+                _ => return None,
+            }
+        }
+    }
+}
+
+pub struct Enumerate<I>
+    where I: Iterator,
+{
+    iter: I,
+    pos: usize,
+}
+
+impl<I> Iterator for Enumerate<I>
+    where I: Iterator,
+{
+    type Item = (usize, I::Item);
+    fn next(&mut self) -> Option<(usize, I::Item)> {
+        loop {
+            match self.iter.next() {
+                Some(t) => {
+                    let rv = Some((self.pos, t));
+                    self.pos = self.pos.wrapping_add(1);
+                    return rv;
                 },
                 _ => return None,
             }

@@ -473,24 +473,32 @@ pub struct iovec {
 pub const UIO_FASTIOV : usize = 8;
 pub const UIO_MAXIOV  : usize = 1024;
 
-// socket.h
+//////////////////////////////
+// include/uapi/linux/socket.h
+//////////////////////////////
 
 pub type __kernel_sa_family_t = c_ushort;
 
 pub const _K_SS_MAXSIZE   : usize = 128;
 pub const _K_SS_ALIGNSIZE : usize = USER_POINTER_ALIGN;
 
-// XXX(WRONG) this needs an ((aligned(USER_POINTER_ALIGN))) attribute
-// "systems language"
+// NOTE: The C structure looks different but has an `aligned` attribute with
+// _K_SS_ALIGNSIZE alignment. We just use u64 to make sure that we get (at least) the
+// correct alignment.  This is actually a bit too much on x32 which aligns u64 at 8 bytes
+// instead of 4 but what can you do? (The alternative would be usize which is a bit too
+// unwieldy for my taste.)
 #[repr(C)]
 #[derive(Pod)]
 pub struct __kernel_sockaddr_storage {
-    pub ss_family: __kernel_sa_family_t,
-    pub __data:    [c_char; _K_SS_MAXSIZE - BYTES_PER_SHORT],
+    pub _data: [u64; _K_SS_MAXSIZE / 8],
 }
 
+/////////////////////////
+// include/linux/socket.h
+/////////////////////////
+
 #[repr(C)]
-#[derive(Pod, Eq)]
+#[derive(Pod)]
 pub struct sockaddr {
     pub sa_family: sa_family_t,
     pub sa_data: [k_char; 14],
@@ -503,31 +511,35 @@ pub struct linger {
     pub l_linger: k_int,
 }
 
+// NOTE: This is written so that it agrees with user_msghdr in non-compat context and
+// compat_msghdr in compat context.
 #[repr(C)]
 #[derive(Pod, Eq)]
-pub struct user_msghdr {
+pub struct msghdr {
     pub msg_name:       *mut c_void,
-    pub msg_namelen:    k_int,
+    pub msg_namelen:    c_int,
     pub msg_iov:        *mut iovec,
     pub msg_iovlen:     user_size_t,
     pub msg_control:    *mut c_void,
     pub msg_controllen: user_size_t,
-    pub msg_flags:      k_uint,
+    pub msg_flags:      c_uint,
 }
 
+// NOTE: As above.
 #[repr(C)]
 #[derive(Pod, Eq)]
 pub struct mmsghdr {
-    pub msg_hdr: user_msghdr,
-    pub msg_len: k_uint,
+    pub msg_hdr: msghdr,
+    pub msg_len: c_uint,
 }
 
+// NOTE: As above.
 #[repr(C)]
 #[derive(Pod, Eq)]
 pub struct cmsghdr {
     pub cmsg_len:   user_size_t,
-    pub cmsg_level: k_int,
-    pub cmsg_type:  k_int,
+    pub cmsg_level: c_int,
+    pub cmsg_type:  c_int,
 }
 
 pub const SCM_RIGHTS      : c_int = 0x01;
@@ -2719,7 +2731,150 @@ pub struct sockaddr_un {
     pub sun_path: [c_char; UNIX_PATH_MAX],
 }
 
-// in.h
+
+// uapi/linux/net.h
+
+pub const NPROTO          : c_int = AF_MAX;
+pub const SYS_SOCKET      : c_int = 1;
+pub const SYS_BIND        : c_int = 2;
+pub const SYS_CONNECT     : c_int = 3;
+pub const SYS_LISTEN      : c_int = 4;
+pub const SYS_ACCEPT      : c_int = 5;
+pub const SYS_GETSOCKNAME : c_int = 6;
+pub const SYS_GETPEERNAME : c_int = 7;
+pub const SYS_SOCKETPAIR  : c_int = 8;
+pub const SYS_SEND        : c_int = 9;
+pub const SYS_RECV        : c_int = 10;
+pub const SYS_SENDTO      : c_int = 11;
+pub const SYS_RECVFROM    : c_int = 12;
+pub const SYS_SHUTDOWN    : c_int = 13;
+pub const SYS_SETSOCKOPT  : c_int = 14;
+pub const SYS_GETSOCKOPT  : c_int = 15;
+pub const SYS_SENDMSG     : c_int = 16;
+pub const SYS_RECVMSG     : c_int = 17;
+pub const SYS_ACCEPT4     : c_int = 18;
+pub const SYS_RECVMMSG    : c_int = 19;
+pub const SYS_SENDMMSG    : c_int = 20;
+
+pub const SS_FREE          : c_int = 0;
+pub const SS_UNCONNECTED   : c_int = 1;
+pub const SS_CONNECTING    : c_int = 2;
+pub const SS_CONNECTED     : c_int = 3;
+pub const SS_DISCONNECTING : c_int = 4;
+
+pub const __SO_ACCEPTCON : c_int = 1 << 16;
+
+// net.h
+
+pub const SOCK_ASYNC_NOSPACE        : c_int = 0;
+pub const SOCK_ASYNC_WAITDATA       : c_int = 1;
+pub const SOCK_NOSPACE              : c_int = 2;
+pub const SOCK_PASSCRED             : c_int = 3;
+pub const SOCK_PASSSEC              : c_int = 4;
+pub const SOCK_EXTERNALLY_ALLOCATED : c_int = 5;
+
+pub const SHUT_RD   : c_int = 0;
+pub const SHUT_WR   : c_int = 1;
+pub const SHUT_RDWR : c_int = 2;
+
+// uapi/hdlc/ioctl.h
+
+pub const GENERIC_HDLC_VERSION   : c_int = 4;
+pub const CLOCK_DEFAULT          : c_int = 0;
+pub const CLOCK_EXT              : c_int = 1;
+pub const CLOCK_INT              : c_int = 2;
+pub const CLOCK_TXINT            : c_int = 3;
+pub const CLOCK_TXFROMRX         : c_int = 4;
+pub const ENCODING_DEFAULT       : c_int = 0;
+pub const ENCODING_NRZ           : c_int = 1;
+pub const ENCODING_NRZI          : c_int = 2;
+pub const ENCODING_FM_MARK       : c_int = 3;
+pub const ENCODING_FM_SPACE      : c_int = 4;
+pub const ENCODING_MANCHESTER    : c_int = 5;
+pub const PARITY_DEFAULT         : c_int = 0;
+pub const PARITY_NONE            : c_int = 1;
+pub const PARITY_CRC16_PR0       : c_int = 2;
+pub const PARITY_CRC16_PR1       : c_int = 3;
+pub const PARITY_CRC16_PR0_CCITT : c_int = 4;
+pub const PARITY_CRC16_PR1_CCITT : c_int = 5;
+pub const PARITY_CRC32_PR0_CCITT : c_int = 6;
+pub const PARITY_CRC32_PR1_CCITT : c_int = 7;
+pub const LMI_DEFAULT            : c_int = 0;
+pub const LMI_NONE               : c_int = 1;
+pub const LMI_ANSI               : c_int = 2;
+pub const LMI_CCITT              : c_int = 3;
+pub const LMI_CISCO              : c_int = 4;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct sync_serial_settings {
+    pub clock_rate: c_uint,
+    pub clock_type: c_uint,
+    pub loopback:   c_ushort,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct te1_settings {
+    pub clock_rate: c_uint,
+    pub clock_type: c_uint,
+    pub loopback:   c_ushort,
+    pub slot_map:   c_uint,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct raw_hdlc_proto {
+    pub encoding: c_ushort,
+    pub parity:   c_ushort,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct fr_proto {
+    pub t391: c_uint,
+    pub t392: c_uint,
+    pub n391: c_uint,
+    pub n392: c_uint,
+    pub n393: c_uint,
+    pub lmi:  c_ushort,
+    pub dce:  c_ushort,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct fr_proto_pvc {
+    pub dlci: c_uint,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct fr_proto_pvc_info {
+    pub dlci: c_uint,
+    pub master: [c_char; IFNAMSIZ],
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct cisco_proto {
+    pub interval: c_uint,
+    pub timeout:  c_uint,
+}
+
+
+// uapi/linux/if.h
+
+pub const IFNAMSIZ : usize = 16;
+pub const IFALIASZ : usize = 256;
+
+// XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX 
+// XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX 
+// XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX 
+// XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX 
+
+//////////////////////////
+// include/uapi/linux/in.h
+//////////////////////////
 
 pub const IPPROTO_IP      : c_int = 0;
 pub const IPPROTO_ICMP    : c_int = 1;
@@ -2934,7 +3089,9 @@ pub const INADDR_ALLHOSTS_GROUP  : u32 = 0xe0000001;
 pub const INADDR_ALLRTRS_GROUP   : u32 = 0xe0000002;
 pub const INADDR_MAX_LOCAL_GROUP : u32 = 0xe00000ff;
 
-// in6.h
+///////////////////////////
+// include/uapi/linux/in6.h
+///////////////////////////
 
 #[repr(C)]
 #[derive(Pod, Eq)]
@@ -3085,48 +3242,3 @@ pub const IPV6_ORIGDSTADDR               : c_int = 74;
 pub const IPV6_RECVORIGDSTADDR           : c_int = IPV6_ORIGDSTADDR;
 pub const IPV6_TRANSPARENT               : c_int = 75;
 pub const IPV6_UNICAST_IF                : c_int = 76;
-
-// uapi/linux/net.h
-
-pub const NPROTO          : c_int = AF_MAX;
-pub const SYS_SOCKET      : c_int = 1;
-pub const SYS_BIND        : c_int = 2;
-pub const SYS_CONNECT     : c_int = 3;
-pub const SYS_LISTEN      : c_int = 4;
-pub const SYS_ACCEPT      : c_int = 5;
-pub const SYS_GETSOCKNAME : c_int = 6;
-pub const SYS_GETPEERNAME : c_int = 7;
-pub const SYS_SOCKETPAIR  : c_int = 8;
-pub const SYS_SEND        : c_int = 9;
-pub const SYS_RECV        : c_int = 10;
-pub const SYS_SENDTO      : c_int = 11;
-pub const SYS_RECVFROM    : c_int = 12;
-pub const SYS_SHUTDOWN    : c_int = 13;
-pub const SYS_SETSOCKOPT  : c_int = 14;
-pub const SYS_GETSOCKOPT  : c_int = 15;
-pub const SYS_SENDMSG     : c_int = 16;
-pub const SYS_RECVMSG     : c_int = 17;
-pub const SYS_ACCEPT4     : c_int = 18;
-pub const SYS_RECVMMSG    : c_int = 19;
-pub const SYS_SENDMMSG    : c_int = 20;
-
-pub const SS_FREE          : c_int = 0;
-pub const SS_UNCONNECTED   : c_int = 1;
-pub const SS_CONNECTING    : c_int = 2;
-pub const SS_CONNECTED     : c_int = 3;
-pub const SS_DISCONNECTING : c_int = 4;
-
-pub const __SO_ACCEPTCON : c_int = 1 << 16;
-
-// net.h
-
-pub const SOCK_ASYNC_NOSPACE        : c_int = 0;
-pub const SOCK_ASYNC_WAITDATA       : c_int = 1;
-pub const SOCK_NOSPACE              : c_int = 2;
-pub const SOCK_PASSCRED             : c_int = 3;
-pub const SOCK_PASSSEC              : c_int = 4;
-pub const SOCK_EXTERNALLY_ALLOCATED : c_int = 5;
-
-pub const SHUT_RD   : ::c_int = 0;
-pub const SHUT_WR   : ::c_int = 1;
-pub const SHUT_RDWR : ::c_int = 2;

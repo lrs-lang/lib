@@ -17,7 +17,7 @@ use cty::{
     robust_list_head, rusage, __s32, sched_attr, sched_param, sel_arg_struct, sembuf,
     shmid64_ds, sigaction, siginfo_t,
     ssize_t, stack_t, stat, stat64, statfs, statfs64, __sysctl_args, sysinfo, timer_t,
-    time_t, timeval, timezone, tms, __u64, user_msghdr, ustat, utimbuf, IPC_64, k_uchar,
+    time_t, timeval, timezone, tms, __u64, msghdr, ustat, utimbuf, IPC_64, k_uchar,
 };
 
 use cty::{
@@ -1068,7 +1068,7 @@ pub unsafe fn recvmmsg(fd: k_int, mmsg: *mut mmsghdr, vlen: k_uint, flags: k_uin
     call!(__NR_recvmmsg, fd, mmsg, vlen, flags, timeout) as ssize_t
 }
 
-pub unsafe fn recvmsg(fd: k_int, msg: *mut user_msghdr, flags: k_uint) -> ssize_t {
+pub unsafe fn recvmsg(fd: k_int, msg: *mut msghdr, flags: k_uint) -> ssize_t {
     call!(__NR_recvmsg, fd, msg, flags) as ssize_t
 }
 
@@ -1239,7 +1239,7 @@ pub unsafe fn sendmmsg(fd: k_int, mmsg: *mut mmsghdr, vlen: k_uint,
     call!(__NR_sendmmsg, fd, mmsg, vlen, flags) as ssize_t
 }
 
-pub unsafe fn sendmsg(fd: k_int, msg: *mut user_msghdr, flags: k_uint) -> ssize_t {
+pub unsafe fn sendmsg(fd: k_int, msg: *mut msghdr, flags: k_uint) -> ssize_t {
     call!(__NR_sendmsg, fd, msg, flags) as ssize_t
 }
 

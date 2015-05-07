@@ -5,7 +5,9 @@
 use ops::{Eq};
 use ops::{PartialOrd, Ordering};
 use cmp::{Ord};
+use {mem};
 use option::{Option};
+use option::Option::{Some, None};
 
 #[lang = "char"]
 impl char {
@@ -35,6 +37,14 @@ impl char {
             val >> 6;
         }
         bytes
+    }
+
+    pub fn from_u32(val: u32) -> Option<char> {
+        if val > 0x10ffff || (val >= 0xD800 && val <= 0xDFFF) {
+            None
+        } else {
+            Some(unsafe { mem::cast(val) })
+        }
     }
 }
 

@@ -4,17 +4,21 @@
 
 //! Time handling.
 //!
+//! = Description
+//!
 //! This module provides methods for time handling. The essential types are
 //!
-//! - `Time` - An offset from an unspecified point in time,
-//! - `DateTime` - A time represented in a human-readable format,
-//! - `Zone` - A timezone,
-//! - `Clock` - A clock that can be used to measure time.
-//! - `Timer` - A timer.
+//! * `Time` - An offset from an unspecified point in time,
+//! * `DateTime` - A time represented in a human-readable format,
+//! * `Zone` - A timezone,
+//! * `Clock` - A clock that can be used to measure time.
+//! * `Timer` - A timer.
+//!
+//! = Examples
 //!
 //! The following example prints the current time in the local timezone to stdout:
 //!
-//! ```
+//! ----
 //! use lrs::{time};
 //!
 //! let now = time::Real::get_time().unwrap();
@@ -25,12 +29,12 @@
 //!
 //! // Example output:
 //! // It is 13:06:27
-//! ```
+//! ----
 //!
 //! The next example prints the last time the current time zone was changed when viewed
 //! from Tokyo:
 //!
-//! ```
+//! ----
 //! use lrs::{file, time};
 //!
 //! let info = file::info_no_follow("/etc/localtime").unwrap();
@@ -42,12 +46,12 @@
 //!
 //! // Example output:
 //! // 2013-08-06T07:06:55+09:00
-//! ```
+//! ----
 //!
 //! The next example creates a timer that starts ticking after five seconds every second,
 //! sleeps for ten seconds, and then prints the number of times the timer expired.
 //!
-//! ```
+//! ----
 //! use lrs::time::{self, Time};
 //!
 //! let timer = time::Real.timer().unwrap();
@@ -59,7 +63,7 @@
 //!
 //! // Example output:
 //! // 6
-//! ```
+//! ----
 
 pub use lrs_time_base::{Time};
 pub use lrs_time_base::timer::{Timer};

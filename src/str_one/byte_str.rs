@@ -24,6 +24,26 @@ impl ByteStr {
     pub fn len(&self) -> usize {
         self.data.len()
     }
+
+    pub fn trim(&self) -> &ByteStr {
+        let mut start = 0;
+        let mut end = self.data.len();
+        while start < self.data.len() {
+            match self.data[start] {
+                b' ' | b'\t' => { },
+                _ => break,
+            }
+            start += 1;
+        }
+        while end > start {
+            match self.data[end-1] {
+                b' ' | b'\t' => { },
+                _ => break,
+            }
+            end -= 1;
+        }
+        self.data[start..end].as_byte_str()
+    }
 }
 
 impl Index<usize> for ByteStr {

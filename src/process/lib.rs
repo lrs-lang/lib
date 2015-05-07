@@ -51,6 +51,13 @@ pub fn parent_process_id() -> ProcessId {
 }
 
 /// Exits the process.
-pub fn exit(code: c_int) -> ! {
-    exit_group(code);
+///
+/// [argument, code]
+/// The exit code that will be shown to the parent process.
+///
+/// = See also
+///
+/// * link:man:exit_group(2)
+pub fn exit(code: u8) -> ! {
+    exit_group(code as c_int);
 }

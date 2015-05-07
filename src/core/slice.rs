@@ -4,8 +4,9 @@
 
 use mem::{self};
 use repr::{Slice, Repr};
-use ops::{Eq, Index, IndexMut, Range, RangeTo, RangeFrom, RangeFull, FnMut, Ordering};
-use cmp::{Ord};
+use ops::{Eq, Index, IndexMut, PartialOrd, Range, RangeTo, RangeFrom, RangeFull, FnMut,
+          Ordering};
+use cmp::{self, Ord};
 use option::{Option};
 use option::Option::{None, Some};
 use iter::{Iterator};
@@ -139,6 +140,32 @@ impl<T> [T] {
         where F: FnMut(&T, &T) -> Ordering
     {
         unsafe { sort(self, &mut f); }
+    }
+}
+
+impl<T: PartialOrd> PartialOrd for [T] {
+    fn partial_cmp(&self, other: &[T]) -> Option<Ordering> {
+        let min_len = cmp::min(self.len(), other.len());
+        for i in 0..min_len {
+            match self[i].partial_cmp(&other[i]) {
+                Some(Ordering::Equal) => { },
+                r @ _ => return r,
+            }
+        }
+        Some(self.len().cmp(&other.len()))
+    }
+}
+
+impl<T: Ord> Ord for [T] {
+    fn cmp(&self, other: &[T]) -> Ordering {
+        let min_len = cmp::min(self.len(), other.len());
+        for i in 0..min_len {
+            match self[i].cmp(&other[i]) {
+                Ordering::Equal => { },
+                r @ _ => return r,
+            }
+        }
+        self.len().cmp(&other.len())
     }
 }
 

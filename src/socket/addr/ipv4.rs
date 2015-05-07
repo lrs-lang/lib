@@ -12,10 +12,10 @@ use addr::{SockAddr};
 use fmt::{Debug, Write};
 
 pub const IPV4_SOCK_ADDR_SIZE: usize = 16; // == size_of::<sockaddr_in>()
-                                          // XXX: On some platforms there might be
-                                          // unnatural padding between the fields. We
-                                          // should have a static assert that this size is
-                                          // actually correct.
+                                           // XXX: On some platforms there might be
+                                           // unnatural padding between the fields. We
+                                           // should have a static assert that this size
+                                           // is actually correct.
 
 // Offsets of the port and address. Same XXX applies.
 const PORT_OFF: usize = 2;

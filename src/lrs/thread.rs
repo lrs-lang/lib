@@ -4,7 +4,7 @@
 
 //! Multi-threading
 //!
-//! # Example
+//! = Examples
 //!
 //! ```
 //! let mut array = [1u8; 1024];

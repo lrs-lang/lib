@@ -50,6 +50,10 @@ impl Eq<str> for [u8] {
     fn eq(&self, other: &str) -> bool { self.eq(other.as_bytes()) }
 }
 
+impl Eq<[u8]> for str {
+    fn eq(&self, other: &[u8]) -> bool { self.as_bytes().eq(other) }
+}
+
 pub static UTF8_CHAR_LEN: [u8; 256] = [
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,

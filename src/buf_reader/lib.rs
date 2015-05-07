@@ -16,7 +16,7 @@ extern crate lrs_io as io;
 extern crate lrs_alloc as alloc;
 
 #[prelude_import] use base::prelude::*;
-use core::{num, slice};
+use core::{num, slice, cmp};
 use base::{error};
 use alloc::{NoMem, Allocator};
 use io::{Read, BufRead, Write};
@@ -231,5 +231,11 @@ impl<'a, R, H> BufRead for BufReader<'a, R, H>
         }
 
         Ok(len)
+    }
+
+    fn consume(&mut self, num: usize) -> usize {
+        let num = cmp::min(num, self.available());
+        self.start = self.start.wrapping_add(num);
+        num
     }
 }

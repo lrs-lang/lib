@@ -4,6 +4,8 @@
 
 //! Single-threaded interior mutability
 //!
+//! = Description
+//!
 //! This module provides structures that allow data-modification through immutable
 //! references. None of the objects are safe to use from multiple threads.
 

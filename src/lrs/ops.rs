@@ -4,6 +4,8 @@
 
 //! Operator traits
 //!
+//! = Description
+//!
 //! This module contains traits and structures that are used via special symbols, e.g.,
 //! `+`, `==`, or `..`.
 

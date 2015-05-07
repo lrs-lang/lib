@@ -16,6 +16,7 @@ macro_rules! assert {
 
 /// Unwraps the `Ok` branch of a `Result` and returns the error from the calling function
 /// otherwise.
+#[cfg(not(try_abort))]
 #[macro_export]
 macro_rules! try {
     ($val:expr) => {
@@ -24,6 +25,13 @@ macro_rules! try {
             ::lrs::result::Result::Err(e) => return ::lrs::result::Result::Err(e),
         }
     }
+}
+
+/// Unwraps the `Ok` branch of a `Result`.
+#[cfg(try_abort)]
+#[macro_export]
+macro_rules! try {
+    ($val:expr) => { $val.unwrap() }
 }
 
 /// Prints a value to stdout.

@@ -65,7 +65,7 @@ impl<'a, H> NoNullString<'a, H>
         let bytes = try!(name.as_no_null_str()).as_ref();
         try!(self.data.reserve(bytes.len() + 1));
         self.data.push(b'/');
-        self.data.try_push_all(bytes)
+        self.data.push_all(bytes)
     }
 
     pub fn pop_file(&mut self) -> &mut NoNullStr {
@@ -87,7 +87,7 @@ impl<'a, H> NoNullString<'a, H>
         let bytes = try!(path.as_no_null_str()).as_ref();
         self.clear();
         try!(self.data.reserve(bytes.len()));
-        self.data.try_push_all(bytes)
+        self.data.push_all(bytes)
     }
 }
 

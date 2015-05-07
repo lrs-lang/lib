@@ -7,6 +7,7 @@ use core::ops::{Deref};
 use core::{mem, ptr};
 use core::marker::{Leak};
 use base::clone::{Clone};
+use base::error::{Errno};
 use atomic::{AtomicUsize};
 use fmt::{Debug, Write};
 use alloc::{self, Allocator};
@@ -28,11 +29,11 @@ impl<T, H> Arc<T, H>
     where H: Allocator,
           T: Leak,
 {
-    pub fn new(val: T) -> Result<Arc<T, H>, T> {
+    pub fn new(val: T) -> Result<Arc<T, H>, (T, Errno)> {
         unsafe {
             let data_ptr = match H::allocate::<Inner<T>>() {
                 Ok(p) => p,
-                _ => return Err(val),
+                Err(e) => return Err((val, e)),
             };
             let mut data = &mut *data_ptr;
             data.count.store(1);

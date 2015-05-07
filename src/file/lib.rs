@@ -63,6 +63,7 @@ use cty::alias::{UserId, GroupId};
 use fd::{FDContainer};
 use rmo::{Rmo, ToOwned};
 use alloc::{FbHeap};
+use io::{Write};
 
 use time_base::{Time, time_to_timespec};
 
@@ -77,47 +78,131 @@ use info::{Info, info_from_stat, Type, file_type_to_mode};
 pub mod flags;
 pub mod info;
 
-/// Returns information about the file specified by `path`.
+/// Retrieves information about a file.
 ///
-/// If `path` is a symlink, then this is equivalent to returning information about the
-/// destination of the symlink. Relative paths will be interpreted relative to the current
-/// working directory.
+/// [argument, path]
+/// The path of the file whose information is to be retrieved.
+///
+/// [return_value]
+/// The file information.
+///
+/// = Remarks
+///
+/// If the path refers to a symbolic link, then it will recursively be resolved and the
+/// information of the first non-link target will be returned.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:lrs::file::info_no_follow
+/// * link:lrs::file::File::rel_info
+/// * link:man:stat(2)
 pub fn _info<P>(path: P) -> Result<Info>
     where P: ToCString,
 {
     File::current_dir().rel_info(path)
 }
 
-/// Returns information about the file specified by `path`.
+/// Retrieves information about a file without following symbolic links.
 ///
-/// This returns information about the file at `path`, even if `path` is a symlink.
-/// Relative paths will be interpreted relative to the current working directory.
+/// [argument, path]
+/// The path of the file whose information is to be retrieved.
+///
+/// [return_value]
+/// The file information.
+///
+/// = Remarks
+///
+/// This function does not follow symbolic links and always returns information about the
+/// file specified by the path.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:lrs::file::info
+/// * link:lrs::file::File::rel_info_no_follow
+/// * link:man:stat(2)
 pub fn info_no_follow<P>(path: P) -> Result<Info>
     where P: ToCString,
 {
     File::current_dir().rel_info_no_follow(path)
 }
 
-/// Returns whether the specified path points to an existing file.
+/// Checks whether a file exists.
 ///
-/// If `path` is relative then the path will be interpreted relative to the current
-/// working directory.
+/// [argument, path]
+/// The path to the file to be checked.
+///
+/// [return_value]
+/// Returns `true` if the file exists, `false` otherwise.
+///
+/// = Remarks
+///
+/// If the path refers to a symbolic link, then the existence of the symbolic link is
+/// checked.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:faccessat(2)
+/// * link:lrs::file::File::rel_exists
 pub fn exists<P>(path: P) -> Result<bool>
     where P: ToCString,
 {
     File::current_dir().rel_exists(path)
 }
 
-/// Checks whether the file at `path` can be accessed with the specified mode.
+/// Checks whether a file can be accessed with a certain mode.
 ///
-/// Relative paths are interpreted relative to the current working directory.
+/// [argument, path]
+/// The path of the file to be checked.
+///
+/// [argument, mode]
+/// The mode we want to access the file with.
+///
+/// [return_value]
+/// Returns `true` if the file can be accessed with the specified mode, `false` otherwise.
+///
+/// = Remarks
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:faccessat(2)
+/// * link:lrs::file::File::rel_can_access
 pub fn can_access<P>(path: P, mode: AccessMode) -> Result<bool>
     where P: ToCString,
 {
     File::current_dir().rel_can_access(path, mode)
 }
 
-/// Sets the length of the file at `path`.
+/// Truncates a file to a certain length.
+///
+/// [argument, path]
+/// The path of the file to be truncated.
+///
+/// [argument, len]
+/// The length we want to truncate the file to.
+///
+/// = Remarks
+///
+/// The new length can be larger than the old length.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:truncate(2)
+/// * link:lrs::file::File::set_len
 pub fn set_len<P>(path: P, len: u64) -> Result
     where P: ToCString,
 {
@@ -127,34 +212,91 @@ pub fn set_len<P>(path: P, len: u64) -> Result
     Ok(())
 }
 
-/// Creates a hard link to `old` at `new`.
+/// Creates a hard link.
 ///
-/// If `old` is a symlink then it is not dereferenced. Relative paths are interpreted
-/// relative to the current working directory.
-pub fn link<P, Q>(old: P, new: Q) -> Result
+/// [argument, source]
+/// The path of the file we want to link to.
+///
+/// [argument, link]
+/// The path of the new hard link.
+///
+/// = Remarks
+///
+/// If `source` refers to a symbolic link, the new link will refer to the symbolic link
+/// and not the target of the symbolic link.
+///
+/// `source` and `link` have to be located in the same mount point.
+///
+/// If the paths are relative, they will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:link(2)
+pub fn link<P, Q>(source: P, link: Q) -> Result
     where P: ToCString, Q: ToCString,
 {
     let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let old: Rmo<_, FbHeap> = try!(old.rmo_cstr(&mut buf1));
-    let new: Rmo<_, FbHeap> = try!(new.rmo_cstr(&mut buf2));
+    let old: Rmo<_, FbHeap> = try!(source.rmo_cstr(&mut buf1));
+    let new: Rmo<_, FbHeap> = try!(link.rmo_cstr(&mut buf2));
     rv!(linkat(AT_FDCWD, &old, AT_FDCWD, &new, 0))
 }
 
-/// Changes the access and modification times of the file specified by `path`.
+/// Changes the access and modification times of a file.
 ///
-/// Relative paths are interpreted relative to the current working directory. If `path` is
-/// a symlink, then this changes the times of the destination.
+/// [argument, path]
+/// The path of the file we want to modify.
+///
+/// [argument, access]
+/// The access time change to be performed.
+///
+/// [argument, modification]
+/// The modification time change to be performed.
+///
+/// = Remarks
+///
+/// If `path` refers to a symbolic link, the symbolic link will recursively be resolved
+/// and the times of the first non-link target will be modified.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:utimensat(2)
+/// * link:lrs::file::File::rel_set_times
+/// * link:lrs::file::set_times_no_follow
 pub fn set_times<P>(path: P, access: TimeChange, modification: TimeChange) -> Result
     where P: ToCString,
 {
     File::current_dir().rel_set_times(path, access, modification)
 }
 
-/// Changes the access and modification times of the file specified by `path`.
+/// Changes the access and modification times of a file without following symbolic links.
 ///
-/// Relative paths are interpreted relative to the current working directory. If `path` is
-/// a symlink, then this changes the times of the symlink.
+/// [argument, path]
+/// The path of the file we want to modify.
+///
+/// [argument, access]
+/// The access time change to be performed.
+///
+/// [argument, modification]
+/// The modification time change to be performed.
+///
+/// = Remarks
+///
+/// If `path` refers to a symbolic link, the times of the symbolic link itself will be
+/// modified.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:utimensat(2)
+/// * link:lrs::file::File::rel_set_times
+/// * link:lrs::file::set_times_no_follow
 pub fn set_times_no_follow<P>(path: P, access: TimeChange,
                               modification: TimeChange) -> Result
     where P: ToCString,
@@ -162,117 +304,311 @@ pub fn set_times_no_follow<P>(path: P, access: TimeChange,
     File::current_dir().rel_set_times_no_follow(path, access, modification)
 }
 
-/// Atomically exchanges the two files `one` and `two`.
+/// Atomically exchanges two files.
 ///
-/// Relative paths will be interpreted relative to the current working directory.
+/// [argument, one]
+/// File one.
+///
+/// [argument, two]
+/// File two.
+///
+/// = Remarks
+///
+/// The files can have different type. For example, one could refer to a directory and the
+/// other one could refer to a symbolic link.
+///
+/// If the paths are relative, they will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:renameat2(2)
+/// * link:lrs::file::File::rel_exchange
 pub fn exchange<P, Q>(one: P, two: Q) -> Result
     where P: ToCString, Q: ToCString,
 {
     File::current_dir().rel_exchange(one, two)
 }
 
-/// Renames `one` to `two`.
+/// Renames a file.
 ///
-/// Relative paths will be interpreted relative to the current working directory.  If
-/// `replace` is `false`, then the operation fails if `two` already exists.
-pub fn rename<P, Q>(one: P, two: Q, replace: bool) -> Result
+/// [argument, from]
+/// The path of the file to be renamed.
+///
+/// [argument, to]
+/// The new name of the file.
+///
+/// [argument, replace]
+/// Whether `to` is replaced if it already exists.
+///
+/// = Remarks
+///
+/// If the paths are relative, they will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:renameat2(2)
+/// * link:lrs::file::File::rel_rename
+pub fn rename<P, Q>(from: P, to: Q, replace: bool) -> Result
     where P: ToCString, Q: ToCString,
 {
-    File::current_dir().rel_rename(one, two, replace)
+    File::current_dir().rel_rename(from, to, replace)
 }
 
-/// Creates the directory `path`.
+/// Creates a directory.
 ///
-/// Relative paths will be interpreted relative to the current working directory.
+/// [argument, path]
+/// The path of the new directory.
+///
+/// [argument, mode]
+/// The mode of the new directory.
+///
+/// = Remarks
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:mkdirat(2)
+/// * link:lrs::file::File::rel_create_dir
 pub fn create_dir<P>(path: P, mode: Mode) -> Result
     where P: ToCString,
 {
     File::current_dir().rel_create_dir(path, mode)
 }
 
-/// Removes the file at `path`.
+/// Removes a file.
 ///
-/// Relative paths will be interpreted relative to the current working directory.  If
-/// `path` refers to a directory, then the directory has to be empty.
+/// [argument, path]
+/// The path of the file to be removed.
+///
+/// = Remarks
+///
+/// If the path refers to a directory, the directory has to be empty.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:unlinkat(2)
+/// * link:lrs::file::File::rel_remove
 pub fn remove<P>(path: P) -> Result
     where P: ToCString,
 {
     File::current_dir().rel_remove(path)
 }
 
-/// Creates a symlink from `link` to `target`.
+/// Creates a symbolic link.
 ///
-/// Relative paths will be interpreted relative to the current working directory.
-pub fn symlink<P, Q>(target: P, link: Q) -> Result
+/// [argument, source]
+/// The path to be linked to.
+///
+/// [argument, link]
+/// The path of the new link.
+///
+/// = Remarks
+///
+/// If the paths are relative, they will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:symlinkat(2)
+/// * link:lrs::file::File::rel_symlink
+pub fn symlink<P, Q>(source: P, link: Q) -> Result
     where P: ToCString, Q: ToCString,
 {
-    File::current_dir().rel_symlink(target, link)
+    File::current_dir().rel_symlink(source, link)
 }
 
-/// Reads the target of the symbolic link `link` into `buf`.
+/// Retrieves the target of a symbolic link.
 ///
-/// Relative paths will be interpreted relative to the current working directory.
+/// [argument, link]
+/// The link whose target is to be retrieved.
+///
+/// [argument, buf]
+/// The buffer where the target will be stored in.
+///
+/// [return_value]
+/// Returns the target of the link.
+///
+/// = Remarks
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:readlinkat(2)
+/// * link:lrs::file::read_link
+/// * link:lrs::file::File::rel_read_link_buf
 pub fn read_link_buf<P>(link: P, buf: &mut [u8]) -> Result<&mut NoNullStr>
     where P: ToCString,
 {
     File::current_dir().rel_read_link_buf(link, buf)
 }
 
-/// Reads the target of the symbolic link `link`.
+/// Retrieves the target of a symbolic link.
 ///
-/// Relative paths will be interpreted relative to the current working directory.
+/// [argument, link]
+/// The link whose target is to be retrieved.
+///
+/// [return_value]
+/// Returns the target of the link.
+///
+/// = Remarks
+///
+/// The memory for the target will be allocated.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:readlinkat(2)
+/// * link:lrs::file::read_link_buf
+/// * link:lrs::file::File::rel_read_link
 pub fn read_link<P>(link: P) -> Result<NoNullString<'static>>
     where P: ToCString,
 {
     File::current_dir().rel_read_link(link)
 }
 
-/// Changes the owner of the file at `path`.
+/// Changes the owner of a file.
 ///
-/// Relative paths will be interpreted relative to the current working directory.
+/// [argument, path]
+/// The path of the file whose owner will be changed.
+///
+/// [argument, user]
+/// The user id of the new owner.
+///
+/// [argument, group]
+/// The group id of the new owner.
+///
+/// = Remarks
+///
+/// If the path refers to a symbolic link, the link will be recursively resolved and the
+/// owner of the first non-link target will be changed.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:fchownat(2)
+/// * link:lrs::file::File::rel_change_owner
 pub fn change_owner<P>(path: P, user: UserId, group: GroupId) -> Result
     where P: ToCString,
 {
     File::current_dir().rel_change_owner(path, user, group)
 }
 
-/// Changes the owner of the file at `path`.
+/// Changes the owner of a file without following symbolic links.
 ///
-/// Relative paths will be interpreted relative to the current working directory.  If
-/// `path` refers to a symlink, then this changes the owner of the symlink itself.
+/// [argument, path]
+/// The path of the file whose owner will be changed.
+///
+/// [argument, user]
+/// The user id of the new owner.
+///
+/// [argument, group]
+/// The group id of the new owner.
+///
+/// = Remarks
+///
+/// If the path refers to a symbolic link, the owner of the link will be changed.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:fchownat(2)
+/// * link:lrs::file::File::rel_change_owner_no_follow
 pub fn change_owner_no_follow<P>(path: P, user: UserId, group: GroupId) -> Result
     where P: ToCString,
 {
     File::current_dir().rel_change_owner_no_follow(path, user, group)
 }
 
-/// Change the mode of the file at `path`.
+/// Change the mode of a file.
 ///
-/// Relative paths will be interpreted relative to the current working directory.
+/// [argument, path]
+/// The path of the file whose mode will be changed.
+///
+/// [argument, mode]
+/// The new mode of the file.
+///
+/// = Remarks
+///
+/// If the path refers to a symbolic link, the link will be recursively resolved and the
+/// mode of the first non-link target will be changed.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:fchmodat(2)
+/// * link:lrs::file::File::rel_change_mode
 pub fn change_mode<P>(path: P, mode: Mode) -> Result
     where P: ToCString,
 {
     File::current_dir().rel_change_mode(path, mode)
 }
 
-/// Creates a file at `path`.
+/// Creates a file.
 ///
-/// Relative paths will be interpreted relative to the current working directory.
+/// [argument, path]
+/// The path at which the file will be created.
 ///
-/// The type must be one of the following:
+/// [argument, ty]
+/// The type of the new file.
 ///
-/// - `File`
-/// - `FIFO`
-/// - `Socket`
+/// [argument, mode]
+/// The mode of the new file.
+///
+/// = Remarks
+///
+/// The type must be either `File`, `FIFO`, or `Socket`.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:mknodat(2)
+/// * link:lrs::file::create_device
+/// * link:lrs::file::File::rel_create_file
 pub fn create_file<P>(path: P, ty: Type, mode: Mode) -> Result
     where P: ToCString,
 {
     File::current_dir().rel_create_file(path, ty, mode)
 }
 
-/// Creates a device special file at `path`.
+/// Creates a device special file.
 ///
-/// Relative paths will be interpreted relative to the current working directory.
+/// [argument, path]
+/// The path at which the file will be created.
+///
+/// [argument, dev]
+/// The device special file to create.
+///
+/// [argument, mode]
+/// The mode of the new file.
+///
+/// = Remarks
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man::mknodat(2)
+/// * link:lrs::file::File::rel_create_device
 pub fn create_device<P>(path: P, dev: Device, mode: Mode) -> Result
     where P: ToCString,
 {
@@ -281,7 +617,31 @@ pub fn create_device<P>(path: P, dev: Device, mode: Mode) -> Result
 
 /// Sets an attribute of a file.
 ///
-/// Relative paths will be interpreted relative to the current working directory.
+/// [argument, path]
+/// The path of the file whose attribute to change.
+///
+/// [argument, name]
+/// The name of the attribute.
+///
+/// [argument, val]
+/// The new value of the attribute.
+///
+/// = Remarks
+///
+/// If the attribute does not exist, it will be created. If the attribute exists, it will
+/// be overwritten.
+///
+/// If the path refers to a symbolic link, the link will be recursively resolved and the
+/// attribute of the first non-link target will be set.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man::setxattr(2)
+/// * link:lrs::file::set_attr_no_follow
+/// * link:lrs::file::File::set_attr
 pub fn set_attr<P, S, V>(path: P, name: S, val: V) -> Result
     where P: ToCString, S: ToCString, V: AsRef<[u8]>,
 {
@@ -292,10 +652,32 @@ pub fn set_attr<P, S, V>(path: P, name: S, val: V) -> Result
     rv!(setxattr(&path, &name, val.as_ref(), 0))
 }
 
-/// Sets an attribute of a file.
+/// Sets an attribute of a file without following symbolic links.
 ///
-/// Relative paths will be interpreted relative to the current working directory. If
-/// `path` is a symbolic link, then the attribute of the symbolic link is set.
+/// [argument, path]
+/// The path of the file whose attribute to change.
+///
+/// [argument, name]
+/// The name of the attribute.
+///
+/// [argument, val]
+/// The new value of the attribute.
+///
+/// = Remarks
+///
+/// If the attribute does not exist, it will be created. If the attribute exists, it will
+/// be overwritten.
+///
+/// If the path refers to a symbolic link, the attribute of the link will be set.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man::setxattr(2)
+/// * link:lrs::file::set_attr
+/// * link:lrs::file::File::set_attr
 pub fn set_attr_no_follow<P, S, V>(path: P, name: S, val: V) -> Result
     where P: ToCString, S: ToCString, V: AsRef<[u8]>,
 {
@@ -306,31 +688,79 @@ pub fn set_attr_no_follow<P, S, V>(path: P, name: S, val: V) -> Result
     rv!(lsetxattr(&path, &name, val.as_ref(), 0))
 }
 
-/// Gets an attribute of a file.
+/// Retrieves an attribute of a file.
 ///
-/// Relative paths will be interpreted relative to the current working directory.
-pub fn get_attr_buf<P, S, V>(path: P, name: S, mut val: V) -> Result<usize>
-    where P: ToCString, S: ToCString, V: AsMut<[u8]>,
+/// [argument, path]
+/// The path of the file whose attribute we want to retrieve.
+///
+/// [argument, name]
+/// The name of the attribute to retrieve.
+///
+/// [argument, buf]
+/// The buffer in which the attribute will be stored.
+///
+/// [return_value]
+/// The number of bytes stored in the buffer.
+///
+/// = Remarks
+///
+/// If the path refers to a symbolic link, the link will be recursively resolved and the
+/// attribute of the first non-link target will be retrieved.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:getxattr(2)
+/// * link:lrs::file::get_attr_no_follow_buf
+/// * link:lrs::file::get_attr
+/// * link:lrs::file::File::get_attr_buf
+pub fn get_attr_buf<P, S>(path: P, name: S, buf: &mut [u8]) -> Result<usize>
+    where P: ToCString, S: ToCString,
 {
     let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let mut buf2: [u8; 128] = unsafe { mem::uninit() };
     let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf1));
     let name: Rmo<_, FbHeap> = try!(name.rmo_cstr(&mut buf2));
-    rv!(getxattr(&path, &name, val.as_mut()), -> usize)
+    rv!(getxattr(&path, &name, buf), -> usize)
 }
 
-/// Gets an attribute of a file.
+/// Retrieves an attribute of a file without following symbolic links.
 ///
-/// Relative paths will be interpreted relative to the current working directory. If
-/// `path` is a symbolic link, then the attribute of the symbolic link is set.
-pub fn get_attr_no_follow_buf<P, S, V>(path: P, name: S, mut val: V) -> Result<usize>
-    where P: ToCString, S: ToCString, V: AsMut<[u8]>,
+/// [argument, path]
+/// The path of the file whose attribute we want to retrieve.
+///
+/// [argument, name]
+/// The name of the attribute to retrieve.
+///
+/// [argument, buf]
+/// The buffer in which the attribute will be stored.
+///
+/// [return_value]
+/// The number of bytes stored in the buffer.
+///
+/// = Remarks
+///
+/// If the path refers to a symbolic link, the attribute of the file  will be retrieved.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:getxattr(2)
+/// * link:lrs::file::get_attr_buf
+/// * link:lrs::file::get_attr_no_follow
+/// * link:lrs::file::File::get_attr_buf
+pub fn get_attr_no_follow_buf<P, S, V>(path: P, name: S, buf: &mut [u8]) -> Result<usize>
+    where P: ToCString, S: ToCString,
 {
     let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let mut buf2: [u8; 128] = unsafe { mem::uninit() };
     let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf1));
     let name: Rmo<_, FbHeap> = try!(name.rmo_cstr(&mut buf2));
-    rv!(lgetxattr(&path, &name, val.as_mut()), -> usize)
+    rv!(lgetxattr(&path, &name, buf), -> usize)
 }
 
 fn get_attr_common<F>(mut f: F) -> Result<SVec<u8>>
@@ -355,9 +785,31 @@ fn get_attr_common<F>(mut f: F) -> Result<SVec<u8>>
     }
 }
 
-/// Gets an attribute of a file.
+/// Retrieves an attribute of a file.
 ///
-/// Relative paths will be interpreted relative to the current working directory.
+/// [argument, path]
+/// The path of the file whose attribute we want to retrieve.
+///
+/// [argument, name]
+/// The name of the attribute to retrieve.
+///
+/// [return_value]
+/// The attribute.
+///
+/// = Remarks
+///
+/// If the path refers to a symbolic link, the link will be recursively resolved and the
+/// attribute of the first non-link target will be retrieved.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:getxattr(2)
+/// * link:lrs::file::get_attr_no_follow
+/// * link:lrs::file::get_attr_buf
+/// * link:lrs::file::File::get_attr
 pub fn get_attr<P, S>(path: P, name: S) -> Result<SVec<u8>>
     where P: ToCString, S: ToCString,
 {
@@ -368,10 +820,30 @@ pub fn get_attr<P, S>(path: P, name: S) -> Result<SVec<u8>>
     get_attr_common(|buf| getxattr(&path, &name, buf))
 }
 
-/// Gets an attribute of a file.
+/// Retrieves an attribute of a file without following symbolic links.
 ///
-/// Relative paths will be interpreted relative to the current working directory. If
-/// `path` is a symbolic link, then the attribute of the symbolic link is set.
+/// [argument, path]
+/// The path of the file whose attribute we want to retrieve.
+///
+/// [argument, name]
+/// The name of the attribute to retrieve.
+///
+/// [return_value]
+/// The attribute.
+///
+/// = Remarks
+///
+/// If the path refers to a symbolic link, the attribute of the link will be retrieved.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:getxattr(2)
+/// * link:lrs::file::get_attr_no_follow_buf
+/// * link:lrs::file::get_attr
+/// * link:lrs::file::File::get_attr
 pub fn get_attr_no_follow<P, S>(path: P, name: S) -> Result<SVec<u8>>
     where P: ToCString, S: ToCString,
 {
@@ -384,7 +856,25 @@ pub fn get_attr_no_follow<P, S>(path: P, name: S) -> Result<SVec<u8>>
 
 /// Removes an attribute of a file.
 ///
-/// Relative paths will be interpreted relative to the current working directory.
+/// [argument, path]
+/// The path of the file whose argument we want to remove.
+///
+/// [argument, name]
+/// The name of the argument.
+///
+/// = Remarks
+///
+/// If the path refers to a symbolic link, the link will be recursively resolved and the
+/// attribute of the first non-link target will be removed.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:removexattr(2)
+/// * link:lrs::file::remove_attr_no_follow
+/// * link:lrs::file::File::remove_attr
 pub fn remove_attr<P, S>(path: P, name: S) -> Result
     where P: ToCString, S: ToCString,
 {
@@ -395,10 +885,26 @@ pub fn remove_attr<P, S>(path: P, name: S) -> Result
     rv!(removexattr(&path, &name))
 }
 
-/// Removes an attribute of a file.
+/// Removes an attribute of a file without following symbolic links.
 ///
-/// Relative paths will be interpreted relative to the current working directory. If
-/// `path` is a symbolic link, then the attribute of the symbolic link is set.
+/// [argument, path]
+/// The path of the file whose argument we want to remove.
+///
+/// [argument, name]
+/// The name of the argument.
+///
+/// = Remarks
+///
+/// If the path refers to a symbolic link, the attribute of the link will be removed.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:removexattr(2)
+/// * link:lrs::file::remove_attr
+/// * link:lrs::file::File::remove_attr
 pub fn remove_attr_no_follow<P, S>(path: P, name: S) -> Result
     where P: ToCString, S: ToCString,
 {
@@ -409,9 +915,28 @@ pub fn remove_attr_no_follow<P, S>(path: P, name: S) -> Result
     rv!(lremovexattr(&path, &name))
 }
 
-/// Returns the buffer size required in a `list_attr_buf` call.
+/// Retrieves the buffer size required for all attributes in a file.
 ///
-/// Relative paths will be interpreted relative to the current working directory.
+/// [argument, path]
+/// The path of the file whose attributes we're interested in.
+///
+/// [return_value]
+/// Returns the number of bytes required.
+///
+/// = Remarks
+///
+/// If the path refers to a symbolic link, the link will be recursively resolved and the
+/// required buffer size of the first non-link target will be retrieved.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:listxattr(2)
+/// * link:lrs::file::list_attr_size_no_follow
+/// * link:lrs::file::list_attr
+/// * link:lrs::file::File::list_attr_size
 pub fn list_attr_size<P>(path: P) -> Result<usize>
     where P: ToCString,
 {
@@ -420,10 +945,29 @@ pub fn list_attr_size<P>(path: P) -> Result<usize>
     rv!(listxattr(&path, &mut []), -> usize)
 }
 
-/// Returns the buffer size required in a `list_attr_buf_no_follow` call.
+/// Retrieves the buffer size required for all attributes in a file without following
+/// symbolic links.
 ///
-/// Relative paths will be interpreted relative to the current working directory. If
-/// `path` is a symbolic link, then the attribute of the symbolic link is set.
+/// [argument, path]
+/// The path of the file whose attributes we're interested in.
+///
+/// [return_value]
+/// Returns the number of bytes required.
+///
+/// = Remarks
+///
+/// If the path refers to a symbolic link, the required buffer size for the link will be
+/// retrieved.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:listxattr(2)
+/// * link:lrs::file::list_attr_size
+/// * link:lrs::file::list_attr_no_follow
+/// * link:lrs::file::File::list_attr_size
 pub fn list_attr_size_no_follow<P>(path: P) -> Result<usize>
     where P: ToCString,
 {
@@ -432,26 +976,83 @@ pub fn list_attr_size_no_follow<P>(path: P) -> Result<usize>
     rv!(llistxattr(&path, &mut []), -> usize)
 }
 
-/// Returns an iterator over the attributes in a file.
+/// Creates an iterator over all attributes in a file.
 ///
-/// Relative paths will be interpreted relative to the current working directory.
+/// [argument, path]
+/// The path of the file whose attributes we're interested in.
+///
+/// [argument, buf]
+/// The buffer in which the attributes will be stored.
+///
+/// [return_value]
+/// Returns an iterator over the attributes in the file.
+///
+/// = Remarks
+///
+/// :list_attr_size: link:lrs::file::list_attr_size
+///
+/// Use {list_attr_size}[list_attr_size] to get the required buffer size. It is an error
+/// for `buf` to have length `0`.
+///
+/// If the path refers to a symbolic link, the link will be recursively resolved and an
+/// Iterator over the attributes of the first non-link target is returned.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:listxattr(2)
+/// * {list_attr_size}
+/// * link:lrs::file::list_attr
+/// * link:lrs::file::list_attr_buf_no_follow
+/// * link:lrs::file::File::list_attr_buf
 pub fn list_attr_buf<'a, P>(path: P, buf: &'a mut [u8]) -> Result<ListAttrIter<'a>>
     where P: ToCString,
 {
+    if buf.len() == 0  { return Err(error::InvalidArgument); }
     let mut pbuf: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut pbuf));
     let len = try!(rv!(listxattr(&path, buf), -> usize));
     Ok(ListAttrIter { buf: &buf[..len], pos: 0 })
 }
 
-/// Returns an iterator over the attributes in a file.
+/// Creates an iterator over all attributes in a file without following symbolic links.
 ///
-/// Relative paths will be interpreted relative to the current working directory. If
-/// `path` is a symbolic link, then the attribute of the symbolic link is set.
+/// [argument, path]
+/// The path of the file whose attributes we're interested in.
+///
+/// [argument, buf]
+/// The buffer in which the attributes will be stored.
+///
+/// [return_value]
+/// Returns an iterator over the attributes in the file.
+///
+/// = Remarks
+///
+/// :list_attr_size_no_follow: link:lrs::file::list_attr_size_no_follow
+///
+/// Use {list_attr_size_no_follow}[list_attr_size_no_follow] to get the required buffer
+/// size. It is an error for `buf` to have length `0`.
+///
+/// If the path refers to a symbolic link, an Iterator over the attributes of the link is
+/// returned.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:listxattr(2)
+/// * {list_attr_size_no_follow}
+/// * link:lrs::file::list_attr_no_follow
+/// * link:lrs::file::list_attr_buf
+/// * link:lrs::file::File::list_attr_buf
 pub fn list_attr_buf_no_follow<'a, P>(path: P,
                                       buf: &'a mut [u8]) -> Result<ListAttrIter<'a>>
     where P: ToCString,
 {
+    if buf.len() == 0  { return Err(error::InvalidArgument); }
     let mut pbuf: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut pbuf));
     let len = try!(rv!(llistxattr(&path, buf), -> usize));
@@ -480,9 +1081,34 @@ fn list_attr_common<F>(mut f: F) -> Result<ListAttrIterator>
     }
 }
 
-/// Returns an iterator over the attributes in a file.
+/// Creates an iterator over all attributes in a file.
 ///
-/// Relative paths will be interpreted relative to the current working directory.
+/// [argument, path]
+/// The path of the file whose attributes we're interested in.
+///
+/// [return_value]
+/// Returns an iterator over the attributes in the file.
+///
+/// = Remarks
+///
+/// :list_attr_size: link:lrs::file::list_attr_size
+///
+/// Use {list_attr_size}[list_attr_size] to get the required buffer size. It is an error
+/// for `buf` to have length `0`.
+///
+/// If the path refers to a symbolic link, the link will be recursively resolved and an
+/// Iterator over the attributes of the first non-link target is returned.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:listxattr(2)
+/// * {list_attr_size}
+/// * link:lrs::file::list_attr_buf
+/// * link:lrs::file::list_attr_no_follow
+/// * link:lrs::file::File::list_attr
 pub fn list_attr<P>(path: P) -> Result<ListAttrIterator>
     where P: ToCString,
 {
@@ -491,10 +1117,34 @@ pub fn list_attr<P>(path: P) -> Result<ListAttrIterator>
     list_attr_common(|buf| listxattr(&path, buf))
 }
 
-/// Returns an iterator over the attributes in a file.
+/// Creates an iterator over all attributes in a file without following symbolic links.
 ///
-/// Relative paths will be interpreted relative to the current working directory. If
-/// `path` is a symbolic link, then the attribute of the symbolic link is set.
+/// [argument, path]
+/// The path of the file whose attributes we're interested in.
+///
+/// [return_value]
+/// Returns an iterator over the attributes in the file.
+///
+/// = Remarks
+///
+/// :list_attr_size_no_follow: link:lrs::file::list_attr_size_no_follow
+///
+/// Use {list_attr_size_no_follow}[list_attr_size_no_follow] to get the required buffer
+/// size. It is an error for `buf` to have length `0`.
+///
+/// If the path refers to a symbolic link, an Iterator over the attributes of the link is
+/// returned.
+///
+/// If the path is relative, it will be interpreted relative to the current working
+/// directory.
+///
+/// = See also
+///
+/// * link:man:listxattr(2)
+/// * {list_attr_size_no_follow}
+/// * link:lrs::file::list_attr_no_follow
+/// * link:lrs::file::list_attr
+/// * link:lrs::file::File::list_attr
 pub fn list_attr_no_follow<P>(path: P) -> Result<ListAttrIterator>
     where P: ToCString,
 {
@@ -513,72 +1163,211 @@ pub struct File {
 
 impl File {
     /// Creates a file on which every operation fails.
+    ///
+    /// [return_value]
+    /// Returns an invalid file.
+    ///
+    /// = Remarks
+    ///
+    /// This is equivalent to calling `File::from_borrowed(-1)`. This can be useful when a
+    /// function which always returns a `File` or an object containing a `File` has to
+    /// signal an error condition.
     pub fn invalid() -> File {
         File { fd: -1, owned: false }
     }
 
-    /// Creates a file that points to the current directory.
+    /// Creates a file that points to the current working directory.
+    ///
+    /// [return_value]
+    /// Returns a file that points to the current working directory.
+    ///
+    /// = Remarks
+    ///
+    /// :setcwd: link:lrs::process::set_cwd
+    /// :open: link:lrs::file::File::open
+    ///
+    /// This call does not actually open a directory. The returned `File` is thus affected
+    /// by changes of the global current working directory via {setcwd} . If you require a
+    /// pointer to the current directory that is not affected by changes to the current
+    /// working directory of the process, use the following code:
+    ///
+    /// ----
+    /// let mut flags = Flags::new();
+    /// flags.set_path_fd(true);
+    /// let file = try!(File::open(".", flags);
+    /// ----
+    ///
+    /// This call is mostly useful when working with interfaces that require an argument
+    /// which points to a directory. For example, {open}[`File::open`] is implemented like
+    /// this:
+    ///
+    /// ----
+    /// pub fn open_read<P>(path: P) -> Result<File>
+    ///     where P: ToCString,
+    /// {
+    ///     File::current_dir().rel_open_read(path)
+    /// }
+    /// ----
+    ///
+    /// = See also
+    ///
+    /// * {setcwd}
     pub fn current_dir() -> File {
         File { fd: AT_FDCWD, owned: false }
     }
 
-    /// Opens the file at path `path` in read mode.
+    /// Opens a file in read-only mode.
+    ///
+    /// [argument, path]
+    /// The path of the file to be opened.
+    ///
+    /// [return_value]
+    /// Returns the opened file.
+    ///
+    /// = Remarks
+    ///
+    /// If the path refers to a symbolic link, the link is recursively resolved and the
+    /// first non-link target is opened.
+    ///
+    /// If the path is relative, it is interpreted relative to the current working
+    /// directory.
     ///
     /// This is equivalent to `File::open` with the default flags.
+    ///
+    /// = See also
+    ///
+    /// * link:open(2)
+    /// * link:lrs::file::File::open
     pub fn open_read<P>(path: P) -> Result<File>
         where P: ToCString,
     {
         File::current_dir().rel_open_read(path)
     }
 
-    /// Open the file at path `path` with the specified flags.
+    /// Opens a file with custom flags.
+    ///
+    /// [argument, path]
+    /// The path of the file to be opened.
+    ///
+    /// [argument, flags]
+    /// The flags to be used when opening a file.
+    ///
+    /// [return_value]
+    /// Return the opened file.
+    ///
+    /// = Remarks
+    ///
+    /// If the path refers to a symbolic link, the link is recursively resolved and the
+    /// first non-link target is opened.
+    ///
+    /// If the path is relative, it is interpreted relative to the current working
+    /// directory.
+    ///
+    /// = See also
+    ///
+    /// * link:open(2)
+    /// * link:lrs::file::File::open_read
     pub fn open<P>(path: P, flags: Flags) -> Result<File>
         where P: ToCString,
     {
         File::current_dir().rel_open(path, flags)
     }
 
-    /// Reads bytes from the current read position into the buffer.
+    /// Reads from the file.
     ///
-    /// ### Return value
+    /// [argument, buf]
+    /// The buffer that will be filled by the operation.
     ///
-    /// Returns the number of bytes read or an error. Zero indicates end of file.
+    /// [return_value]
+    /// Returns the number of bytes read.
+    ///
+    /// = Remarks
+    ///
+    /// If the length of the buffer is `0`, the meaning of a `0` return value is
+    /// unspecified. Otherwise a return value of `0` signals End-Of-File.
+    ///
+    /// If lrs was compiled with the `retry` option, this call will automatically retry
+    /// the operation if the call was interrupted by a signal.
+    ///
+    /// = See also
+    ///
+    /// * link:man:read(2)
+    /// * link:lrs::file::File::read_at
+    /// * link:lrs::file::File::scatter_read
+    /// * link:lrs::file::File::scatter_read_at
     pub fn read(&self, buf: &mut [u8]) -> Result<usize> {
         retry(|| read(self.fd, buf)).map(|r| r as usize)
     }
 
-    /// Writes bytes to the current to position from the buffer.
+    /// Writes to the file.
     ///
-    /// ### Return value
+    /// [argument, buf]
+    /// The buffer that will be written to the file.
     ///
-    /// Returns the number of bytes written or an error.
+    /// [return_value]
+    /// Returns the number of bytes written.
+    ///
+    /// = Remarks
+    ///
+    /// If lrs was compiled with the `retry` option, this call will automatically retry
+    /// the operation if the call was interrupted by a signal.
+    ///
+    /// = See also
+    ///
+    /// * link:man:write(2)
+    /// * link:lrs::file::File::write_at
+    /// * link:lrs::file::File::gather_write
+    /// * link:lrs::file::File::gather_write_at
     pub fn write(&self, buf: &[u8]) -> Result<usize> {
         retry(|| write(self.fd, buf)).map(|r| r as usize)
     }
 
-    /// Closes the file descriptor.
+    /// Closes the file.
+    ///
+    /// = Remarks
+    ///
+    /// If the file is not owned, an error is returned. If the file is owned and the
+    /// kernel returns an error, the error is returned but the file descriptor contained
+    /// in this object is nonetheless replaced by `-1`.
+    ///
+    /// = See also
+    ///
+    /// * link:man:close(2)
     pub fn close(&mut self) -> Result {
         if self.owned {
             let ret = close(self.fd);
             self.fd = -1;
             rv!(ret)
         } else {
-            Ok(())
+            Err(error::InvalidArgument)
         }
     }
 
-    /// Returns information about the file.
+    /// Retrieves information about the file.
+    ///
+    /// [return_value]
+    /// The retrieved information.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fstatat(2)
     pub fn info(&self) -> Result<Info> {
         let mut stat = mem::zeroed();
         try!(rv!(fstatat(self.fd, CStr::empty(), &mut stat, AT_EMPTY_PATH)));
         Ok(info_from_stat(stat))
     }
 
-    /// Performs requested seek operation.
+    /// Changes the read/write position of the file.
     ///
-    /// ### Return value
+    /// [argument, pos]
+    /// The seek operation to be performed.
     ///
-    /// Returns the new position in the file or an error.
+    /// [return_value]
+    /// Returns the new position in the file.
+    ///
+    /// = See also
+    ///
+    /// * link:man:lseek(2)
     pub fn seek(&self, pos: Seek) -> Result<i64> {
         let ret = lseek(self.fd, pos.offset(), pos.whence());
         rv!(ret, -> i64)
@@ -586,11 +1375,23 @@ impl File {
 
     /// Creates a new file referring to the same file description.
     ///
+    /// [return_value]
+    /// Returns the new file.
+    ///
+    /// = Remarks
+    ///
     /// The `close on exec` flag will be set on the new file.
     ///
-    /// ### Return value
+    /// The new file has its own file descriptor which refers to the same file
+    /// description. This means that changing the `close on exec` flag on this file will
+    /// not affect the other file and neither does closing this file. But writing,
+    /// reading, seeking, etc. will affect the other file.
     ///
-    /// Returns the new file or an error.
+    /// = See also
+    ///
+    /// * link:man:fcntl(2) and the `F_DUPFD_CLOEXEC` section therein.
+    /// * link:man:open(2) and the description of *file descriptors* and *file
+    ///   descriptions* therein.
     pub fn duplicate(&self) -> Result<File> {
         let new_fd = fcntl_dupfd_cloexec(self.fd, 0);
         if new_fd < 0 {
@@ -600,9 +1401,36 @@ impl File {
         }
     }
 
-    /// Retrieves the file description flags.
+    /// Retrieves the file status flags and access mode.
     ///
-    /// The returned flags will contain the access mode flags and the file status flags.
+    /// [return_value]
+    /// Returns the status flags and access mode.
+    ///
+    /// = Remarks
+    ///
+    /// The status flags and access mode are part of the file description, not the file
+    /// descriptor. The status flags are
+    ///
+    /// * `bypass buffer`
+    /// * `access time update`
+    /// * `append`
+    /// * `signal io`
+    /// * `data synchronized`
+    /// * `non blocking`
+    /// * `synchronized`
+    /// * `path fd`
+    ///
+    /// The access mode are
+    ///
+    /// * `readable`
+    /// * `writable`
+    ///
+    /// The status of the other flags in unspecified.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fcntl(2) and the description of `F_GETFL` therein.
+    /// * link:lrs::file::File::set_status_flags
     pub fn get_status_flags(&self) -> Result<Flags> {
         let ret = fcntl_getfl(self.fd);
         if ret < 0 {
@@ -612,15 +1440,39 @@ impl File {
         }
     }
 
-    /// Sets the file description flags.
+    /// Sets the file status flags.
     ///
-    /// Only the file status flags can be modified.
+    /// [argument, flags]
+    /// The modified flags.
+    ///
+    /// = Remarks
+    ///
+    /// Only the following flags can be changed
+    ///
+    /// * `append`
+    /// * `signal io`
+    /// * `bypass buffer`
+    /// * `access time update`
+    /// * `non blocking`
+    ///
+    /// = See also
+    ///
+    /// * link:man:fcntl(2) and the description of `F_SETFL` therein.
+    /// * link:lrs::file::File::get_status_flags
     pub fn set_status_flags(&self, flags: Flags) -> Result {
         let ret = fcntl_setfl(self.fd, flags_to_int(flags));
         rv!(ret)
     }
 
-    /// Returns whether the file has the `close on exec` flag set.
+    /// Retrieves the status of the `close on exec` flag.
+    ///
+    /// [return_value]
+    /// Returns whether the `close on exec` flag is set.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fcntl(2) and the description of `F_GETFD` therein.
+    /// * link:lrs::file::File::set_close_on_exec
     pub fn is_close_on_exec(&self) -> Result<bool> {
         let ret = fcntl_getfd(self.fd);
         if ret < 0 {
@@ -630,7 +1482,15 @@ impl File {
         }
     }
 
-    /// Modifies the `close on exec` flag of the file.
+    /// Enables or disables the `close on exec` flag.
+    ///
+    /// [argument, val]
+    /// Whether the flag is set.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fcntl(2) and the description of `F_SETFD` therein.
+    /// * link:lrs::file::File::io_close_on_exec
     pub fn set_close_on_exec(&self, val: bool) -> Result {
         let mut ret = fcntl_getfd(self.fd);
         if ret >= 0 {
@@ -640,83 +1500,258 @@ impl File {
         rv!(ret)
     }
 
-    /// Reads bytes from the offset into the buffer.
+    /// Reads from a position in the file.
     ///
-    /// The return value and errors are the same as for `read` and `seek`.
+    /// [argument, buf]
+    /// The buffer that will be filled by the operation.
+    ///
+    /// [argument, off]
+    /// The position in the file at which to read.
+    ///
+    /// [return_value]
+    /// Returns the number of bytes read.
+    ///
+    /// = Remarks
+    ///
+    /// This function does not change the read/write position of the file description.
+    ///
+    /// If lrs was compiled with the `retry` option, this call will automatically retry
+    /// the operation if the call was interrupted by a signal.
+    ///
+    /// = See also
+    ///
+    /// * link:man:pread(2)
+    /// * link:lrs::file::File::read
+    /// * link:lrs::file::File::scatter_read
+    /// * link:lrs::file::File::scatter_read_at
     pub fn read_at(&self, buf: &mut [u8], off: i64) -> Result<usize> {
         retry(|| pread(self.fd, buf, off as loff_t)).map(|r| r as usize)
     }
 
-    /// Writes bytes to the offset from the buffer.
+    /// Writes to an offset in the file.
     ///
-    /// The return value and errors are the same as for `write` and `seek`.
+    /// [argument, buf]
+    /// The buffer that will be written to the file.
+    ///
+    /// [argument, off]
+    /// The position in the file at which to write.
+    ///
+    /// [return_value]
+    /// Returns the number of bytes written.
+    ///
+    /// = Remarks
+    ///
+    /// This function does not change the read/write position of the file description.
+    ///
+    /// If lrs was compiled with the `retry` option, this call will automatically retry
+    /// the operation if the call was interrupted by a signal.
+    ///
+    /// = See also
+    ///
+    /// * link:man:pwrite(2)
+    /// * link:lrs::file::File::write
+    /// * link:lrs::file::File::gather_write
+    /// * link:lrs::file::File::gather_write_at
     pub fn write_at(&self, buf: &[u8], off: i64) -> Result<usize> {
         retry(|| pwrite(self.fd, buf, off as loff_t)).map(|r| r as usize)
     }
 
-    /// Reads bytes from the current read position into the buffers.
+    /// Reads from the file into multiple buffers.
     ///
-    /// ### Return value
+    /// [argument, bufs]
+    /// The buffers that will be filled by the operation.
     ///
-    /// Returns the total number of bytes read.
+    /// [return_value]
+    /// Returns the number of bytes read.
+    ///
+    /// = Remarks
+    ///
+    /// This operation is atomic in the sense that the read operations will not be
+    /// interleaved with other operations on the same file description.
+    ///
+    /// If the length of the buffer is `0`, the meaning of a `0` return value is
+    /// unspecified. Otherwise a return value of `0` signals End-Of-File.
+    ///
+    /// If lrs was compiled with the `retry` option, this call will automatically retry
+    /// the operation if the call was interrupted by a signal.
+    ///
+    /// = See also
+    ///
+    /// * link:man:readv(2)
+    /// * link:lrs::file::File::read
+    /// * link:lrs::file::File::read_at
+    /// * link:lrs::file::File::scatter_read_at
     pub fn scatter_read(&self, bufs: &mut [&mut [u8]]) -> Result<usize> {
         assert!(bufs.len() < (!0 as c_uint / 2) as usize);
         retry(|| readv(self.fd, bufs)).map(|r| r as usize)
     }
 
-    /// Writes bytes to the current write position from the buffers.
+    /// Writes from multiple buffers to the file.
     ///
-    /// ### Return value
+    /// [argument, bufs]
+    /// The buffers that will be written to the file.
     ///
-    /// Returns the total number of bytes written.
+    /// [return_value]
+    /// Returns the number of bytes written.
+    ///
+    /// = Remarks
+    ///
+    /// This operation is atomic in the sense that the write operations will not be
+    /// interleaved with other operations on the same file description.
+    ///
+    /// If lrs was compiled with the `retry` option, this call will automatically retry
+    /// the operation if the call was interrupted by a signal.
+    ///
+    /// = See also
+    ///
+    /// * link:man:writev(2)
+    /// * link:lrs::file::File::write
+    /// * link:lrs::file::File::write_at
+    /// * link:lrs::file::File::gather_write_at
     pub fn gather_write(&self, bufs: &[&[u8]]) -> Result<usize> {
         assert!(bufs.len() < (!0 as c_uint / 2) as usize);
         retry(|| writev(self.fd, bufs)).map(|r| r as usize)
     }
 
-    /// Reads bytes from the offset into the buffers.
+    /// Reads from a position in the file into multiple buffers.
     ///
-    /// ### Return value
+    /// [argument, bufs]
+    /// The buffers that will be filled by the operation.
     ///
-    /// Returns the total number of bytes read.
+    /// [argument, off]
+    /// The position in the file at which to read.
+    ///
+    /// [return_value]
+    /// Returns the number of bytes read.
+    ///
+    /// = Remarks
+    ///
+    /// This function does not change the read/write position of the file description.
+    ///
+    /// This operation is atomic in the sense that the read operations will not be
+    /// interleaved with other operations on the same file description.
+    ///
+    /// If the length of the buffer is `0`, the meaning of a `0` return value is
+    /// unspecified. Otherwise a return value of `0` signals End-Of-File.
+    ///
+    /// If lrs was compiled with the `retry` option, this call will automatically retry
+    /// the operation if the call was interrupted by a signal.
+    ///
+    /// = See also
+    ///
+    /// * link:man:readv(2)
+    /// * link:lrs::file::File::read
+    /// * link:lrs::file::File::read_at
+    /// * link:lrs::file::File::scatter_read
     pub fn scatter_read_at(&self, bufs: &mut [&mut [u8]], off: i64) -> Result<usize> {
         assert!(bufs.len() < (!0 as c_uint / 2) as usize);
         retry(|| preadv(self.fd, bufs, off as loff_t)).map(|r| r as usize)
     }
 
-    /// Writes bytes to the offset from the buffers.
+    /// Writes from multiple buffers to an offset in the file.
     ///
-    /// ### Return value
+    /// [argument, bufs]
+    /// The buffers that will be written to the file.
     ///
-    /// Returns the total number of bytes written.
+    /// [argument, off]
+    /// The position in the file at which to write.
+    ///
+    /// [return_value]
+    /// Returns the number of bytes written.
+    ///
+    /// = Remarks
+    ///
+    /// This function does not change the read/write position of the file description.
+    ///
+    /// This operation is atomic in the sense that the write operations will not be
+    /// interleaved with other operations on the same file description.
+    ///
+    /// If lrs was compiled with the `retry` option, this call will automatically retry
+    /// the operation if the call was interrupted by a signal.
+    ///
+    /// = See also
+    ///
+    /// * link:man:pwritev(2)
+    /// * link:lrs::file::File::write
+    /// * link:lrs::file::File::write_at
+    /// * link:lrs::file::File::gather_write
     pub fn gather_write_at(&self, bufs: &[&[u8]], off: i64) -> Result<usize> {
         assert!(bufs.len() < (!0 as c_uint / 2) as usize);
         retry(|| pwritev(self.fd, bufs, off as loff_t)).map(|r| r as usize)
     }
 
-    /// Changes the length of the file to the specified length.
+    /// Changes the length of the file.
     ///
-    /// If the requested length is larger than the current length, a hole is created.
+    /// [argument, len]
+    /// The new length of the file.
+    ///
+    /// = Remarks
+    ///
+    /// :seek: link:lrs::file::File::seek
+    ///
+    /// If the length is larger than the current length, a hole is created. Such holes can
+    /// be inspected with the {seek}[seek] method.
+    ///
+    /// = See also
+    ///
+    /// * link:man:ftruncate(2)
+    /// * link:lrs::file::set_len
+    /// * {seek}
     pub fn set_len(&self, len: i64) -> Result {
         retry(|| ftruncate(self.fd, len as loff_t)).map(|_| ())
     }
 
-    /// Flushes all data and metadata to the disk.
+    /// Flushes all data and meta-data of the file to the disk.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fsync(2)
+    /// * link:lrs::file::File::data_sync
     pub fn sync(&self) -> Result {
         rv!(fsync(self.fd))
     }
 
-    /// Flushes enough data to the disk that the content of the file can be read again.
+    /// Flushes enough data and mate-data to the disk that the content of the file can be
+    /// read again.
+    ///
+    /// = Remarks
+    ///
+    /// :sync: link:lrs::file::File::sync
+    ///
+    /// In some cases, this is more efficient than {sync}[sync].
+    ///
+    /// = See also
+    ///
+    /// * link:man:fdatasync(2)
+    /// * {sync}
     pub fn data_sync(&self) -> Result {
         rv!(fdatasync(self.fd))
     }
 
-    /// Writes all data and metadata of the filesystem containing this file to the disk.
+    /// Flushes all data and meta-data of the filesystem containing the file to the disk.
+    /// 
+    /// = See also
+    ///
+    /// * link:man:syncfs(2)
+    /// * link:lrs::file::File::sync
     pub fn sync_filesystem(&self) -> Result {
         rv!(syncfs(self.fd))
     }
 
-    /// Advise the kernel that the specified range will have a certain usage pattern.
+    /// Advises the kernel that a range in the file will have a certain usage pattern.
+    ///
+    /// [argument, from]
+    /// The start of the range.
+    ///
+    /// [argument, to]
+    /// The end of the range.
+    ///
+    /// [argument, advice]
+    /// The advice given to the kernel.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fadvise(2)
     pub fn advise(&self, from: u64, to: Option<u64>, advice: Advice) -> Result {
         let len = match to {
             Some(e) => {
@@ -729,15 +1764,40 @@ impl File {
         rv!(ret)
     }
 
-    /// Returns information about the file system of this file.
+    /// Returns information about the filesystem in which this file in stored.
+    ///
+    /// [return_value]
+    /// Returns information about the filesystem.
+    ///
+    /// = See also
+    /// 
+    /// * link:man:fstatfs(2)
     pub fn fs_info(&self) -> Result<FileSystemInfo> {
         let mut buf = mem::zeroed();
         retry(|| fstatfs(self.fd, &mut buf)).map(|_| from_statfs(buf))
     }
 
-    /// Creates a hard link to this file.
+    /// Creates a hard link to the file.
     ///
-    /// Relative paths are interpreted relative to the current working directory.
+    /// [argument, path]
+    /// The path at which the link will be created.
+    ///
+    /// = Remarks
+    ///
+    /// The new path must be in the same mount point as the opened file.
+    ///
+    /// In general, this function cannot be used if there are no links to the file, e.g.,
+    /// because the last link was deleted after the file was opened. However, this is
+    /// possible if the file was opened with the `temp file` and without the `exclusive`
+    /// flag. This can be used to securely create files and only make them visible in the
+    /// file system once they have been completely written.
+    ///
+    /// If the path is relative, it is interpreted relative to the current working
+    /// directory.
+    ///
+    /// = See also
+    ///
+    /// * link:man:linkat(2)
     pub fn link<P>(&self, path: P) -> Result
         where P: ToCString,
     {
@@ -747,6 +1807,8 @@ impl File {
     }
 
     /// Creates a hard link to this file relative to a directory.
+    ///
+    /// = Remarks
     ///
     /// Relative paths are interpreted relative to the directory `dir`.
     pub fn link_rel_to<P>(&self, dir: &File, path: P) -> Result
@@ -769,7 +1831,6 @@ impl File {
         // enough space for "/proc/self/fd/-{u64::MAX}\0"
         let mut proc_buf = [0; 36];
         let _ = write!(&mut proc_buf[..], "/proc/self/fd/{}", self.fd);
-        // FIXME: not actually correct
         let cstr = proc_buf.as_cstr().unwrap();
         let len = try!(rv!(readlinkat(self.fd, cstr, buf), -> usize));
         Ok(buf[..len].as_mut_no_null_str().unwrap())
@@ -801,6 +1862,8 @@ impl File {
 
     /// Reserves the specified range in the file system.
     ///
+    /// = Remarks
+    ///
     /// Further writes in the specified range are guaranteed not to fail because of a lack
     /// of storage capacity.
     pub fn reserve<R>(&self, range: R) -> Result
@@ -822,6 +1885,8 @@ impl File {
 
     /// Removes the specified range from the file and closes the gap.
     ///
+    /// = Remarks
+    ///
     /// The range must probably begin and end at a multiple of the block size but this
     /// depends on the filesystem. This function cannot be used if the range reaches the
     /// end of the file. Use `set_len` for this purpose.
@@ -834,6 +1899,8 @@ impl File {
     }
     
     /// Zeroes the specified range in the file.
+    ///
+    /// = Remarks
     /// 
     /// This can be more efficient than manually writing zeroes.
     pub fn zero<R>(&self, range: R) -> Result
@@ -925,6 +1992,8 @@ impl File {
 impl File {
     /// Opens the file at path `path` in read mode.
     ///
+    /// = Remarks
+    ///
     /// If `path` is relative, the `self` must be a directory and the `path` will be
     /// interpreted relative to `self`.
     ///
@@ -936,6 +2005,8 @@ impl File {
     }
 
     /// Open the file at path `path` with the specified flags.
+    ///
+    /// = Remarks
     ///
     /// If `path` is relative, the `self` must be a directory and the `path` will be
     /// interpreted relative to `self`.
@@ -961,6 +2032,8 @@ impl File {
 
     /// Returns information about the file specified by `path`.
     ///
+    /// = Remarks
+    ///
     /// If `path` is a symlink, then this is equivalent to returning information about the
     /// destination of the symlink. If `path` is relative, then `self` must be a directory
     /// and the path will be interpreted relative to `self`.
@@ -976,6 +2049,8 @@ impl File {
 
     /// Returns information about the file specified by `path`.
     ///
+    /// = Remarks
+    ///
     /// This returns information about the file at `path`, even if `path` is a symlink.
     /// If `path` is relative, then `self` must be a directory and the path will be
     /// interpreted relative to `self`.
@@ -990,6 +2065,8 @@ impl File {
     }
 
     /// Returns whether the specified path points to an existing file.
+    ///
+    /// = Remarks
     ///
     /// If `path` is relative then `self` must be a directory and the path will be
     /// interpreted relative to `self`.
@@ -1012,6 +2089,8 @@ impl File {
 
     /// Checks whether the file at `path` can be accessed with the specified mode.
     ///
+    /// = Remarks
+    ///
     /// If `path` is relative then `self` must be a directory and the path will be
     /// interpreted relative to `self`.
     pub fn rel_can_access<P>(&self, path: P, mode: AccessMode) -> Result<bool>
@@ -1033,6 +2112,8 @@ impl File {
 
     /// Changes the access and modification times of the file specified by `path`.
     ///
+    /// = Remarks
+    ///
     /// If `path` is relative then `self` has to be a directory and relative paths are
     /// interpreted relative to `self`. If `path` is a symlink, then this changes the
     /// times of the destination.
@@ -1048,6 +2129,8 @@ impl File {
     }
 
     /// Changes the access and modification times of the file specified by `path`.
+    ///
+    /// = Remarks
     ///
     /// If `path` is relative then `self` has to be a directory and relative paths are
     /// interpreted relative to `self`. If `path` is a symlink, then this changes the
@@ -1065,6 +2148,8 @@ impl File {
 
     /// Atomically exchanges the two files `one` and `two`.
     ///
+    /// = Remarks
+    ///
     /// If one of the paths is relative, then `self` has to be a directory and the path
     /// will be interpreted relative to `self`.
     pub fn rel_exchange<P, Q>(&self, one: P, two: Q) -> Result
@@ -1078,6 +2163,8 @@ impl File {
     }
 
     /// Renames `one` to `two`.
+    ///
+    /// = Remarks
     ///
     /// If one of the paths is relative, then `self` has to be a directory and the path
     /// will be interpreted relative to `self`. If `replace` is `false`, then the
@@ -1095,6 +2182,8 @@ impl File {
 
     /// Creates the directory `path`.
     ///
+    /// = Remarks
+    ///
     /// If `path` is relative, then `self` has to be a directory and the path is
     /// interpreted relative to `self`.
     pub fn rel_create_dir<P>(&self, path: P, mode: Mode) -> Result
@@ -1106,6 +2195,8 @@ impl File {
     }
 
     /// Removes the file at `path`.
+    ///
+    /// = Remarks
     ///
     /// If `path` is relative, then `self` has to be a directory and the path is
     /// interpreted relative to `self`. If `path` refers to a directory, then the
@@ -1124,6 +2215,8 @@ impl File {
 
     /// Creates a symlink from `link` to `target`.
     ///
+    /// = Remarks
+    ///
     /// If `link` is relative, then `self` has to be a directory and `link` will be
     /// interpreted relative to `self`.
     pub fn rel_symlink<P, Q>(&self, target: P, link: Q) -> Result
@@ -1137,6 +2230,8 @@ impl File {
     }
 
     /// Reads the target of the symbolic link `link` into `buf`.
+    ///
+    /// = Remarks
     ///
     /// If `link` is relative, then `self` has to be a directory and `link` will be
     /// interpreted relative to `self`.
@@ -1152,6 +2247,8 @@ impl File {
 
     /// Reads the target of the symbolic link `link`.
     ///
+    /// = Remarks
+    ///
     /// If `link` is relative, then `self` has to be a directory and `link` will be
     /// interpreted relative to `self`.
     pub fn rel_read_link<P>(&self, link: P) -> Result<NoNullString<'static>>
@@ -1162,6 +2259,8 @@ impl File {
     }
 
     /// Changes the owner of the file at `path`.
+    ///
+    /// = Remarks
     ///
     /// If `path` is relative, then `self` has to be a directory and `path` will be
     /// interpreted relative to `self`.
@@ -1174,6 +2273,8 @@ impl File {
     }
 
     /// Changes the owner of the file at `path`.
+    ///
+    /// = Remarks
     ///
     /// If `path` is relative, then `self` has to be a directory and `path` will be
     /// interpreted relative to `self`. If `path` refers to a symlink, then this changes
@@ -1189,6 +2290,8 @@ impl File {
 
     /// Change the mode of the file at `path`.
     ///
+    /// = Remarks
+    ///
     /// If `path` is relative, then `self` has to be a directory and `path` will be
     /// interpreted relative to `self`.
     pub fn rel_change_mode<P>(&self, path: P, mode: Mode) -> Result
@@ -1200,6 +2303,8 @@ impl File {
     }
 
     /// Creates a file at `path`.
+    ///
+    /// = Remarks
     ///
     /// If `path` is relative, then `self` has to be a directory and `path` will be
     /// interpreted relative to `self`.
@@ -1223,6 +2328,8 @@ impl File {
 
     /// Creates a device special file at `path`.
     ///
+    /// = Remarks
+    ///
     /// If `path` is relative, then `self` has to be a directory and `path` will be
     /// interpreted relative to `self`.
     pub fn rel_create_device<P>(&self, path: P, dev: Device, mode: Mode) -> Result
@@ -1241,6 +2348,12 @@ impl File {
 impl Read for File {
     fn scatter_read(&mut self, buf: &mut [&mut [u8]]) -> Result<usize> {
         File::scatter_read(self, buf)
+    }
+}
+
+impl Write for File {
+    fn gather_write(&mut self, buf: &[&[u8]]) -> Result<usize> {
+        File::gather_write(self, buf)
     }
 }
 

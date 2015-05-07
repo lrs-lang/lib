@@ -24,7 +24,7 @@ use cty::{
     c_int, ssize_t, rlimit64, pid_t, uid_t, gid_t, stat, c_char, size_t, statfs,
     timespec, dev_t, c_void, clockid_t, itimerspec, epoll_event, sigset_t, new_utsname,
     sysinfo, c_uint, c_ulong, umode_t, k_uint, loff_t, k_ulong, F_DUPFD_CLOEXEC, F_GETFL,
-    F_SETFL, F_GETFD, F_SETFD, sockaddr, user_msghdr, mmsghdr, FUTEX_WAIT, FUTEX_WAKE,
+    F_SETFL, F_GETFD, F_SETFD, sockaddr, msghdr, mmsghdr, FUTEX_WAIT, FUTEX_WAKE,
     siginfo_t, rusage,
 };
 
@@ -460,7 +460,7 @@ pub fn recvfrom(sockfd: c_int, buf: &mut [u8], flags: c_int, src_addr: Option<&m
     res
 }
 
-pub fn recvmsg(sockfd: c_int, msg: &mut user_msghdr, flags: c_int) -> ssize_t {
+pub fn recvmsg(sockfd: c_int, msg: &mut msghdr, flags: c_int) -> ssize_t {
     unsafe { r::recvmsg(sockfd, msg, flags as k_uint) }
 }
 
@@ -485,7 +485,7 @@ pub fn sendto(sockfd: c_int, buf: &[u8], flags: c_int,
     }
 }
 
-pub fn sendmsg(sockfd: c_int, msg: &user_msghdr, flags: c_int) -> ssize_t {
+pub fn sendmsg(sockfd: c_int, msg: &msghdr, flags: c_int) -> ssize_t {
     unsafe { r::sendmsg(sockfd, msg as *const _ as *mut _, flags as k_uint) }
 }
 

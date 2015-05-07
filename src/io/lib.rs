@@ -8,12 +8,17 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
+#[macro_use]
 extern crate lrs_core as core;
 extern crate lrs_base as base;
+extern crate lrs_arch_fns as arch_fns;
 
 #[prelude_import] use base::prelude::*;
-use core::{mem};
+use core::{mem, cmp};
 use base::error::{Errno, DeviceFull};
+use arch_fns::{memchr};
+
+mod lrs { pub use base::lrs::*; }
 
 pub type Result<T> = base::result::Result<T, Errno>;
 
@@ -42,6 +47,7 @@ pub trait Read {
 
 pub trait BufRead {
     fn copy_until<W: Write>(&mut self, dst: &mut W, b: u8) -> Result<usize>;
+    fn consume(&mut self, num: usize) -> usize;
 }
 
 pub trait Write {
@@ -86,6 +92,28 @@ impl<'a> Read for &'a [u8] {
             buf = &mut b[1..];
         }
         Ok(sum)
+    }
+}
+
+impl<'a> BufRead for &'a [u8] {
+    fn copy_until<W: Write>(&mut self, dst: &mut W, b: u8) -> Result<usize> {
+        let mut len = match memchr(self, b) {
+            Some(pos) => pos + 1,
+            _ => self.len(),
+        };
+        let total = len;
+        while len > 0 {
+            let consumed = try!(dst.write(&self[..len]));
+            len -= consumed;
+            self.consume(consumed);
+        }
+        Ok(total)
+    }
+
+    fn consume(&mut self, num: usize) -> usize {
+        let num = cmp::min(num, self.len());
+        *self = &self[num..];
+        num
     }
 }
 
