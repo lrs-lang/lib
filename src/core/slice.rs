@@ -139,7 +139,9 @@ impl<T> [T] {
     pub fn sort_by<F>(&mut self, mut f: F)
         where F: FnMut(&T, &T) -> Ordering
     {
-        unsafe { sort(self, &mut f); }
+        if mem::size_of::<T>() != 0 {
+            unsafe { sort(self, &mut f); }
+        }
     }
 }
 

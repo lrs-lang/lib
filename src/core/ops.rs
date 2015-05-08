@@ -214,6 +214,12 @@ pub trait PartialOrd<Rhs: ?Sized = Self> : Eq<Rhs> {
     }
 }
 
+impl<'a, 'b, Rhs: ?Sized, Lhs: PartialOrd<Rhs>+?Sized> PartialOrd<&'a Rhs> for &'b Lhs {
+    fn partial_cmp(&self, other: &&'a Rhs) -> Option<Ordering> {
+        (**self).partial_cmp(*other)
+    }
+}
+
 /// The `(&self)` (immutable function call) trait.
 #[lang = "fn"]
 #[rustc_paren_sugar]

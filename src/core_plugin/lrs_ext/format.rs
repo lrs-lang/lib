@@ -23,7 +23,6 @@ use parse::token;
 use ptr::P;
 
 use std::collections::HashMap;
-use std::iter::repeat;
 
 #[derive(PartialEq)]
 enum ArgumentType {
@@ -52,7 +51,7 @@ struct Context<'a, 'b:'a> {
     /// were declared in.
     names: HashMap<String, P<ast::Expr>>,
     name_types: HashMap<String, ArgumentType>,
-    name_ordering: Vec<String>,
+    _name_ordering: Vec<String>,
 
     /// The latest consecutive literal strings, or empty if there weren't any.
     literal: String,
@@ -402,7 +401,7 @@ impl<'a, 'b> Context<'a, 'b> {
         block
     }
 
-    fn static_array(ecx: &mut ExtCtxt,
+    fn _static_array(ecx: &mut ExtCtxt,
                     name: &str,
                     piece_ty: P<ast::Ty>,
                     pieces: Vec<P<ast::Expr>>)
@@ -427,7 +426,7 @@ impl<'a, 'b> Context<'a, 'b> {
 
     /// Actually builds the expression which the iformat! block will be expanded
     /// to
-    fn into_expr(mut self) -> P<ast::Expr> {
+    fn into_expr(self) -> P<ast::Expr> {
         if self.pieces.len() == 0 {
             let path = vec!(self.ecx.ident_of("lrs"),
                             self.ecx.ident_of("result"),
@@ -566,7 +565,7 @@ pub fn expand_preparsed_format_args(ecx: &mut ExtCtxt, sp: Span,
         names: names,
         name_positions: HashMap::new(),
         name_types: HashMap::new(),
-        name_ordering: name_ordering,
+        _name_ordering: name_ordering,
         nest_level: 0,
         next_arg: 0,
         literal: String::new(),

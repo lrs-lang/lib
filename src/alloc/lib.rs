@@ -22,11 +22,15 @@ use base::{error};
 pub use libc::{Libc};
 pub use no::{NoMem};
 pub use bda::{Bda};
+
+#[cfg(jemalloc)]
 pub use jemalloc::{JeMalloc};
 
 mod libc;
 mod no;
 mod bda;
+
+#[cfg(jemalloc)]
 mod jemalloc;
 
 /// The default allocator

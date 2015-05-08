@@ -5,5 +5,10 @@
 //! Memory allocation
 
 pub use lrs_alloc::{
-    MAX_SIZE, empty_ptr, Allocator, Heap, FbHeap, Libc, NoMem, Bda, JeMalloc,
+    MAX_SIZE, empty_ptr, Allocator, Heap, FbHeap, Libc, NoMem, Bda,
+};
+
+#[cfg(jemalloc)]
+pub use lrs_alloc::{
+    JeMalloc,
 };

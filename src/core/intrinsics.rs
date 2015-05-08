@@ -3,30 +3,210 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 extern "rust-intrinsic" {
+    /// Calculates the discriminant of an enum variant.
+    ///
+    /// [argument, v]
+    /// The variant whose discriminant will be calculated.
+    ///
+    /// [return_value]
+    /// Returns the discriminant value cast to an `u64` or `0` if the argument does not
+    /// have a discriminant value.
+    ///
+    /// = Remarks
+    ///
+    /// If the discriminant cannot be represented in an `i64`, the result is unspecified.
+    /// Note that it is `i64`, not `u64`.
+    ///
+    /// = Examples
+    ///
+    /// ----
+    /// enum T {
+    ///     X,
+    ///     Y,
+    /// }
+    ///
+    /// assert!(unsafe { discriminant_value(&T::X) } == 0);
+    /// ----
     pub fn discriminant_value<T>(v: &T) -> u64;
+
+    /// Aborts the process.
+    ///
+    /// = Remarks
+    ///
+    /// :abt: link:lrs::intrinsics::lrs_abort[lrs_abort]
+    ///
+    /// You should never use this function directly since it can cause strange code
+    /// generation even in unoptimized builds. Instead use {abt} which simply calls this
+    /// function.
+    ///
+    /// = See also
+    ///
+    /// * {abt}
     pub fn abort() -> !;
+
+    /// Raises a `SIGTRAP`.
+    ///
+    /// = Remarks
+    ///
+    /// This is useful for debugging as it causes debuggers to interrupt the program at
+    /// this point. Note that the program will terminate if the signal is not caught.
     pub fn breakpoint();
+
+    /// Calculates the size of a type.
+    ///
+    /// [return_value]
+    /// Returns the size of `T` objects.
+    ///
+    /// = Remarks
+    ///
+    /// :so: link:lrs::mem::size_of[size_of]
+    ///
+    /// You should never use this function directly. Use {so} instead.
+    ///
+    /// = See also
+    ///
+    /// * {so}
     pub fn size_of<T>() -> usize;
+
+    /// Stores a new value in an object without running the object's destructor.
+    ///
+    /// [argument, dst]
+    /// The location where `src` will be stored.
+    ///
+    /// [argument, src]
+    /// The value to store in `dst`.
+    ///
+    /// = Remarks
+    ///
+    /// :uninit: link:lrs::intrinsics::uninit[uninit]
+    ///
+    /// This can be used to initialize memory that was previously created with {uninit}.
+    ///
+    /// = Examples
+    ///
+    /// ----
+    /// unsafe fn f(x: T) {
+    ///     let mut y = uninit():
+    ///     move_val_init(&mut y, x);
+    /// }
+    /// ----
+    ///
+    /// = See also
+    ///
+    /// * {uninit}
     pub fn move_val_init<T>(dst: &mut T, src: T);
+
+    /// Calculates the alignment of a type.
+    ///
+    /// [return_value]
+    /// Returns the alignment of `T` objects.
+    ///
+    /// = Remarks
+    ///
+    /// :ao: link:lrs::mem::align_of[align_of]
+    ///
+    /// You should never use this function directly. Use {ao} instead.
+    ///
+    /// = See also
+    ///
+    /// * {ao}
     pub fn min_align_of<T>() -> usize;
-    pub fn pref_align_of<T>() -> usize;
+
+    /// Creates a value that appears to have had its destructor run.
+    ///
+    /// [return_value]
+    /// Returns an object that appears to have had its destructor run.
+    ///
+    /// = Remarks
+    ///
+    /// The returned object has all of its bytes set to a special value which will prevent
+    /// its destructor from running when it goes out of scope.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::intrinsics::init
     pub fn init_dropped<T>() -> T;
+
+    /// Creates a value with all bytes set to zero.
+    ///
+    /// [return_value]
+    /// Returns an object with all bytes set to zero.
+    ///
+    /// = Remarks
+    ///
+    /// :i: link:lrs::mem::init
+    /// :pod: link:lrs::marker::Pod[Pod]
+    ///
+    /// For {pod} objects you should use the safe {i} instead.
+    ///
+    /// = See also
+    ///
+    /// * {i}
+    /// * {pod}
     pub fn init<T>() -> T;
-    /// Creates a completely uninitialized object.
+
+    /// Creates an uninitialized object.
     ///
-    /// This is a zero-cost operation but reading from the object before it has been
-    /// initialized is undefined behavior.
+    /// [return_value]
+    /// Returns an uninitialized object.
+    ///
+    /// = Remarks
+    ///
+    /// This is a very efficient way to create large objects that will later be
+    /// initialized. Note that this is *not* the same as creating an object that contains
+    /// the bytes that were previously stored in the memory location the object is stored
+    /// in. If the returned object is used before it is properly initialized, the behavior
+    /// is undefined.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::mem::uninit
     pub fn uninit<T>() -> T;
-    /// You probably want to use `mem::forget`.
+
+    /// Moves an object without running its destructor.
     ///
-    /// If you actually want this function then I'd be interested in hearing why.
-    pub fn forget<T>(_: T) -> ();
-    /// Casts one object into another.
+    /// [argument, val]
+    /// The object to be forgotten.
     ///
-    /// The objects must have the same size. This is checked at compile time.
-    pub fn transmute<T,U>(e: T) -> U;
+    /// = Remarks
+    ///
+    /// :f: link:lrs::mem::forget
+    ///
+    /// The object will be moved into the forget function which will return without
+    /// running the object's destructor. This is unsafe because it can cause objects whose
+    /// destructor must run at the end of their lifetime to not be destroyed.
+    ///
+    /// You probably want to use the safe variant {f}.
+    ///
+    /// = See also
+    ///
+    /// * {f}
+    pub fn forget<T>(val: T);
+
+    /// Casts an object to another type.
+    ///
+    /// [argument, val]
+    /// The object to be cast.
+    ///
+    /// [return_vale]
+    /// Returns the same object but interpreted as an object of type `U`.
+    ///
+    /// = Remarks
+    ///
+    /// The returned object has the same memory representation as the argument. The
+    /// types must have the same size. This is checked at compile time.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::mem::cast
+    /// * link:lrs::mem::size_of
+    pub fn transmute<T, U>(val: T) -> U;
+
     pub fn needs_drop<T>() -> bool;
     pub fn offset<T>(dst: *const T, offset: isize) -> *const T;
+    pub fn copy<T>(src: *const T, dst: *mut T, count: usize);
+    pub fn copy_nonoverlapping<T>(src: *const T, dst: *mut T, count: usize);
+
     pub fn sqrtf32(x: f32) -> f32;
     pub fn sqrtf64(x: f64) -> f64;
     pub fn powif32(a: f32, x: i32) -> f32;
@@ -80,6 +260,7 @@ extern "rust-intrinsic" {
     pub fn bswap16(x: u16) -> u16;
     pub fn bswap32(x: u32) -> u32;
     pub fn bswap64(x: u64) -> u64;
+
     pub fn i8_add_with_overflow(x: i8, y: i8) -> (i8, bool);
     pub fn i16_add_with_overflow(x: i16, y: i16) -> (i16, bool);
     pub fn i32_add_with_overflow(x: i32, y: i32) -> (i32, bool);
@@ -107,8 +288,6 @@ extern "rust-intrinsic" {
     pub fn overflowing_add<T>(a: T, b: T) -> T;
     pub fn overflowing_sub<T>(a: T, b: T) -> T;
     pub fn overflowing_mul<T>(a: T, b: T) -> T;
-    pub fn copy<T>(src: *const T, dst: *mut T, count: usize);
-    pub fn copy_nonoverlapping<T>(src: *const T, dst: *mut T, count: usize);
 
     pub fn atomic_cxchg         <T>(dst: *mut T, old: T, src: T) -> T;
     pub fn atomic_cxchg_acq     <T>(dst: *mut T, old: T, src: T) -> T;

@@ -14,9 +14,9 @@ pub unsafe fn sort<T, F>(slice: &mut [T], f: &mut F)
     }
 
     let pivot = &mut slice[0] as *mut T;
-    let mut start = pivot;
+    let mut start = pivot.add(1);
     let mut end = pivot.add(slice.len() - 1);
-    while start < end {
+    while start <= end {
         while start <= end && f(&*start, &*pivot) != Greater {
             start = start.offset(1);
         }
@@ -27,6 +27,8 @@ pub unsafe fn sort<T, F>(slice: &mut [T], f: &mut F)
             mem::swap(&mut *start, &mut *end);
             start = start.offset(1);
             end = end.offset(-1);
+        } else {
+            break;
         }
     }
     start = start.offset(-1);

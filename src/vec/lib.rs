@@ -316,6 +316,7 @@ impl<'a, H> AsMut<[u8]> for Vec<'a, u8, H>
     }
 }
 
+/// Hurr and Durr
 impl<'a, H> AsByteStr for Vec<'a, u8, H>
     where H: Allocator,
 {

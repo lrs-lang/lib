@@ -1,10 +1,8 @@
-use ast::{Generics, MetaItem, Item, Expr, ExprRet, TokenTree, LifetimeDef};
+use ast::{MetaItem, Item, Expr, ExprRet, TokenTree, LifetimeDef};
 
 use codemap::{Span};
 
 use util::small_vector::{SmallVector};
-
-use owned_slice::{OwnedSlice};
 
 use ext::base::{ExtCtxt, MacEager, MacResult, DummyResult};
 use ext::deriving::generic::{
@@ -184,10 +182,11 @@ pub fn derive_clone_for_copy(cx: &mut ExtCtxt, span: Span, _mitem: &MetaItem,
         _ => cx.bug("expected ItemStruct or ItemEnum in #[derive(Copy)]")
     };
 
+    // generics doesn't implement ToTokens anymore so we'll just use this ugly thing:
     struct Lts<'a>(&'a [LifetimeDef], Span);
 
     impl<'a> Lts<'a> {
-        fn to_tokens(&self, cx: &ExtCtxt) -> Vec<TokenTree> {
+        fn to_tokens(&self, _cx: &ExtCtxt) -> Vec<TokenTree> {
             let mut vec = Vec::new();
             vec.push(TokenTree::TtToken(self.1, Token::Lt));
             for lt in self.0 {
