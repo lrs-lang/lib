@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use core::ops::{Index, IndexMut, Eq, RangeFrom};
+use core::ops::{Index, IndexMut, Eq, RangeFrom, RangeTo, Range, RangeFull};
 use core::{mem, slice};
 use base::rmo::{AsRef, AsMut};
 use base::{error};
@@ -58,6 +58,12 @@ impl CStr {
     pub fn len(&self) -> usize {
         self.data.len() - 1
     }
+
+    pub fn starts_with<A>(&self, arg: A) -> bool
+        where A: AsRef<[u8]>,
+    {
+        self.data[..self.data.len()-1].starts_with(arg.as_ref())
+    }
 }
 
 impl Index<usize> for CStr {
@@ -67,18 +73,55 @@ impl Index<usize> for CStr {
     }
 }
 
+impl Index<RangeFull> for CStr {
+    type Output = CStr;
+    fn index(&self, _: RangeFull) -> &CStr {
+        self
+    }
+}
+
+impl IndexMut<RangeFull> for CStr {
+    fn index_mut(&mut self, _: RangeFull) -> &mut CStr {
+        self
+    }
+}
+
 impl Index<RangeFrom<usize>> for CStr {
     type Output = CStr;
     fn index(&self, idx: RangeFrom<usize>) -> &CStr {
-        assert!(idx.start < self.data.len());
         unsafe { CStr::from_bytes_unchecked(&self.data[idx]) }
     }
 }
 
 impl IndexMut<RangeFrom<usize>> for CStr {
     fn index_mut(&mut self, idx: RangeFrom<usize>) -> &mut CStr {
-        assert!(idx.start < self.data.len());
         unsafe { CStr::from_bytes_unchecked_mut(&mut self.data[idx]) }
+    }
+}
+
+impl Index<RangeTo<usize>> for CStr {
+    type Output = NoNullStr;
+    fn index(&self, idx: RangeTo<usize>) -> &NoNullStr {
+        unsafe { NoNullStr::from_bytes_unchecked(&self.data[idx]) }
+    }
+}
+
+impl IndexMut<RangeTo<usize>> for CStr {
+    fn index_mut(&mut self, idx: RangeTo<usize>) -> &mut NoNullStr {
+        unsafe { NoNullStr::from_bytes_unchecked_mut(&mut self.data[idx]) }
+    }
+}
+
+impl Index<Range<usize>> for CStr {
+    type Output = NoNullStr;
+    fn index(&self, idx: Range<usize>) -> &NoNullStr {
+        unsafe { NoNullStr::from_bytes_unchecked(&self.data[idx]) }
+    }
+}
+
+impl IndexMut<Range<usize>> for CStr {
+    fn index_mut(&mut self, idx: Range<usize>) -> &mut NoNullStr {
+        unsafe { NoNullStr::from_bytes_unchecked_mut(&mut self.data[idx]) }
     }
 }
 

@@ -6,12 +6,12 @@
 #![plugin(linux_core_plugin)]
 #![no_std]
 
-#[macro_use] extern crate linux;
-mod core { pub use linux::core::*; }
-#[prelude_import] use linux::prelude::*;
+#[macro_use] extern crate lrs;
+mod core { pub use lrs::core::*; }
+#[prelude_import] use lrs::prelude::*;
 
-use linux::parse::{Parse};
-use linux::file::{can_access};
+use lrs::parse::{Parse};
+use lrs::file::{can_access};
 
 fn main() {
     assert!(can_access("Makefile", "rw-".parse().unwrap()) == Ok(true));

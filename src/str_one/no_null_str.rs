@@ -58,6 +58,12 @@ impl NoNullStr {
         self.data.len()
     }
 
+    pub fn starts_with<A>(&self, arg: A) -> bool
+        where A: AsRef<[u8]>,
+    {
+        self.as_ref().starts_with(arg.as_ref())
+    }
+
     /// Converts the bytes to a `NoNullStr` without checking for null bytes.
     pub unsafe fn from_bytes_unchecked(bytes: &[u8]) -> &NoNullStr {
         mem::cast(bytes)

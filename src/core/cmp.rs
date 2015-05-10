@@ -42,7 +42,7 @@ pub use ops::{Ordering};
 ///
 /// * {po}
 /// * link:http://en.wikipedia.org/wiki/Total_order
-pub trait Ord<Rhs = Self> : PartialOrd<Rhs> {
+pub trait Ord<Rhs: ?Sized = Self> : PartialOrd<Rhs> {
     /// Compares two objects.
     ///
     /// [argument, other]

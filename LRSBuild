@@ -14,6 +14,7 @@ obj fmt        core base io
 obj cell       core base
 obj str_one    core cty_base base arch_fns fmt parse
 
+obj getopt     core base str_one
 obj rt         core libc base str_one
 
 obj atomic     core base cell

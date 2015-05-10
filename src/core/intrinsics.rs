@@ -202,9 +202,74 @@ extern "rust-intrinsic" {
     /// * link:lrs::mem::size_of
     pub fn transmute<T, U>(val: T) -> U;
 
+    /// Checks whether a type has a destructor.
+    ///
+    /// [return_value]
+    /// Return whether `T` has a destructor.
     pub fn needs_drop<T>() -> bool;
+
+    /// Creates a pointer by calculating an offset from another one.
+    ///
+    /// [argument, dst]
+    /// The original pointer.
+    ///
+    /// [argument, offset]
+    /// The offset to be added to the original pointer.
+    ///
+    /// [return_value]
+    /// Returns the offset pointer.
+    ///
+    /// = Remarks
+    ///
+    /// The offset argument is in units of `T`, not in byte units. If `dst` is not a valid
+    /// pointer, or `dst + offset` does not point into the same object, or `dst + offset`
+    /// overflows, the behavior is undefined.
+    ///
+    /// Using this function instead of casting to integers can enable more optimizations.
     pub fn offset<T>(dst: *const T, offset: isize) -> *const T;
+
+    /// Copies memory between two pointers.
+    ///
+    /// [argument, src]
+    /// The source of the memory.
+    ///
+    /// [argument, dst]
+    /// Where the memory will be stored.
+    ///
+    /// [argument, count]
+    /// The number of `T` objects to copy.
+    ///
+    /// = Remarks
+    ///
+    /// :copy: link:lrs::ptr::memmove[memmove]
+    ///
+    /// Never use this function. Use :copy: instead.
+    ///
+    /// = See also
+    ///
+    /// * {copy}
     pub fn copy<T>(src: *const T, dst: *mut T, count: usize);
+
+    /// Copies memory between two non-overlapping pointers.
+    ///
+    /// [argument, src]
+    /// The source of the memory.
+    ///
+    /// [argument, dst]
+    /// Where the memory will be stored.
+    ///
+    /// [argument, count]
+    /// The number of `T` objects to copy.
+    ///
+    /// = Remarks
+    ///
+    /// :copy: link:lrs::ptr::memcpy[memcpy]
+    ///
+    /// Never use this function. Use :copy: instead.
+    ///
+    /// = See also
+    ///
+    /// * {copy}
     pub fn copy_nonoverlapping<T>(src: *const T, dst: *mut T, count: usize);
 
     pub fn sqrtf32(x: f32) -> f32;
@@ -381,7 +446,11 @@ pub unsafe fn bswap8(x: u8) -> u8 { x }
 
 /// Aborts the process.
 ///
-/// This function is called by the `abort` macro and exists for easier debugging as
+/// = Remarks
+///
+/// :abort: link:lrs::abort![abort!]
+///
+/// This function is called by the {abort} macro and exists for easier debugging as
 /// calling the `abort` intrinsic directly can cause the code to be modified even without
 /// optimization enabled.
 #[no_mangle]
