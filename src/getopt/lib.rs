@@ -14,21 +14,14 @@ extern crate lrs_base as base;
 extern crate lrs_str_one as str_one;
 
 #[prelude_import] use base::prelude::*;
-use str_one::{CStr, NoNullStr, AsNoNullStr};
+use str_one::{CStr, NoNullStr};
 
 mod lrs { pub use base::lrs::*; }
-
-#[derive(Copy, Eq)]
-pub enum Opt {
-    Flag,
-    Arg,
-    OptArg,
-}
 
 pub struct Getopt<'a, I>
     where I: Iterator<Item=&'static CStr>,
 {
-    opts: &'a [(Option<char>, Option<&'static str>, Opt)],
+    opts: &'a [(Option<char>, Option<&'static str>, bool)],
     cur: &'static CStr,
     args: I,
     num: usize,
@@ -38,7 +31,7 @@ impl<'a, I> Getopt<'a, I>
     where I: Iterator<Item=&'static CStr>,
 {
     pub fn new(args: I,
-               opts: &'a [(Option<char>, Option<&'static str>, Opt)]) -> Getopt<'a, I> {
+               opts: &'a [(Option<char>, Option<&'static str>, bool)]) -> Getopt<'a, I> {
         Getopt {
             opts: opts,
             cur: CStr::empty(),
@@ -58,36 +51,18 @@ impl<'a, I> Iterator for Getopt<'a, I>
     type Item = (&'static NoNullStr, Option<&'static CStr>);
     fn next(&mut self) -> Option<(&'static NoNullStr, Option<&'static CStr>)> {
         if self.cur.len() > 0 {
-            for &(short, _, kind) in self.opts {
+            for &(short, _, optional) in self.opts {
                 if short == Some(self.cur[0] as char) {
-                    let res = match kind {
-                        Opt::Flag => {
-                            let rv = (&self.cur[..1], None);
-                            self.cur = &self.cur[1..];
-                            rv
-                        },
-                        Opt::Arg => {
-                            let arg = &self.cur[..1];
-                            let opt = if self.cur.len() > 1 {
-                                Some(&self.cur[1..])
-                            } else {
-                                self.args.next()
-                            };
-                            self.cur = CStr::empty();
-                            (arg, opt)
-                        },
-                        Opt::OptArg => {
-                            let arg = &self.cur[..1];
-                            let opt = if self.cur.len() > 1 {
-                                Some(&self.cur[1..])
-                            } else {
-                                None
-                            };
-                            self.cur = CStr::empty();
-                            (arg, opt)
-                        },
+                    let arg = &self.cur[..1];
+                    let opt = if self.cur.len() > 1 {
+                        Some(&self.cur[1..])
+                    } else if optional {
+                        None
+                    } else {
+                        self.args.next()
                     };
-                    return Some(res);
+                    self.cur = CStr::empty();
+                    return Some((arg, opt));
                 }
             }
             let rv = &self.cur[..1];
@@ -103,34 +78,26 @@ impl<'a, I> Iterator for Getopt<'a, I>
             if next == "--" {
                 return None;
             }
-            if next.as_ref().starts_with(b"--") {
+            if next.starts_with("--") {
                 let arg = &next[2..];
-                let argnn = &next[2..].as_no_null_str().unwrap();
-                for &(_, long, kind) in self.opts {
+                for &(_, long, optional) in self.opts {
                     let long = match long {
                         Some(l) if arg.starts_with(l) => l,
                         _ => continue,
                     };
-                    match kind {
-                        Opt::Flag if long.len() == arg.len() => {
-                            return Some((argnn, None));
-                        },
-                        Opt::Arg if long.len() == arg.len() => {
-                            return Some((argnn, self.args.next()));
-                        },
-                        Opt::Arg if arg[long.len()] == b'=' => {
+                    if optional {
+                        if long.len() == arg.len() {
+                            return Some((arg.as_ref(), None));
+                        } else if arg[long.len()] == b'=' {
                             return Some((&arg[..long.len()], Some(&arg[long.len()+1..])));
-                        },
-                        Opt::OptArg if long.len() == arg.len() => {
-                            return Some((argnn, None));
-                        },
-                        Opt::OptArg if arg[long.len()] == b'=' => {
-                            return Some((&arg[..long.len()], Some(&arg[long.len()+1..])));
-                        },
-                        _ => { },
+                        }
+                    } else if long.len() == arg.len() {
+                        return Some((arg.as_ref(), self.args.next()));
+                    } else if arg[long.len()] == b'=' {
+                        return Some((&arg[..long.len()], Some(&arg[long.len()+1..])));
                     }
                 }
-                return Some((argnn, None));
+                return Some((arg.as_ref(), None));
             }
             self.cur = &next[1..];
             return self.next();

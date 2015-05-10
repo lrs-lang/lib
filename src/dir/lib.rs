@@ -170,7 +170,7 @@ impl<'a> Iterator for Iter<'a> {
             if name == "." || name == ".." {
                 self.next()
             } else {
-                match name.as_ref().to_owned() {
+                match AsRef::<[u8]>::as_ref(name).to_owned() {
                     Ok(n) => Some(Entry {
                         inode: ent.d_ino,
                         ty:    ty,

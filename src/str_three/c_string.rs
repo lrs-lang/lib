@@ -53,13 +53,14 @@ impl ToCString for CStr {
     fn to_cstring<H>(&self) -> Result<CString<'static, H>>
         where H: Allocator,
     {
-        self.as_ref().to_owned().map(|o| unsafe { CString::from_bytes_unchecked(o) })
+        let bytes: &[u8] = self.as_ref();
+        bytes.to_owned().map(|o| unsafe { CString::from_bytes_unchecked(o) })
     }
 
     fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
         where H: Allocator,
     {
-        let bytes = self.as_ref();
+        let bytes: &[u8] = self.as_ref();
         if bytes.len() <= buf.len() {
             mem::copy(buf, bytes);
             Ok(Rmo::Ref(unsafe { CStr::from_bytes_unchecked(&buf[..bytes.len()]) }))

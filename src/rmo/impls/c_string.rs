@@ -14,6 +14,7 @@ impl<H> ToOwned<H> for CStr
 {
     type Owned = CString<'static, H>;
     fn to_owned(&self) -> Result<CString<'static, H>> {
-        self.as_ref().to_owned().map(|o| unsafe { CString::from_bytes_unchecked(o) })
+        let bytes: &[u8] = self.as_ref();
+        bytes.to_owned().map(|o| unsafe { CString::from_bytes_unchecked(o) })
     }
 }

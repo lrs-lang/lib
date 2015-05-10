@@ -96,7 +96,7 @@ impl UnixSockAddr {
             let buf = &mut buf[BYTES_PER_SHORT..];
             let buf_addr = buf.as_ptr() as usize;
             let cstr = try!(path.to_cstr(buf));
-            if cstr.as_ref().as_ptr() as usize != buf_addr {
+            if cstr.as_ptr() as usize != buf_addr {
                 return Err(error::InvalidArgument);
             }
             cstr.len()

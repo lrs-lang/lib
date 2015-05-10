@@ -131,6 +131,19 @@ impl AsRef<[u8]> for CStr {
     }
 }
 
+impl AsRef<NoNullStr> for CStr {
+    fn as_ref(&self) -> &NoNullStr {
+        unsafe { NoNullStr::from_bytes_unchecked(&self.data[..self.data.len() - 1]) }
+    }
+}
+
+impl AsMut<NoNullStr> for CStr {
+    fn as_mut(&mut self) -> &mut NoNullStr {
+        let len = self.data.len() - 1;
+        unsafe { NoNullStr::from_bytes_unchecked_mut(&mut self.data[..len]) }
+    }
+}
+
 impl AsByteStr for CStr {
     fn as_byte_str(&self) -> &ByteStr {
         self.data[..self.data.len() - 1].as_byte_str()
@@ -139,14 +152,13 @@ impl AsByteStr for CStr {
 
 impl AsNoNullStr for CStr {
     fn as_no_null_str(&self) -> Result<&NoNullStr> {
-        unsafe { Ok(NoNullStr::from_bytes_unchecked(&self.data[..self.data.len() - 1])) }
+        Ok(self.as_ref())
     }
 }
 
 impl AsMutNoNullStr for CStr {
     fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
-        let len = self.data.len() - 1;
-        unsafe { Ok(NoNullStr::from_bytes_unchecked_mut(&mut self.data[..len])) }
+        Ok(self.as_mut())
     }
 }
 
@@ -158,7 +170,7 @@ impl Debug for CStr {
 
 impl Eq for CStr {
     fn eq(&self, other: &CStr) -> bool {
-        self.as_ref() == other.as_ref()
+        self.data == other.data
     }
 }
 

@@ -42,7 +42,8 @@ pub fn var<S>(name: S) -> Result<&'static CStr>
         if var == bytes {
             return Ok(CStr::empty());
         }
-        if let Some(var_name) = var.as_ref().split(|&b| b == b'=').next() {
+        let var_bytes: &[u8] = var.as_ref();
+        if let Some(var_name) = var_bytes.split(|&b| b == b'=').next() {
             if var_name == bytes {
                 let len = var_name.len() + 1;
                 return Ok(&var[len..]);
@@ -55,7 +56,8 @@ pub fn var<S>(name: S) -> Result<&'static CStr>
 fn path_split(b: &u8) -> bool { *b == b':' }
 
 pub fn path() -> Result<PathIter> {
-    Ok(PathIter { path: try!(var("PATH")).as_ref().split(path_split) })
+    let bytes: &[u8] = try!(var("PATH")).as_ref();
+    Ok(PathIter { path: bytes.split(path_split) })
 }
 
 pub struct PathIter {
