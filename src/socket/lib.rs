@@ -16,6 +16,7 @@ extern crate lrs_cty        as cty;
 extern crate lrs_arch_fns   as arch_fns;
 extern crate lrs_str_one    as str_one;
 extern crate lrs_fmt        as fmt;
+extern crate lrs_time_base  as time_base;
 extern crate lrs_rv         as rv;
 extern crate lrs_fd         as fd;
 extern crate lrs_saturating as saturating;

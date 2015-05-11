@@ -3,13 +3,17 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use base::{error};
+use base::error::{self, Errno};
 use cty::{
     msghdr, c_void, iovec, c_int, AF_UNSPEC, sa_family_t, SHUT_RD, SHUT_WR, SHUT_RDWR,
     SOL_SOCKET, SO_ACCEPTCONN, SO_BINDTODEVICE, IFNAMSIZ, SO_BROADCAST, SO_DEBUG,
-    SO_DOMAIN, MSG_CMSG_CLOEXEC, MSG_NOSIGNAL, SOCK_CLOEXEC,
+    SO_DOMAIN, MSG_CMSG_CLOEXEC, MSG_NOSIGNAL, SOCK_CLOEXEC, SO_REUSEPORT, SO_REUSEADDR,
+    SO_SNDTIMEO, SO_RCVTIMEO, SO_SNDBUF, SO_SNDBUFFORCE, SO_RCVBUF, SO_RCVBUFFORCE,
+    timeval, SO_PRIORITY, SO_PEERCRED, SO_PEEK_OFF, SO_PASSCRED, SO_OOBINLINE,
+    SO_MARK, SO_LINGER, SO_DONTROUTE, SO_KEEPALIVE, k_int, SO_ERROR, linger, INT_MAX,
 };
-use core::{num, slice};
+use time_base::{Time};
+use core::{num, slice, mem};
 use syscall::{
     socket, bind, getsockname, getpeername, connect, close, shutdown, listen, sendto,
     sendmsg, recvfrom, recvmsg, getsockopt, setsockopt,
@@ -20,7 +24,7 @@ use rv::{retry};
 use saturating::{SaturatingCast};
 
 use addr::{self, SockAddr};
-use cmsg::{CMsgIter};
+use cmsg::{CMsgIter, Credentials};
 
 use ip_proto::{self};
 use domain::{self, Domain};
@@ -378,17 +382,541 @@ impl Socket {
         self.get_bool(SOL_SOCKET, SO_DEBUG)
     }
 
-    /// Returns the domain of this socket, if any.
+    /// Returns the domain of this socket.
     pub fn domain(&self) -> Result<Domain> {
         let mut domain = 0;
         try!(rv!(getsockopt(self.fd, SOL_SOCKET, SO_DOMAIN, domain.as_mut(), &mut 0)));
         Ok(Domain(domain))
     }
 
-    //pub fn error(&self) -> Result<Errno> {
-    //    let mut error: c_int = 0;
-    //    try!(rv!(
-    //}
+    /// Retrieves the last pending socket error.
+    ///
+    /// [return_value]
+    /// Returns the last socket error.
+    pub fn error(&self) -> Result<Errno> {
+        let mut error: c_int = 0;
+        try!(rv!(getsockopt(self.fd, SOL_SOCKET, SO_ERROR, error.as_mut(), &mut 0)));
+        Ok(Errno(error))
+    }
+
+    /// Retrieves whether this socket only sends packets to directly connected hosts.
+    ///
+    /// [return_value]
+    /// Returns whether this socket only sends packets to directly connected hosts.
+    ///
+    /// = Remarks
+    ///
+    /// If this option is set, then the socket will not send packets via gateways.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::socket::Socket::set_dont_route
+    pub fn is_dont_route(&self) -> Result<bool> {
+        self.get_bool(SOL_SOCKET, SO_DONTROUTE)
+    }
+
+    /// Sets whether this socket only sends packets to directly connected hosts.
+    ///
+    /// [argument, val]
+    /// Whether this socket only sends packets to directly connected hosts.
+    ///
+    /// = Remarks
+    ///
+    /// :dr: link:lrs::socket::msg::DontRoute[DontRoute]
+    ///
+    /// If this option is set, then the socket will not send packets via gateways. This
+    /// option can also be set on a per-message basis with the {dr} flag.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::socket::Socket::is_dont_route
+    /// * {dr}
+    pub fn set_dont_route(&self, val: bool) -> Result {
+        self.set_bool(SOL_SOCKET, SO_DONTROUTE, val)
+    }
+
+    /// Retrieves whether this socket sends keep-alive messages.
+    ///
+    /// [return_value]
+    /// Returns whether this socket sends keep-alive messages.
+    ///
+    /// = Remarks
+    ///
+    /// This option only makes sense for connection-oriented protocols.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::socket::Socket::set_keep_alive
+    pub fn is_keep_alive(&self) -> Result<bool> {
+        self.get_bool(SOL_SOCKET, SO_KEEPALIVE)
+    }
+
+    /// Sets whether this socket sends keep-alive messages.
+    ///
+    /// [argument, val]
+    /// Whether this socket sends keep-alive messages.
+    ///
+    /// = Remarks
+    ///
+    /// This option only makes sense for connection-oriented protocols.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::socket::Socket::is_keep_alive
+    pub fn set_keep_alive(&self, val: bool) -> Result {
+        self.set_bool(SOL_SOCKET, SO_KEEPALIVE, val)
+    }
+
+    /// Retrieves the linger setting of this socket.
+    ///
+    /// [return_value]
+    /// Returns the number of seconds this socket will linger in the foreground or `None`.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::socket::Socket::set_linger
+    pub fn linger(&self) -> Result<Option<u32>> {
+        let mut linger: linger = mem::zeroed();
+        try!(rv!(getsockopt(self.fd, SOL_SOCKET, SO_LINGER,
+                            mem::as_mut_bytes(&mut linger), &mut 0)));
+        if linger.l_onoff != 0 {
+            Ok(Some(linger.l_linger as u32))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// Sets the linger setting of this socket.
+    ///
+    /// [argument, seconds]
+    /// For how long this socket will linger in the foreground, if at all.
+    ///
+    /// = Remarks
+    ///
+    /// :shut: link:lrs::socket::Socket::shutdown
+    ///
+    /// If this is set to anything but `None`, then closing the socket or calling :shut:
+    /// will block for up to `seconds` seconds, waiting for all pending outgoing messages
+    /// to be sent. Afterwards the socket lingers in the background.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::socket::Socket::linger
+    pub fn set_linger(&self, seconds: Option<u32>) -> Result {
+        let linger = linger {
+            l_onoff: seconds.is_some() as k_int,
+            l_linger: seconds.unwrap_or(0).saturating_cast(),
+        };
+        rv!(setsockopt(self.fd, SOL_SOCKET, SO_LINGER, mem::as_bytes(&linger)))
+    }
+
+    pub fn mark(&self) -> Result<u32> {
+        let mut mark = 0;
+        try!(rv!(getsockopt(self.fd, SOL_SOCKET, SO_MARK, mark.as_mut(), &mut 0)));
+        Ok(mark)
+    }
+
+    pub fn set_mark(&self, mark: u32) -> Result {
+        rv!(setsockopt(self.fd, SOL_SOCKET, SO_MARK, mark.as_ref()))
+    }
+
+    /// Retrieves whether this socket places out-of-band data directly into the data
+    /// stream.
+    ///
+    /// [return_value]
+    /// Returns whether this socket places out-of-band data directly into the data stream.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::socket::Socket::set_oob_inline
+    pub fn is_oob_inline(&self) -> Result<bool> {
+        self.get_bool(SOL_SOCKET, SO_OOBINLINE)
+    }
+
+    /// Sets whether this socket places out-of-band data directly into the data stream.
+    ///
+    /// [argument, val]
+    /// Whether this socket places out-of-band data directly into the data stream.
+    ///
+    /// = Remarks
+    ///
+    /// :oob: link:lrs::socket::msg::OutOfBand[OutOfBand]
+    ///
+    /// If this option is not set, out-of-band data can only be received with the {oob}
+    /// message option.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::socket::Socket::is_oob_inline
+    /// * {oob}
+    pub fn set_oob_inline(&self, val: bool) -> Result {
+        self.set_bool(SOL_SOCKET, SO_OOBINLINE, val)
+    }
+
+    /// Retrieves whether this socket accepts credentials control messages.
+    ///
+    /// [return_value]
+    /// Returns whether this socket accepts credentials control messages.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::socket::cmsg::Credentials
+    /// * link:lrs::socket::Socket::set_receive_credentials
+    pub fn is_receive_credentials(&self) -> Result<bool> {
+        self.get_bool(SOL_SOCKET, SO_PASSCRED)
+    }
+
+    /// Sets whether this socket accepts credentials control messages.
+    ///
+    /// [argument, val]
+    /// Whether this socket accepts credentials control messages.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::socket::cmsg::Credentials
+    /// * link:lrs::socket::Socket::is_receive_credentials
+    pub fn set_receive_credentials(&self, val: bool) -> Result {
+        self.set_bool(SOL_SOCKET, SO_PASSCRED, val)
+    }
+
+    /// Retrieves the peek offset of this socket.
+    ///
+    /// [return_value]
+    /// Returns the peek offset of this socket.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::socket::Socket::set_peek_offset
+    pub fn peek_offset(&self) -> Result<Option<usize>> {
+        let mut val: c_int = 0;
+        try!(rv!(getsockopt(self.fd, SOL_SOCKET, SO_PEEK_OFF, val.as_mut(), &mut 0)));
+        if val < 0 {
+            Ok(None)
+        } else {
+            Ok(Some(val as usize))
+        }
+    }
+
+    /// Sets the peek offset of this socket.
+    ///
+    /// [argument, val]
+    /// The peek offset of this socket.
+    ///
+    /// = Remarks
+    ///
+    /// This is only implemented for Unix sockets. The argument must be representable in a
+    /// `c_int`.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::socket::Socket::peek_offset
+    pub fn set_peek_offset(&self, val: Option<usize>) -> Result {
+        if val.is_none() {
+            let val: c_int = -1;
+            rv!(setsockopt(self.fd, SOL_SOCKET, SO_PEEK_OFF, val.as_ref()))
+        } else {
+            let val = val.unwrap();
+            if val > INT_MAX as usize {
+                Err(error::InvalidArgument)
+            } else {
+                let val = val as c_int;
+                rv!(setsockopt(self.fd, SOL_SOCKET, SO_PEEK_OFF, val.as_ref()))
+            }
+        }
+    }
+
+    /// Retrieves the credentials of a connected peer.
+    ///
+    /// [return_value]
+    /// Returns the credentials of the peer.
+    ///
+    /// = Remarks
+    ///
+    /// This is only implemented for Unix sockets.
+    pub fn peer_credentials(&self) -> Result<Credentials> {
+        let mut val = mem::zeroed();
+        try!(rv!(getsockopt(self.fd, SOL_SOCKET, SO_PEERCRED, mem::as_mut_bytes(&mut val),
+                            &mut 0)));
+        Ok(val)
+    }
+
+    /// Retrieves the priority of packets sent over this socket.
+    ///
+    /// [return_value]
+    /// Returns the priority of packets sent over this socket.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::socket::Socket::set_priority
+    pub fn priority(&self) -> Result<u32> {
+        let mut val: c_int = 0;
+        try!(rv!(getsockopt(self.fd, SOL_SOCKET, SO_PRIORITY, val.as_mut(), &mut 0)));
+        Ok(val as u32)
+    }
+
+    /// Sets the priority of packets sent over this socket.
+    ///
+    /// [argument, val]
+    /// The priority of packets sent over this socket.
+    ///
+    /// = Remarks
+    ///
+    /// The argument must be representable in a `c_int`.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::socket::Socket::priority
+    pub fn set_priority(&self, val: u32) -> Result {
+        if val > INT_MAX as u32 {
+            return Err(error::InvalidArgument);
+        }
+        let val = val as c_int;
+        rv!(setsockopt(self.fd, SOL_SOCKET, SO_PRIORITY, val.as_ref()))
+    }
+
+    /// Retrieves the maximal receive buffer size of this socket.
+    ///
+    /// [return_value]
+    /// Returns the maximal receive buffer size of this socket.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::socket::Socket::set_recv_buffer_size
+    pub fn recv_buffer_size(&self) -> Result<usize> {
+        let mut val: c_int = 0;
+        try!(rv!(getsockopt(self.fd, SOL_SOCKET, SO_RCVBUF, val.as_mut(), &mut 0)));
+        Ok(val as usize)
+    }
+
+    /// Sets the maximal receive buffer size of this socket.
+    ///
+    /// [argument, size]
+    /// The maximal receive buffer size of this socket.
+    ///
+    /// = Remarks
+    ///
+    /// :recv: link:lrs::socket::Socket::recv_buffer_size[recv_buffer_size]
+    ///
+    /// The argument must be representable in a `c_int`. The value will be doubled by the
+    /// kernel and this doubled value will be returned by a call to {recv}.
+    ///
+    /// = See also
+    ///
+    /// * {recv}
+    /// * link:lrs::socket::Socket::force_set_recv_buffer_size
+    pub fn set_recv_buffer_size(&self, size: usize) -> Result {
+        if size > INT_MAX as usize {
+            return Err(error::InvalidArgument);
+        }
+        let val = size as c_int;
+        rv!(setsockopt(self.fd, SOL_SOCKET, SO_RCVBUF, val.as_ref()))
+    }
+
+    /// Sets the maximal receive buffer size of this socket, overriding normal system
+    /// limits.
+    ///
+    /// [argument, size]
+    /// The maximal receive buffer size of this socket.
+    ///
+    /// = Remarks
+    ///
+    /// :recv: link:lrs::socket::Socket::recv_buffer_size[recv_buffer_size]
+    /// :ord: link:lrs::socket::Socket::set_recv_buffer_size[set_recv_buffer_size]
+    ///
+    /// The argument must be representable in a `c_int`. The value will be doubled by the
+    /// kernel and this doubled value will be returned by a call to {recv}.
+    ///
+    /// This function is different from {ord} in that privileged processes can override
+    /// the system limits imposed on the buffer size.
+    ///
+    /// = See also
+    ///
+    /// * {recv}
+    /// * {ord}
+    pub fn force_set_recv_buffer_size(&self, size: usize) -> Result {
+        if size > INT_MAX as usize {
+            return Err(error::InvalidArgument);
+        }
+        let val = size as c_int;
+        rv!(setsockopt(self.fd, SOL_SOCKET, SO_RCVBUFFORCE, val.as_ref()))
+    }
+
+    fn common_timeout(&self, ty: c_int) -> Result<Option<Time>> {
+        let mut time: timeval = mem::zeroed();
+        try!(rv!(getsockopt(self.fd, SOL_SOCKET, ty, mem::as_mut_bytes(&mut time),
+                            &mut 0)));
+        if time.tv_sec == 0 && time.tv_usec == 0 {
+            Ok(None)
+        } else {
+            Ok(Some(Time {
+                seconds: time.tv_sec as i64,
+                nanoseconds: time.tv_usec as i64 * 1000,
+            }))
+        }
+    }
+
+    fn set_common_timeout(&self, ty: c_int, val: Option<Time>) -> Result {
+        let val = match val {
+            Some(v) => v,
+            _ => Time::seconds(0),
+        };
+        let time = timeval {
+            tv_sec: val.seconds.saturating_cast(),
+            tv_usec: val.nanoseconds / 1000,
+        };
+        rv!(setsockopt(self.fd, SOL_SOCKET, ty, mem::as_bytes(&time)))
+    }
+
+    /// Retrieves the timeout option of receiving operations.
+    ///
+    /// [return_value]
+    /// Returns the timeout of receiving operations.
+    ///
+    /// = Remarks
+    ///
+    /// A return value of `None` implies that operations never time-out.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::socket::Socket::set_recv_timeout
+    /// * link:lrs::socket::Socket::send_timeout
+    pub fn recv_timeout(&self) -> Result<Option<Time>> {
+        self.common_timeout(SO_RCVTIMEO)
+    }
+
+    /// Sets the timeout option of receiving operations.
+    ///
+    /// [argument, val]
+    /// The timeout option of receiving operations.
+    ///
+    /// = Remarks
+    ///
+    /// A `None` argument implies that operations never time-out.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::socket::Socket::recv_timeout
+    /// * link:lrs::socket::Socket::set_send_timeout
+    pub fn set_recv_timeout(&self, val: Option<Time>) -> Result {
+        self.set_common_timeout(SO_RCVTIMEO, val)
+    }
+
+    /// Retrieves the timeout option of sending operations.
+    ///
+    /// [return_value]
+    /// Returns the timeout of sending operations.
+    ///
+    /// = Remarks
+    ///
+    /// A return value of `None` implies that operations never time-out.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::socket::Socket::set_send_timeout
+    /// * link:lrs::socket::Socket::recv_timeout
+    pub fn send_timeout(&self) -> Result<Option<Time>> {
+        self.common_timeout(SO_SNDTIMEO)
+    }
+
+    /// Sets the timeout option of sending operations.
+    ///
+    /// [argument, val]
+    /// The timeout option of sending operations.
+    ///
+    /// = Remarks
+    ///
+    /// A `None` argument implies that operations never time-out.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::socket::Socket::send_timeout
+    /// * link:lrs::socket::Socket::set_recv_timeout
+    pub fn set_send_timeout(&self, val: Option<Time>) -> Result {
+        self.set_common_timeout(SO_SNDTIMEO, val)
+    }
+
+    pub fn is_reuse_addr(&self) -> Result<bool> {
+        self.get_bool(SOL_SOCKET, SO_REUSEADDR)
+    }
+
+    pub fn set_reuse_addr(&self, val: bool) -> Result {
+        self.set_bool(SOL_SOCKET, SO_REUSEADDR, val)
+    }
+
+    pub fn is_reuse_port(&self) -> Result<bool> {
+        self.get_bool(SOL_SOCKET, SO_REUSEPORT)
+    }
+
+    pub fn set_reuse_port(&self, val: bool) -> Result {
+        self.set_bool(SOL_SOCKET, SO_REUSEPORT, val)
+    }
+
+    /// Retrieves the maximal send buffer size of this socket.
+    ///
+    /// [return_value]
+    /// Returns the maximal send buffer size of this socket.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::socket::Socket::set_send_buffer_size
+    pub fn send_buffer_size(&self) -> Result<usize> {
+        let mut val: c_int = 0;
+        try!(rv!(getsockopt(self.fd, SOL_SOCKET, SO_SNDBUF, val.as_mut(), &mut 0)));
+        Ok(val as usize)
+    }
+
+    /// Sets the maximal send buffer size of this socket.
+    ///
+    /// [argument, size]
+    /// The maximal send buffer size of this socket.
+    ///
+    /// = Remarks
+    ///
+    /// :send: link:lrs::socket::Socket::send_buffer_size[send_buffer_size]
+    ///
+    /// The argument must be representable in a `c_int`. The value will be doubled by the
+    /// kernel and this doubled value will be returned by a call to {send}.
+    ///
+    /// = See also
+    ///
+    /// * {send}
+    /// * link:lrs::socket::Socket::force_set_send_buffer_size
+    pub fn set_send_buffer_size(&self, size: usize) -> Result {
+        if size > INT_MAX as usize {
+            return Err(error::InvalidArgument);
+        }
+        let val = size as c_int;
+        rv!(setsockopt(self.fd, SOL_SOCKET, SO_SNDBUF, val.as_ref()))
+    }
+
+    /// Sets the maximal send buffer size of this socket, overriding normal system
+    /// limits.
+    ///
+    /// [argument, size]
+    /// The maximal send buffer size of this socket.
+    ///
+    /// = Remarks
+    ///
+    /// :send: link:lrs::socket::Socket::send_buffer_size[send_buffer_size]
+    /// :ord: link:lrs::socket::Socket::set_send_buffer_size[set_send_buffer_size]
+    ///
+    /// The argument must be representable in a `c_int`. The value will be doubled by the
+    /// kernel and this doubled value will be returned by a call to {send}.
+    ///
+    /// This function is different from {ord} in that privileged processes can override
+    /// the system limits imposed on the buffer size.
+    ///
+    /// = See also
+    ///
+    /// * {send}
+    /// * {ord}
+    pub fn force_set_send_buffer_size(&self, size: usize) -> Result {
+        if size > INT_MAX as usize {
+            return Err(error::InvalidArgument);
+        }
+        let val = size as c_int;
+        rv!(setsockopt(self.fd, SOL_SOCKET, SO_SNDBUFFORCE, val.as_ref()))
+    }
 }
 
 impl Drop for Socket {

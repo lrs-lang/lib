@@ -71,6 +71,13 @@ pub trait IteratorExt : Iterator+Sized {
         Enumerate { iter: self, pos: 0 }
     }
 
+    fn consume(&mut self, n: usize) -> &mut Self {
+        for _ in 0..n {
+            self.next();
+        }
+        self
+    }
+
     /// Runs the iterator and places the elements into the buffer until the buffer or the
     /// iterator are exhausted.
     ///

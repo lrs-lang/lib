@@ -251,6 +251,8 @@ pub type c_ulonglong  = u64;
 pub type c_float      = f32;
 pub type c_double     = f64;
 
+pub const INT_MAX: c_int = ::core::num::i32::MAX;
+
 // Bits per k_long, not c_long.
 pub const __BITS_PER_LONG : usize = 64;
 pub const BYTES_PER_LONG  : usize = 8;
