@@ -22,6 +22,8 @@ obj cty        core base cty_base
 obj r_syscall  core cty
 obj syscall    core saturating base str_one cty r_syscall
 
+obj kernel     core base atomic cty syscall parse arch_fns
+
 obj clone      core libc base cty syscall
 obj fd         core base rv io cty syscall
 
@@ -46,7 +48,7 @@ obj str_three  core arch_fns base str_one str_two rmo alloc
 obj env        core base str_one rt syscall alloc str_two str_three cty rmo
 
 obj fs         core base fmt cty syscall rv str_three alloc rmo
-obj socket     core base cty arch_fns str_one fmt syscall rv fd io saturating time_base
+obj socket     core base cty arch_fns str_one fmt syscall rv fd io saturating time_base alloc
 
 obj sys        core base fmt cty syscall str_one str_three rv time_base iter rmo alloc
 obj poll       core base cty syscall fd rv saturating fmt time_base

@@ -45,7 +45,7 @@ pub use ::common::{
     rt_sigpending, sigaltstack,
     kexec_load, set_robust_list, get_robust_list, vmsplice, move_pages, preadv,
     pwritev, recvmmsg, sendmmsg, process_vm_readv, process_vm_writev,
-    setsockopt, getsockopt, io_setup, io_submit, execveat,
+    setsockopt, getsockopt, io_setup, io_submit, execveat, renameat, renameat2,
 };
 
 use cty::{
@@ -193,12 +193,6 @@ pub unsafe fn prlimit(pid: pid_t, resource: k_uint, new_rlim: *const rlimit64,
                       old_rlim: *mut rlimit64) -> k_int {
     ::common::prlimit64(pid, resource, new_rlim, old_rlim)
 }
-
-pub unsafe fn renameat(olddfd: k_int, oldname: *const c_char, newdfd: k_int,
-                       newname: *const c_char, flags: k_uint) -> k_int {
-    ::common::renameat2(olddfd, oldname, newdfd, newname, flags)
-}
-
 
 
 // x86_64 specific

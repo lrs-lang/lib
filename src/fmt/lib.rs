@@ -27,6 +27,7 @@ pub mod impls {
     pub mod num;
     pub mod str;
     pub mod option;
+    pub mod boolean;
     pub mod result;
     pub mod errno;
     pub mod unit;

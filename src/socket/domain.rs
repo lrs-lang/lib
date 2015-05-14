@@ -15,14 +15,27 @@ use fmt::{Debug, Write};
 
 /// A socket domain/protocol family
 ///
+/// [field, 1]
+/// The integer constant associated with the domain.
+///
+/// = Remarks
+///
 /// This is a protocol family understood by the kernel. For direct access to the link
 /// layer (TCP/IP model) use the `Packet` domain. See also `packet(7)`.
+///
+/// :domains: link:lrs::socket::domain
+///
+/// See {domains} for pre-defined constants.
+///
+/// = See also
+///
+/// * {domains}
 #[derive(Pod, Eq)]
 pub struct Domain(pub c_int);
 
 macro_rules! create {
-    ($($name:ident = $val:expr, $doc:expr,)*) => {
-        $(#[doc = $doc] pub const $name: Domain = Domain($val);)*
+    ($($(#[$meta:meta])* domain $name:ident = $val:expr;)*) => {
+        $($(#[$meta])* pub const $name: Domain = Domain($val);)*
 
         impl Debug for Domain {
             fn fmt<W: Write>(&self, w: &mut W) -> Result {
@@ -37,44 +50,109 @@ macro_rules! create {
 }
 
 create! {
-    Unspecified = AF_UNSPEC     , "Unspecified domain",
-    Unix        = AF_UNIX       , "Unix domain",
-    Ipv4        = AF_INET       , "Ipv4",
-    Ax25        = AF_AX25       , "Amateur radio AX.25",
-    Ipx         = AF_IPX        , "Internetwork Packet Exchange",
-    AppleTalk   = AF_APPLETALK  , "AppleTalk",
-    NetRom      = AF_NETROM     , "Amateur radio NET/ROM",
-    Bridge      = AF_BRIDGE     , "Multiprotocol bridge",
-    AtmPvc      = AF_ATMPVC     , "ATM PVCs",
-    X25         = AF_X25        , "X.25 interface",
-    Ipv6        = AF_INET6      , "Ipv6",
-    Rose        = AF_ROSE       , "Amateur radio X.25 PLP",
-    Decnet      = AF_DECnet     , "Decnet",
-    NetBeui     = AF_NETBEUI    , "NetBEUI",
-    Security    = AF_SECURITY   , "Security callback pseudo domain",
-    Key         = AF_KEY        , "Security association database interface",
-    Netlink     = AF_NETLINK    , "Kernel/Userspace communication",
-    Packet      = AF_PACKET     , "Raw socket",
-    Ash         = AF_ASH        , "Ash",
-    Econet      = AF_ECONET     , "Acorn Econet",
-    AtmSvc      = AF_ATMSVC     , "ATM SVCs",
-    Rds         = AF_RDS        , "RDS",
-    Sna         = AF_SNA        , "Linux SNA Project (nutters!)",
-    Irda        = AF_IRDA       , "IRDA",
-    Pppox       = AF_PPPOX      , "PPPoX",
-    Wanpipe     = AF_WANPIPE    , "Wanpipe API",
-    Llc         = AF_LLC        , "Linux LLC",
-    Ib          = AF_IB         , "Native InfiniBand address",
-    Can         = AF_CAN        , "Controller Area Network",
-    Tipc        = AF_TIPC       , "TIPC sockets",
-    Bluetooth   = AF_BLUETOOTH  , "Bluetooth",
-    Iucv        = AF_IUCV       , "IUCV",
-    Rxrpc       = AF_RXRPC      , "RxRPC",
-    Isdn        = AF_ISDN       , "mISDN",
-    Phonet      = AF_PHONET     , "Phonet",
-    Ieee802154  = AF_IEEE802154 , "IEEE802154",
-    Caif        = AF_CAIF       , "CAIF",
-    Alg         = AF_ALG        , "Algorithm",
-    Nfc         = AF_NFC        , "NFC",
-    Vsock       = AF_VSOCK      , "vSockets",
+    #[doc = "Unspecified domain"]
+    domain Unspecified = AF_UNSPEC;
+    #[doc = "Unix domain"]
+    #[doc = ""]
+    #[doc = "= See also"]
+    #[doc = ""]
+    #[doc = "* link:man:unix(7)"]
+    domain Unix = AF_UNIX;
+    #[doc = "Ipv4"]
+    #[doc = ""]
+    #[doc = "= See also"]
+    #[doc = ""]
+    #[doc = "* link:man:ip(7)"]
+    domain Ipv4 = AF_INET;
+    #[doc = "Amateur radio AX.25"]
+    domain Ax25 = AF_AX25;
+    #[doc = "Internetwork Packet Exchange"]
+    domain Ipx = AF_IPX;
+    #[doc = "AppleTalk"]
+    #[doc = ""]
+    #[doc = "= See also"]
+    #[doc = ""]
+    #[doc = "* link:man:ddp(7)"]
+    domain AppleTalk = AF_APPLETALK;
+    #[doc = "Amateur radio NET/ROM"]
+    domain NetRom = AF_NETROM;
+    #[doc = "Multiprotocol bridge"]
+    domain Bridge = AF_BRIDGE;
+    #[doc = "ATM PVCs"]
+    domain AtmPvc = AF_ATMPVC;
+    #[doc = "X.25 interface"]
+    #[doc = ""]
+    #[doc = "= See also"]
+    #[doc = ""]
+    #[doc = "* link:man:x25(7)"]
+    domain X25 = AF_X25;
+    #[doc = "Ipv6"]
+    #[doc = ""]
+    #[doc = "= See also"]
+    #[doc = ""]
+    #[doc = "* link:man:ipv6(7)"]
+    domain Ipv6 = AF_INET6;
+    #[doc = "Amateur radio X.25 PLP"]
+    domain Rose = AF_ROSE;
+    #[doc = "Decnet"]
+    domain Decnet = AF_DECnet;
+    #[doc = "NetBEUI"]
+    domain NetBeui = AF_NETBEUI;
+    #[doc = "Security callback pseudo domain"]
+    domain Security = AF_SECURITY;
+    #[doc = "Security association database interface"]
+    domain Key = AF_KEY;
+    #[doc = "Kernel/Userspace communication"]
+    #[doc = ""]
+    #[doc = "= See also"]
+    #[doc = ""]
+    #[doc = "* link:man:netlink(7)"]
+    domain Netlink = AF_NETLINK;
+    #[doc = "Raw socket"]
+    #[doc = ""]
+    domain Packet = AF_PACKET;
+    #[doc = "Ash"]
+    domain Ash = AF_ASH;
+    #[doc = "Acorn Econet"]
+    domain Econet = AF_ECONET;
+    #[doc = "ATM SVCs"]
+    domain AtmSvc = AF_ATMSVC;
+    #[doc = "RDS"]
+    domain Rds = AF_RDS;
+    #[doc = "Linux SNA Project (nutters!)"]
+    domain Sna = AF_SNA;
+    #[doc = "IRDA"]
+    domain Irda = AF_IRDA;
+    #[doc = "PPPoX"]
+    domain Pppox = AF_PPPOX;
+    #[doc = "Wanpipe API"]
+    domain Wanpipe = AF_WANPIPE;
+    #[doc = "Linux LLC"]
+    domain Llc = AF_LLC;
+    #[doc = "Native InfiniBand address"]
+    domain Ib = AF_IB;
+    #[doc = "Controller Area Network"]
+    domain Can = AF_CAN;
+    #[doc = "TIPC sockets"]
+    domain Tipc = AF_TIPC;
+    #[doc = "Bluetooth"]
+    domain Bluetooth = AF_BLUETOOTH;
+    #[doc = "IUCV"]
+    domain Iucv = AF_IUCV;
+    #[doc = "RxRPC"]
+    domain Rxrpc = AF_RXRPC;
+    #[doc = "mISDN"]
+    domain Isdn = AF_ISDN;
+    #[doc = "Phonet"]
+    domain Phonet = AF_PHONET;
+    #[doc = "IEEE802154"]
+    domain Ieee802154 = AF_IEEE802154;
+    #[doc = "CAIF"]
+    domain Caif = AF_CAIF;
+    #[doc = "Algorithm"]
+    domain Alg = AF_ALG;
+    #[doc = "NFC"]
+    domain Nfc = AF_NFC;
+    #[doc = "vSockets"]
+    domain Vsock = AF_VSOCK;
 }

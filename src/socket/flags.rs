@@ -9,6 +9,20 @@ use cty::{
 use fmt::{Debug, Write};
 use core::ops::{BitOr, BitAnd, Not};
 
+/// Flags that can be used when opering a socket.
+///
+/// [field, 1]
+/// The integer constant associated with the flags.
+///
+/// = Remarks
+///
+/// :flags: link:lrs::socket::flags
+///
+/// See {flags} for pre-defined constants.
+///
+/// = See also
+///
+/// * {flags}
 #[derive(Pod, Eq)]
 pub struct Flags(pub c_int);
 
@@ -28,9 +42,12 @@ impl Not for Flags {
 }
 
 macro_rules! create {
-    ($($name:ident = $val:expr, $doc:expr,)*) => {
-        $(#[doc = $doc] pub const $name: Flags = Flags($val);)*
+    ($($(#[$meta:meta])* flag $name:ident = $val:expr;)*) => {
+        $($(#[$meta])*  pub const $name: Flags = Flags($val);)*
 
+        /// = Remarks
+        ///
+        /// This prints the flags as a comma-separated list.
         impl Debug for Flags {
             fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
                 let raw = self.0;
@@ -54,7 +71,24 @@ macro_rules! create {
 }
 
 create! {
-    None        = 0             , "No flags",
-    NonBlocking = SOCK_NONBLOCK , "Sets the file descriptor to non-blocking",
-    CloseOnExec = SOCK_CLOEXEC  , "Sets the close-on-exec flag on the file descriptor",
+    #[doc = "No flags"]
+    flag None = 0;
+
+    #[doc = "Sets the file descriptor to non-blocking"]
+    #[doc = ""]
+    #[doc = "= See also"]
+    #[doc = ""]
+    #[doc = "* link:man:socket(2) and SOCK_NONBLOCK therein"]
+    flag NonBlocking = SOCK_NONBLOCK;
+
+    #[doc = "Sets the close-on-exec flag on the file descriptor"]
+    #[doc = ""]
+    #[doc = "= Remarks"]
+    #[doc = ""]
+    #[doc = "This flag will always be set."]
+    #[doc = ""]
+    #[doc = "= See also"]
+    #[doc = ""]
+    #[doc = "* link:man:socket(2) and SOCK_CLOEXEC therein"]
+    flag CloseOnExec = SOCK_CLOEXEC;
 }

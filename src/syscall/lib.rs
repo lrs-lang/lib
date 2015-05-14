@@ -25,7 +25,7 @@ use cty::{
     timespec, dev_t, c_void, clockid_t, itimerspec, epoll_event, sigset_t, new_utsname,
     sysinfo, c_uint, c_ulong, umode_t, k_uint, loff_t, k_ulong, F_DUPFD_CLOEXEC, F_GETFL,
     F_SETFL, F_GETFD, F_SETFD, sockaddr, msghdr, mmsghdr, FUTEX_WAIT, FUTEX_WAKE,
-    siginfo_t, rusage,
+    siginfo_t, rusage, SIOCGSTAMPNS, SIOCINQ, SIOCOUTQ,
 };
 
 // XXX: iovec _MUST_ be the same as &mut [u8]
@@ -242,10 +242,15 @@ pub fn utimensat(dir: c_int, file: Option<&CStr>, times: &[timespec; 2],
     unsafe { r::utimensat(dir, file, times.as_ptr(), flags) }
 }
 
-pub fn renameat(olddir: c_int, oldfile: &CStr, newdir: c_int, newfile: &CStr,
+pub fn renameat2(olddir: c_int, oldfile: &CStr, newdir: c_int, newfile: &CStr,
                  flags: c_int) -> c_int {
     unsafe {
-        r::renameat(olddir, oldfile.as_ptr(), newdir, newfile.as_ptr(), flags as k_uint)
+        if flags == 0 {
+            r::renameat(olddir, oldfile.as_ptr(), newdir, newfile.as_ptr())
+        } else {
+            r::renameat2(olddir, oldfile.as_ptr(), newdir, newfile.as_ptr(),
+                         flags as k_uint)
+        }
     }
 }
 
@@ -613,4 +618,26 @@ pub fn getcwd(buf: &mut [u8]) -> c_int {
 
 pub fn chdir(path: &CStr) -> c_int {
     unsafe { r::chdir(path.as_ptr()) }
+}
+
+pub fn ioctl_siocgstampns(fd: c_int, time: &mut timespec) -> c_int {
+    unsafe { r::ioctl(fd as k_uint, SIOCGSTAMPNS as k_uint, time as *mut _ as k_ulong) }
+}
+
+pub fn ioctl_siocinq(fd: c_int, unread: &mut usize) -> c_int {
+    let mut u: c_int = 0;
+    let rv = unsafe {
+        r::ioctl(fd as k_uint, SIOCINQ as k_uint, &mut u as *mut _ as k_ulong) 
+    };
+    *unread = u as usize;
+    rv
+}
+
+pub fn ioctl_siocoutq(fd: c_int, unread: &mut usize) -> c_int {
+    let mut u: c_int = 0;
+    let rv = unsafe {
+        r::ioctl(fd as k_uint, SIOCOUTQ as k_uint, &mut u as *mut _ as k_ulong) 
+    };
+    *unread = u as usize;
+    rv
 }

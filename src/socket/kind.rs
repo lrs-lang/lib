@@ -9,12 +9,26 @@ use cty::{
 };
 use fmt::{Debug, Write};
 
+/// A socket type.
+///
+/// [field, 1]
+/// The integer contsant associated with the socket type.
+///
+/// = Remarks
+///
+/// :kinds: link:lrs:socket:kind
+///
+/// See {kinds} for pre-defined constants.
+///
+/// = See also
+///
+/// * {kinds}
 #[derive(Pod, Eq)]
 pub struct Kind(pub c_int);
 
 macro_rules! create {
-    ($($name:ident = $val:expr, $doc:expr,)*) => {
-        $(#[doc = $doc] pub const $name: Kind = Kind($val);)*
+    ($($(#[$meta:meta])* kind $name:ident = $val:expr;)*) => {
+        $($(#[$meta])*  pub const $name: Kind = Kind($val);)*
 
         impl Debug for Kind {
             fn fmt<W: Write>(&self, w: &mut W) -> Result {
@@ -29,10 +43,45 @@ macro_rules! create {
 }
 
 create! {
-    Stream    = SOCK_STREAM,    "Sequenced, reliable, two-way, connection-based byte streams",
-    Datagram  = SOCK_DGRAM,     "Unsequenced, unreliable, connection-less messages",
-    Raw       = SOCK_RAW,       "Raw network protocol access",
-    Rdm       = SOCK_RDM,       "Unsequenced, reliable, connection-less messages",
-    SeqPacket = SOCK_SEQPACKET, "Sequenced, reliable, two-way, connection-based messages",
-    Dccp      = SOCK_DCCP,      "DCCP",
+    #[doc = "Sequenced, reliable, two-way, connection-based byte streams"]
+    #[doc = ""]
+    #[doc = "= See also"]
+    #[doc = ""]
+    #[doc = "* link:man:socket(2) and SOCK_STREAM therein"]
+    kind Stream = SOCK_STREAM;
+
+    #[doc = "Unsequenced, unreliable, connection-less messages"]
+    #[doc = ""]
+    #[doc = "= See also"]
+    #[doc = ""]
+    #[doc = "* link:man:socket(2) and SOCK_DGRAM therein"]
+    kind Datagram = SOCK_DGRAM;
+
+    #[doc = "Raw network protocol access"]
+    #[doc = ""]
+    #[doc = "= See also"]
+    #[doc = ""]
+    #[doc = "* link:man:socket(2) and SOCK_RAW therein"]
+    kind Raw = SOCK_RAW;
+
+    #[doc = "Unsequenced, reliable, connection-less messages"]
+    #[doc = ""]
+    #[doc = "= See also"]
+    #[doc = ""]
+    #[doc = "* link:man:socket(2) and SOCK_RDM therein"]
+    kind Rdm = SOCK_RDM;
+
+    #[doc = "Sequenced, reliable, two-way, connection-based messages"]
+    #[doc = ""]
+    #[doc = "= See also"]
+    #[doc = ""]
+    #[doc = "* link:man:socket(2) and SOCK_SEQPACKET therein"]
+    kind SeqPacket = SOCK_SEQPACKET;
+
+    #[doc = "DCCP"]
+    #[doc = ""]
+    #[doc = "= See also"]
+    #[doc = ""]
+    #[doc = "* link:man:socket(2) and SOCK_DCCP therein"]
+    kind Dccp = SOCK_DCCP;
 }

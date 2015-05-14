@@ -14,12 +14,17 @@ pub mod unix;
 pub mod ipv4;
 pub mod ipv6;
 
+/// A borrowed socket address.
 pub struct SockAddr { data: [u8] }
 
+/// An address type.
 #[derive(Eq)]
 pub enum AddrType {
+    /// A Unix socket address.
     Unix,
+    /// An Ipv4 socket address.
     Ipv4,
+    /// An Ipv6 socket address.
     Ipv6,
 }
 
@@ -46,10 +51,28 @@ fn addr_type(bytes: &[u8]) -> Result<AddrType> {
 }
 
 impl SockAddr {
+    /// Creates a socket address from a sequence of bytes.
+    ///
+    /// [argument, bytes]
+    /// The buffer containing the address.
+    ///
+    /// = Remarks
+    ///
+    /// This fails if the socket address contains invalid data or an address that has
+    /// not been wrapped.
     pub fn from_bytes(bytes: &[u8]) -> Result<&SockAddr> {
         addr_type(bytes).map(|_| unsafe { mem::cast(bytes) })
     }
 
+    /// Creates a socket address from a sequence of bytes.
+    ///
+    /// [argument, bytes]
+    /// The buffer containing the address.
+    ///
+    /// = Remarks
+    ///
+    /// This fails if the socket address contains invalid data or an address that has
+    /// not been wrapped.
     pub fn from_mut_bytes(bytes: &mut [u8]) -> Result<&mut SockAddr> {
         addr_type(bytes).map(|_| unsafe { mem::cast(bytes) })
     }

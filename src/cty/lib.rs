@@ -3242,3 +3242,137 @@ pub const IPV6_ORIGDSTADDR               : c_int = 74;
 pub const IPV6_RECVORIGDSTADDR           : c_int = IPV6_ORIGDSTADDR;
 pub const IPV6_TRANSPARENT               : c_int = 75;
 pub const IPV6_UNICAST_IF                : c_int = 76;
+
+///////////////////////////////
+// include/uapi/linux/sockios.h
+///////////////////////////////
+
+pub const SIOCINQ                : c_int = FIONREAD as c_int;
+pub const SIOCOUTQ               : c_int = TIOCOUTQ as c_int;
+pub const SIOCADDRT              : c_int = 0x890B;
+pub const SIOCDELRT              : c_int = 0x890C;
+pub const SIOCRTMSG              : c_int = 0x890D;
+pub const SIOCGIFNAME            : c_int = 0x8910;
+pub const SIOCSIFLINK            : c_int = 0x8911;
+pub const SIOCGIFCONF            : c_int = 0x8912;
+pub const SIOCGIFFLAGS           : c_int = 0x8913;
+pub const SIOCSIFFLAGS           : c_int = 0x8914;
+pub const SIOCGIFADDR            : c_int = 0x8915;
+pub const SIOCSIFADDR            : c_int = 0x8916;
+pub const SIOCGIFDSTADDR         : c_int = 0x8917;
+pub const SIOCSIFDSTADDR         : c_int = 0x8918;
+pub const SIOCGIFBRDADDR         : c_int = 0x8919;
+pub const SIOCSIFBRDADDR         : c_int = 0x891a;
+pub const SIOCGIFNETMASK         : c_int = 0x891b;
+pub const SIOCSIFNETMASK         : c_int = 0x891c;
+pub const SIOCGIFMETRIC          : c_int = 0x891d;
+pub const SIOCSIFMETRIC          : c_int = 0x891e;
+pub const SIOCGIFMEM             : c_int = 0x891f;
+pub const SIOCSIFMEM             : c_int = 0x8920;
+pub const SIOCGIFMTU             : c_int = 0x8921;
+pub const SIOCSIFMTU             : c_int = 0x8922;
+pub const SIOCSIFNAME            : c_int = 0x8923;
+pub const SIOCSIFHWADDR          : c_int = 0x8924;
+pub const SIOCGIFENCAP           : c_int = 0x8925;
+pub const SIOCSIFENCAP           : c_int = 0x8926;
+pub const SIOCGIFHWADDR          : c_int = 0x8927;
+pub const SIOCGIFSLAVE           : c_int = 0x8929;
+pub const SIOCSIFSLAVE           : c_int = 0x8930;
+pub const SIOCADDMULTI           : c_int = 0x8931;
+pub const SIOCDELMULTI           : c_int = 0x8932;
+pub const SIOCGIFINDEX           : c_int = 0x8933;
+pub const SIOGIFINDEX            : c_int = SIOCGIFINDEX;
+pub const SIOCSIFPFLAGS          : c_int = 0x8934;
+pub const SIOCGIFPFLAGS          : c_int = 0x8935;
+pub const SIOCDIFADDR            : c_int = 0x8936;
+pub const SIOCSIFHWBROADCAST     : c_int = 0x8937;
+pub const SIOCGIFCOUNT           : c_int = 0x8938;
+pub const SIOCGIFBR              : c_int = 0x8940;
+pub const SIOCSIFBR              : c_int = 0x8941;
+pub const SIOCGIFTXQLEN          : c_int = 0x8942;
+pub const SIOCSIFTXQLEN          : c_int = 0x8943;
+pub const SIOCETHTOOL            : c_int = 0x8946;
+pub const SIOCGMIIPHY            : c_int = 0x8947;
+pub const SIOCGMIIREG            : c_int = 0x8948;
+pub const SIOCSMIIREG            : c_int = 0x8949;
+pub const SIOCWANDEV             : c_int = 0x894A;
+pub const SIOCOUTQNSD            : c_int = 0x894B;
+pub const SIOCDARP               : c_int = 0x8953;
+pub const SIOCGARP               : c_int = 0x8954;
+pub const SIOCSARP               : c_int = 0x8955;
+pub const SIOCDRARP              : c_int = 0x8960;
+pub const SIOCGRARP              : c_int = 0x8961;
+pub const SIOCSRARP              : c_int = 0x8962;
+pub const SIOCGIFMAP             : c_int = 0x8970;
+pub const SIOCSIFMAP             : c_int = 0x8971;
+pub const SIOCADDDLCI            : c_int = 0x8980;
+pub const SIOCDELDLCI            : c_int = 0x8981;
+pub const SIOCGIFVLAN            : c_int = 0x8982;
+pub const SIOCSIFVLAN            : c_int = 0x8983;
+pub const SIOCBONDENSLAVE        : c_int = 0x8990;
+pub const SIOCBONDRELEASE        : c_int = 0x8991;
+pub const SIOCBONDSETHWADDR      : c_int = 0x8992;
+pub const SIOCBONDSLAVEINFOQUERY : c_int = 0x8993;
+pub const SIOCBONDINFOQUERY      : c_int = 0x8994;
+pub const SIOCBONDCHANGEACTIVE   : c_int = 0x8995;
+pub const SIOCBRADDBR            : c_int = 0x89a0;
+pub const SIOCBRDELBR            : c_int = 0x89a1;
+pub const SIOCBRADDIF            : c_int = 0x89a2;
+pub const SIOCBRDELIF            : c_int = 0x89a3;
+pub const SIOCSHWTSTAMP          : c_int = 0x89b0;
+pub const SIOCGHWTSTAMP          : c_int = 0x89b1;
+pub const SIOCDEVPRIVATE         : c_int = 0x89F0;
+pub const SIOCPROTOPRIVATE       : c_int = 0x89E0;
+
+///////////////////////////
+// include/uapi/linux/tcp.h
+///////////////////////////
+
+pub const TCP_MSS_DEFAULT          : c_uint = 536;
+pub const TCP_MSS_DESIRED          : c_uint = 1220;
+
+pub const TCP_NODELAY              : c_int = 1;
+pub const TCP_MAXSEG               : c_int = 2;
+pub const TCP_CORK                 : c_int = 3;
+pub const TCP_KEEPIDLE             : c_int = 4;
+pub const TCP_KEEPINTVL            : c_int = 5;
+pub const TCP_KEEPCNT              : c_int = 6;
+pub const TCP_SYNCNT               : c_int = 7;
+pub const TCP_LINGER2              : c_int = 8;
+pub const TCP_DEFER_ACCEPT         : c_int = 9;
+pub const TCP_WINDOW_CLAMP         : c_int = 10;
+pub const TCP_INFO                 : c_int = 11;
+pub const TCP_QUICKACK             : c_int = 12;
+pub const TCP_CONGESTION           : c_int = 13;
+pub const TCP_MD5SIG               : c_int = 14;
+pub const TCP_THIN_LINEAR_TIMEOUTS : c_int = 16;
+pub const TCP_THIN_DUPACK          : c_int = 17;
+pub const TCP_USER_TIMEOUT         : c_int = 18;
+pub const TCP_REPAIR               : c_int = 19;
+pub const TCP_REPAIR_QUEUE         : c_int = 20;
+pub const TCP_QUEUE_SEQ            : c_int = 21;
+pub const TCP_REPAIR_OPTIONS       : c_int = 22;
+pub const TCP_FASTOPEN             : c_int = 23;
+pub const TCP_TIMESTAMP            : c_int = 24;
+pub const TCP_NOTSENT_LOWAT        : c_int = 25;
+
+///////////////////////////
+// include/uapi/linux/udp.h
+///////////////////////////
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct udphdr {
+    pub source: __be16,
+    pub dst:    __be16,
+    pub len:    __be16,
+    pub check:  __sum16,
+}
+
+pub const UDP_CORK                   : c_int = 1;
+pub const UDP_ENCAP                  : c_int = 100;
+pub const UDP_NO_CHECK6_TX           : c_int = 101;
+pub const UDP_NO_CHECK6_RX           : c_int = 102;
+pub const UDP_ENCAP_ESPINUDP_NON_IKE : c_int = 1;
+pub const UDP_ENCAP_ESPINUDP         : c_int = 2;
+pub const UDP_ENCAP_L2TPINUDP        : c_int = 3;

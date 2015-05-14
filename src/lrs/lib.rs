@@ -27,6 +27,7 @@ extern crate lrs_atomic;
 extern crate lrs_base;
 extern crate lrs_buf_reader;
 extern crate lrs_cell;
+extern crate lrs_kernel;
 extern crate lrs_cty;
 extern crate lrs_cty_base;
 extern crate lrs_env;

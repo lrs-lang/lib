@@ -93,6 +93,11 @@ impl Ipv4Addr {
     pub fn broadcast() -> Ipv4Addr {
         Ipv4Addr(255, 255, 255, 255)
     }
+
+    /// `0.0.0.0`
+    pub fn any() -> Ipv4Addr {
+        Ipv4Addr(0, 0, 0, 0)
+    }
 }
 
 pub struct Ipv4SockAddr { data: [u8] }

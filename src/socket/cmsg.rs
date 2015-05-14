@@ -4,13 +4,15 @@
 
 #[prelude_import] use base::prelude::*;
 use core::{num, mem, slice, ptr};
-use base::{error};
 use cty::{
     cmsghdr, c_int, SCM_RIGHTS, SCM_CREDENTIALS, SOL_SOCKET, user_size_t,
+    SO_TIMESTAMPNS, timespec, IPPROTO_IP, IP_OPTIONS,
 };
 use cty::alias::{ProcessId, UserId, GroupId};
 use io::{BufRead};
 use fmt::{Debug, Write};
+use time_base::{self, Time};
+use alloc::{self, NoMem, Allocator};
 
 const PTR_MASK: usize = num::usize::BYTES - 1;
 
@@ -32,11 +34,24 @@ macro_rules! hdr_ptr { ($slf:expr) => { $slf.data.add($slf.len) as *mut cmsghdr 
 // pointer to the current data section in a CMsgBuf
 macro_rules! data_ptr { ($slf:expr) => { $slf.data.add($slf.len + hdr_space!()) } }
 
+/// Process credentials.
+///
+/// = Remarks
+///
+/// Privileged process can send any ids. Unprivileged processes must send their process
+/// id and the other ids must be either the effective, real, or saved ids.
+///
+/// = See also
+///
+/// * link:man:unix(7) and SCM_CREDENTIALS therein
 #[repr(C)]
 #[derive(Pod, Eq)]
 pub struct Credentials {
+    /// The process id of a process.
     pub process_id: ProcessId,
+    /// The user id of a process.
     pub user_id:    UserId,
+    /// The group id of a process.
     pub group_id:   GroupId,
 }
 
@@ -47,56 +62,161 @@ impl Debug for Credentials {
     }
 }
 
+/// A timestamp.
+///
+/// = Remarks
+///
+/// The timestamp has nanosecond precision.
+///
+/// = See also
+///
+/// * link:man:socket(7) and SO_TIMESTAMP therein
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct Timestamp {
+    data: timespec,
+}
+
+impl Timestamp {
+    /// Turns the timestamp into a `Time` object.
+    pub fn to_time(&self) -> Time {
+        time_base::time_from_timespec(self.data)
+    }
+}
+
+impl Debug for Timestamp {
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
+        self.to_time().fmt(w)
+    }
+}
+
+/// A generic control message.
 #[derive(Copy, Eq)]
 pub enum CMsg<'a> {
-    Unknown,
+    /// An unknown control message.
+    ///
+    /// [field, 1]
+    /// The data-part of the control message.
+    ///
+    /// = Remarks
+    ///
+    /// This will always be used if no wrapper for the control message type has been
+    /// written yet.
+    Unknown(&'a [u8]),
+
+    /// A set of file descriptors.
+    ///
+    /// [field, 1]
+    /// The file descriptors sent with the message.
+    ///
+    /// = See also
+    ///
+    /// * link:man:unix(7) and SCM_RIGHTS therein
     Fds(&'a [c_int]),
+
+    /// Process credentials.
+    ///
+    /// [field, 1]
+    /// The credentials sent by the process.
     Credentials(&'a Credentials),
+
+    /// A timestamp.
+    ///
+    /// [field, 1]
+    /// The timestamp.
+    Timestamp(&'a Timestamp),
+
+    /// Ipv4 options.
+    ///
+    /// [field, 1]
+    /// The options.
+    Ipv4Options(&'a [u8]),
 }
 
 impl<'a> Debug for CMsg<'a> {
     fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
         match *self {
-            CMsg::Unknown => write!(w, "Unknown"),
+            CMsg::Unknown(_) => write!(w, "Unknown"),
             CMsg::Fds(f) => write!(w, "Fds({:?})", f),
             CMsg::Credentials(c) => write!(w, "{:?}", c),
+            CMsg::Timestamp(c) => write!(w, "{:?}", c),
+            CMsg::Ipv4Options(c) => write!(w, "{:?}", c),
         }
     }
 }
 
-pub struct CMsgBuf<'a> {
+/// A buffer for creating control messages.
+pub struct CMsgBuf<'a, Heap = alloc::Heap>
+    where Heap: Allocator,
+{
     data: *mut u8,
     len: usize,
     cap: usize,
-    _marker: PhantomData<&'a ()>,
+    _marker: PhantomData<(&'a (), Heap)>,
 }
 
-impl<'a> CMsgBuf<'a> {
-    pub fn new(buf: &'a mut [u8]) -> CMsgBuf<'a> {
-        let ptr = buf.as_ptr() as usize;
-        let pad_ptr = pad_ptr!(ptr);
-        let cap = buf.len().saturating_sub(pad_ptr - ptr);
-        let real_ptr = match cap {
-            0 => ptr,
-            _ => pad_ptr,
-        };
+impl<'a> CMsgBuf<'a, NoMem> {
+    /// Creates a new `CMsgBuf` backed by borrowed memory.
+    ///
+    /// [argument, buf]
+    /// The buffer in which the control messages will be created.
+    pub fn buffered(buf: &'a mut [u64]) -> CMsgBuf<'a, NoMem> {
         CMsgBuf {
-            data: real_ptr as *mut u8,
+            data: buf.as_mut_ptr() as *mut u8,
             len: 0,
-            cap: cap,
+            cap: buf.len() * 8,
             _marker: PhantomData,
         }
     }
+}
 
+impl<H> CMsgBuf<'static, H>
+    where H: Allocator,
+{
+    /// Creates a new `CMsgBuf` backed by allocated memory.
+    ///
+    /// [return_value]
+    /// Returns an allocated `CMsgBuf`.
+    ///
+    /// = Remarks
+    ///
+    /// The buffer will be resized dynamically. This constructor fails if no memory can be
+    /// allocated.
+    pub fn new() -> Result<CMsgBuf<'static, H>> {
+        let ptr: *mut usize = unsafe { try!(H::allocate_array(1)) };
+        Ok(CMsgBuf {
+            data: ptr as *mut u8,
+            len: 0,
+            cap: num::usize::BYTES,
+            _marker: PhantomData,
+        })
+    }
+}
+
+impl<'a, H> CMsgBuf<'a, H>
+    where H: Allocator,
+{
+    /// Returns the size currently occupied by the create messages.
     pub fn len(&self) -> usize {
         self.len
     }
 
+    fn reserve(&mut self, n: usize) -> Result {
+        if self.cap - self.len < n {
+            let cap = self.cap / num::usize::BYTES;
+            let new_cap = pad_ptr!(self.cap * 2 + n) / num::usize::BYTES;
+            let ptr = unsafe {
+                try!(H::reallocate_array(self.data as *mut usize, cap, new_cap))
+            };
+            self.data = ptr as *mut u8;
+            self.cap = new_cap * num::usize::BYTES;
+        }
+        Ok(())
+    }
+
     fn bytes(&mut self, bytes: &[u8], level: c_int, ty: c_int) -> Result {
         let msg_space = msg_space!(bytes.len());
-        if self.cap - self.len < msg_space {
-            return Err(error::NoMemory);
-        }
+        try!(self.reserve(msg_space));
         unsafe {
             let hdr = hdr_ptr!(self);
             (*hdr).cmsg_len = msg_len!(bytes.len()) as user_size_t;
@@ -109,16 +229,35 @@ impl<'a> CMsgBuf<'a> {
         Ok(())
     }
 
+    /// Adds a message containing file descriptors to the buffer.
+    ///
+    /// [argument, fds]
+    /// The file descriptors to be added.
     pub fn fds(&mut self, fds: &[c_int]) -> Result {
         self.bytes(fds.as_ref(), SOL_SOCKET, SCM_RIGHTS)
     }
 
+    /// Adds process credentials to the buffer.
+    ///
+    /// [argument, creds]
+    /// The credentials to be added.
     pub fn credentials(&mut self, creds: Credentials) -> Result {
         self.bytes(mem::as_bytes(&creds), SOL_SOCKET, SCM_CREDENTIALS)
     }
 
-    pub fn iter(&self) -> CMsgIter<'a> {
+    /// Creates an iterator over the messages.
+    pub fn iter<'b>(&'b self) -> CMsgIter<'b> {
         CMsgIter { data: unsafe { slice::from_ptr(self.data, self.len) } }
+    }
+}
+
+impl<'a, H> Drop for CMsgBuf<'a, H>
+    where H: Allocator,
+{
+    fn drop(&mut self) {
+        unsafe {
+            H::free_array(self.data as *mut usize, self.cap / num::usize::BYTES);
+        }
     }
 }
 
@@ -128,11 +267,20 @@ impl<'a> AsRef<[u8]> for CMsgBuf<'a> {
     }
 }
 
+/// An iterator over control messages.
 pub struct CMsgIter<'a> {
     data: &'a [u8],
 }
 
 impl<'a> CMsgIter<'a> {
+    /// Creates a new iterator.
+    ///
+    /// [argument, buf]
+    /// The buffer which contains the control messages.
+    ///
+    /// = Remarks
+    ///
+    /// This operation fails if the slice is not properly aligned.
     pub fn new(buf: &'a [u8]) -> Option<CMsgIter<'a>> {
         if buf.as_ptr() as usize & PTR_MASK != 0 {
             None
@@ -160,6 +308,20 @@ impl<'a> CMsgIter<'a> {
             let ptr = self.data.as_ptr() as *const Credentials;
             Some(CMsg::Credentials(&*ptr))
         }
+    }
+
+    fn timestamp(&self, len: usize) -> Option<CMsg<'a>> {
+        if len != mem::size_of::<Timestamp>() {
+            return None;
+        }
+        unsafe {
+            let ptr = self.data.as_ptr() as *const Timestamp;
+            Some(CMsg::Timestamp(&*ptr))
+        }
+    }
+
+    fn ipv4_options(&self, len: usize) -> Option<CMsg<'a>> {
+        Some(CMsg::Ipv4Options(&self.data[..len]))
     }
 }
 
@@ -191,7 +353,9 @@ impl<'a> Iterator for CMsgIter<'a> {
         let rv = match (level, ty) {
             (SOL_SOCKET, SCM_RIGHTS) => self.fds(data_len),
             (SOL_SOCKET, SCM_CREDENTIALS) => self.credentials(data_len),
-            _ => Some(CMsg::Unknown),
+            (SOL_SOCKET, SO_TIMESTAMPNS) => self.timestamp(data_len),
+            (IPPROTO_IP, IP_OPTIONS) => self.ipv4_options(data_len),
+            _ => Some(CMsg::Unknown(&self.data[..len])),
         };
         if rv.is_none() {
             self.data.consume(self.data.len());

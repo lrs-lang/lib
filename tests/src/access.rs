@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #![feature(plugin, no_std)]
-#![plugin(linux_core_plugin)]
+#![plugin(lrs_core_plugin)]
 #![no_std]
 
 #[macro_use] extern crate lrs;

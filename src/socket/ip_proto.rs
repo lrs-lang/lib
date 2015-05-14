@@ -5,10 +5,23 @@
 #[prelude_import] use base::prelude::*;
 use fmt::{Debug, Write};
 
-/// An IPv4/IPv6 protocol
+/// An IPv4/IPv6 protocol.
+///
+/// [field, 1]
+/// The integer constant associated with the protocol.
+///
+/// = Remarks
 ///
 /// This value corresponds to the protocol/next header field in an IPv4/IPv6 packet. For
 /// example, TCP/IP uses the protocol `ip::proto::Tcp`.
+///
+/// :ipproto: link:lrs::socket::ip::proto
+///
+/// See {ipproto} for pre-defined constants.
+///
+/// = See also
+///
+/// * {ipproto}
 #[derive(Pod, Eq)]
 pub struct Proto(pub u8);
 

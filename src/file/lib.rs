@@ -49,7 +49,7 @@ use syscall::{
     openat, read, write, close, pread, lseek, pwrite, readv, writev, preadv, pwritev,
     ftruncate, fsync, fdatasync, syncfs, fadvise, fstatfs, fcntl_dupfd_cloexec,
     fcntl_getfl, fcntl_setfl, fcntl_getfd, fcntl_setfd, fstatat, faccessat, truncate,
-    linkat, utimensat, renameat, mkdirat, unlinkat, symlinkat, readlinkat, fchownat,
+    linkat, utimensat, renameat2, mkdirat, unlinkat, symlinkat, readlinkat, fchownat,
     fchmodat, fchmod, mknodat, readahead, fallocate, setxattr, lsetxattr, fsetxattr,
     getxattr, lgetxattr, fgetxattr, removexattr, lremovexattr, fremovexattr, listxattr,
     llistxattr, flistxattr, flock
@@ -2159,7 +2159,7 @@ impl File {
         let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninit() };
         let one: Rmo<_, FbHeap> = try!(one.rmo_cstr(&mut buf1));
         let two: Rmo<_, FbHeap> = try!(two.rmo_cstr(&mut buf2));
-        rv!(renameat(self.fd, &one, self.fd, &two, RENAME_EXCHANGE))
+        rv!(renameat2(self.fd, &one, self.fd, &two, RENAME_EXCHANGE))
     }
 
     /// Renames `one` to `two`.
@@ -2177,7 +2177,7 @@ impl File {
         let one: Rmo<_, FbHeap> = try!(one.rmo_cstr(&mut buf1));
         let two: Rmo<_, FbHeap> = try!(two.rmo_cstr(&mut buf2));
         let flag = if replace { 0 } else { RENAME_NOREPLACE };
-        rv!(renameat(self.fd, &one, self.fd, &two, flag))
+        rv!(renameat2(self.fd, &one, self.fd, &two, flag))
     }
 
     /// Creates the directory `path`.

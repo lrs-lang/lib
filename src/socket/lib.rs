@@ -19,6 +19,7 @@ extern crate lrs_fmt        as fmt;
 extern crate lrs_time_base  as time_base;
 extern crate lrs_rv         as rv;
 extern crate lrs_fd         as fd;
+extern crate lrs_alloc      as alloc;
 extern crate lrs_saturating as saturating;
 extern crate lrs_io         as io;
 extern crate lrs_syscall    as syscall;
