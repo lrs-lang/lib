@@ -183,17 +183,17 @@ pub trait AsMutByteStr: AsByteStr {
 }
 
 impl<T: ?Sized> AsByteStr for T
-    where T: AsRef<[u8]>,
+    where T: AsRef<ByteStr>,
 {
     fn as_byte_str(&self) -> &ByteStr {
-        self.as_ref().as_ref()
+        self.as_ref()
     }
 }
 
 impl<T: ?Sized> AsMutByteStr for T
-    where T: AsRef<[u8]> + AsMut<[u8]>,
+    where T: AsRef<ByteStr> + AsMut<ByteStr>,
 {
     fn as_mut_byte_str(&mut self) -> &mut ByteStr {
-        self.as_mut().as_mut()
+        self.as_mut()
     }
 }

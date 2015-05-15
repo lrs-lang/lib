@@ -86,6 +86,22 @@ impl<'a, H> AsMut<[u8]> for ByteString<'a, H>
     }
 }
 
+impl<'a, H> AsRef<ByteStr> for ByteString<'a, H>
+    where H: Allocator,
+{
+    fn as_ref(&self) -> &ByteStr {
+        self.data.as_ref()
+    }
+}
+
+impl<'a, H> AsMut<ByteStr> for ByteString<'a, H>
+    where H: Allocator,
+{
+    fn as_mut(&mut self) -> &mut ByteStr {
+        self.data.as_mut()
+    }
+}
+
 impl<H> Clone for ByteString<'static, H>
     where H: Allocator,
 {

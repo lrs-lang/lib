@@ -7,6 +7,7 @@
 use core::{mem};
 use base::rmo::{AsRef, AsMut};
 use byte_str::{ByteStr};
+use c_str::{CStr};
 use no_null_str::{NoNullStr};
 
 impl AsRef<ByteStr> for [u8] {
@@ -40,6 +41,13 @@ impl AsRef<ByteStr> for str {
 }
 
 impl AsRef<ByteStr> for NoNullStr {
+    fn as_ref(&self) -> &ByteStr {
+        let bytes: &[u8] = self.as_ref();
+        bytes.as_ref()
+    }
+}
+
+impl AsRef<ByteStr> for CStr {
     fn as_ref(&self) -> &ByteStr {
         let bytes: &[u8] = self.as_ref();
         bytes.as_ref()

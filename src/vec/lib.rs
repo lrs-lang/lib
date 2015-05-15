@@ -30,8 +30,8 @@ use io::{Read, Write};
 use fmt::{Debug};
 use alloc::{Allocator, empty_ptr};
 use base::rmo::{AsRef, AsMut};
-use str_one::c_str::{CStr, AsCStr, AsMutCStr, ToCStr};
-use str_one::no_null_str::{NoNullStr, AsMutNoNullStr, AsNoNullStr};
+use str_one::{ByteStr, CStr, AsCStr, AsMutCStr, ToCStr, NoNullStr, AsMutNoNullStr,
+              AsNoNullStr};
 
 pub type SVec<T, Heap = alloc::Heap> = Vec<'static, T, Heap>;
 
@@ -297,21 +297,37 @@ impl<'a, T, H> IntoIterator for &'a Vec<'a, T, H>
     fn into_iter(self) -> slice::Items<'a, T> { self.iter() }
 }
 
-// Maybe these aren't really needed. We can just let the user manually deref.
-
-impl<'a, H> AsRef<[u8]> for Vec<'a, u8, H>
+impl<'a, T, H> AsRef<[T]> for Vec<'a, T, H>
     where H: Allocator,
 {
-    fn as_ref(&self) -> &[u8] {
+    fn as_ref(&self) -> &[T] {
         self.deref()
     }
 }
 
-impl<'a, H> AsMut<[u8]> for Vec<'a, u8, H>
+impl<'a, T, H> AsMut<[T]> for Vec<'a, T, H>
     where H: Allocator,
 {
-    fn as_mut(&mut self) -> &mut [u8] {
+    fn as_mut(&mut self) -> &mut [T] {
         self.deref_mut()
+    }
+}
+
+// Maybe these aren't really needed. We can just let the user manually deref.
+
+impl<'a, H> AsRef<ByteStr> for Vec<'a, u8, H>
+    where H: Allocator,
+{
+    fn as_ref(&self) -> &ByteStr {
+        self.deref().as_ref()
+    }
+}
+
+impl<'a, H> AsMut<ByteStr> for Vec<'a, u8, H>
+    where H: Allocator,
+{
+    fn as_mut(&mut self) -> &mut ByteStr {
+        self.deref_mut().as_mut()
     }
 }
 
