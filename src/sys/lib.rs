@@ -34,7 +34,7 @@ use fmt::{Debug, Write};
 use cty::{new_utsname, sysinfo, GRND_NONBLOCK, PATH_MAX};
 use syscall::{sched_getaffinity, uname, sysinfo, getrandom, acct, sethostname,
                     setdomainname};
-use str_one::{AsByteStr, AsCStr, ByteStr};
+use str_one::{AsCStr, ByteStr};
 use str_three::{ToCString};
 use base::rmo::{AsRef};
 use rv::{retry};
@@ -88,32 +88,32 @@ impl StrInfo {
 
     /// The name of the system.
     pub fn system_name(&self) -> &ByteStr {
-        self.buf.sysname[..self.sysname_len as usize].as_byte_str()
+        self.buf.sysname[..self.sysname_len as usize].as_ref()
     }
 
     /// The hostname.
     pub fn host_name(&self) -> &ByteStr {
-        self.buf.nodename[..self.nodename_len as usize].as_byte_str()
+        self.buf.nodename[..self.nodename_len as usize].as_ref()
     }
 
     /// The kernel release.
     pub fn release(&self) -> &ByteStr {
-        self.buf.release[..self.release_len as usize].as_byte_str()
+        self.buf.release[..self.release_len as usize].as_ref()
     }
 
     /// The kernel version.
     pub fn version(&self) -> &ByteStr {
-        self.buf.version[..self.version_len as usize].as_byte_str()
+        self.buf.version[..self.version_len as usize].as_ref()
     }
 
     /// The machine.
     pub fn machine(&self) -> &ByteStr {
-        self.buf.machine[..self.machine_len as usize].as_byte_str()
+        self.buf.machine[..self.machine_len as usize].as_ref()
     }
 
     /// The domain name.
     pub fn domain_name(&self) -> &ByteStr {
-        self.buf.domainname[..self.domainname_len as usize].as_byte_str()
+        self.buf.domainname[..self.domainname_len as usize].as_ref()
     }
 }
 

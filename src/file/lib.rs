@@ -2493,7 +2493,7 @@ impl<'a> Iterator for ListAttrIter<'a> {
         let buf = &self.buf[self.pos..];
         let len = memchr(buf, 0).unwrap();
         self.pos += len + 1;
-        Some(buf[..len].as_byte_str())
+        Some(buf[..len].as_ref())
     }
 }
 

@@ -5,12 +5,12 @@
 #[prelude_import] use base::prelude::*;
 use core::{mem};
 use core::ops::{Index, IndexMut, Range, RangeFrom, RangeTo, RangeFull};
-use base::rmo::{AsRef, AsMut};
+use base::rmo::{AsRef};
 use base::{error};
 use arch_fns::{memrchr, memchr};
 use fmt::{Debug, Write};
 
-use byte_str::{ByteStr, AsByteStr};
+use byte_str::{AsByteStr};
 use c_str::{CStr, ToCStr};
 
 /// A byte slice with no null bytes.
@@ -61,7 +61,8 @@ impl NoNullStr {
     pub fn starts_with<A>(&self, arg: A) -> bool
         where A: AsRef<[u8]>,
     {
-        self.as_ref().starts_with(arg.as_ref())
+        let bytes: &[u8] = self.as_ref();
+        bytes.starts_with(arg.as_ref())
     }
 
     /// Converts the bytes to a `NoNullStr` without checking for null bytes.
@@ -73,6 +74,10 @@ impl NoNullStr {
     pub unsafe fn from_bytes_unchecked_mut(bytes: &mut [u8]) -> &mut NoNullStr {
         mem::cast(bytes)
     }
+}
+
+impl AsRef<[u8]> for NoNullStr {
+    fn as_ref(&self) -> &[u8] { &self.data }
 }
 
 impl Index<RangeFull> for NoNullStr {
@@ -123,14 +128,6 @@ impl IndexMut<Range<usize>> for NoNullStr {
     }
 }
 
-impl AsRef<[u8]> for NoNullStr {
-    fn as_ref(&self) -> &[u8] { &self.data }
-}
-
-impl AsByteStr for NoNullStr {
-    fn as_byte_str(&self) -> &ByteStr { self.data.as_byte_str() }
-}
-
 impl ToCStr for NoNullStr {
     fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
         let bytes = &self.data;
@@ -176,9 +173,25 @@ impl AsNoNullStr for [u8] {
     }
 }
 
-impl AsNoNullStr for NoNullStr { fn as_no_null_str(&self) -> Result<&NoNullStr> { Ok(self) } }
-impl AsNoNullStr for [i8] { fn as_no_null_str(&self) -> Result<&NoNullStr> { self.as_ref().as_no_null_str() } }
-impl AsNoNullStr for str  { fn as_no_null_str(&self) -> Result<&NoNullStr> { self.as_ref().as_no_null_str() } }
+impl AsNoNullStr for NoNullStr {
+    fn as_no_null_str(&self) -> Result<&NoNullStr> {
+        Ok(self)
+    }
+}
+
+impl AsNoNullStr for [i8] {
+    fn as_no_null_str(&self) -> Result<&NoNullStr> {
+        let bytes: &[u8] = self.as_ref();
+        bytes.as_no_null_str()
+    }
+}
+
+impl AsNoNullStr for str {
+    fn as_no_null_str(&self) -> Result<&NoNullStr> {
+        let bytes: &[u8] = self.as_ref();
+        bytes.as_no_null_str()
+    }
+}
 
 impl AsMutNoNullStr for [u8] {
     fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
@@ -189,5 +202,15 @@ impl AsMutNoNullStr for [u8] {
     }
 }
 
-impl AsMutNoNullStr for NoNullStr { fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> { Ok(self) } }
-impl AsMutNoNullStr for [i8] { fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> { self.as_mut().as_mut_no_null_str() } }
+impl AsMutNoNullStr for NoNullStr {
+    fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
+        Ok(self)
+    }
+}
+
+impl AsMutNoNullStr for [i8] {
+    fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
+        let bytes: &mut [u8] = self.as_mut();
+        bytes.as_mut_no_null_str()
+    }
+}

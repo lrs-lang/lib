@@ -30,7 +30,6 @@ use io::{Read, Write};
 use fmt::{Debug};
 use alloc::{Allocator, empty_ptr};
 use base::rmo::{AsRef, AsMut};
-use str_one::byte_str::{ByteStr, AsByteStr, AsMutByteStr};
 use str_one::c_str::{CStr, AsCStr, AsMutCStr, ToCStr};
 use str_one::no_null_str::{NoNullStr, AsMutNoNullStr, AsNoNullStr};
 
@@ -313,23 +312,6 @@ impl<'a, H> AsMut<[u8]> for Vec<'a, u8, H>
 {
     fn as_mut(&mut self) -> &mut [u8] {
         self.deref_mut()
-    }
-}
-
-/// Hurr and Durr
-impl<'a, H> AsByteStr for Vec<'a, u8, H>
-    where H: Allocator,
-{
-    fn as_byte_str(&self) -> &ByteStr {
-        self.deref().as_byte_str()
-    }
-}
-
-impl<'a, H> AsMutByteStr for Vec<'a, u8, H>
-    where H: Allocator,
-{
-    fn as_mut_byte_str(&mut self) -> &mut ByteStr {
-        self.deref_mut().as_mut_byte_str()
     }
 }
 

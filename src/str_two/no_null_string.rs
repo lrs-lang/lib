@@ -61,7 +61,7 @@ impl<'a, H> NoNullString<'a, H>
     pub fn push_file<F>(&mut self, name: F) -> Result
         where F: AsNoNullStr,
     {
-        let bytes = try!(name.as_no_null_str()).as_ref();
+        let bytes: &[u8] = try!(name.as_no_null_str()).as_ref();
         try!(self.data.reserve(bytes.len() + 1));
         self.data.push(b'/');
         self.data.push_all(bytes)
@@ -83,7 +83,7 @@ impl<'a, H> NoNullString<'a, H>
     pub fn set_path<F>(&mut self, path: F) -> Result
         where F: AsNoNullStr,
     {
-        let bytes = try!(path.as_no_null_str()).as_ref();
+        let bytes: &[u8] = try!(path.as_no_null_str()).as_ref();
         self.clear();
         try!(self.data.reserve(bytes.len()));
         self.data.push_all(bytes)

@@ -4,7 +4,7 @@
 
 #[prelude_import] use base::prelude::*;
 use core::ops::{Index, IndexMut, Range, RangeFrom, RangeTo, RangeFull};
-use core::{mem, str};
+use core::{str};
 use base::rmo::{AsRef, AsMut};
 use fmt::{self, Debug, Display, UpperHex, Write};
 use parse::{Parse, Parsable};
@@ -41,7 +41,7 @@ impl ByteStr {
             }
             end -= 1;
         }
-        self.data[start..end].as_byte_str()
+        self.data[start..end].as_ref()
     }
 }
 
@@ -70,48 +70,52 @@ impl IndexMut<RangeFull> for ByteStr {
 impl Index<RangeTo<usize>> for ByteStr {
     type Output = ByteStr;
     fn index(&self, idx: RangeTo<usize>) -> &ByteStr {
-        self.data[idx].as_byte_str()
+        self.data[idx].as_ref()
     }
 }
 
 impl IndexMut<RangeTo<usize>> for ByteStr {
     fn index_mut(&mut self, idx: RangeTo<usize>) -> &mut ByteStr {
-        self.data[idx].as_mut_byte_str()
+        self.data[idx].as_mut()
     }
 }
 
 impl Index<RangeFrom<usize>> for ByteStr {
     type Output = ByteStr;
     fn index(&self, idx: RangeFrom<usize>) -> &ByteStr {
-        self.data[idx].as_byte_str()
+        self.data[idx].as_ref()
     }
 }
 
 impl IndexMut<RangeFrom<usize>> for ByteStr {
     fn index_mut(&mut self, idx: RangeFrom<usize>) -> &mut ByteStr {
-        self.data[idx].as_mut_byte_str()
+        self.data[idx].as_mut()
     }
 }
 
 impl Index<Range<usize>> for ByteStr {
     type Output = ByteStr;
     fn index(&self, idx: Range<usize>) -> &ByteStr {
-        self.data[idx].as_byte_str()
+        self.data[idx].as_ref()
     }
 }
 
 impl IndexMut<Range<usize>> for ByteStr {
     fn index_mut(&mut self, idx: Range<usize>) -> &mut ByteStr {
-        self.data[idx].as_mut_byte_str()
+        self.data[idx].as_mut()
     }
 }
 
 impl AsRef<[u8]> for ByteStr {
-    fn as_ref(&self) -> &[u8] { &self.data }
+    fn as_ref(&self) -> &[u8] {
+        &self.data
+    }
 }
 
 impl AsMut<[u8]> for ByteStr {
-    fn as_mut(&mut self) -> &mut [u8] { &mut self.data }
+    fn as_mut(&mut self) -> &mut [u8] {
+        &mut self.data
+    }
 }
 
 impl AsNoNullStr for ByteStr {
@@ -178,14 +182,18 @@ pub trait AsMutByteStr: AsByteStr {
     fn as_mut_byte_str(&mut self) -> &mut ByteStr;
 }
 
-impl AsByteStr for ByteStr { fn as_byte_str(&self) -> &ByteStr { self } }
-impl AsByteStr for [i8]    { fn as_byte_str(&self) -> &ByteStr { unsafe { mem::cast(self) } } }
-impl AsByteStr for [u8]    { fn as_byte_str(&self) -> &ByteStr { unsafe { mem::cast(self) } } }
-impl AsByteStr for str     { fn as_byte_str(&self) -> &ByteStr { unsafe { mem::cast(self) } } }
-
-impl<'a, T: AsByteStr+?Sized> AsByteStr for &'a T {
-    fn as_byte_str(&self) -> &ByteStr { (*self).as_byte_str() }
+impl<T: ?Sized> AsByteStr for T
+    where T: AsRef<[u8]>,
+{
+    fn as_byte_str(&self) -> &ByteStr {
+        self.as_ref().as_ref()
+    }
 }
 
-impl AsMutByteStr for ByteStr { fn as_mut_byte_str(&mut self) -> &mut ByteStr { self   } }
-impl AsMutByteStr for [u8]    { fn as_mut_byte_str(&mut self) -> &mut ByteStr { unsafe { mem::cast(self) } } }
+impl<T: ?Sized> AsMutByteStr for T
+    where T: AsRef<[u8]> + AsMut<[u8]>,
+{
+    fn as_mut_byte_str(&mut self) -> &mut ByteStr {
+        self.as_mut().as_mut()
+    }
+}

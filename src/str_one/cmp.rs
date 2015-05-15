@@ -2,6 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Eq implementations
+
 use core::ops::{Eq};
 use base::rmo::{AsRef};
 use byte_str::{ByteStr};

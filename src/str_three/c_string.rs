@@ -116,13 +116,15 @@ impl ToCString for [i8] {
     fn to_cstring<H>(&self) -> Result<CString<'static, H>>
         where H: Allocator,
     {
-        self.as_ref().to_cstring()
+        let bytes: &[u8] = self.as_ref();
+        bytes.to_cstring()
     }
 
     fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
         where H: Allocator,
     {
-        self.as_ref().rmo_cstr(buf)
+        let bytes: &[u8] = self.as_ref();
+        bytes.rmo_cstr(buf)
     }
 }
 
@@ -130,13 +132,15 @@ impl ToCString for str {
     fn to_cstring<H>(&self) -> Result<CString<'static, H>>
         where H: Allocator,
     {
-        self.as_ref().to_cstring()
+        let bytes: &[u8] = self.as_ref();
+        bytes.to_cstring()
     }
 
     fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
         where H: Allocator,
     {
-        self.as_ref().rmo_cstr(buf)
+        let bytes: &[u8] = self.as_ref();
+        bytes.rmo_cstr(buf)
     }
 }
 
@@ -144,7 +148,8 @@ impl ToCString for NoNullStr {
     fn to_cstring<H>(&self) -> Result<CString<'static, H>>
         where H: Allocator,
     {
-        match self.as_ref().to_owned() {
+        let bytes: &[u8] = self.as_ref();
+        match bytes.to_owned() {
             Ok(mut o) => {
                 try!(o.reserve(1));
                 o.push(0);
@@ -157,7 +162,7 @@ impl ToCString for NoNullStr {
     fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
         where H: Allocator,
     {
-        let bytes = self.as_ref();
+        let bytes: &[u8] = self.as_ref();
         if bytes.len() < buf.len() {
             mem::copy(buf, bytes);
             buf[bytes.len()] = 0;

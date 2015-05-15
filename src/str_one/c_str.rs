@@ -5,14 +5,14 @@
 #[prelude_import] use base::prelude::*;
 use core::ops::{Index, IndexMut, RangeFrom, RangeTo, Range, RangeFull};
 use core::{mem, slice};
-use base::rmo::{AsRef, AsMut};
+use base::rmo::{AsRef};
 use base::{error};
 use arch_fns::{all_bytes, memchr, strlen};
 use cty_base::types::{c_char};
 use fmt::{Debug, Write};
 use parse::{Parse, Parsable};
 
-use byte_str::{ByteStr, AsByteStr};
+use byte_str::{AsByteStr};
 use no_null_str::{AsNoNullStr, AsMutNoNullStr, NoNullStr};
 
 /// A byte slice that has exactly one null byte at the very end.
@@ -63,6 +63,12 @@ impl CStr {
         where A: AsRef<[u8]>,
     {
         self.data[..self.data.len()-1].starts_with(arg.as_ref())
+    }
+}
+
+impl AsRef<[u8]> for CStr {
+    fn as_ref(&self) -> &[u8] {
+        &self.data
     }
 }
 
@@ -125,9 +131,15 @@ impl IndexMut<Range<usize>> for CStr {
     }
 }
 
-impl AsRef<[u8]> for CStr {
-    fn as_ref(&self) -> &[u8] {
-        &self.data
+impl AsNoNullStr for CStr {
+    fn as_no_null_str(&self) -> Result<&NoNullStr> {
+        Ok(self.as_ref())
+    }
+}
+
+impl AsMutNoNullStr for CStr {
+    fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
+        Ok(self.as_mut())
     }
 }
 
@@ -141,24 +153,6 @@ impl AsMut<NoNullStr> for CStr {
     fn as_mut(&mut self) -> &mut NoNullStr {
         let len = self.data.len() - 1;
         unsafe { NoNullStr::from_bytes_unchecked_mut(&mut self.data[..len]) }
-    }
-}
-
-impl AsByteStr for CStr {
-    fn as_byte_str(&self) -> &ByteStr {
-        self.data[..self.data.len() - 1].as_byte_str()
-    }
-}
-
-impl AsNoNullStr for CStr {
-    fn as_no_null_str(&self) -> Result<&NoNullStr> {
-        Ok(self.as_ref())
-    }
-}
-
-impl AsMutNoNullStr for CStr {
-    fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
-        Ok(self.as_mut())
     }
 }
 
@@ -230,9 +224,25 @@ impl AsCStr for [u8] {
     }
 }
 
-impl AsCStr for CStr { fn as_cstr(&self) -> Result<&CStr> { Ok(self) } }
-impl AsCStr for [i8] { fn as_cstr(&self) -> Result<&CStr> { self.as_ref().as_cstr() } }
-impl AsCStr for str { fn as_cstr(&self) -> Result<&CStr> { self.as_ref().as_cstr() } }
+impl AsCStr for CStr {
+    fn as_cstr(&self) -> Result<&CStr> {
+        Ok(self)
+    }
+}
+
+impl AsCStr for [i8] {
+    fn as_cstr(&self) -> Result<&CStr> {
+        let bytes: &[u8] = self.as_ref();
+        bytes.as_cstr()
+    }
+}
+
+impl AsCStr for str {
+    fn as_cstr(&self) -> Result<&CStr> {
+        let bytes: &[u8] = self.as_ref();
+        bytes.as_cstr()
+    }
+}
 
 impl AsMutCStr for [u8] {
     fn as_mut_cstr(&mut self) -> Result<&mut CStr> {
@@ -243,8 +253,18 @@ impl AsMutCStr for [u8] {
     }
 }
 
-impl AsMutCStr for CStr { fn as_mut_cstr(&mut self) -> Result<&mut CStr> { Ok(self) } }
-impl AsMutCStr for [i8] { fn as_mut_cstr(&mut self) -> Result<&mut CStr> { self.as_mut().as_mut_cstr() } }
+impl AsMutCStr for CStr {
+    fn as_mut_cstr(&mut self) -> Result<&mut CStr> {
+        Ok(self)
+    }
+}
+
+impl AsMutCStr for [i8] {
+    fn as_mut_cstr(&mut self) -> Result<&mut CStr> {
+        let bytes: &mut [u8] = self.as_mut();
+        bytes.as_mut_cstr()
+    }
+}
 
 impl ToCStr for CStr {
     fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
@@ -311,19 +331,46 @@ impl ToCStr for [u8] {
 }
 
 impl ToCStr for [i8] {
-    fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> { self.as_ref().to_cstr(buf) }
-    fn to_or_as_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<&'a CStr> { self.as_ref().to_or_as_cstr(buf) }
-    fn to_or_as_mut_cstr<'a>(&'a mut self, buf: &'a mut [u8]) -> Result<&'a mut CStr> { self.as_mut().to_or_as_mut_cstr(buf) }
+    fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
+        let bytes: &[u8] = self.as_ref();
+        bytes.to_cstr(buf)
+    }
+
+    fn to_or_as_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<&'a CStr> {
+        let bytes: &[u8] = self.as_ref();
+        bytes.to_or_as_cstr(buf)
+    }
+
+    fn to_or_as_mut_cstr<'a>(&'a mut self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
+        let bytes: &mut [u8] = self.as_mut();
+        bytes.to_or_as_mut_cstr(buf)
+    }
 }
 
 impl ToCStr for str {
-    fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> { self.as_bytes().to_cstr(buf) }
-    fn to_or_as_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<&'a CStr> { self.as_bytes().to_or_as_cstr(buf) }
-    fn to_or_as_mut_cstr<'a>(&'a mut self, buf: &'a mut [u8]) -> Result<&'a mut CStr> { self.as_bytes().to_cstr(buf) }
+    fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
+        self.as_bytes().to_cstr(buf)
+    }
+
+    fn to_or_as_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<&'a CStr> {
+        self.as_bytes().to_or_as_cstr(buf)
+    }
+
+    fn to_or_as_mut_cstr<'a>(&'a mut self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
+        self.as_bytes().to_cstr(buf)
+    }
 }
 
 impl<'b, T: ToCStr+?Sized> ToCStr for &'b T {
-    fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> { (**self).to_cstr(buf) }
-    fn to_or_as_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<&'a CStr> { (**self).to_or_as_cstr(buf) }
-    fn to_or_as_mut_cstr<'a>(&'a mut self, buf: &'a mut [u8]) -> Result<&'a mut CStr> { (**self).to_cstr(buf) }
+    fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
+        (**self).to_cstr(buf)
+    }
+
+    fn to_or_as_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<&'a CStr> {
+        (**self).to_or_as_cstr(buf)
+    }
+
+    fn to_or_as_mut_cstr<'a>(&'a mut self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
+        (**self).to_cstr(buf)
+    }
 }
