@@ -180,6 +180,12 @@ impl Eq<str> for CStr {
     }
 }
 
+impl Eq<[u8]> for CStr {
+    fn eq(&self, other: &[u8]) -> bool {
+        self.as_byte_str() == other
+    }
+}
+
 impl Eq<ByteStr> for CStr {
     fn eq(&self, other: &ByteStr) -> bool {
         self.as_byte_str() == other

@@ -16,7 +16,6 @@ extern crate lrs_io as io;
 #[prelude_import] use base::prelude::*;
 
 pub use io::{Write};
-pub use impls::num::{format_u64};
 
 pub mod lrs {
     pub use ::base::lrs::*;
@@ -35,30 +34,42 @@ pub mod impls {
 }
 
 macro_rules! fmt_var {
-    ($name:ident) => {
-        pub trait $name {
-            /// Formats the object into the writer.
-            fn fmt<W: Write>(&self, w: &mut W) -> Result;
-        }
-
-        impl<'a, T: $name+?Sized> $name for &'a T {
-            fn fmt<W: Write>(&self, w: &mut W) -> Result {
-                (**self).fmt(w)
+    ($($(#[$meta:meta])* ty $name:ident)*) => {
+        $(
+            $(#[$meta])*
+            pub trait $name {
+                /// Formats the object into the writer.
+                fn fmt<W: Write>(&self, w: &mut W) -> Result;
             }
-        }
 
-        impl<'a, T: $name+?Sized> $name for &'a mut T {
-            fn fmt<W: Write>(&self, w: &mut W) -> Result {
-                (**self).fmt(w)
+            impl<'a, T: $name+?Sized> $name for &'a T {
+                fn fmt<W: Write>(&self, w: &mut W) -> Result {
+                    (**self).fmt(w)
+                }
             }
-        }
+
+            impl<'a, T: $name+?Sized> $name for &'a mut T {
+                fn fmt<W: Write>(&self, w: &mut W) -> Result {
+                    (**self).fmt(w)
+                }
+            }
+        )*
     }
 }
 
-fmt_var!(LowerHex);
-fmt_var!(UpperHex);
-fmt_var!(Debug);
-fmt_var!(Display);
+fmt_var! {
+    #[doc = "Objects that can be formatted in a \"lower hex\" form."]
+    ty LowerHex
+
+    #[doc = "Objects that can be formatted in a \"upper hex\" form."]
+    ty UpperHex
+
+    #[doc = "Objects that can be formatted in a \"debug\" form."]
+    ty Debug
+
+    #[doc = "Objects that can be formatted in a \"display\" form."]
+    ty Display
+}
 
 mod fmt {
     pub use {Debug, Display};

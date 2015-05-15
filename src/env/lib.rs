@@ -23,7 +23,7 @@ extern crate lrs_syscall   as syscall;
 #[prelude_import] use base::prelude::*;
 use core::slice::{Split};
 use core::{mem};
-use str_one::{AsByteStr, CStr, NoNullStr};
+use str_one::{CStr, NoNullStr};
 use str_two::{NoNullString};
 use str_three::{ToCString};
 use alloc::{Allocator, FbHeap};

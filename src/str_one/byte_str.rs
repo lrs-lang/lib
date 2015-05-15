@@ -140,6 +140,12 @@ impl Eq<str> for ByteStr {
     }
 }
 
+impl Eq<[u8]> for ByteStr {
+    fn eq(&self, other: &[u8]) -> bool {
+        self.data.eq(other)
+    }
+}
+
 impl Eq<ByteStr> for [u8] {
     fn eq(&self, other: &ByteStr) -> bool {
         self.eq(&other.data)
