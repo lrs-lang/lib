@@ -9,6 +9,12 @@ use cmp::{Ord};
 use option::{Option};
 
 /// Reads a value from a pointer.
+///
+/// [argument, src]
+/// The pointer that will be read from.
+///
+/// [return_value]
+/// Returns the object pointed to by the pointer.
 pub unsafe fn read<T>(src: *const T) -> T {
     let mut tmp: T = mem::uninit();
     memcpy(&mut tmp, src, 1);
@@ -16,17 +22,45 @@ pub unsafe fn read<T>(src: *const T) -> T {
 }
 
 /// Writes a value to a pointer.
+///
+/// [argument, dst]
+/// The pointer that will be written to.
+///
+/// [argument, data]
+/// The object that will be written.
 pub unsafe fn write<T>(dst: *mut T, data: T) {
     memcpy(dst, &data, 1);
     intrinsics::forget(data);
 }
 
-/// Copies `n` elements from `src` to `dst` which must not overlap.
+/// Copies a number of elements between two non-overlapping pointers.
+///
+/// [argument, dst]
+/// The pointer that will be written to.
+///
+/// [argument, src]
+/// The pointer that will be read from.
+///
+/// [argument, n]
+/// The number of elements that will be copied.
+///
+/// = Remarks
+///
+/// If the pointers overlap, the behavior is undefined.
 pub unsafe fn memcpy<T>(dst: *mut T, src: *const T, n: usize) {
     intrinsics::copy_nonoverlapping(src, dst, n);
 }
 
-/// Copies `n` elements from `src` to `dst` which are allowed to overlap.
+/// Copies a number of elements between two, possibly overlapping, pointers.
+///
+/// [argument, dst]
+/// The pointer that will be written to.
+///
+/// [argument, src]
+/// The pointer that will be read from.
+///
+/// [argument, n]
+/// The number of elements that will be copied.
 pub unsafe fn memmove<T>(dst: *mut T, src: *const T, n: usize) {
     intrinsics::copy(src, dst, n);
 }
@@ -38,18 +72,50 @@ impl<T> *const T {
         self as usize == 0
     }
 
-    /// Like `ptr + val` in C. The result must be a valid pointer or the behavior is
-    /// undefined.
+    /// Creates a new pointer by calculating an offset from it.
+    ///
+    /// [argument, val]
+    /// The value that will be added to the pointer.
+    ///
+    /// [return_value]
+    /// Returns the new pointer.
+    ///
+    /// = Remarks
+    ///
+    /// This is like `ptr + val` in C. If the resulting pointer does not point into the
+    /// same object or one byte after it, the behavior is undefined.
     pub unsafe fn offset(self, val: isize) -> *const T {
         intrinsics::offset(self, val)
     }
 
-    /// Like `offset`.
+    /// Creates a new pointer by adding an offset to it.
+    ///
+    /// [argument, val]
+    /// The value that will be added to the pointer.
+    ///
+    /// [return_value]
+    /// Returns the new pointer.
+    ///
+    /// = Remarks
+    ///
+    /// This is like `ptr + val` in C. If the resulting pointer does not point into the
+    /// same object or one byte after it, the behavior is undefined.
     pub unsafe fn add(self, val: usize) -> *const T {
         self.offset(val as isize)
     }
 
-    /// Like `offset`.
+    /// Creates a new pointer by subtracting an offset from it.
+    ///
+    /// [argument, val]
+    /// The value that will be subtracted from the pointer.
+    ///
+    /// [return_value]
+    /// Returns the new pointer.
+    ///
+    /// = Remarks
+    ///
+    /// This is like `ptr - val` in C. If the resulting pointer does not point into the
+    /// same object or one byte after it, the behavior is undefined.
     pub unsafe fn sub(self, val: usize) -> *const T {
         self.offset(-(val as isize))
     }
@@ -80,18 +146,50 @@ impl<T> *mut T {
         self as usize == 0
     }
 
-    /// Like `ptr + val` in C. The result must be a valid pointer or the behavior is
-    /// undefined.
+    /// Creates a new pointer by calculating an offset from it.
+    ///
+    /// [argument, val]
+    /// The value that will be added to the pointer.
+    ///
+    /// [return_value]
+    /// Returns the new pointer.
+    ///
+    /// = Remarks
+    ///
+    /// This is like `ptr + val` in C. If the resulting pointer does not point into the
+    /// same object or one byte after it, the behavior is undefined.
     pub unsafe fn offset(self, val: isize) -> *mut T {
         intrinsics::offset(self, val) as *mut T
     }
 
-    /// Like `offset`.
+    /// Creates a new pointer by adding an offset to it.
+    ///
+    /// [argument, val]
+    /// The value that will be added to the pointer.
+    ///
+    /// [return_value]
+    /// Returns the new pointer.
+    ///
+    /// = Remarks
+    ///
+    /// This is like `ptr + val` in C. If the resulting pointer does not point into the
+    /// same object or one byte after it, the behavior is undefined.
     pub unsafe fn add(self, val: usize) -> *mut T {
         self.offset(val as isize)
     }
 
-    /// Like `offset`.
+    /// Creates a new pointer by subtracting an offset from it.
+    ///
+    /// [argument, val]
+    /// The value that will be subtracted from the pointer.
+    ///
+    /// [return_value]
+    /// Returns the new pointer.
+    ///
+    /// = Remarks
+    ///
+    /// This is like `ptr - val` in C. If the resulting pointer does not point into the
+    /// same object or one byte after it, the behavior is undefined.
     pub unsafe fn sub(self, val: usize) -> *mut T {
         self.offset(-(val as isize))
     }

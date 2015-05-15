@@ -34,31 +34,60 @@ pub fn validate(data: &[u8]) -> Result<usize> {
     }
 }
 
+/// A Unix socket address.
 pub struct UnixSockAddr { data: [u8] }
 
+/// The type of a unix socket address.
+///
+/// = See also
+///
+/// * link:man:unix(7)
 pub enum UnixAddrType {
+    /// A socket address represented by a filesystem path.
     Path,
+    /// The unnamed socket address.
     Unnamed,
+    /// An abstract socket address.
     Abstract,
 }
 
 impl UnixSockAddr {
+    /// Creates a Unix socket address from given bytes.
+    ///
+    /// [argument, bytes]
+    /// The bytes that contain the socket address.
     pub fn from_bytes(bytes: &[u8]) -> Result<&UnixSockAddr> {
         validate(bytes).map(|l| unsafe { mem::cast(&bytes[..l]) })
     }
 
+    /// Creates a mutable Unix socket address from given bytes.
+    ///
+    /// [argument, bytes]
+    /// The bytes that contain the socket address.
     pub fn from_mut_bytes(bytes: &mut [u8]) -> Result<&mut UnixSockAddr> {
         validate(bytes).map(|l| unsafe { mem::cast(&mut bytes[..l]) })
     }
 
+    /// Creates a Unix socket address from given bytes without validation.
+    ///
+    /// [argument, bytes]
+    /// The bytes that contain the socket address.
     pub unsafe fn from_bytes_unchecked(bytes: &[u8]) -> &UnixSockAddr {
         mem::cast(bytes)
     }
 
+    /// Creates a mutable Unix socket address from given bytes without validation.
+    ///
+    /// [argument, bytes]
+    /// The bytes that contain the socket address.
     pub unsafe fn from_mut_bytes_unchecked(bytes: &mut [u8]) -> &mut UnixSockAddr {
         mem::cast(bytes)
     }
 
+    /// Creates a new unnamed Unix socket address.
+    ///
+    /// [argument, bytes]
+    /// The buffer in which the address will be stored.
     pub fn from_unnamed(buf: &mut [u8]) -> Result<&mut UnixSockAddr> {
         if buf.len() >= BYTES_PER_SHORT {
             mem::copy(buf, (AF_UNIX as sa_family_t).as_ref());
@@ -68,6 +97,13 @@ impl UnixSockAddr {
         }
     }
 
+    /// Creates a new abstract Unix socket address.
+    ///
+    /// [argument, bytes]
+    /// The buffer in which the address will be stored.
+    ///
+    /// [argument, name]
+    /// The address of the socket address.
     pub fn from_abstract<T>(buf: &mut [u8], name: T) -> Result<&mut UnixSockAddr>
         where T: AsRef<[u8]>
     {
@@ -85,6 +121,13 @@ impl UnixSockAddr {
         }
     }
 
+    /// Creates a new path Unix socket address.
+    ///
+    /// [argument, buf]
+    /// The buffer in which the address will be stored.
+    ///
+    /// [argument, path]
+    /// The path of the socket address.
     pub fn from_path<T>(buf: &mut [u8], path: T) -> Result<&mut UnixSockAddr>
         where T: ToCStr,
     {
@@ -108,12 +151,14 @@ impl UnixSockAddr {
         }
     }
 
+    /// Returns the address type of the socket address.
     pub fn addr_type(&self) -> UnixAddrType {
         if self.data.len() == BYTES_PER_SHORT { return UnixAddrType::Unnamed; }
         if self.data[BYTES_PER_SHORT] == 0 { return UnixAddrType::Abstract; }
         UnixAddrType::Path
     }
 
+    /// Returns the path of a path Unix socket address.
     pub fn as_path(&self) -> Result<&CStr> {
         match self.addr_type() {
             UnixAddrType::Path => Ok(unsafe {
@@ -123,6 +168,7 @@ impl UnixSockAddr {
         }
     }
 
+    /// Returns the mutable path of a path Unix socket address.
     pub fn as_mut_path(&mut self) -> Result<&mut CStr> {
         match self.addr_type() {
             UnixAddrType::Path => Ok(unsafe {
@@ -132,6 +178,7 @@ impl UnixSockAddr {
         }
     }
 
+    /// Returns the abstract address of an abstract Unix socket address.
     pub fn as_abstract(&self) -> Result<&[u8]> {
         match self.addr_type() {
             UnixAddrType::Abstract => Ok(&self.data[BYTES_PER_SHORT + 1..]),
@@ -139,6 +186,7 @@ impl UnixSockAddr {
         }
     }
 
+    /// Returns the mutable abstract address of an abstract Unix socket address.
     pub fn as_mut_abstract(&mut self) -> Result<&mut [u8]> {
         match self.addr_type() {
             UnixAddrType::Abstract => Ok(&mut self.data[BYTES_PER_SHORT + 1..]),

@@ -79,6 +79,11 @@ create! {
     #[doc = "= Remarks"]
     #[doc = ""]
     #[doc = "This can be used whenever no special flags are required."]
+    #[doc = "No flags."]
+    #[doc = ""]
+    #[doc = "= Remarks"]
+    #[doc = ""]
+    #[doc = "This can be used whenever no special flags are required."]
     flag None = 0;
     
     #[doc = "Informs the link-layer that we're receiving messages from the peer."]

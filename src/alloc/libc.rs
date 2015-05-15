@@ -7,10 +7,12 @@ use base::{error};
 use {Allocator, MAX_SIZE};
 use lrs_libc as libc;
 
-/// The libc heap
+/// The libc allocator
 ///
-/// Note that this allocator ignores the alignment argument and always returns maximally
-/// aligned pointers.
+/// = Remarks
+///
+/// This allocator ignores the alignment argument and always returns maximally aligned
+/// pointers.
 pub struct Libc;
 
 impl Allocator for Libc {

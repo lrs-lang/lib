@@ -26,7 +26,13 @@ impl str {
         self.as_bytes().len()
     }
 
-    /// Checks if `b` contains vaild UTF-8 and, if so, returns it as a string.
+    /// Tries to turn a byte slice into a string slice.
+    ///
+    /// [argument, b]
+    /// The bytes that supposedly contain valid UTF-8.
+    ///
+    /// [return_varue]
+    /// Returns the slice transmuted to a string slice if it contains valid UTF-8.
     pub fn from_bytes(b: &[u8]) -> Option<&str> {
         let longest = longest_sequence(b);
         if longest.len() == b.len() {
@@ -83,7 +89,7 @@ impl<'a> Iterator for &'a str {
     }
 }
 
-/// See the `chars_len` documentation.
+/// Iterator over characters and their UTF-8 lengths in a string.
 pub struct CharsLen<'a> {
     data: &'a [u8],
 }
@@ -110,7 +116,10 @@ unsafe fn bytes_to_char(b: &[u8]) -> char {
     mem::cast(val)
 }
 
-/// Returns the longest initial sequence of valid UTF-8 in the `b`.
+/// Returns the longest initial sequence of valid UTF-8 in a byte slice.
+///
+/// [argument, b]
+/// The byte slice.
 pub fn longest_sequence(b: &[u8]) -> &str {
     let mut idx = 0;
     while idx < b.len() {

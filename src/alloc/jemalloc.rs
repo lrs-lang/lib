@@ -29,8 +29,11 @@ extern {
 
 /// The jemalloc allocator
 ///
-/// To use this you have to compile a recent version of jemalloc with the `je_` prefix and
-/// add `-L path_to_jemalloc` to your compiler invocation.
+/// = Remarks
+///
+/// To use this you have to compile lrs with the `jemalloc` option, compile a recent
+/// version of jemalloc with the `je_` prefix and add `-L path_to_jemalloc` to your
+/// compiler invocation.
 pub struct JeMalloc;
 
 impl Allocator for JeMalloc {

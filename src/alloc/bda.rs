@@ -11,6 +11,17 @@ use cty::{
 use {Allocator, MAX_SIZE};
 
 /// The brain-dead allocator
+///
+/// = Remarks
+///
+/// :mmap: link:man:mmap(2)
+///
+/// This allocator has no state and always uses {mmap} to allocate in multiples of the
+/// page size.
+///
+/// = See also
+///
+/// * {mmap}
 pub struct Bda;
 
 impl Allocator for Bda {

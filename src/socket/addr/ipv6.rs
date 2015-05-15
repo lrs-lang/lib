@@ -11,6 +11,7 @@ use base::{error};
 use addr::{SockAddr};
 use fmt::{Debug, Write};
 
+/// The size of an Ipv6 socket address in bytes.
 pub const IPV6_SOCK_ADDR_SIZE: usize = 28; // == size_of::<sockaddr_in6>().
                                            // XXX: See the comment in addr::ipv4
 
@@ -32,11 +33,22 @@ pub fn validate(bytes: &[u8]) -> Result<usize> {
     }
 }
 
+/// An Ipv6 address.
+///
+/// = Remarks
+///
+/// The individual segments should be stored in host byte order. That is, `::1` is stored
+/// as
+///
+/// ----
+/// Ipv6Addr(0, 0, 0, 0, 0, 0, 0, 1)
+/// ----
 #[derive(Pod, Eq)]
 pub struct Ipv6Addr(pub u16, pub u16, pub u16, pub u16,
                     pub u16, pub u16, pub u16, pub u16);
 
 impl Ipv6Addr {
+    /// Creates an Ipv6 address from segments in network byte order.
     pub fn from_be_bytes(bytes: [u16; 8]) -> Ipv6Addr {
         Ipv6Addr(
            bytes[0].from_be(), bytes[1].from_be(), bytes[2].from_be(), bytes[3].from_be(),
@@ -44,6 +56,7 @@ impl Ipv6Addr {
         )
     }
 
+    /// Creates an Ipv6 address from segments in host byte order.
     pub fn from_bytes(bytes: [u16; 8]) -> Ipv6Addr {
         Ipv6Addr(
             bytes[0], bytes[1], bytes[2], bytes[3],
@@ -51,117 +64,159 @@ impl Ipv6Addr {
         )
     }
 
+    /// Transforms the address into an array of segments in network byte order.
     pub fn to_be_bytes(&self) -> [u16; 8] {
         [self.0.to_be(), self.1.to_be(), self.2.to_be(), self.3.to_be(),
          self.4.to_be(), self.5.to_be(), self.6.to_be(), self.7.to_be()]
     }
 
+    /// Transforms the address into an array of segments in host byte order.
     pub fn to_bytes(&self) -> [u16; 8] {
         [self.0, self.1, self.2, self.3,
          self.4, self.5, self.6, self.7]
     }
 
-    /// `::`
+    /// Creates the unspecified address `::`.
     pub fn unspecified() -> Ipv6Addr {
         Ipv6Addr::from_bytes([0, 0, 0, 0, 0, 0, 0, 0])
     }
 
-    /// `::1`
+    /// Creates the loopback address `::1`.
     pub fn loopback() -> Ipv6Addr {
         Ipv6Addr::from_bytes([0, 0, 0, 0, 0, 0, 0, 1])
     }
 
-    /// `fe80::/10`
+    /// Compares the address to the link local prefix `fe80::/10`.
     pub fn is_link_local(&self) -> bool {
         self.0 & 0b1111_1111_1100_0000 == 0xfe80
     }
 
-    /// `fc00::/7`
+    /// Compares the address to the unique local prefix `fc00::/7`.
     pub fn is_unique_local(&self) -> bool {
         self.0 & 0b1111_1110_0000_0000 == 0xfc00
     }
 
-    /// `::/96`
+    /// Compares the address to the prefix `::/96`.
     pub fn is_ipv4_compatible(&self) -> bool {
         self.0 == 0 && self.1 == 0 && self.2 == 0 && self.3 == 0 && self.4 == 0
             && self.5 == 0
     }
 
-    /// `::ffff:0:0/96`
+    /// Compares the address to the Ipv4-mapped prefix `::ffff:0:0/96`.
     pub fn is_ipv4_mapped(&self) -> bool {
         self.0 == 0 && self.1 == 0 && self.2 == 0 && self.3 == 0 && self.4 == 0
             && self.5 == 0xffff
     }
 
-    /// `::ffff:0:0:0/96`
+    /// Compares the address to the Ipv4-translated prefix `::ffff:0:0:0/96`.
     pub fn is_ipv4_translated(&self) -> bool {
         self.0 == 0 && self.1 == 0 && self.2 == 0 && self.3 == 0 && self.4 == 0xffff
             && self.5 == 0
     }
 
-    /// `2002::/16`
+    /// Compares the address to the 6to4 prefix `2002::/16`.
     pub fn is_6to4(&self) -> bool {
         self.0 == 0x2002
     }
 
-    /// `2001::/32`
+    /// Compares the address to the Teredo prefix `2001::/32`.
     pub fn is_teredo(&self) -> bool {
         self.0 == 0x2001 && self.1 == 0
     }
 
-    /// `2001:2::/48`
+    /// Compares the address to the BWMG prefix `2001:2::/48`.
     pub fn is_bmwg(&self) -> bool {
         self.0 == 0x2001 && self.1 == 2 && self.2 == 0
     }
 
-    /// `2001:20::/28`
+    /// Compares the address to the ORCHIDv2 prefix `2001:20::/28`.
     pub fn is_orchidv2(&self) -> bool {
         self.0 == 0x2001 && self.1 & 0b1111_1111_1111_0000 == 0x20
     }
 
-    /// `2001:db8::/32`
+    /// Compares the address to the documentation prefix `2001:db8::/32`.
     pub fn is_documentation(&self) -> bool {
         self.0 == 0x2001 && self.1 == 0xdb8
     }
 
-    /// `0100::/64`
+    /// Compares the address to the discard prefix `0100::/64`.
     pub fn is_discard(&self) -> bool {
         self.0 == 0x0100 && self.1 == 0 && self.2 == 0 && self.3 == 0
     }
 
-    /// `ff00::/8`
+    /// Compares the address to the multicast prefix `ff00::/8`.
     pub fn is_multicast(&self) -> bool {
         self.0 & 0b1111_1111_0000_0000 == 0xff00
     }
 
-    /// `ff0?::1`
+    /// Creates the well-known "All nodes" multicast address with a certain scope.
+    ///
+    /// [argument, scope]
+    /// The scope of the multicast address.
+    ///
+    /// = Remarks
+    ///
+    /// The created address is `ff0?::1` where `?` depends on the scope.
+    ///
+    /// Only the `Interface` and `Link` scopes are valid.
     pub fn multicast(scope: Ipv6Scope) -> Ipv6Addr {
         Ipv6Addr::from_bytes([scope.to_multicast_prefix(), 0, 0, 0, 0, 0, 0, 0x1])
     }
 
-    /// `ff0?::2`
+    /// Creates the well-known "All routers" multicast address with a certain scope.
+    ///
+    /// [argument, scope]
+    /// The scope of the multicast address.
+    ///
+    /// = Remarks
+    ///
+    /// The created address is `ff0?::2` where `?` depends on the scope.
+    ///
+    /// Only the `Interface`, `Link`, and `Site` scopes are valid.
     pub fn router_multicast(scope: Ipv6Scope) -> Ipv6Addr {
         Ipv6Addr::from_bytes([scope.to_multicast_prefix(), 0, 0, 0, 0, 0, 0, 0x2])
     }
 
-    /// `ff0?::101`
+    /// Creates the well-known "All NTP servers" multicast address with a certain scope.
+    ///
+    /// [argument, scope]
+    /// The scope of the multicast address.
+    ///
+    /// = Remarks
+    ///
+    /// The created address is `ff0?::101` where `?` depends on the scope.
     pub fn ntp_multicast(scope: Ipv6Scope) -> Ipv6Addr {
         Ipv6Addr::from_bytes([scope.to_multicast_prefix(), 0, 0, 0, 0, 0, 0, 0x101])
     }
 
-    /// `ff05::1:3`
+    /// Creates the well-known "All DHCP servers" multicast address.
+    ///
+    /// = Remarks
+    ///
+    /// The created address is `ff05::1:3`.
     pub fn dhcp_server_multicast() -> Ipv6Addr {
         Ipv6Addr::from_bytes([0xff05, 0, 0, 0, 0, 0, 0x1, 0x3])
     }
 }
 
+/// The scope of an Ipv6 address.
+///
+/// = Remarks
+///
+/// This is currently only used for multicast addresses.
 #[derive(Copy, Eq)]
 pub enum Ipv6Scope {
+    /// Interface-local scope.
     Interface,
+    /// Link-local scope.
     Link,
+    /// Admin-local scope.
     Admin,
+    /// Site-local scope.
     Site,
+    /// Organization-local scope.
     Organization,
+    /// Global scope.
     Global,
 }
 
@@ -178,25 +233,52 @@ impl Ipv6Scope {
     }
 }
 
+/// An Ipv6 socket address.
 pub struct Ipv6SockAddr { data: [u8] }
 
 impl Ipv6SockAddr {
+    /// Creates an Ipv6 address from given bytes.
+    ///
+    /// [argument, bytes]
+    /// The bytes that contain the address.
     pub fn from_bytes(bytes: &[u8]) -> Result<&Ipv6SockAddr> {
         validate(bytes).map(|l| unsafe { mem::cast(&bytes[..l]) })
     }
 
+    /// Creates a mutable Ipv6 address from given bytes.
+    ///
+    /// [argument, bytes]
+    /// The bytes that contain the address.
     pub fn from_mut_bytes(bytes: &mut [u8]) -> Result<&mut Ipv6SockAddr> {
         validate(bytes).map(|l| unsafe { mem::cast(&mut bytes[..l]) })
     }
 
+    /// Creates an Ipv6 address from given bytes without validating the contents.
+    ///
+    /// [argument, bytes]
+    /// The bytes that contain the address.
     pub unsafe fn from_bytes_unchecked(bytes: &[u8]) -> &Ipv6SockAddr {
         mem::cast(bytes)
     }
 
+    /// Creates a mutable Ipv6 address from given bytes without validating the contents.
+    ///
+    /// [argument, bytes]
+    /// The bytes that contain the address.
     pub unsafe fn from_mut_bytes_unchecked(bytes: &mut [u8]) -> &mut Ipv6SockAddr {
         mem::cast(bytes)
     }
 
+    /// Creates a new Ipv6 socket address from an address and a port.
+    ///
+    /// [argument, bytes]
+    /// The buffer in which the address will be stored.
+    ///
+    /// [argument, addr]
+    /// The Ipv6 address of the socket.
+    ///
+    /// [argument, port]
+    /// The port of the socket.
     pub fn from_addr_port(bytes: &mut [u8], addr: Ipv6Addr,
                           port: u16) -> Result<&mut Ipv6SockAddr> {
         if bytes.len() < IPV6_SOCK_ADDR_SIZE {
@@ -212,42 +294,62 @@ impl Ipv6SockAddr {
         Ok(unsafe { mem::cast(&mut bytes[..IPV6_SOCK_ADDR_SIZE]) })
     }
 
+    /// Returns the Ipv6 address of an Ipv6 socket address.
     pub fn addr(&self) -> Ipv6Addr {
         let mut addr = [0; 8];
         mem::copy(addr.as_mut(), &self.data[ADDR_OFF..]);
         Ipv6Addr::from_be_bytes(addr)
     }
 
+    /// Sets the Ipv6 address of an Ipv6 socket address.
+    ///
+    /// [argument, addr]
+    /// The new address.
     pub fn set_addr(&mut self, addr: Ipv6Addr) {
         mem::copy(&mut self.data[ADDR_OFF..], addr.to_be_bytes().as_ref());
     }
 
+    /// Returns the port of an Ipv6 socket address.
     pub fn port(&self) -> u16 {
         let mut port = 0;
         mem::copy(port.as_mut(), &self.data[PORT_OFF..]);
         port
     }
 
+    /// Sets the port of an Ipv6 socket address.
+    ///
+    /// [argument, port]
+    /// The new port.
     pub fn set_port(&mut self, port: u16) {
         mem::copy(&mut self.data[PORT_OFF..], port.to_be().as_ref());
     }
 
+    /// Returns the flow label of an Ipv6 socket address.
     pub fn flow_label(&self) -> u32 {
         let mut label: u32 = 0;
         mem::copy(label.as_mut(), &self.data[FLOW_OFF..]);
         label.from_be()
     }
 
+    /// Sets the flow label of an Ipv6 socket address.
+    ///
+    /// [argument, label]
+    /// The new flow label.
     pub fn set_flow_label(&mut self, label: u32) {
         mem::copy(&mut self.data[FLOW_OFF..], label.to_be().as_ref());
     }
 
+    /// Returns the scope id of an Ipv6 socket address.
     pub fn scope_id(&self) -> u32 {
         let mut id: u32 = 0;
         mem::copy(id.as_mut(), &self.data[SCOP_OFF..]);
         id.from_be()
     }
 
+    /// Sets the scope id of an Ipv6 socket address.
+    ///
+    /// [argument, id]
+    /// The new scope id.
     pub fn set_scope_id(&mut self, id: u32) {
         mem::copy(&mut self.data[SCOP_OFF..], id.to_be().as_ref());
     }

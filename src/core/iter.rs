@@ -10,7 +10,11 @@ use marker::{Sized, PhantomData};
 pub trait Iterator {
     /// The type that the iterator yields.
     type Item;
-    /// Returns the next value of `None` if the iterator is finished.
+
+    /// Yields the next value.
+    ///
+    /// [return_value]
+    /// Returns the next value or `None` if no more values are available.
     fn next(&mut self) -> Option<Self::Item>;
 }
 
@@ -37,13 +41,18 @@ impl<T> Iterator for Option<T> {
 
 /// Objects that can be turned into iterators.
 ///
+/// = Remarks
+///
 /// This is the trait used by `for` loops. The object on the right-hand-side has to
 /// implement this trait. All iterators implement this trait and simply return themselves.
-///
-/// The unit `()` implements this trait with the target `Empty<()>`.
 pub trait IntoIterator {
+    /// The type that the iterator yields.
     type Item;
+
+    /// The type of the iterator this object can be turned into.
     type IntoIter: Iterator<Item=Self::Item>;
+
+    /// Turns the object into an iterator.
     fn into_iter(self) -> Self::IntoIter;
 }
 

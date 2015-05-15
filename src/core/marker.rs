@@ -4,29 +4,37 @@
 
 use ops::{Eq};
 
-/// Objects whose size known at compile time
+/// Objects whose size known at compile time.
 ///
-/// E.g. not `[T]` or `str` but `&[T]` and `&str`.
+/// = Remarks
+///
+/// This includes `&[T]` and `&Trait` but not `[T]` or `Trait`.
 #[lang = "sized"]
 pub trait Sized { }
 
 impl Sized for .. { }
 
-/// Objects that are safe to use if they contain a random bit pattern
+/// Objects that are safe to use if they contain a random bit pattern.
 ///
-/// That is, types without invarints. For example, immutable slices are not `Pod` for the
+/// = Remarks
+///
+/// That is, types without invariants. For example, immutable slices are not `Pod` for the
 /// same reason `slice::from_ptr` is not safe. Note that only structs and primitives can
 /// be `Pod`.
 pub trait Pod : Copy { }
 
-/// Objects that can safely be copied via `memcpy`
+/// Objects that can safely be copied via `memcpy`.
+///
+/// = Remarks
 ///
 /// That is, objects which you can copy and use both the copy and the original. For
 /// example, immutable slices are `Copy`. This is a weaker form of `Pod`.
 #[lang = "copy"]
 pub trait Copy { }
 
-/// Objects that allow immutable access from threads other than their owning thread
+/// Objects that allow immutable access from threads other than their owning thread.
+///
+/// = Remarks
 ///
 /// For example, `RefCell` is `!Sync`.
 #[lang = "sync"]
@@ -37,12 +45,18 @@ unsafe impl Sync for .. { }
 impl<T> !Sync for *const T { }
 impl<T> !Sync for *mut T { }
 
-/// A dummy object that is `!Sync`
+/// A dummy object that is `!Sync`.
+///
+/// = Remarks
+///
+/// This can be embedded in other objects to make them `!Sync`.
 pub struct NoSync;
 
 impl !Sync for NoSync { }
 
-/// Objects whose ownership can be moved from one thread to another
+/// Objects whose ownership can be moved from one thread to another.
+///
+/// = Remarks
 ///
 /// For example, types using a thread-local allocator are often `Sync` but never `Send`
 /// because they must be destroyed in the thread they were created in. 
@@ -54,11 +68,17 @@ impl<T> !Send for *const T { }
 impl<T> !Send for *mut T { }
 
 /// A dummy object that is `!Send`
+///
+/// = Remarks
+///
+/// This can be embedded in other objects to make them `!Send`.
 pub struct NoSend;
 
 impl !Send for NoSend { }
 
-/// Objects that can be leaked without causing memory unsafety
+/// Objects that can be leaked without causing memory unsafety.
+///
+/// = Remarks
 ///
 /// In normal, safe code, the compiler inserts calls to destructors at the end of object's
 /// lifetimes, e.g,
@@ -186,7 +206,19 @@ pub unsafe trait Leak { }
 
 unsafe impl Leak for .. { }
 
-/// TODO: Document this.
+/// A dummy type for unused type parameters.
+///
+/// = Remarks
+///
+/// Normally, all type parameters have to be used in some way. If a type has type
+/// parameters that are not used directly in the type definition, it has to use this
+/// object instead:
+///
+/// ----
+/// struct X<T> {
+///     _dummy: PhantomData<T>,
+/// }
+/// ----
 #[lang = "phantom_data"]
 pub struct PhantomData<T: ?Sized>;
 

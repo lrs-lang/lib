@@ -8,7 +8,10 @@ use {Allocator};
 
 /// Heap without memory backing it
 ///
-/// Always returns that there is no memory available.
+/// = Remarks
+///
+/// This allocator does not inspect the argumnets passed to it and always returns that no
+/// memory is available.
 pub struct NoMem;
 
 impl Allocator for NoMem {

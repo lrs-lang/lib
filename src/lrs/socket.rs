@@ -22,10 +22,13 @@ pub mod domain {
     };
 }
 
+/// Ip sockets.
 pub mod ip {
     pub use lrs_socket::ip_proto::{Proto};
+    pub use lrs_socket::addr::ipv4::{Ipv4Addr, Ipv4SockAddr};
+    pub use lrs_socket::addr::ipv6::{Ipv6Addr, Ipv6SockAddr, Ipv6Scope};
 
-    /// IP protocol constants
+    /// IP protocol constants.
     ///
     /// = Description
     ///
@@ -67,18 +70,30 @@ pub mod ip {
     }
 }
 
+/// Unix domain sockets.
+pub mod unix {
+    pub use lrs_socket::addr::unix::{UnixSockAddr};
+}
+
+/// Socket type constants.
 pub mod kind {
     pub use lrs_socket::kind::{
         Stream, Datagram, Raw, Rdm, SeqPacket, Dccp,
     };
 }
 
+/// Control messages.
 pub mod cmsg {
     pub use lrs_socket::cmsg::{
         CMsgBuf, CMsgIter, CMsg, Credentials,
     };
 }
 
+/// Socket flags.
+///
+/// = Description
+///
+/// These flags can be used when creating sockets.
 pub mod flags {
     pub use lrs_socket::flags::{
         None, NonBlocking, CloseOnExec,

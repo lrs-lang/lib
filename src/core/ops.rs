@@ -9,134 +9,203 @@ use option::Option::{Some};
 /// Objects with a destructor.
 #[lang = "drop"]
 pub trait Drop {
-    /// The destructor.
+    /// The destructor which will be called when the object is dropped.
     fn drop(&mut self);
 }
 
-/// The `+` trait.
+/// Objects that implement the binary `+` operator.
 #[lang = "add"]
 pub trait Add<RHS=Self> {
+    /// The output of the operator.
     type Output = Self;
+    /// The method that will be called by the operator.
+    ///
+    /// [argument, rhs]
+    /// The right-hand-side of the operator.
     fn add(self, rhs: RHS) -> Self::Output;
 }
 
-/// The `-` trait.
+/// Objects that implement the binary `-` operator.
 #[lang = "sub"]
 pub trait Sub<RHS=Self> {
+    /// The output of the operator.
     type Output = Self;
+    /// The method that will be called by the operator.
+    ///
+    /// [argument, rhs]
+    /// The right-hand-side of the operator.
     fn sub(self, rhs: RHS) -> Self::Output;
 }
 
-/// The `*` trait.
+/// Objects that implement the binary `*` operator.
 #[lang = "mul"]
 pub trait Mul<RHS=Self> {
+    /// The output of the operator.
     type Output = Self;
+    /// The method that will be called by the operator.
+    ///
+    /// [argument, rhs]
+    /// The right-hand-side of the operator.
     fn mul(self, rhs: RHS) -> Self::Output;
 }
 
-/// The `/` trait.
+/// Objects that implement the binary `/` operator.
 #[lang = "div"]
 pub trait Div<RHS=Self> {
+    /// The output of the operator.
     type Output = Self;
+    /// The method that will be called by the operator.
+    ///
+    /// [argument, rhs]
+    /// The right-hand-side of the operator.
     fn div(self, rhs: RHS) -> Self::Output;
 }
 
-/// The `%` trait.
+/// Objects that implement the binary `%` operator.
 #[lang = "rem"]
 pub trait Rem<RHS=Self> {
+    /// The output of the operator.
     type Output = Self;
+    /// The method that will be called by the operator.
+    ///
+    /// [argument, rhs]
+    /// The right-hand-side of the operator.
     fn rem(self, rhs: RHS) -> Self::Output;
 }
 
-/// The unary `-` trait.
+/// Objects that implement the unary `-` operator.
 #[lang = "neg"]
 pub trait Neg {
+    /// The output of the operator.
     type Output = Self;
+    /// The method that will be called by the operator.
     fn neg(self) -> Self::Output;
 }
 
-/// The `!` trait.
+/// Objects that implement the unary `!` operator.
 #[lang = "not"]
 pub trait Not {
+    /// The output of the operator.
     type Output = Self;
+    /// The method that will be called by the operator.
     fn not(self) -> Self::Output;
 }
 
-/// The `&` trait.
+/// Objects that implement the binary `&` operator.
 #[lang = "bitand"]
 pub trait BitAnd<RHS = Self> {
+    /// The output of the operator.
     type Output = Self;
+    /// The method that will be called by the operator.
+    ///
+    /// [argument, rhs]
+    /// The right-hand-side of the operator.
     fn bitand(self, rhs: RHS) -> Self::Output;
 }
 
-/// The `|` trait.
+/// Objects that implement the binary `|` operator.
 #[lang = "bitor"]
 pub trait BitOr<RHS = Self> {
+    /// The output of the operator.
     type Output = Self;
+    /// The method that will be called by the operator.
+    ///
+    /// [argument, rhs]
+    /// The right-hand-side of the operator.
     fn bitor(self, rhs: RHS) -> Self::Output;
 }
 
-/// The `^` trait.
+/// Objects that implement the binary `^` operator.
 #[lang = "bitxor"]
 pub trait BitXor<RHS = Self> {
+    /// The output of the operator.
     type Output = Self;
+    /// The method that will be called by the operator.
+    ///
+    /// [argument, rhs]
+    /// The right-hand-side of the operator.
     fn bitxor(self, rhs: RHS) -> Self::Output;
 }
 
-/// The `<<` trait.
+/// Objects that implement the binary `<<` operator.
 #[lang = "shl"]
 pub trait Shl<RHS> {
+    /// The output of the operator.
     type Output = Self;
+    /// The method that will be called by the operator.
+    ///
+    /// [argument, rhs]
+    /// The right-hand-side of the operator.
     fn shl(self, rhs: RHS) -> Self::Output;
 }
 
-/// The `>>` trait.
+/// Objects that implement the binary `>>` operator.
 #[lang = "shr"]
 pub trait Shr<RHS> {
+    /// The output of the operator.
     type Output = Self;
+    /// The method that will be called by the operator.
+    ///
+    /// [argument, rhs]
+    /// The right-hand-side of the operator.
     fn shr(self, rhs: RHS) -> Self::Output;
 }
 
-/// The `[index]` trait.
+/// Objects that implement the immutable subscript operator.
 #[lang = "index"]
 pub trait Index<Idx: ?Sized> {
+    /// The output of the operator.
     type Output: ?Sized;
+    /// The method that will be called by the operator.
+    ///
+    /// [argument, index]
+    /// The index of the operator.
     fn index(&self, index: Idx) -> &Self::Output;
 }
 
-/// The mutable `[index]` trait.
+/// Objects that implement the mutable subscript operator.
 #[lang = "index_mut"]
 pub trait IndexMut<Idx: ?Sized>: Index<Idx> {
+    /// The method that will be called by the operator.
+    ///
+    /// [argument, index]
+    /// The index of the operator.
     fn index_mut(&mut self, index: Idx) -> &mut Self::Output;
 }
 
-/// `..`
+/// The type representing the unbounded `..` syntax.
 #[lang = "range_full"]
 pub struct RangeFull;
 
-/// `N..M`
+/// The type representing the bounded `M..N` syntax.
 #[lang = "range"]
 pub struct Range<Idx> {
+    /// The left-hand-side of the operator.
     pub start: Idx,
+    /// The right-hand-side of the operator.
     pub end: Idx,
 }
 
-/// `N..`
+/// The type representing the half-bounded `M..` syntax.
 #[lang = "range_from"]
 pub struct RangeFrom<Idx> {
+    /// The left-hand-side of the operator.
     pub start: Idx,
 }
 
-/// `..M`
+/// The type representing the half-bounded `..N` syntax.
 #[lang = "range_to"]
 pub struct RangeTo<Idx> {
+    /// The right-hand-side of the operator.
     pub end: Idx,
 }
 
-/// The `*` (immutable dereferencing) trait.
+/// Objects that implement the immutable dereference operator.
 #[lang = "deref"]
 pub trait Deref {
+    /// The output of the operator.
     type Target: ?Sized;
+    /// The method that will be called by the operator.
     fn deref(&self) -> &Self::Target;
 }
 
@@ -148,9 +217,10 @@ impl<'a, T> Deref for &'a T {
 // TODO: This is wrong. DerefMut should not depend on Deref. E.g. Mutex can implement
 // DerefMut but not Deref. We could change it here but method resolution in the compiler
 // doesn't work in that case. Change it once we fork the compiler.
-/// The `*` (mutable dereferencing) trait.
+/// Objects that implement the mutable dereference operator.
 #[lang = "deref_mut"]
 pub trait DerefMut: Deref {
+    /// The method that will be called by the operator.
     fn deref_mut<'a>(&'a mut self) -> &'a mut Self::Target;
 }
 
@@ -163,10 +233,18 @@ impl<'a, T> DerefMut for &'a mut T {
     fn deref_mut(&mut self) -> &mut T { *self }
 }
 
-/// The `==` trait.
+/// Objects that implement the binary `==` and `!=` operators.
 #[lang = "eq"]
 pub trait Eq<Rhs: ?Sized = Self> {
+    /// The method that will be called by the `==` operator.
+    ///
+    /// [argument, other]
+    /// The right-hand-side of the operator.
     fn eq(&self, other: &Rhs) -> bool;
+    /// The method that will be called by the `==` operator.
+    ///
+    /// [argument, other]
+    /// The right-hand-side of the operator.
     fn ne(&self, other: &Rhs) -> bool { !self.eq(other) }
 }
 
@@ -186,15 +264,30 @@ pub enum Ordering {
 }
 impl Copy for Ordering { }
 
-/// The `<`, `<=`, `>`, and `>=` trait.
+/// Objects that implement the binary `<`, `<=`, `>`, and `>=` operators.
 #[lang = "ord"]
 pub trait PartialOrd<Rhs: ?Sized = Self> : Eq<Rhs> {
+    /// Attempts a comparison between the object and another one.
+    ///
+    /// [argument, other]
+    /// The right-hand-side of the operation.
+    ///
+    /// [return_value]
+    /// Returns the result of the comparison, if any.
     fn partial_cmp(&self, other: &Rhs) -> Option<Ordering>;
 
+    /// The method that will be called by the `<` operator.
+    ///
+    /// [argument, other]
+    /// The right-hand-side of the operator.
     fn lt(&self, other: &Rhs) -> bool {
         self.partial_cmp(other) == Some(Ordering::Less)
     }
 
+    /// The method that will be called by the `<=` operator.
+    ///
+    /// [argument, other]
+    /// The right-hand-side of the operator.
     fn le(&self, other: &Rhs) -> bool {
         match self.partial_cmp(other) {
             Some(Ordering::Less) | Some(Ordering::Equal) => true,
@@ -202,10 +295,18 @@ pub trait PartialOrd<Rhs: ?Sized = Self> : Eq<Rhs> {
         }
     }
 
+    /// The method that will be called by the `>` operator.
+    ///
+    /// [argument, other]
+    /// The right-hand-side of the operator.
     fn gt(&self, other: &Rhs) -> bool {
         self.partial_cmp(other) == Some(Ordering::Greater)
     }
 
+    /// The method that will be called by the `>=` operator.
+    ///
+    /// [argument, other]
+    /// The right-hand-side of the operator.
     fn ge(&self, other: &Rhs) -> bool {
         match self.partial_cmp(other) {
             Some(Ordering::Greater) | Some(Ordering::Equal) => true,
@@ -220,25 +321,38 @@ impl<'a, 'b, Rhs: ?Sized, Lhs: PartialOrd<Rhs>+?Sized> PartialOrd<&'a Rhs> for &
     }
 }
 
-/// The `(&self)` (immutable function call) trait.
+/// Objects that implement the immutable function call operator.
 #[lang = "fn"]
 #[rustc_paren_sugar]
 pub trait Fn<Args> : FnMut<Args> {
+    /// The method that is called by the operator.
+    ///
+    /// [argument, args]
+    /// The arguments passed to the function.
     extern "rust-call" fn call(&self, args: Args) -> Self::Output;
 }
 
-/// The `(&mut self)` (mutable function call) trait.
+/// Objects that implement the mutable function call operator.
 #[lang = "fn_mut"]
 #[rustc_paren_sugar]
 pub trait FnMut<Args> : FnOnce<Args> {
+    /// The method that is called by the operator.
+    ///
+    /// [argument, args]
+    /// The arguments passed to the function.
     extern "rust-call" fn call_mut(&mut self, args: Args) -> Self::Output;
 }
 
-/// The `(self)` (consuming function call) trait.
+/// Objects that implement the consuming function call operator.
 #[lang = "fn_once"]
 #[rustc_paren_sugar]
 pub trait FnOnce<Args> {
+    /// The return type of the function.
     type Output;
+    /// The method that is called by the operator.
+    ///
+    /// [argument, args]
+    /// The arguments passed to the function.
     extern "rust-call" fn call_once(self, args: Args) -> Self::Output;
 }
 

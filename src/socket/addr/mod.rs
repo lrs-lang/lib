@@ -14,7 +14,7 @@ pub mod unix;
 pub mod ipv4;
 pub mod ipv6;
 
-/// A borrowed socket address.
+/// A socket address.
 pub struct SockAddr { data: [u8] }
 
 /// An address type.
@@ -64,7 +64,7 @@ impl SockAddr {
         addr_type(bytes).map(|_| unsafe { mem::cast(bytes) })
     }
 
-    /// Creates a socket address from a sequence of bytes.
+    /// Creates a mutable socket address from a sequence of bytes.
     ///
     /// [argument, bytes]
     /// The buffer containing the address.
@@ -77,14 +77,33 @@ impl SockAddr {
         addr_type(bytes).map(|_| unsafe { mem::cast(bytes) })
     }
 
+    /// Creates a socket address from a sequence of bytes without validation.
+    ///
+    /// [argument, bytes]
+    /// The buffer containing the address.
+    ///
+    /// = Remarks
+    ///
+    /// If `bytes` does not contain a valid and wrapped socket address, the behavior is
+    /// undefined.
     pub unsafe fn from_bytes_unchecked(bytes: &[u8]) -> &SockAddr {
         mem::cast(bytes)
     }
 
+    /// Creates a mutable socket address from a sequence of bytes without validation.
+    ///
+    /// [argument, bytes]
+    /// The buffer containing the address.
+    ///
+    /// = Remarks
+    ///
+    /// If `bytes` does not contain a valid and wrapped socket address, the behavior is
+    /// undefined.
     pub unsafe fn from_mut_bytes_unchecked(bytes: &mut [u8]) -> &mut SockAddr {
         mem::cast(bytes)
     }
 
+    /// Returns the address type of the socket address.
     pub fn addr_type(&self) -> AddrType {
         let mut ty: sa_family_t = 0;
         mem::copy(ty.as_mut(), &self.data);
@@ -95,6 +114,11 @@ impl SockAddr {
         }
     }
 
+    /// Returns the socket address as a Unix socket address.
+    ///
+    /// = Remarks
+    ///
+    /// This fails if the address is not a Unix socket address.
     pub fn as_unix(&self) -> Result<&unix::UnixSockAddr> {
         match self.addr_type() {
             AddrType::Unix => unsafe {
@@ -104,6 +128,11 @@ impl SockAddr {
         }
     }
 
+    /// Returns the socket address as a mutable Unix socket address.
+    ///
+    /// = Remarks
+    ///
+    /// This fails if the address is not a Unix socket address.
     pub fn as_mut_unix(&mut self) -> Result<&mut unix::UnixSockAddr> {
         match self.addr_type() {
             AddrType::Unix => unsafe {
@@ -113,6 +142,11 @@ impl SockAddr {
         }
     }
 
+    /// Returns the socket address as an Ipv4 socket address.
+    ///
+    /// = Remarks
+    ///
+    /// This fails if the address is not an Ipv4 socket address.
     pub fn as_ipv4(&self) -> Result<&ipv4::Ipv4SockAddr> {
         match self.addr_type() {
             AddrType::Ipv4 => unsafe {
@@ -122,6 +156,11 @@ impl SockAddr {
         }
     }
 
+    /// Returns the socket address as a mutable Ipv4 socket address.
+    ///
+    /// = Remarks
+    ///
+    /// This fails if the address is not an Ipv4 socket address.
     pub fn as_mut_ipv4(&mut self) -> Result<&mut ipv4::Ipv4SockAddr> {
         match self.addr_type() {
             AddrType::Ipv4 => unsafe {
@@ -131,6 +170,11 @@ impl SockAddr {
         }
     }
 
+    /// Returns the socket address as an Ipv6 socket address.
+    ///
+    /// = Remarks
+    ///
+    /// This fails if the address is not an Ipv6 socket address.
     pub fn as_ipv6(&self) -> Result<&ipv6::Ipv6SockAddr> {
         match self.addr_type() {
             AddrType::Ipv6 => unsafe {
@@ -140,6 +184,11 @@ impl SockAddr {
         }
     }
 
+    /// Returns the socket address as a mutable Ipv6 socket address.
+    ///
+    /// = Remarks
+    ///
+    /// This fails if the address is not an Ipv6 socket address.
     pub fn as_mut_ipv6(&mut self) -> Result<&mut ipv6::Ipv6SockAddr> {
         match self.addr_type() {
             AddrType::Ipv6 => unsafe {

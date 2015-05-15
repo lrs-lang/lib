@@ -12,16 +12,25 @@ pub enum Option<T> {
     /// The value is not present.
     None,
     /// The value is present.
+    ///
+    /// [field, 1]
+    /// The value.
     Some(T),
 }
 
 impl<T> Option<T> {
-    /// Replaces `self` by `None` and returns the original.
+    /// Replaces the value by `None` and returns the original.
+    ///
+    /// [return_value]
+    /// Returns the original value.
     pub fn take(&mut self) -> Option<T> {
         mem::replace(self, Option::None)
     }
 
-    /// Applies `f` to the value (if any) and returns the result.
+    /// If the value is present, replaces it by the result of a function application.
+    ///
+    /// [argument, f]
+    /// The function that will be applied to the value.
     pub fn map<U, F>(self, f: F) -> Option<U>
         where F: FnOnce(T) -> U,
     {
@@ -39,7 +48,13 @@ impl<T> Option<T> {
         }
     }
 
-    /// Unwraps the value or returns `val`.
+    /// Unwraps the value or returns another one.
+    ///
+    /// [argument, val]
+    /// The object that will be returned if the value is not present.
+    ///
+    /// [return_value]
+    /// Returns the contained value or `val` if the value is not present.
     pub fn unwrap_or(self, val: T) -> T {
         match self {
             Some(v) => v,
@@ -47,6 +62,10 @@ impl<T> Option<T> {
         }
     }
 
+    /// Applies a function to the value (if any) and returns the result.
+    ///
+    /// [argument, f]
+    /// The function that will be applied to the value.
     pub fn chain<U, F>(self, f: F) -> Option<U>
         where F: FnOnce(T) -> Option<U>
     {
@@ -56,7 +75,7 @@ impl<T> Option<T> {
         }
     }
 
-    /// Returns an `Option` with containing an immutable reference to the value (if any.)
+    /// Returns an `Option` containing an immutable reference to the value (if any.)
     pub fn as_ref(&self) -> Option<&T> {
         match *self {
             Some(ref v) => Some(v),
@@ -64,7 +83,7 @@ impl<T> Option<T> {
         }
     }
 
-    /// Like `as_ref`.
+    /// Returns an `Option` containing an mutable reference to the value (if any.)
     pub fn as_mut(&mut self) -> Option<&mut T> {
         match *self {
             Some(ref mut v) => Some(v),
@@ -72,7 +91,7 @@ impl<T> Option<T> {
         }
     }
 
-    /// Returns whether this `Option` contains a value.
+    /// Returns whether this object contains a value.
     pub fn is_some(&self) -> bool {
         match *self {
             Some(_) => true,
@@ -80,7 +99,7 @@ impl<T> Option<T> {
         }
     }
 
-    /// Like `is_some`.
+    /// Returns whether this object does not contain a value.
     pub fn is_none(&self) -> bool {
         !self.is_some()
     }
