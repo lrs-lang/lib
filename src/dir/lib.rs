@@ -47,10 +47,19 @@ use file::info::{Type, file_type_from_mode};
 /// The default buffer size used for reading directory entries.
 pub const DEFAULT_BUF_SIZE: usize = 2048;
 
-/// Creates an iterator over the entries in the directory `path`.
+/// Creates an iterator over the entries in a directory.
 ///
-/// Errors can optionally be stored in the `error` variable which should then be inspected
-/// after the iterator returns ends the loop.
+/// [argument, path]
+/// The path of the directory to be inspected.
+///
+/// [argument, error]
+/// Optional storage space for an error that occurs during the iteation.
+///
+/// = Remarks
+///
+/// If the error argument is not `None`, an error that occurs during the iteration will be
+/// stored in its place. After the iteration the error variable should be inspected for an
+/// error.
 pub fn iter<'a, S>(path: S, error: Option<&'a mut Result>) -> Iter<'a>
     where S: ToCString,
 {
@@ -136,8 +145,11 @@ impl<'a> Iter<'a> {
 /// An entry in a directory.
 #[derive(Clone)]
 pub struct Entry {
+    /// The inode of the entry.
     pub inode: u64,
+    /// The type of the entry.
     pub ty:    Type,
+    /// The name of the entry.
     pub name:  ByteString<'static>,
 }
 
@@ -185,60 +197,3 @@ impl<'a> Iterator for Iter<'a> {
         }
     }
 }
-
-//#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-//pub enum WalkOp {
-//    Abort,
-//    Continue,
-//    Recurse,
-//}
-//
-//#[derive(Clone, Debug)]
-//pub struct WalkEntry<'a> {
-//    pub inode: u64,
-//    pub ty:    Type,
-//    pub name:  &'a LinuxStr,
-//}
-//
-//pub fn walk<S, F>(path: S, mut f: F)
-//    where S: AsLinuxPath,
-//          F: FnMut(&WalkEntry) -> WalkOp,
-//{
-//    walk_int(path.as_linux_path(), &mut f);
-//}
-//
-//fn walk_int<F>(path: &Path, f: &mut F) 
-//    where F: FnMut(&WalkEntry) -> WalkOp
-//{
-//    let mut iter = iter(path, None);
-//    loop {
-//        if iter.buf.position() as usize == iter.buf.get_ref().len() {
-//            if iter.read().is_err() { break; }
-//        }
-//        let pos = iter.buf.position() as usize;
-//        if pos == iter.buf.get_ref().len() {
-//            break;
-//        }
-//        let entry = unsafe {
-//            let ent = &*(iter.buf.get_ref()[pos..].as_ptr() as *const linux_dirent64);
-//            let ent_len = ent.d_reclen as usize;
-//            iter.buf.set_position((pos + ent_len) as u64);
-//            let name = CStr::from_ptr(ent.d_name.as_ptr()).to_bytes();
-//            let ty = file_type_from_mode((ent.d_type as umode_t) << MODE_TYPE_SHIFT);
-//            WalkEntry {
-//                inode: ent.d_ino,
-//                ty:    ty,
-//                name:  name.as_linux_str(),
-//            }
-//        };
-//        match f(&entry) {
-//            WalkOp::Abort => break,
-//            WalkOp::Continue => { },
-//            WalkOp::Recurse => {
-//                let mut path = path.to_path_buf();
-//                path.push(entry.name);
-//                walk_int(&path, f);
-//            },
-//        }
-//    }
-//}

@@ -5,23 +5,29 @@
 use core::marker::{Copy};
 use cell::{Cell};
 
-/// Interior mutability for copyable types.
+/// A container with interior mutability for Copy types.
 pub struct CopyCell<T: Copy> {
     data: Cell<T>,
 }
 
 impl<T: Copy> CopyCell<T> {
     /// Creates a new `CopyCell`.
+    ///
+    /// [argument, data]
+    /// The initial datum stored in the cell.
     pub fn new(data: T) -> CopyCell<T> {
         CopyCell { data: Cell { data: data } }
     }
 
-    /// Returns a copy of the data.
+    /// Returns a copy of the contained data.
     pub fn get(&self) -> T {
         self.data.data
     }
 
-    /// Sets the data.
+    /// Modifies the contained data.
+    ///
+    /// [argument, data]
+    /// The new value.
     pub fn set(&self, data: T) {
         unsafe { *self.data.ptr() = data }
     }

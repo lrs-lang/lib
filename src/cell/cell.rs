@@ -6,12 +6,18 @@ use core::marker::{Sync};
 
 /// A container with interior mutability.
 ///
+/// = Remarks
+///
 /// Modifying data through immutable `&` references is undefined behavior unless the data
 /// is (recursively) contained in a `Cell`.
 ///
-/// # Example
+/// This type is not `Sync` because race conditions are undefined behavior. It should
+/// rarely be used directly except to build more robust structures with interior
+/// mutability such as `CopyCell`.
 ///
-/// ```
+/// = Examples
+///
+/// ----
 /// struct X {
 ///     val: Cell<i32>,
 /// }
@@ -21,21 +27,21 @@ use core::marker::{Sync};
 ///         unsafe { *self.val.ptr() = new; }
 ///     }
 /// }
-/// ```
-///
-/// This type is not `Sync` because race conditions are undefined behavior. It should
-/// rarely be used directly except to build more robust structures with interior
-/// mutability such as `CopyCell`.
+/// ----
 #[lang="unsafe_cell"]
 #[derive(Copy)]
 pub struct Cell<T> {
+    /// The data contained in the cell.
     pub data: T,
 }
 
 impl<T> !Sync for Cell<T> { }
 
 impl<T> Cell<T> {
-    /// Creates a new `Cell` with the specified data.
+    /// Creates a new cell.
+    ///
+    /// [argument, data]
+    /// The datum initially contained in the cell.
     pub fn new(data: T) -> Cell<T> {
         Cell { data: data }
     }

@@ -23,6 +23,7 @@ use fmt::{Debug, Write};
 
 mod lrs { pub use fmt::lrs::*; }
 
+/// A heap-allocated object.
 pub struct Box<T, Heap = alloc::Heap>
     where Heap: alloc::Allocator,
 {
@@ -33,6 +34,13 @@ pub struct Box<T, Heap = alloc::Heap>
 impl<T, H> Box<T, H>
     where H: alloc::Allocator,
 {
+    /// Creates a new box and stores a value in it.
+    ///
+    /// [argument, val]
+    /// The value to be stored in the box.
+    ///
+    /// [return_value]
+    /// On success, the box is returned, otherwise the error and the value are returned.
     pub fn new(val: T) -> Result<Box<T, H>, (T, Errno)> {
         unsafe {
             let ptr = match H::allocate() {

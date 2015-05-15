@@ -9,11 +9,14 @@ use cell::{Cell};
 /// The status of a `RefCell`.
 #[derive(Copy)]
 pub enum RefCellStatus {
-    /// Not borrowed.
+    /// The cell is not borrowed.
     Free,
-    /// Immutably borrowed. The argument is the number of immutable borrows minus one.
+    /// The cell is immutably borrowed.
+    ///
+    /// [field, 1]
+    /// The number of immutable borrows minus one.
     Borrowed(usize),
-    /// Mutably borrowed.
+    /// The cell is mutably borrowed.
     BorrowedMut,
 }
 
@@ -22,13 +25,16 @@ struct Inner<T> {
     data: T,
 }
 
-/// Interior mutability for non-Copy types.
+/// A container with interior mutability for non-Copy types.
 pub struct RefCell<T> {
     inner: Cell<Inner<T>>,
 }
 
 impl<T> RefCell<T> {
     /// Creates a new `RefCell`.
+    ///
+    /// [argument, data]
+    /// The initial datum stored in the cell.
     pub fn new(data: T) -> RefCell<T> {
         RefCell {
             inner: Cell {
@@ -46,13 +52,15 @@ impl<T> RefCell<T> {
 
     /// Returns the borrow-status of the object.
     ///
+    /// = Remarks
+    ///
     /// Note that there are no race conditions between this function and the borrow
     /// functions since `RefCell` is not `Sync`.
     pub fn status(&self) -> RefCellStatus {
         self.inner().status
     }
 
-    /// Borrows the object immutably or panics if the object is borrowed mutably.
+    /// Borrows the object immutably or aborts if the object is borrowed mutably.
     pub fn borrow<'a>(&'a self) -> RefCellBorrow<'a, T> {
         let inner = self.inner();
         inner.status = match inner.status {
@@ -66,7 +74,7 @@ impl<T> RefCell<T> {
         }
     }
 
-    /// Borrows the object mutably or panics if the object is borrowed.
+    /// Borrows the object mutably or aborts if the object is borrowed.
     pub fn borrow_mut<'a>(&'a self) -> RefCellBorrowMut<'a, T> {
         let inner = self.inner();
         inner.status = match inner.status {

@@ -34,6 +34,9 @@ pub const STDOUT: FdIo = FdIo(1);
 pub const STDERR: FdIo = FdIo(2);
 
 /// A read/write wrapper for raw file descriptors.
+///
+/// [field, 1]
+/// The numeric value of the file descriptor.
 #[derive(Pod, Eq)]
 pub struct FdIo(pub c_int);
 
@@ -63,11 +66,19 @@ pub trait FDContainer {
 
     /// Creates a new owned object from a file descriptor.
     ///
-    /// Note that not all objects support owned file descriptors. Check with `is_owned` if
-    /// this matters.
+    /// [argument, fd]
+    /// The value of the file descriptor.
+    ///
+    /// = Remarks
+    ///
+    /// Not all objects support owned file descriptors. Check with `is_owned` if this
+    /// matters.
     fn from_owned(fd: c_int) -> Self;
 
     /// Creates a new borrowed object from a file descriptor.
+    ///
+    /// [argument, fd]
+    /// The value of the file descriptor.
     fn from_borrowed(fd: c_int) -> Self;
 }
 

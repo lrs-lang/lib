@@ -41,10 +41,18 @@ impl<R, H> BufReader<'static, R, H>
     where R: Read,
           H: Allocator,
 {
-    /// Allocates at least `size` bytes on the heap for buffering.
+    /// Allocates a new buffered reader.
     ///
-    /// Note that `size` will be increased to the next power of two.
-    pub fn allocate(read: R, size: usize) -> Result<BufReader<'static, R, H>> {
+    /// [argument, read]
+    /// The reader that will be wrapped in the buffered reader.
+    ///
+    /// [argument, size]
+    /// The buffer-size of the buffered reader.
+    ///
+    /// = Remarks
+    ///
+    /// `size` will be increased to the next power of two.
+    pub fn new(read: R, size: usize) -> Result<BufReader<'static, R, H>> {
         let size = match size.checked_next_power_of_two() {
             Some(n) => n,
             _ => return Err(error::NoMemory),
@@ -64,10 +72,18 @@ impl<R, H> BufReader<'static, R, H>
 impl<'a, R> BufReader<'a, R, NoMem>
     where R: Read,
 {
-    /// Uses `buf` as a buffer.
+    /// Creates a new buffered reader that is backed by borrowed memory.
     ///
-    /// Note that the length of `buf` will be decreased to the previous power of two.
-    pub fn new(read: R, buf: &'a mut [u8]) -> BufReader<'a, R, NoMem> {
+    /// [argument, read]
+    /// The reader that will be wrapped in the buffered reader.
+    ///
+    /// [argument, buf]
+    /// The buffer that will be used to back the buffered reader.
+    ///
+    /// = Remarks
+    ///
+    /// The length of `buf` will be decreased to the previous power of two.
+    pub fn buffered(read: R, buf: &'a mut [u8]) -> BufReader<'a, R, NoMem> {
         let size = match buf.len() {
             0 => 0,
             n => 1 << (num::usize::BITS - n.leading_zeros() - 1),
@@ -87,18 +103,17 @@ impl<'a, R, H> BufReader<'a, R, H>
     where R: Read,
           H: Allocator,
 {
-    /// The number of currently buffered bytes.
+    /// Returns the number of currently buffered bytes.
     pub fn available(&self) -> usize {
         self.end.wrapping_sub(self.start)
     }
 
-    /// The total buffer capacity.
+    /// Returns the total buffer capacity.
     pub fn capacity(&self) -> usize {
         self.cap
     }
 
-    /// Calls the underlying reader once to fill the currently free buffer space.
-    pub fn fill(&mut self) -> Result<usize> {
+    fn fill(&mut self) -> Result<usize> {
         if self.available() == self.cap {
             return Ok(0);
         }

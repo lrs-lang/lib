@@ -5,13 +5,13 @@
 #[prelude_import] use core::prelude::*;
 use core::{mem, slice};
 
-/// Objects that can be immutably borrowed as `Target`.
+/// Objects that can be immutably borrowed.
 pub trait AsRef<Target: ?Sized> {
     /// Borrows the object.
     fn as_ref(&self) -> &Target;
 }
 
-/// Objects that can be mutably borrowed as `Target`.
+/// Objects that can be mutably borrowed.
 pub trait AsMut<Target: ?Sized> {
     /// Borrows the object.
     fn as_mut(&mut self) -> &mut Target;

@@ -194,7 +194,7 @@ impl<'a> InformationIter<'a> {
         match File::open_read("/etc/passwd") {
             Err(e) => InformationIter::error_dummy(e, error),
             Ok(f) => {
-                match BufReader::allocate(f, 1024) {
+                match BufReader::new(f, 1024) {
                     Ok(b) => InformationIter {
                         file: b,
                         err: error,
@@ -210,7 +210,7 @@ impl<'a> InformationIter<'a> {
             *err = Err(e);
         }
         InformationIter {
-            file: BufReader::allocate(File::invalid(), 0).unwrap(),
+            file: BufReader::new(File::invalid(), 0).unwrap(),
             err: None,
         }
     }

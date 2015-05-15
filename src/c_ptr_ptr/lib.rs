@@ -33,6 +33,7 @@ macro_rules! usize_align {
 
 pub type SCPtrPtr<Heap = alloc::Heap> = CPtrPtr<'static, Heap>;
 
+/// A helper type for creating `*const *const c_char` objects.
 pub struct CPtrPtr<'a, Heap = alloc::Heap>
     where Heap: Allocator,
 {
@@ -44,6 +45,10 @@ pub struct CPtrPtr<'a, Heap = alloc::Heap>
 }
 
 impl<'a> CPtrPtr<'a, alloc::NoMem> {
+    /// Creates a new `CPtrPtr` from borrowed memory.
+    ///
+    /// [argument, buf]
+    /// The buffer which backs the `CPtrPtr`.
     pub fn buffered(buf: &'a mut [u8]) -> CPtrPtr<'a, alloc::NoMem> {
         let (ptr, cap) = if buf.len() < USIZE_BYTES {
             (buf.as_mut_ptr(), 0)
@@ -66,6 +71,7 @@ impl<'a> CPtrPtr<'a, alloc::NoMem> {
 impl<Heap> CPtrPtr<'static, Heap>
     where Heap: Allocator,
 {
+    /// Allocates a new `CPtrPtr`.
     pub fn new() -> Result<CPtrPtr<'static, Heap>> {
         const DEFAULT_CAP: usize = 32;
         Ok(CPtrPtr {
@@ -126,6 +132,10 @@ impl<'a, Heap> CPtrPtr<'a, Heap>
         Ok(*next)
     }
 
+    /// Adds a string to the `CPtrPtr`.
+    ///
+    /// [argument, s]
+    /// The string to be added.
     pub fn push<S>(&mut self, s: S) -> Result
         where S: ToCStr,
     {
@@ -142,6 +152,12 @@ impl<'a, Heap> CPtrPtr<'a, Heap>
         }
     }
 
+    /// Finishes the construction and returns the `*const *const c_char`.
+    ///
+    /// = Remarks
+    ///
+    /// The last element of the slice contains a null pointer. The returned value becomes
+    /// invalid when another function of this object is called.
     pub fn finish(&mut self) -> Result<&mut [*const c_char]> {
         let (mut iter, mut slice) = try!(self.ptr_slice());
         unsafe {
@@ -154,7 +170,8 @@ impl<'a, Heap> CPtrPtr<'a, Heap>
         }
     }
 
-    pub fn truncate(&mut self) {
+    /// Removes all strings from the `CPtrPtr`.
+    pub fn clear(&mut self) {
         self.pos = 0;
         self.num = 0;
     }

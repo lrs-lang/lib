@@ -25,7 +25,7 @@ mod lrs { pub use fmt::lrs::*; }
 use fmt::{Write, Debug};
 use cty::alias::{DeviceId};
 
-/// The type of a device special file.
+/// The type of a device.
 #[derive(Copy, Eq)]
 pub enum DeviceType {
     /// A character device.
@@ -43,17 +43,38 @@ impl Debug for DeviceType {
     }
 }
 
-/// A device special file.
+/// A device.
+///
+/// [field, 1]
+/// The id of the device.
+///
+/// [field, 2]
+/// The type of the device.
 #[derive(Copy, Eq)]
 pub struct Device(DeviceId, DeviceType);
 
 impl Device {
     /// Returns a device based on its id and type.
+    ///
+    /// [argument, id]
+    /// The id of the device.
+    ///
+    /// [argument, ty]
+    /// The type of the device.
     pub fn from_id(id: DeviceId, ty: DeviceType) -> Device {
         Device(id, ty)
     }
 
     /// Returns a device based on its major and minor numbers and type.
+    ///
+    /// [argument, major]
+    /// The major part of the device id.
+    ///
+    /// [argument, minor]
+    /// The minor part of the device id.
+    ///
+    /// [argument, ty]
+    /// The type of the device.
     pub fn from_major_minor(major: u32, minor: u32, ty: DeviceType) -> Device {
         let x = major as u64;
         let y = minor as u64;
@@ -86,12 +107,20 @@ impl Device {
 
     /// Returns the path of a device in "/dev".
     ///
-    /// # Example
+    /// [argument, buf]
+    /// The buffer in which the device path will be stored.
     ///
-    /// ```
+    /// = Remarks
+    ///
+    /// This functionality is only available if lrs has been compiled with the
+    /// `device_paths` option. Otherwise the function returns the `NotImplemented` error.
+    ///
+    /// = Example
+    ///
+    /// ----
     /// let device = Device::from_major_minor(8, 1, DeviceType::Block);
     /// assert_eq!(device.to_path(), "/dev/sda1");
-    /// ```
+    /// ----
     pub fn to_path(self, buf: &mut [u8]) -> Result<&mut [u8]> {
         dfmt::to_path(self, buf)
     }

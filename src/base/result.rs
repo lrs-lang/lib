@@ -10,8 +10,14 @@ use error::{Errno};
 #[derive(Eq)]
 pub enum Result<T=(), E=Errno> {
     /// The operation succeeded.
+    ///
+    /// [field, 1]
+    /// The success value.
     Ok(T),
     /// The operation failed.
+    ///
+    /// [field, 1]
+    /// The error value.
     Err(E),
 }
 
@@ -27,7 +33,11 @@ impl<T, E> Result<T, E> {
         }
     }
 
-    /// Replaces the success value (if any) by the result of the function.
+    /// If the success value is present, replaces it by the result of a function
+    /// application.
+    ///
+    /// [argument, f]
+    /// The function that will be applied to the value.
     pub fn map<U, F>(self, f: F) -> Result<U, E>
         where F: FnOnce(T) -> U,
     {
@@ -37,7 +47,10 @@ impl<T, E> Result<T, E> {
         }
     }
 
-    /// Applies `f` to the success value (if any) and returns its return value.
+    /// Applies a function to the success value (if any) and returns the result.
+    ///
+    /// [argument, f]
+    /// The function that will be applied to the value.
     pub fn chain<U, F>(self, f: F) -> Result<U, E>
         where F: FnOnce(T) -> Result<U, E>,
     {

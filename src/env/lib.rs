@@ -34,10 +34,25 @@ use rmo::{Rmo};
 
 mod lrs { pub use base::lrs::*; pub use cty; }
 
+/// Retrieves the value of an environment variable, if any.
+///
+/// [argument, name]
+/// The name of the variable to be found.
+///
+/// [return_value]
+/// Returns the value of the variable with name `name` or an empty string if the variable
+/// does not have a value.
+///
+/// = Remarks
+///
+/// This function iterates over all environment variables. If if finds a variable whose
+/// whole string is equal to `name`, the empty string is returned. Otherwise it tries to
+/// split the variable at the first `=` character and compares the part before the `=` to
+/// `name`. If they compare equal, the part after the `=` is returned.
 pub fn var<S>(name: S) -> Result<&'static CStr>
-    where S: AsByteStr,
+    where S: AsRef<[u8]>
 {
-    let bytes = name.as_byte_str();
+    let bytes = name.as_ref();
     for var in env() {
         if var == bytes {
             return Ok(CStr::empty());
@@ -55,11 +70,13 @@ pub fn var<S>(name: S) -> Result<&'static CStr>
 
 fn path_split(b: &u8) -> bool { *b == b':' }
 
+/// Returns an iterator over the paths in the `PATH` environment variable.
 pub fn path() -> Result<PathIter> {
     let bytes: &[u8] = try!(var("PATH")).as_ref();
     Ok(PathIter { path: bytes.split(path_split) })
 }
 
+/// An iterator over the paths in the `PATH` environment variable.
 pub struct PathIter {
     path: Split<'static, u8, fn(&u8) -> bool>,
 }
@@ -71,6 +88,10 @@ impl Iterator for PathIter {
     }
 }
 
+/// Retrieves the current working directory.
+///
+/// [argument, buf]
+/// The buffer in which the current working directory will be stored.
 pub fn cwd<H>(buf: &mut NoNullString<H>) -> Result
     where H: Allocator,
 {
@@ -87,9 +108,15 @@ pub fn cwd<H>(buf: &mut NoNullString<H>) -> Result
     }
     // This should never happen because the kernel returns PathTooLong if the cwd doesn't
     // fit in one page = 4096 bytes which is the last thing we try above.
+    //
+    // XXX: However, some platforms use a larger page size.
     abort!();
 }
 
+/// Sets the current working directory.
+///
+/// [argument, path]
+/// The path of the new current working directory.
 pub fn set_cwd<P>(path: P) -> Result
     where P: ToCString,
 {
