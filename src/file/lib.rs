@@ -344,7 +344,11 @@ pub fn exchange<P, Q>(one: P, two: Q) -> Result
 /// = Remarks
 ///
 /// If the paths are relative, they will be interpreted relative to the current working
-/// directory.
+/// directory. Both paths must refer to the same mount point or the operation fails.
+///
+/// == Kernel versions
+///
+/// If `replace` is `false`, the required kernel version is 3.15.
 ///
 /// = See also
 ///
