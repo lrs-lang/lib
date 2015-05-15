@@ -27,3 +27,4 @@ pub mod lrs {
 pub mod byte_str;
 pub mod no_null_str;
 pub mod c_str;
+mod cmp;

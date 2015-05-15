@@ -5,7 +5,6 @@
 #[prelude_import] use base::prelude::*;
 use core::ops::{Index, IndexMut, Range, RangeFrom, RangeTo, RangeFull};
 use core::{mem, str};
-use core::ops::{Eq};
 use base::rmo::{AsRef, AsMut};
 use fmt::{self, Debug, Display, UpperHex, Write};
 use parse::{Parse, Parsable};
@@ -107,8 +106,13 @@ impl IndexMut<Range<usize>> for ByteStr {
     }
 }
 
-impl AsRef<[u8]> for ByteStr { fn as_ref(&self) -> &[u8] { &self.data } }
-impl AsMut<[u8]> for ByteStr { fn as_mut(&mut self) -> &mut [u8] { &mut self.data } }
+impl AsRef<[u8]> for ByteStr {
+    fn as_ref(&self) -> &[u8] { &self.data }
+}
+
+impl AsMut<[u8]> for ByteStr {
+    fn as_mut(&mut self) -> &mut [u8] { &mut self.data }
+}
 
 impl AsNoNullStr for ByteStr {
     fn as_no_null_str(&self) -> Result<&NoNullStr> {
@@ -125,30 +129,6 @@ impl AsMutNoNullStr for ByteStr {
 impl ToCStr for ByteStr {
     fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
         self.data.to_cstr(buf)
-    }
-}
-
-impl Eq for ByteStr {
-    fn eq(&self, other: &ByteStr) -> bool {
-        self.data.eq(&other.data)
-    }
-}
-
-impl Eq<str> for ByteStr {
-    fn eq(&self, other: &str) -> bool {
-        self.data.eq(other.as_bytes())
-    }
-}
-
-impl Eq<[u8]> for ByteStr {
-    fn eq(&self, other: &[u8]) -> bool {
-        self.data.eq(other)
-    }
-}
-
-impl Eq<ByteStr> for [u8] {
-    fn eq(&self, other: &ByteStr) -> bool {
-        self.eq(&other.data)
     }
 }
 

@@ -33,3 +33,4 @@ pub mod byte_string;
 pub mod c_string;
 pub mod string;
 pub mod no_null_string;
+mod cmp;

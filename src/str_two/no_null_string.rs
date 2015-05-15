@@ -5,8 +5,7 @@
 #[prelude_import] use base::prelude::*;
 use base::rmo::{AsRef, AsMut};
 use core::{mem};
-use core::ops::{Eq};
-use str_one::{NoNullStr, AsNoNullStr, AsMutNoNullStr, AsMutCStr, CStr, ByteStr};
+use str_one::{NoNullStr, AsNoNullStr, AsMutNoNullStr, AsMutCStr, CStr};
 use vec::{Vec};
 use fmt::{Debug, Write};
 use alloc::{self, Allocator};
@@ -171,14 +170,5 @@ impl<'a, H> AsMutCStr for NoNullString<'a, H>
         };
         unsafe { self.data.set_len(cstr.len()); }
         Ok(cstr)
-    }
-}
-
-impl<'a, H> Eq<ByteStr> for NoNullString<'a, H>
-    where H: Allocator,
-{
-    fn eq(&self, other: &ByteStr) -> bool {
-        let bytes: &[u8] = self.as_ref();
-        bytes == other.as_ref()
     }
 }

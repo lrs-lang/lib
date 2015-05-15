@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use core::ops::{Index, IndexMut, Eq, RangeFrom, RangeTo, Range, RangeFull};
+use core::ops::{Index, IndexMut, RangeFrom, RangeTo, Range, RangeFull};
 use core::{mem, slice};
 use base::rmo::{AsRef, AsMut};
 use base::{error};
@@ -165,30 +165,6 @@ impl AsMutNoNullStr for CStr {
 impl Debug for CStr {
     fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
         Debug::fmt(self.as_byte_str(), w)
-    }
-}
-
-impl Eq for CStr {
-    fn eq(&self, other: &CStr) -> bool {
-        self.data == other.data
-    }
-}
-
-impl Eq<str> for CStr {
-    fn eq(&self, other: &str) -> bool {
-        self.as_byte_str() == other
-    }
-}
-
-impl Eq<[u8]> for CStr {
-    fn eq(&self, other: &[u8]) -> bool {
-        self.as_byte_str() == other
-    }
-}
-
-impl Eq<ByteStr> for CStr {
-    fn eq(&self, other: &ByteStr) -> bool {
-        self.as_byte_str() == other
     }
 }
 

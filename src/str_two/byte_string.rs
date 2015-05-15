@@ -4,11 +4,9 @@
 
 #[prelude_import] use base::prelude::*;
 use core::{mem};
-use core::ops::{Eq};
 use base::clone::{Clone};
 use base::rmo::{AsRef, AsMut};
-use str_one::{ByteStr, ToCStr, CStr, AsByteStr};
-use no_null_string::{NoNullString};
+use str_one::{ByteStr, ToCStr, CStr};
 use fmt::{Debug, Display, Write};
 use vec::{Vec};
 use alloc::{self, Allocator};
@@ -93,50 +91,6 @@ impl<H> Clone for ByteString<'static, H>
 {
     fn clone(&self) -> Result<ByteString<'static, H>> {
         self.data.clone().map(|o| ByteString { data: o })
-    }
-}
-
-impl<'a, H1, H2> Eq<ByteString<'a, H1>> for ByteString<'a, H2>
-    where H1: Allocator,
-          H2: Allocator,
-{
-    fn eq(&self, other: &ByteString<'a, H1>) -> bool {
-        self.data == other.data
-    }
-}
-
-impl<'a, H> Eq<str> for ByteString<'a, H>
-    where H: Allocator,
-{
-    fn eq(&self, other: &str) -> bool {
-        let bytes: &[u8] = self.as_ref();
-        bytes.eq(other)
-    }
-}
-
-impl<'a, H> Eq<[u8]> for ByteString<'a, H>
-    where H: Allocator,
-{
-    fn eq(&self, other: &[u8]) -> bool {
-        let bytes: &[u8] = self.as_ref();
-        bytes.eq(other)
-    }
-}
-
-impl<'a, H> Eq<ByteStr> for ByteString<'a, H>
-    where H: Allocator,
-{
-    fn eq(&self, other: &ByteStr) -> bool {
-        self.as_ref() == other
-    }
-}
-
-impl<'a, 'b, H1, H2> Eq<NoNullString<'b, H1>> for ByteString<'a, H2>
-    where H1: Allocator,
-          H2: Allocator,
-{
-    fn eq(&self, other: &NoNullString<'b, H1>) -> bool {
-        self.deref() == other.as_byte_str()
     }
 }
 
