@@ -81,32 +81,32 @@ impl Debug for Type {
 pub struct Info(stat);
 
 impl Info {
-    /// The device on which the file is stored.
+    /// Returns the device on which the file is stored.
     pub fn device(&self) -> Device {
         Device::from_id(self.0.st_dev as DeviceId, DeviceType::Block)
     }
 
-    /// The inode of the file.
+    /// Returns the inode of the file.
     pub fn inode(&self) -> InodeId {
         self.0.st_ino as InodeId
     }
 
-    /// The number of hard links to the file.
+    /// Returns the number of hard links to the file.
     pub fn nr_hard_links(&self) -> u64 {
         self.0.st_nlink as u64
     }
 
-    /// The mode of the file.
+    /// Returns the mode of the file.
     pub fn mode(&self) -> Mode {
         Mode::from_mode(self.0.st_mode as umode_t)
     }
 
-    /// The user id of the owner.
+    /// Returns the user id of the owner.
     pub fn user(&self) -> UserId {
         self.0.st_uid as UserId
     }
 
-    /// The group id of the owner.
+    /// Returns the group id of the owner.
     pub fn group(&self) -> GroupId {
         self.0.st_gid as GroupId
     }
@@ -123,37 +123,37 @@ impl Info {
         }
     }
 
-    /// The size of the file in bytes.
+    /// Returns he size of the file in bytes.
     pub fn size(&self) -> u64 {
         self.0.st_size as u64
     }
 
-    /// The number of `512` byte blocks used by this file.
+    /// Returns the number of `512` byte blocks used by this file.
     pub fn blocks(&self) -> u64 {
         self.0.st_blocks as u64
     }
 
-    /// The preferred size of writes to this file.
+    /// Returns the preferred size of writes to this file.
     pub fn preferred_write_size(&self) -> u64 {
         self.0.st_blksize as u64
     }
 
-    /// The last time this file was accessed.
+    /// Returns the last time this file was accessed.
     pub fn last_access(&self) -> Time {
         Time { seconds: self.0.st_atime as i64, nanoseconds: self.0.st_atime_nsec as i64 }
     }
 
-    /// The last time this file was modified.
+    /// Returns the last time this file was modified.
     pub fn last_modification(&self) -> Time {
         Time { seconds: self.0.st_mtime as i64, nanoseconds: self.0.st_mtime_nsec as i64 }
     }
 
-    /// The time this file was created.
-    pub fn creation(&self) -> Time {
+    /// Returns the last time the status of the inode was changed.
+    pub fn last_status_change(&self) -> Time {
         Time { seconds: self.0.st_ctime as i64, nanoseconds: self.0.st_ctime_nsec as i64 }
     }
 
-    /// The type of this file.
+    /// Returns the type of this file.
     pub fn file_type(&self) -> Type {
         file_type_from_mode(self.0.st_mode as umode_t)
     }
@@ -164,10 +164,12 @@ impl Debug for Info {
         write!(w, "Info {{ device: {:?}, inode: {}, nr_hard_links: {}, mode: {:?}, \
                      user: {}, group: {}, special_file: {:?}, size: {}, blocks: {}, \
                      preferred_write_size: {}, last_access: {:?}, \
-                     last_modification: {:?}, creation: {:?}, file_type: {:?} }}",
+                     last_modification: {:?}, last_status_change: {:?}, file_type: {:?} \
+                     }}",
                      self.device(), self.inode(), self.nr_hard_links(), self.mode(),
                      self.user(), self.group(), self.special_file(), self.size(),
                      self.blocks(), self.preferred_write_size(), self.last_access(),
-                     self.last_modification(), self.creation(), self.file_type())
+                     self.last_modification(), self.last_status_change(),
+                     self.file_type())
     }
 }

@@ -36,7 +36,7 @@ mod lrs { pub use vec::lrs::*; pub use {cty}; }
 use vec::{SVec};
 use core::{mem};
 use io::{Read};
-use base::rmo::{AsRef, AsMut};
+use base::rmo::{AsRef};
 use base::error::{self, Errno};
 use cty::{
     c_int, loff_t, c_uint, AT_FDCWD, AT_EMPTY_PATH, AT_SYMLINK_NOFOLLOW, UTIME_NOW,
@@ -314,11 +314,12 @@ pub fn set_times_no_follow<P>(path: P, access: TimeChange,
 ///
 /// = Remarks
 ///
-/// The files can have different type. For example, one could refer to a directory and the
-/// other one could refer to a symbolic link.
-///
 /// If the paths are relative, they will be interpreted relative to the current working
-/// directory.
+/// directory. Both paths must refer to the same mount point or the operation fails.
+///
+/// == Kernel versions
+///
+/// The required kernel version is 3.15.
 ///
 /// = See also
 ///
@@ -1733,7 +1734,7 @@ impl File {
     }
 
     /// Flushes all data and meta-data of the filesystem containing the file to the disk.
-    /// 
+    ///
     /// = See also
     ///
     /// * link:man:syncfs(2)
@@ -1774,7 +1775,7 @@ impl File {
     /// Returns information about the filesystem.
     ///
     /// = See also
-    /// 
+    ///
     /// * link:man:fstatfs(2)
     pub fn fs_info(&self) -> Result<FileSystemInfo> {
         let mut buf = mem::zeroed();
@@ -1812,9 +1813,22 @@ impl File {
 
     /// Creates a hard link to this file relative to a directory.
     ///
+    /// [argument, dir]
+    /// An opened directory.
+    ///
+    /// [argument, path]
+    /// The path of the link that will be created.
+    ///
     /// = Remarks
     ///
-    /// Relative paths are interpreted relative to the directory `dir`.
+    /// :link: link:lrs::file::File::link[link]
+    ///
+    /// If the path is absolute, this is equivalent to {link}. Otherwise dir must be a
+    /// directory and the path will be interpreted relative to dir.
+    ///
+    /// = See also
+    ///
+    /// * {link}
     pub fn link_rel_to<P>(&self, dir: &File, path: P) -> Result
         where P: ToCString,
     {
@@ -1823,7 +1837,17 @@ impl File {
         rv!(linkat(self.fd, CStr::empty(), dir.fd, &path, AT_EMPTY_PATH))
     }
 
-    /// Changes the access and modification times of this file.
+    /// Changes the access and modification times of the file.
+    ///
+    /// [argument, access]
+    /// The new access time.
+    ///
+    /// [argument, modification]
+    /// The new modification time.
+    ///
+    /// = See also
+    ///
+    /// * link:man:utimensat(2)
     pub fn set_times(&self, access: TimeChange, modification: TimeChange) -> Result {
         let times = [time_change_to_timespec(access),
                      time_change_to_timespec(modification)];
@@ -1831,6 +1855,17 @@ impl File {
     }
 
     /// Returns the path of the file that was used to open this file.
+    ///
+    /// [argument, buf]
+    /// The buffer in which the path will be placed.
+    ///
+    /// = Remarks
+    ///
+    /// The `/proc` filesystem must be mounted for this operation.
+    ///
+    /// = See also
+    ///
+    /// * link:man:readlinkat(2)
     pub fn filename_buf<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut NoNullStr> {
         // enough space for "/proc/self/fd/-{u64::MAX}\0"
         let mut proc_buf = [0; 36];
@@ -1841,22 +1876,54 @@ impl File {
     }
 
     /// Returns the path of the file that was used to open this file.
+    ///
+    /// = Remarks
+    ///
+    /// The `/proc` filesystem must be mounted for this operation.
+    ///
+    /// = See also
+    ///
+    /// * link:man:readlinkat(2)
     pub fn filename(&self) -> Result<NoNullString<'static>> {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
         self.filename_buf(&mut buf).chain(|f| f.to_owned())
     }
 
     /// Changes the owner of this file.
+    ///
+    /// [argument, user]
+    /// The user id of the new owner.
+    ///
+    /// [argument, group]
+    /// The group id of the new owner.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fchownat(2)
     pub fn change_owner(&self, user: UserId, group: GroupId) -> Result {
         rv!(fchownat(self.fd, CStr::empty(), user, group, AT_EMPTY_PATH))
     }
 
     /// Changes the mode of this file.
+    ///
+    /// [argument, mode]
+    /// The new mode of this file.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fchmod(2)
     pub fn change_mode(&self, mode: Mode) -> Result {
         rv!(fchmod(self.fd, mode_to_int(mode)))
     }
 
     /// Initiates readahead of the specified range.
+    ///
+    /// [argument, range]
+    /// The range that should be prepared for reading.
+    ///
+    /// = See also
+    ///
+    /// * link:man:readahead(2)
     pub fn readahead<R>(&self, range: R) -> Result
         where R: BoundedRange<u64>
     {
@@ -1864,12 +1931,19 @@ impl File {
         rv!(readahead(self.fd, range.start as loff_t, (range.end - range.start) as size_t))
     }
 
-    /// Reserves the specified range in the file system.
+    /// Reserves space for this file in the filesystem.
+    ///
+    /// [argument, range]
+    /// The range that should be available for writing.
     ///
     /// = Remarks
     ///
     /// Further writes in the specified range are guaranteed not to fail because of a lack
     /// of storage capacity.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fallocate(2)
     pub fn reserve<R>(&self, range: R) -> Result
         where R: BoundedRange<u64>
     {
@@ -1878,7 +1952,14 @@ impl File {
                       (range.end - range.start) as loff_t))
     }
 
-    /// Creates a hole in the specified range.
+    /// Creates a hole in the file.
+    ///
+    /// [argument, range]
+    /// The range that should be turned into a hole.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fallocate(2)
     pub fn create_hole<R>(&self, range: R) -> Result
         where R: BoundedRange<u64>
     {
@@ -1887,13 +1968,20 @@ impl File {
                       range.start as loff_t, (range.end - range.start) as loff_t))
     }
 
-    /// Removes the specified range from the file and closes the gap.
+    /// Removes a range from the file and closes the gap.
+    ///
+    /// [argument, range]
+    /// The range that should be removed.
     ///
     /// = Remarks
     ///
     /// The range must probably begin and end at a multiple of the block size but this
     /// depends on the filesystem. This function cannot be used if the range reaches the
     /// end of the file. Use `set_len` for this purpose.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fallocate(2)
     pub fn collapse<R>(&self, range: R) -> Result
         where R: BoundedRange<u64>
     {
@@ -1901,12 +1989,19 @@ impl File {
         rv!(fallocate(self.fd, FALLOC_FL_COLLAPSE_RANGE, range.start as loff_t,
                       (range.end - range.start) as loff_t))
     }
-    
-    /// Zeroes the specified range in the file.
+
+    /// Zeroes a range in the file.
+    ///
+    /// [argument, range]
+    /// The range that should be zeroed.
     ///
     /// = Remarks
-    /// 
+    ///
     /// This can be more efficient than manually writing zeroes.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fallocate(2)
     pub fn zero<R>(&self, range: R) -> Result
         where R: BoundedRange<u64>
     {
@@ -1916,6 +2011,16 @@ impl File {
     }
 
     /// Sets an attribute of this file.
+    ///
+    /// [argument, name]
+    /// The name of the attribute.
+    ///
+    /// [argument, val]
+    /// The new value of the attribute.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fsetxattr(2)
     pub fn set_attr<S, V>(&self, name: S, val: V) -> Result
         where S: ToCString, V: AsRef<[u8]>,
     {
@@ -1925,15 +2030,38 @@ impl File {
     }
 
     /// Gets an attribute of this file.
-    pub fn get_attr_buf<S, V>(&self, name: S, mut val: V) -> Result<usize>
-        where S: ToCString, V: AsMut<[u8]>,
+    ///
+    /// [argument, name]
+    /// The name of the attribute.
+    ///
+    /// [argument, val]
+    /// The buffer in which the attribute will be stored.
+    ///
+    /// [return_value]
+    /// Returns the size of the attribute placed in the buffer.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fgetxattr(2)
+    pub fn get_attr_buf<S>(&self, name: S, val: &mut [u8]) -> Result<usize>
+        where S: ToCString,
     {
         let mut buf: [u8; 128] = unsafe { mem::uninit() };
         let name: Rmo<_, FbHeap> = try!(name.rmo_cstr(&mut buf));
-        rv!(fgetxattr(self.fd, &name, val.as_mut()), -> usize)
+        rv!(fgetxattr(self.fd, &name, val), -> usize)
     }
 
     /// Gets an attribute of this file.
+    ///
+    /// [argument, name]
+    /// The name of the attribute.
+    ///
+    /// [return_value]
+    /// Returns the value of the argument.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fgetxattr(2)
     pub fn get_attr<S>(&self, name: S) -> Result<SVec<u8>>
         where S: ToCString,
     {
@@ -1943,6 +2071,13 @@ impl File {
     }
 
     /// Removes an attribute of this file.
+    ///
+    /// [argument, name]
+    /// The name of the attribute.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fremovexattr(2)
     pub fn remove_attr<S>(&self, name: S) -> Result
         where S: ToCString,
     {
@@ -1952,68 +2087,160 @@ impl File {
     }
 
     /// Returns the buffer size required in a `list_attr_buf` call.
+    ///
+    /// = See also
+    ///
+    /// * link:man:flistxattr(2)
     pub fn list_attr_size(&self) -> Result<usize> {
         rv!(flistxattr(self.fd, &mut []), -> usize)
     }
 
     /// Returns an iterator over the attributes in this file.
+    ///
+    /// [argument, buf]
+    /// The buffer in which the attributes will be placed.
+    ///
+    /// = Remarks
+    ///
+    /// :list: link:lrs::file::File::list_attr_size[list_attr_size]
+    ///
+    /// Note that the buffer must be large enough to hold all attributes. The required
+    /// size can be queried with the {list} function. It's an error to pass a buffer with
+    /// length `0`.
+    ///
+    /// = See also
+    ///
+    /// {list}
+    /// * link:man:flistxattr(2)
     pub fn list_attr_buf<'a>(&self, buf: &'a mut [u8]) -> Result<ListAttrIter<'a>> {
+        if buf.len() == 0 { return Err(error::InvalidArgument); }
         let len = try!(rv!(flistxattr(self.fd, buf), -> usize));
         Ok(ListAttrIter { buf: &buf[..len], pos: 0 })
     }
 
     /// Returns an iterator over the attributes in this file.
+    ///
+    /// = See also
+    ///
+    /// * link:man:flistxattr(2)
     pub fn list_attr(&self) -> Result<ListAttrIterator> {
         list_attr_common(|buf| flistxattr(self.fd, buf))
     }
 
     /// Tries to lock this file exclusively without blocking.
+    ///
+    /// = Remarks
+    ///
+    /// Note that this locking is voluntary. Other programs can continue to modify the
+    /// file even if you hold a lock. All programs must cooperate and use the locking
+    /// functions to get reliable locking.
+    ///
+    /// = See also
+    ///
+    /// * link:man:flock(2)
     pub fn try_lock_exclusive(&self) -> Result {
         rv!(flock(self.fd, LOCK_EX | LOCK_NB))
     }
 
     /// Tries to lock this file exclusively.
+    ///
+    /// = Remarks
+    ///
+    /// Note that this locking is voluntary. Other programs can continue to modify the
+    /// file even if you hold a lock. All programs must cooperate and use the locking
+    /// functions to get reliable locking.
+    ///
+    /// = See also
+    ///
+    /// * link:man:flock(2)
     pub fn lock_exclusive(&self) -> Result {
         retry(|| flock(self.fd, LOCK_EX)).map(|_| ())
     }
 
     /// Tries to lock this file shared without blocking.
+    ///
+    /// = Remarks
+    ///
+    /// Note that this locking is voluntary. Other programs can continue to modify the
+    /// file even if you hold a lock. All programs must cooperate and use the locking
+    /// functions to get reliable locking.
+    ///
+    /// = See also
+    ///
+    /// * link:man:flock(2)
     pub fn try_lock_shared(&self) -> Result {
         rv!(flock(self.fd, LOCK_SH | LOCK_NB))
     }
 
     /// Tries to lock this file shared.
+    ///
+    /// = Remarks
+    ///
+    /// Note that this locking is voluntary. Other programs can continue to modify the
+    /// file even if you hold a lock. All programs must cooperate and use the locking
+    /// functions to get reliable locking.
+    ///
+    /// = See also
+    ///
+    /// * link:man:flock(2)
     pub fn lock_shared(&self) -> Result {
         retry(|| flock(self.fd, LOCK_SH)).map(|_| ())
     }
 
     /// Unlocks this file.
+    ///
+    /// = See also
+    ///
+    /// * link:man:flock(2)
     pub fn unlock(&self) -> Result {
         rv!(flock(self.fd, LOCK_UN))
     }
 }
 
 impl File {
-    /// Opens the file at path `path` in read mode.
+    /// Opens a path for reading relative to this file.
+    ///
+    /// [argument, path]
+    /// A path to the file to be opened.
+    ///
+    /// [return_value]
+    /// Returns the opened path.
     ///
     /// = Remarks
     ///
-    /// If `path` is relative, the `self` must be a directory and the `path` will be
-    /// interpreted relative to `self`.
+    /// If the path is relative, this file must be a directory and the path will be
+    /// interpreted relative to it.
     ///
-    /// This is equivalent to `file.open` with the default flags.
+    /// This is equivalent to `self.rel_open` with the default flags.
+    ///
+    /// = See also
+    ///
+    /// * link:man:openat(2)
     pub fn rel_open_read<P>(&self, path: P) -> Result<File>
         where P: ToCString,
     {
         self.rel_open(path, Flags::new())
     }
 
-    /// Open the file at path `path` with the specified flags.
+    /// Opens a path relative to this file.
+    ///
+    /// [argument, path]
+    /// A path to the file to be opened.
+    ///
+    /// [argument, flags]
+    /// The flags used when opening the path.
+    ///
+    /// [return_value]
+    /// Returns the opened path.
     ///
     /// = Remarks
     ///
-    /// If `path` is relative, the `self` must be a directory and the `path` will be
-    /// interpreted relative to `self`.
+    /// If the path is relative, this file must be a directory and the path will be
+    /// interpreted relative to it.
+    ///
+    /// = See also
+    ///
+    /// * link:man:openat(2)
     pub fn rel_open<P>(&self, path: P, flags: Flags) -> Result<File>
         where P: ToCString,
     {
@@ -2034,13 +2261,24 @@ impl File {
         })
     }
 
-    /// Returns information about the file specified by `path`.
+    /// Returns information about a path relative to this file.
+    ///
+    /// [argument, path]
+    /// A path to the file whose information will be returned.
+    ///
+    /// [return_value]
+    /// Returns information about the file.
     ///
     /// = Remarks
     ///
-    /// If `path` is a symlink, then this is equivalent to returning information about the
-    /// destination of the symlink. If `path` is relative, then `self` must be a directory
-    /// and the path will be interpreted relative to `self`.
+    /// If the path is relative, this file must be a directory and the path will be
+    /// interpreted relative to it. If the file at the path is a symlink, it will be
+    /// resolved recursively and information about the first non-symlink target will be
+    /// returned.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fstatat(2)
     pub fn rel_info<P>(&self, path: P) -> Result<Info>
         where P: ToCString,
     {
@@ -2051,13 +2289,22 @@ impl File {
         Ok(info_from_stat(stat))
     }
 
-    /// Returns information about the file specified by `path`.
+    /// Returns information about a path relative to this file without following symlinks.
+    ///
+    /// [argument, path]
+    /// A path to the file whose information will be returned.
+    ///
+    /// [return_value]
+    /// Returns information about the file.
     ///
     /// = Remarks
     ///
-    /// This returns information about the file at `path`, even if `path` is a symlink.
-    /// If `path` is relative, then `self` must be a directory and the path will be
-    /// interpreted relative to `self`.
+    /// If the path is relative, this file must be a directory and the path will be
+    /// interpreted relative to it.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fstatat(2)
     pub fn rel_info_no_follow<P>(&self, path: P) -> Result<Info>
         where P: ToCString,
     {
@@ -2068,12 +2315,21 @@ impl File {
         Ok(info_from_stat(stat))
     }
 
-    /// Returns whether the specified path points to an existing file.
+    /// Returns whether a path relative to this file points to an existing file.
+    ///
+    /// [argument, path]
+    /// The path to be inspected.
     ///
     /// = Remarks
     ///
-    /// If `path` is relative then `self` must be a directory and the path will be
-    /// interpreted relative to `self`.
+    /// If the path is relative, this file must be a directory and the path will be
+    /// interpreted relative to it. If the file at the path is a symlink, it will be
+    /// resolved recursively and information about the first non-symlink target will be
+    /// returned.
+    ///
+    /// = See also
+    ///
+    /// * link:man:faccessat(2)
     pub fn rel_exists<P>(&self, path: P) -> Result<bool>
         where P: ToCString,
     {
@@ -2091,12 +2347,24 @@ impl File {
         }
     }
 
-    /// Checks whether the file at `path` can be accessed with the specified mode.
+    /// Returns whether a path relative to this file can be accessed.
+    ///
+    /// [argument, path]
+    /// The path to be inspected.
+    ///
+    /// [argument, mode]
+    /// The access mode which is to be tested.
     ///
     /// = Remarks
     ///
-    /// If `path` is relative then `self` must be a directory and the path will be
-    /// interpreted relative to `self`.
+    /// If the path is relative, this file must be a directory and the path will be
+    /// interpreted relative to it. If the file at the path is a symlink, it will be
+    /// resolved recursively and information about the first non-symlink target will be
+    /// returned.
+    ///
+    /// = See also
+    ///
+    /// * link:man:faccessat(2)
     pub fn rel_can_access<P>(&self, path: P, mode: AccessMode) -> Result<bool>
         where P: ToCString,
     {
@@ -2114,13 +2382,28 @@ impl File {
         }
     }
 
-    /// Changes the access and modification times of the file specified by `path`.
+    /// Changes the access and modification times of a file pointed to by a path relative
+    /// to this file.
+    ///
+    /// [argument, path]
+    /// The path of the file.
+    ///
+    /// [argument, access]
+    /// The new access time.
+    ///
+    /// [argument, modification]
+    /// The new modification time.
     ///
     /// = Remarks
     ///
-    /// If `path` is relative then `self` has to be a directory and relative paths are
-    /// interpreted relative to `self`. If `path` is a symlink, then this changes the
-    /// times of the destination.
+    /// If the path is relative, this file must be a directory and the path will be
+    /// interpreted relative to it. If the file at the path is a symlink, it will be
+    /// resolved recursively and the times of the first non-symlink target will be
+    /// changed.
+    ///
+    /// = See also
+    ///
+    /// * link:man:utimensat(2)
     pub fn rel_set_times<P>(&self, path: P, access: TimeChange,
                             modification: TimeChange) -> Result
         where P: ToCString,
@@ -2132,13 +2415,26 @@ impl File {
         rv!(utimensat(self.fd, Some(&path), &times, 0))
     }
 
-    /// Changes the access and modification times of the file specified by `path`.
+    /// Changes the access and modification times of a file pointed to by a path relative
+    /// to this file without following symlinks.
+    ///
+    /// [argument, path]
+    /// The path of the file.
+    ///
+    /// [argument, access]
+    /// The new access time.
+    ///
+    /// [argument, modification]
+    /// The new modification time.
     ///
     /// = Remarks
     ///
-    /// If `path` is relative then `self` has to be a directory and relative paths are
-    /// interpreted relative to `self`. If `path` is a symlink, then this changes the
-    /// times of the symlink.
+    /// If the path is relative, this file must be a directory and the path will be
+    /// interpreted relative to it.
+    ///
+    /// = See also
+    ///
+    /// * link:man:utimensat(2)
     pub fn rel_set_times_no_follow<P>(&self, path: P, access: TimeChange,
                                       modification: TimeChange) -> Result
         where P: ToCString,
@@ -2150,12 +2446,27 @@ impl File {
         rv!(utimensat(self.fd, Some(&path), &times, AT_SYMLINK_NOFOLLOW))
     }
 
-    /// Atomically exchanges the two files `one` and `two`.
+    /// Atomically exchanges two files relative to this file.
+    ///
+    /// [argument, one]
+    /// File one.
+    ///
+    /// [argument, two]
+    /// File two.
     ///
     /// = Remarks
     ///
-    /// If one of the paths is relative, then `self` has to be a directory and the path
-    /// will be interpreted relative to `self`.
+    /// If the paths are relative, this file must be a directory and the paths will be
+    /// interpreted relative to it. Both paths must refer to the same mount point or the
+    /// operation fails.
+    ///
+    /// == Kernel versions
+    ///
+    /// The required kernel version is 3.15.
+    ///
+    /// = See also
+    ///
+    /// * link:man:renameat2(2)
     pub fn rel_exchange<P, Q>(&self, one: P, two: Q) -> Result
         where P: ToCString, Q: ToCString,
     {
@@ -2166,30 +2477,57 @@ impl File {
         rv!(renameat2(self.fd, &one, self.fd, &two, RENAME_EXCHANGE))
     }
 
-    /// Renames `one` to `two`.
+    /// Renames a file relative to this file.
+    ///
+    /// [argument, from]
+    /// The path of the file to be renamed.
+    ///
+    /// [argument, to]
+    /// The new name of the file.
+    ///
+    /// [argument, replace]
+    /// Whether `to` is replaced if it already exists.
     ///
     /// = Remarks
     ///
-    /// If one of the paths is relative, then `self` has to be a directory and the path
-    /// will be interpreted relative to `self`. If `replace` is `false`, then the
-    /// operation fails if `two` already exists.
-    pub fn rel_rename<P, Q>(&self, one: P, two: Q, replace: bool) -> Result
+    /// If the paths are relative, this file must be a directory and the paths will be
+    /// interpreted relative to it. Both paths must refer to the same mount point or the
+    /// operation fails.
+    ///
+    /// == Kernel versions
+    ///
+    /// If `replace` is `false`, the required kernel version is 3.15.
+    ///
+    /// = See also
+    ///
+    /// * link:man:renameat2(2)
+    pub fn rel_rename<P, Q>(&self, from: P, to: Q, replace: bool) -> Result
         where P: ToCString, Q: ToCString,
     {
         let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
         let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let one: Rmo<_, FbHeap> = try!(one.rmo_cstr(&mut buf1));
-        let two: Rmo<_, FbHeap> = try!(two.rmo_cstr(&mut buf2));
+        let one: Rmo<_, FbHeap> = try!(from.rmo_cstr(&mut buf1));
+        let two: Rmo<_, FbHeap> = try!(to.rmo_cstr(&mut buf2));
         let flag = if replace { 0 } else { RENAME_NOREPLACE };
         rv!(renameat2(self.fd, &one, self.fd, &two, flag))
     }
 
-    /// Creates the directory `path`.
+    /// Creates a directory relative to this file.
+    ///
+    /// [argument, path]
+    /// The path of the directory.
+    ///
+    /// [argument, mode]
+    /// The mode of the directory.
     ///
     /// = Remarks
     ///
-    /// If `path` is relative, then `self` has to be a directory and the path is
-    /// interpreted relative to `self`.
+    /// If the path is relative, this file must be a directory and the path will be
+    /// interpreted relative to it.
+    ///
+    /// = See also
+    ///
+    /// * link:man:mkdirat(2)
     pub fn rel_create_dir<P>(&self, path: P, mode: Mode) -> Result
         where P: ToCString,
     {
@@ -2198,13 +2536,20 @@ impl File {
         rv!(mkdirat(self.fd, &path, mode_to_int(mode)))
     }
 
-    /// Removes the file at `path`.
+    /// Removes a link.
+    ///
+    /// [argument, path]
+    /// The path to be removed.
     ///
     /// = Remarks
     ///
-    /// If `path` is relative, then `self` has to be a directory and the path is
-    /// interpreted relative to `self`. If `path` refers to a directory, then the
-    /// directory has to be empty.
+    /// If the path is relative, this file must be a directory and the path will be
+    /// interpreted relative to it. If the path refers to a directory, the directory
+    /// has to be empty.
+    ///
+    /// = See also
+    ///
+    /// * link:man:unlinkat(2)
     pub fn rel_remove<P>(&self, path: P) -> Result
         where P: ToCString,
     {
@@ -2217,12 +2562,22 @@ impl File {
         rv!(ret)
     }
 
-    /// Creates a symlink from `link` to `target`.
+    /// Creates a symlink relative to this file.
+    ///
+    /// [argument, target]
+    /// The target of the link.
+    ///
+    /// [argument, link]
+    /// The path of the new link.
     ///
     /// = Remarks
     ///
-    /// If `link` is relative, then `self` has to be a directory and `link` will be
-    /// interpreted relative to `self`.
+    /// If the paths are relative, this file must be a directory and the paths will be
+    /// interpreted relative to it.
+    ///
+    /// = See also
+    ///
+    /// * link:man:symlinkat(2)
     pub fn rel_symlink<P, Q>(&self, target: P, link: Q) -> Result
         where P: ToCString, Q: ToCString,
     {
@@ -2233,12 +2588,25 @@ impl File {
         rv!(symlinkat(&target, self.fd, &link))
     }
 
-    /// Reads the target of the symbolic link `link` into `buf`.
+    /// Reads the target of a symbolic link relative to this file.
+    ///
+    /// [argument, link]
+    /// The path to the symlink.
+    ///
+    /// [argument, buf]
+    /// The buffer in which the target will be stored.
+    ///
+    /// [return_value]
+    /// Returns the target of the link.
     ///
     /// = Remarks
     ///
-    /// If `link` is relative, then `self` has to be a directory and `link` will be
-    /// interpreted relative to `self`.
+    /// If the path is relative, this file must be a directory and the path will be
+    /// interpreted relative to it.
+    ///
+    /// = See also
+    ///
+    /// * link:man:readlinkat(2)
     pub fn rel_read_link_buf<'a, P>(&self, link: P,
                                     buf: &'a mut [u8]) -> Result<&'a mut NoNullStr>
         where P: ToCString,
@@ -2249,12 +2617,22 @@ impl File {
         Ok(unsafe { NoNullStr::from_bytes_unchecked_mut(&mut buf[..len]) })
     }
 
-    /// Reads the target of the symbolic link `link`.
+    /// Reads the target of a symbolic link relative to this file.
+    ///
+    /// [argument, link]
+    /// The path to the symlink.
+    ///
+    /// [return_value]
+    /// Returns the target of the link.
     ///
     /// = Remarks
     ///
-    /// If `link` is relative, then `self` has to be a directory and `link` will be
-    /// interpreted relative to `self`.
+    /// If the path is relative, this file must be a directory and the path will be
+    /// interpreted relative to it.
+    ///
+    /// = See also
+    ///
+    /// * link:man:readlinkat(2)
     pub fn rel_read_link<P>(&self, link: P) -> Result<NoNullString<'static>>
         where P: ToCString,
     {
@@ -2262,12 +2640,27 @@ impl File {
         self.rel_read_link_buf(link, &mut buf).chain(|f| f.to_owned())
     }
 
-    /// Changes the owner of the file at `path`.
+    /// Changes the owner of a file relative to this file.
+    ///
+    /// [argument, path]
+    /// A path to the file.
+    ///
+    /// [argument, user]
+    /// The user id of the new owner.
+    ///
+    /// [argument, group]
+    /// The group id of the new owner.
     ///
     /// = Remarks
     ///
-    /// If `path` is relative, then `self` has to be a directory and `path` will be
-    /// interpreted relative to `self`.
+    /// If the path is relative, this file must be a directory and the path will be
+    /// interpreted relative to it. If the path points to a symlink, the symlink will be
+    /// resolved recursively and the owner of the first non-symlink target will be
+    /// changed.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fchownat(2)
     pub fn rel_change_owner<P>(&self, path: P, user: UserId, group: GroupId) -> Result
         where P: ToCString,
     {
@@ -2276,13 +2669,25 @@ impl File {
         rv!(fchownat(self.fd, &path, user, group, 0))
     }
 
-    /// Changes the owner of the file at `path`.
+    /// Changes the owner of a file relative to this file without following symlinks.
+    ///
+    /// [argument, path]
+    /// A path to the file.
+    ///
+    /// [argument, user]
+    /// The user id of the new owner.
+    ///
+    /// [argument, group]
+    /// The group id of the new owner.
     ///
     /// = Remarks
     ///
-    /// If `path` is relative, then `self` has to be a directory and `path` will be
-    /// interpreted relative to `self`. If `path` refers to a symlink, then this changes
-    /// the owner of the symlink itself.
+    /// If the path is relative, this file must be a directory and the path will be
+    /// interpreted relative to it.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fchownat(2)
     pub fn rel_change_owner_no_follow<P>(&self, path: P, user: UserId,
                                          group: GroupId) -> Result
         where P: ToCString,
@@ -2292,12 +2697,22 @@ impl File {
         rv!(fchownat(self.fd, &path, user, group, AT_SYMLINK_NOFOLLOW))
     }
 
-    /// Change the mode of the file at `path`.
+    /// Change the mode of a file relative to this file.
+    ///
+    /// [argument, path]
+    /// A path to the file.
+    ///
+    /// [argument, mode]
+    /// The new mode of the file.
     ///
     /// = Remarks
     ///
-    /// If `path` is relative, then `self` has to be a directory and `path` will be
-    /// interpreted relative to `self`.
+    /// If the path is relative, this file must be a directory and the path will be
+    /// interpreted relative to it.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fchmodat(2)
     pub fn rel_change_mode<P>(&self, path: P, mode: Mode) -> Result
         where P: ToCString,
     {
@@ -2306,18 +2721,27 @@ impl File {
         rv!(fchmodat(self.fd, &path, mode_to_int(mode)))
     }
 
-    /// Creates a file at `path`.
+    /// Creates a file at a path relative to this file.
+    ///
+    /// [argument, path]
+    /// The path to the new file.
+    ///
+    /// [argument, ty]
+    /// The type of the file.
+    ///
+    /// [argument, mode]
+    /// The mode of the file.
     ///
     /// = Remarks
     ///
-    /// If `path` is relative, then `self` has to be a directory and `path` will be
-    /// interpreted relative to `self`.
+    /// If the path is relative, this file must be a directory and the path will be
+    /// interpreted relative to it.
     ///
-    /// The type must be one of the following:
+    /// The type must be either `File` or `FIFO` or `Socket`.
     ///
-    /// - `File`
-    /// - `FIFO`
-    /// - `Socket`
+    /// = See also
+    ///
+    /// * link:man:mknodat(2)
     pub fn rel_create_file<P>(&self, path: P, ty: Type, mode: Mode) -> Result
         where P: ToCString,
     {
@@ -2330,12 +2754,25 @@ impl File {
         rv!(mknodat(self.fd, &path, file_type_to_mode(ty) | mode_to_int(mode), 0))
     }
 
-    /// Creates a device special file at `path`.
+    /// Creates a device special file relative to this file.
+    ///
+    /// [argument, path]
+    /// The path to the new file.
+    ///
+    /// [argument, dev]
+    /// The device to be created.
+    ///
+    /// [argument, mode]
+    /// The mode of the file.
     ///
     /// = Remarks
     ///
-    /// If `path` is relative, then `self` has to be a directory and `path` will be
-    /// interpreted relative to `self`.
+    /// If the path is relative, this file must be a directory and the path will be
+    /// interpreted relative to it.
+    ///
+    /// = See also
+    ///
+    /// * link:man:mknodat(2)
     pub fn rel_create_device<P>(&self, path: P, dev: Device, mode: Mode) -> Result
         where P: ToCString,
     {
@@ -2393,13 +2830,16 @@ impl FDContainer for File {
     }
 }
 
-/// Enum used to specify the way time information of a file is modified.
+/// A time change.
 pub enum TimeChange {
-    /// Donesn't modify the time.
+    /// Does not modify the time.
     Omit,
     /// Sets the time to the current time.
     Now,
     /// Sets the time to the specified time.
+    ///
+    /// [field, 1]
+    /// The time to be set.
     Set(Time),
 }
 
@@ -2415,14 +2855,29 @@ fn time_change_to_timespec(t: TimeChange) -> timespec {
 #[derive(Copy, Eq)]
 pub enum Seek {
     /// Seek from the start of the file.
+    ///
+    /// [field, 1]
+    /// The position to seek to.
     Start(i64),
     /// Seek from the current position in the file.
+    ///
+    /// [field, 1]
+    /// The position to seek to.
     Cur(i64),
     /// Seek from the end of the file.
+    ///
+    /// [field, 1]
+    /// The position to seek to.
     End(i64),
     /// Seek to the first non-hole byte at or after the specified offset.
+    ///
+    /// [field, 1]
+    /// The position from which to seek.
     Data(i64),
     /// Seek to the first hole at or after the specified offset.
+    ///
+    /// [field, 1]
+    /// The position from which to seek.
     Hole(i64),
 }
 
@@ -2478,6 +2933,7 @@ impl Advice {
     }
 }
 
+/// An iterator over file attributes.
 pub struct ListAttrIter<'a> {
     buf: &'a [u8],
     pos: usize,
@@ -2497,6 +2953,7 @@ impl<'a> Iterator for ListAttrIter<'a> {
     }
 }
 
+/// An iterator over file attributes.
 pub struct ListAttrIterator {
     buf: SVec<u8>,
     pos: usize,
