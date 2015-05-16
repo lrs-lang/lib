@@ -18,6 +18,17 @@ pub struct NoNullStr {
     data: [u8],
 }
 
+/// Objects that can be borrowed as a `NoNullStr`.
+pub trait AsNoNullStr {
+    /// Tries to borrow the object as a `NoNullStr`.
+    fn as_no_null_str(&self) -> Result<&NoNullStr>;
+}
+
+/// Like `AsNoNullStr`.
+pub trait AsMutNoNullStr {
+    fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr>;
+}
+
 impl NoNullStr {
     /// Sets a byte in the slice to the specified value.
     pub fn set(&mut self, idx: usize, val: u8) {
@@ -149,17 +160,6 @@ impl Debug for NoNullStr {
 
 ///////////////////////////////
 
-/// Objects that can be borrowed as a `NoNullStr`.
-pub trait AsNoNullStr {
-    /// Tries to borrow the object as a `NoNullStr`.
-    fn as_no_null_str(&self) -> Result<&NoNullStr>;
-}
-
-/// Like `AsNoNullStr`.
-pub trait AsMutNoNullStr {
-    fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr>;
-}
-
 impl<'a, T: AsNoNullStr+?Sized> AsNoNullStr for &'a T {
     fn as_no_null_str(&self) -> Result<&NoNullStr> { (**self).as_no_null_str() }
 }
@@ -202,15 +202,15 @@ impl AsMutNoNullStr for [u8] {
     }
 }
 
-impl AsMutNoNullStr for NoNullStr {
-    fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
-        Ok(self)
-    }
-}
-
 impl AsMutNoNullStr for [i8] {
     fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
         let bytes: &mut [u8] = self.as_mut();
         bytes.as_mut_no_null_str()
+    }
+}
+
+impl AsMutNoNullStr for NoNullStr {
+    fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
+        Ok(self)
     }
 }

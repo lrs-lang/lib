@@ -27,7 +27,10 @@ pub fn from_statfs(s: statfs) -> FileSystemInfo {
 pub struct FileSystemInfo(statfs);
 
 impl FileSystemInfo {
-    /// Returns information about the filesystem located at the path.
+    /// Returns information about the filesystem located at a path.
+    ///
+    /// [argument, path]
+    /// A path inside the filesystem's mount point.
     pub fn from_path<P>(path: P) -> Result<FileSystemInfo>
         where P: ToCString,
     {
@@ -84,7 +87,7 @@ impl FileSystemInfo {
 
     /// Returns the flags the filesystem is mounted with.
     pub fn mount_flags(&self) -> Flags {
-        Flags(self.0.f_frsize as c_ulong)
+        Flags(self.0.f_flags as c_ulong)
     }
 }
 

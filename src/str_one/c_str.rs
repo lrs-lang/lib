@@ -20,6 +20,45 @@ pub struct CStr {
     data: [u8]
 }
 
+/// Objects that can be interpreted as `CStr`s.
+///
+/// This operation can fail if the object has interior null bytes, e.g.,
+/// `"Hello World\0\0\0"` will succeed but `"Hello\0World\0"` will fail.
+pub trait AsCStr : ToCStr+AsRef<[u8]> {
+    /// Borrows the object as a `CStr`.
+    fn as_cstr(&self) -> Result<&CStr> {
+        self.as_ref().as_cstr()
+    }
+}
+
+/// Like `AsCStr`.
+pub trait AsMutCStr {
+    /// Borrows the object mutably as a `CStr`.
+    fn as_mut_cstr(&mut self) -> Result<&mut CStr>;
+}
+
+/// Objects that can be transformed into `CStr`s provided they have some scratch space
+/// available.
+///
+/// For example, "Hello World" needs to be copied and a `0` appended to form a valid
+/// `CStr`. This operation can fail under the same conditions as `AsCStr`.
+pub trait ToCStr {
+    /// Converts the object by copying it into `buf`.
+    fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr>;
+
+    /// Tries to create a `CStr` without copying and copies if it's not possible.
+    ///
+    /// E.g. `"Hello World\0"` does not have to be copied.
+    fn to_or_as_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<&'a CStr> {
+        self.to_cstr(buf).map(|r| &*r)
+    }
+
+    /// Like `to_or_as_cstr`.
+    fn to_or_as_mut_cstr<'a>(&'a mut self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
+        self.to_cstr(buf)
+    }
+}
+
 impl CStr {
     /// Creates a new `CStr` from a pointer.
     ///
@@ -165,47 +204,6 @@ impl Debug for CStr {
 impl Parse for CStr {
     fn parse<P: Parsable>(&self) -> Result<P> {
         self.as_byte_str().parse()
-    }
-}
-
-////////////////////////
-
-/// Objects that can be interpreted as `CStr`s.
-///
-/// This operation can fail if the object has interior null bytes, e.g.,
-/// `"Hello World\0\0\0"` will succeed but `"Hello\0World\0"` will fail.
-pub trait AsCStr : ToCStr+AsRef<[u8]> {
-    /// Borrows the object as a `CStr`.
-    fn as_cstr(&self) -> Result<&CStr> {
-        self.as_ref().as_cstr()
-    }
-}
-
-/// Like `AsCStr`.
-pub trait AsMutCStr {
-    /// Borrows the object mutably as a `CStr`.
-    fn as_mut_cstr(&mut self) -> Result<&mut CStr>;
-}
-
-/// Objects that can be transformed into `CStr`s provided they have some scratch space
-/// available.
-///
-/// For example, "Hello World" needs to be copied and a `0` appended to form a valid
-/// `CStr`. This operation can fail under the same conditions as `AsCStr`.
-pub trait ToCStr {
-    /// Converts the object by copying it into `buf`.
-    fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr>;
-
-    /// Tries to create a `CStr` without copying and copies if it's not possible.
-    ///
-    /// E.g. `"Hello World\0"` does not have to be copied.
-    fn to_or_as_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<&'a CStr> {
-        self.to_cstr(buf).map(|r| &*r)
-    }
-
-    /// Like `to_or_as_cstr`.
-    fn to_or_as_mut_cstr<'a>(&'a mut self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
-        self.to_cstr(buf)
     }
 }
 

@@ -313,8 +313,6 @@ impl<'a, T, H> AsMut<[T]> for Vec<'a, T, H>
     }
 }
 
-// Maybe these aren't really needed. We can just let the user manually deref.
-
 impl<'a, H> AsRef<ByteStr> for Vec<'a, u8, H>
     where H: Allocator,
 {

@@ -2,116 +2,51 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//! File system information.
+//! File system information and mounting.
 
 pub use lrs_fs::{sync_all};
-
-pub use lrs_fs::mount::{mount, MountFlags, unmount, UnmountFlags};
-
+pub use lrs_fs::mount::{mount, MountFlags};
+pub use lrs_fs::unmount::{unmount, UnmountFlags};
 pub use lrs_fs::info::{FileSystemInfo};
 pub use lrs_fs::info::mount::{Flags};
 pub use lrs_fs::info::types::{FileSystem};
 
-pub use lrs_fs::info::types::{ADFS};
-pub use lrs_fs::info::types::{AFFS};
-pub use lrs_fs::info::types::{AFS};
-pub use lrs_fs::info::types::{ANON_INODE_FS};
-pub use lrs_fs::info::types::{AUFS};
-pub use lrs_fs::info::types::{AUTOFS};
-pub use lrs_fs::info::types::{BDEVFS};
-pub use lrs_fs::info::types::{BEFS};
-pub use lrs_fs::info::types::{BFS};
-pub use lrs_fs::info::types::{BINFMTFS};
-pub use lrs_fs::info::types::{BTRFS};
-pub use lrs_fs::info::types::{CEPH};
-pub use lrs_fs::info::types::{CGROUP};
-pub use lrs_fs::info::types::{CIFS};
-pub use lrs_fs::info::types::{CODA};
-pub use lrs_fs::info::types::{COH};
-pub use lrs_fs::info::types::{CONFIGFS};
-pub use lrs_fs::info::types::{CRAMFS};
-pub use lrs_fs::info::types::{CRAMFS_WEND};
-pub use lrs_fs::info::types::{DEBUGFS};
-pub use lrs_fs::info::types::{DEVFS};
-pub use lrs_fs::info::types::{DEVPTS};
-pub use lrs_fs::info::types::{ECRYPTFS};
-pub use lrs_fs::info::types::{EFIVARFS};
-pub use lrs_fs::info::types::{EFS};
-pub use lrs_fs::info::types::{EXOFS};
-pub use lrs_fs::info::types::{EXT};
-pub use lrs_fs::info::types::{EXT2};
-pub use lrs_fs::info::types::{EXT2_OLD};
-pub use lrs_fs::info::types::{F2FS};
-pub use lrs_fs::info::types::{FAT};
-pub use lrs_fs::info::types::{FHGFS};
-pub use lrs_fs::info::types::{FUSEBLK};
-pub use lrs_fs::info::types::{FUSECTL};
-pub use lrs_fs::info::types::{FUTEXFS};
-pub use lrs_fs::info::types::{GFS};
-pub use lrs_fs::info::types::{GPFS};
-pub use lrs_fs::info::types::{HFS};
-pub use lrs_fs::info::types::{HFS_PLUS};
-pub use lrs_fs::info::types::{HFS_X};
-pub use lrs_fs::info::types::{HOSTFS};
-pub use lrs_fs::info::types::{HPFS};
-pub use lrs_fs::info::types::{HUGETLBFS};
-pub use lrs_fs::info::types::{INOTIFYFS};
-pub use lrs_fs::info::types::{ISOFS};
-pub use lrs_fs::info::types::{ISOFS_R_WIN};
-pub use lrs_fs::info::types::{ISOFS_WIN};
-pub use lrs_fs::info::types::{JFFS};
-pub use lrs_fs::info::types::{JFFS2};
-pub use lrs_fs::info::types::{JFS};
-pub use lrs_fs::info::types::{KAFS};
-pub use lrs_fs::info::types::{LOGFS};
-pub use lrs_fs::info::types::{LUSTRE};
-pub use lrs_fs::info::types::{MINIX};
-pub use lrs_fs::info::types::{MINIX_30};
-pub use lrs_fs::info::types::{MINIX_V2};
-pub use lrs_fs::info::types::{MINIX_V2_30};
-pub use lrs_fs::info::types::{MINIX_V3};
-pub use lrs_fs::info::types::{MQUEUE};
-pub use lrs_fs::info::types::{MSDOS};
-pub use lrs_fs::info::types::{MTD_INODE_FS};
-pub use lrs_fs::info::types::{NCP};
-pub use lrs_fs::info::types::{NFS};
-pub use lrs_fs::info::types::{NFSD};
-pub use lrs_fs::info::types::{NILFS};
-pub use lrs_fs::info::types::{NTFS};
-pub use lrs_fs::info::types::{OCFS2};
-pub use lrs_fs::info::types::{OPENPROM};
-pub use lrs_fs::info::types::{PANFS};
-pub use lrs_fs::info::types::{PIPEFS};
-pub use lrs_fs::info::types::{PROC};
-pub use lrs_fs::info::types::{PSTOREFS};
-pub use lrs_fs::info::types::{QNX4};
-pub use lrs_fs::info::types::{QNX6};
-pub use lrs_fs::info::types::{RAMFS};
-pub use lrs_fs::info::types::{REISERFS};
-pub use lrs_fs::info::types::{ROMFS};
-pub use lrs_fs::info::types::{RPC_PIPEFS};
-pub use lrs_fs::info::types::{SECURITYFS};
-pub use lrs_fs::info::types::{SELINUX};
-pub use lrs_fs::info::types::{SMACK};
-pub use lrs_fs::info::types::{SMB};
-pub use lrs_fs::info::types::{SNFS};
-pub use lrs_fs::info::types::{SOCKFS};
-pub use lrs_fs::info::types::{SQUASHFS};
-pub use lrs_fs::info::types::{SYSFS};
-pub use lrs_fs::info::types::{SYSV2};
-pub use lrs_fs::info::types::{SYSV4};
-pub use lrs_fs::info::types::{TMPFS};
-pub use lrs_fs::info::types::{UBIFS};
-pub use lrs_fs::info::types::{UDF};
-pub use lrs_fs::info::types::{UFS};
-pub use lrs_fs::info::types::{UFS_BYTESWAPPED};
-pub use lrs_fs::info::types::{USBDEVFS};
-pub use lrs_fs::info::types::{V9FS};
-pub use lrs_fs::info::types::{VMHGFS};
-pub use lrs_fs::info::types::{VXFS};
-pub use lrs_fs::info::types::{VZFS};
-pub use lrs_fs::info::types::{XENFS};
-pub use lrs_fs::info::types::{XENIX};
-pub use lrs_fs::info::types::{XFS};
-pub use lrs_fs::info::types::{XIAFS};
-pub use lrs_fs::info::types::{ZFS};
+/// Mount and unmount flags.
+///
+/// = Description
+///
+/// This module contains pre-defined flags for mount and unmount operations.
+pub mod flags {
+    pub use lrs_fs::mount::{
+        MOUNT_NONE, MOUNT_READ_ONLY, MOUNT_NO_SET_ID, MOUNT_NO_DEVICE_ACCESS,
+        MOUNT_NO_EXEC, MOUNT_SYNC, MOUNT_REMOUNT, MOUNT_MANDATORY_LOCKING, MOUNT_DIR_SYNC,
+        MOUNT_NO_ACCESS_TIME, MOUNT_NO_DIR_ACCESS_TIME, MOUNT_BIND, MOUNT_MOVE, MOUNT_REC,
+        MOUNT_SILENT, MOUNT_POSIX_ACL, MOUNT_UNBINDABLE, MOUNT_PRIVATE, MOUNT_SLAVE,
+        MOUNT_SHARED, MOUNT_STRICT_ACCESS_TIME, MOUNT_LAZY_TIME,
+    };
+
+    pub use lrs_fs::unmount::{
+        UNMOUNT_NONE, UNMOUNT_FORCE, UNMOUNT_LAZY, UNMOUNT_EXPIRE, UNMOUNT_NO_FOLLOW,
+    };
+}
+
+/// Filesystem types.
+///
+/// = Description
+///
+/// This module contains constants identifying filesystems.
+pub mod types {
+    pub use lrs_fs::info::types::{
+        ADFS, AFFS, AFS, ANON_INODE_FS, AUFS, AUTOFS, BDEVFS, BEFS, BFS, BINFMTFS, BTRFS,
+        CEPH, CGROUP, CIFS, CODA, COH, CONFIGFS, CRAMFS, CRAMFS_WEND, DEBUGFS, DEVFS,
+        DEVPTS, ECRYPTFS, EFIVARFS, EFS, EXOFS, EXT, EXT2, EXT2_OLD, F2FS, FAT, FHGFS,
+        FUSEBLK, FUSECTL, FUTEXFS, GFS, GPFS, HFS, HFS_PLUS, HFS_X, HOSTFS, HPFS,
+        HUGETLBFS, INOTIFYFS, ISOFS, ISOFS_R_WIN, ISOFS_WIN, JFFS, JFFS2, JFS, KAFS,
+        LOGFS, LUSTRE, MINIX, MINIX_30, MINIX_V2, MINIX_V2_30, MINIX_V3, MQUEUE, MSDOS,
+        MTD_INODE_FS, NCP, NFS, NFSD, NILFS, NTFS, OCFS2, OPENPROM, PANFS, PIPEFS, PROC,
+        PSTOREFS, QNX4, QNX6, RAMFS, REISERFS, ROMFS, RPC_PIPEFS, SECURITYFS, SELINUX,
+        SMACK, SMB, SNFS, SOCKFS, SQUASHFS, SYSFS, SYSV2, SYSV4, TMPFS, UBIFS, UDF, UFS,
+        UFS_BYTESWAPPED, USBDEVFS, V9FS, VMHGFS, VXFS, VZFS, XENFS, XENIX, XFS, XIAFS,
+        ZFS,
+    };
+}

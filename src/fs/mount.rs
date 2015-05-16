@@ -4,127 +4,57 @@
 
 #[prelude_import] use base::prelude::*;
 use core::{mem};
-use cty::{c_ulong, c_int, MS_RDONLY, MS_NOSUID, MS_NODEV, MS_NOEXEC, MS_SYNCHRONOUS,
+use core::ops::{BitOr, Not, BitAnd};
+use cty::{c_ulong, MS_RDONLY, MS_NOSUID, MS_NODEV, MS_NOEXEC, MS_SYNCHRONOUS,
           MS_REMOUNT, MS_MANDLOCK, MS_DIRSYNC, MS_NOATIME, MS_NODIRATIME,
-          MS_BIND, MS_MOVE, MS_REC, MS_SILENT, MS_POSIXACL, MS_UNBINDABLE,
-          MS_PRIVATE, MS_SLAVE, MS_SHARED, MS_STRICTATIME, PATH_MAX, MNT_FORCE,
-          MNT_DETACH, MNT_EXPIRE, UMOUNT_NOFOLLOW,};
+          MS_BIND, MS_MOVE, MS_REC, MS_SILENT, MS_POSIXACL, MS_UNBINDABLE, MS_LAZYTIME,
+          MS_PRIVATE, MS_SLAVE, MS_SHARED, MS_STRICTATIME, PATH_MAX};
+use fmt::{Debug, Write};
 use syscall::{self};
 use str_three::{ToCString};
 use alloc::{FbHeap};
 use rmo::{Rmo};
 
-/// Flags used when mounting a filesystem.
-pub struct MountFlags(c_ulong);
-
-impl MountFlags {
-    /// Creates new MountFlags with the default flags set.
-    ///
-    /// NB: This means the value is 0 in the underlying representation, but we've switched
-    /// some flags around so here are the default flags:
-    ///
-    /// - `set_user_id`
-    /// - `device_access`
-    /// - `exec`
-    /// - `access_time`
-    /// - `dir_access_time`
-    /// - `bindable`
-    pub fn new() -> MountFlags {
-        MountFlags(0)
-    }
-
-    /// If this flag is set, then the filesystem is read-only.
-    pub fn is_read_only(&self) -> bool { self.0 & MS_RDONLY != 0 }
-
-    /// If this flag is not set, then set-user-id files have no effect on the filesystem.
-    pub fn is_set_user_id(&self) -> bool { self.0 & MS_NOSUID == 0 }
-
-    /// If this flag is not set, then devices on this filesystem cannot be accessed.
-    pub fn is_device_access(&self) -> bool { self.0 & MS_NODEV == 0 }
-
-    /// If this flag is not set, then no programs on this filesystem can be executed.
-    pub fn is_exec(&self) -> bool { self.0 & MS_NOEXEC == 0 }
-
-    /// If this flag is set, then all writes to this filesystem are synchronous.
-    pub fn is_sync(&self) -> bool { self.0 & MS_SYNCHRONOUS != 0 }
-
-    /// If this flag is set, then a remount operation is performed.
-    pub fn is_remount(&self) -> bool { self.0 & MS_REMOUNT != 0 }
-
-    /// If this flag is set, then mandatory locking is supported on the filesystem.
-    pub fn is_mandatory_locking(&self) -> bool { self.0 & MS_MANDLOCK != 0 }
-
-    /// If this flag is set, then directory changes on this filesystem are synchonous.
-    pub fn is_dir_sync(&self) -> bool { self.0 & MS_DIRSYNC != 0 }
-
-    /// If this flag is not set, then the access times of files on this filesystem are not
-    /// updated.
-    pub fn is_access_time(&self) -> bool { self.0 & MS_NOATIME == 0 }
-
-    /// If this flag is not set, then the access times of directories on this filesystem
-    /// are not updated.
-    pub fn is_dir_access_time(&self) -> bool { self.0 & MS_NODIRATIME == 0 }
-
-    /// If this flag is set, then a bind operation is performed.
-    pub fn is_bind(&self) -> bool { self.0 & MS_BIND != 0 }
-
-    /// If this flag is set, then a mount is atomically moved to another mount point.
-    pub fn is_move(&self) -> bool { self.0 & MS_MOVE != 0 }
-
-    /// Not documented.
-    pub fn is_rec(&self) -> bool { self.0 & MS_REC != 0 }
-
-    /// If this flag is set, then certain warning messages are omited from the kernel log.
-    pub fn is_silent(&self) -> bool { self.0 & MS_SILENT != 0 }
-
-    /// Something about ACL. Not documented.
-    pub fn is_posix_acl(&self) -> bool { self.0 & MS_POSIXACL != 0 }
-
-    /// Not documented.
-    pub fn is_bindable(&self) -> bool { self.0 & MS_UNBINDABLE == 0 }
-
-    /// Not documented.
-    pub fn is_private(&self) -> bool { self.0 & MS_PRIVATE != 0 }
-
-    /// Not documented.
-    pub fn is_slave(&self) -> bool { self.0 & MS_SLAVE != 0 }
-
-    /// Not documented.
-    pub fn is_shared(&self) -> bool { self.0 & MS_SHARED != 0 }
-
-    /// If this flag is set, then every single access to a file causes an access time
-    /// update.
-    pub fn is_strict_access_time(&self) -> bool { self.0 & MS_STRICTATIME != 0 }
-
-    pub fn set_read_only(&mut          self, val: bool) -> &mut MountFlags { self.set_bit(MS_RDONLY,      val);  self }
-    pub fn set_set_user_id(&mut        self, val: bool) -> &mut MountFlags { self.set_bit(MS_NOSUID,      !val); self }
-    pub fn set_device_access(&mut      self, val: bool) -> &mut MountFlags { self.set_bit(MS_NODEV,       !val); self }
-    pub fn set_exec(&mut               self, val: bool) -> &mut MountFlags { self.set_bit(MS_NOEXEC,      !val); self }
-    pub fn set_sync(&mut               self, val: bool) -> &mut MountFlags { self.set_bit(MS_SYNCHRONOUS, val);  self }
-    pub fn set_remount(&mut            self, val: bool) -> &mut MountFlags { self.set_bit(MS_REMOUNT,     val);  self }
-    pub fn set_mandatory_locking(&mut  self, val: bool) -> &mut MountFlags { self.set_bit(MS_MANDLOCK,    val);  self }
-    pub fn set_dir_sync(&mut           self, val: bool) -> &mut MountFlags { self.set_bit(MS_DIRSYNC,     val);  self }
-    pub fn set_access_time(&mut        self, val: bool) -> &mut MountFlags { self.set_bit(MS_NOATIME,     !val); self }
-    pub fn set_dir_access_time(&mut    self, val: bool) -> &mut MountFlags { self.set_bit(MS_NODIRATIME,  !val); self }
-    pub fn set_bind(&mut               self, val: bool) -> &mut MountFlags { self.set_bit(MS_BIND,        val);  self }
-    pub fn set_move(&mut               self, val: bool) -> &mut MountFlags { self.set_bit(MS_MOVE,        val);  self }
-    pub fn set_rec(&mut                self, val: bool) -> &mut MountFlags { self.set_bit(MS_REC,         val);  self }
-    pub fn set_silent(&mut             self, val: bool) -> &mut MountFlags { self.set_bit(MS_SILENT,      val);  self }
-    pub fn set_posix_acl(&mut          self, val: bool) -> &mut MountFlags { self.set_bit(MS_POSIXACL,    val);  self }
-    pub fn set_bindable(&mut           self, val: bool) -> &mut MountFlags { self.set_bit(MS_UNBINDABLE,  !val); self }
-    pub fn set_private(&mut            self, val: bool) -> &mut MountFlags { self.set_bit(MS_PRIVATE,     val);  self }
-    pub fn set_slave(&mut              self, val: bool) -> &mut MountFlags { self.set_bit(MS_SLAVE,       val);  self }
-    pub fn set_shared(&mut             self, val: bool) -> &mut MountFlags { self.set_bit(MS_SHARED,      val);  self }
-    pub fn set_strict_access_time(&mut self, val: bool) -> &mut MountFlags { self.set_bit(MS_STRICTATIME, val);  self }
-
-    fn set_bit(&mut self, bit: c_ulong, val: bool) {
-        self.0 = (self.0 & !bit) | (bit * val as c_ulong);
-    }
-}
-
-/// Mounts a file `src` of type `ty` at `dst` with the flags `flags`.
+/// Mounts a filesystem.
 ///
-/// The contents of the `data` field depend on the filesystem type.
+/// [argument, src]
+/// The file that will be mounted.
+///
+/// [argument, dst]
+/// The point at which it will be mounted.
+///
+/// [argument, ty]
+/// The type of the filesystem.
+///
+/// [argument, flags]
+/// The flags to be used to mount the filesystem.
+///
+/// [argument, data]
+/// Filesystem dependent data.
+///
+/// = Remarks
+///
+/// :flags: link:lrs::fs::flags
+///
+/// See {flags} for pre-defined mount flags.
+///
+/// = Examples
+///
+/// The following example bind-mounts a directory `a` read-only at the path `b`. Both
+/// paths must exist in the current working directory and the example must be executed as
+/// root.
+///
+/// ----
+/// mount("a", "b", "", MOUNT_READ_ONLY | MOUNT_BIND, "").unwrap();
+/// ----
+///
+/// The example in link:lrs::fs::unmount[unmount] shows how to perform the unmount
+/// operation.
+///
+/// = See also
+///
+/// * link:man:mount(2)
+/// * {flags}
 pub fn mount<P, Q, R, S>(src: P, dst: Q, ty: R, flags: MountFlags, data: S) -> Result
     where P: ToCString, Q: ToCString, R: ToCString, S: ToCString
 {
@@ -139,55 +69,187 @@ pub fn mount<P, Q, R, S>(src: P, dst: Q, ty: R, flags: MountFlags, data: S) -> R
     rv!(syscall::mount(&src, &dst, &ty, flags.0, &data))
 }
 
-/// Flags used for unmounting.
-pub struct UnmountFlags(c_int);
+/// Flags used when mounting a filesystem.
+///
+/// = Remarks
+///
+/// :flags: link:lrs::fs::flags
+///
+/// See {flags} for pre-defined mount flags.
+///
+/// = See also
+///
+/// * flags
+pub struct MountFlags(c_ulong);
 
-impl UnmountFlags {
-    /// Creates new UnmountFlags with the default flags set.
-    ///
-    /// NB: This means the value is 0 in the underlying representation, but we've switched
-    /// some flags around so here are the default flags:
-    ///
-    /// - `follow`
-    pub fn new() -> UnmountFlags {
-        UnmountFlags(0)
-    }
-
-    /// If this flag is set, then the unmount is performed even if the device is busy.
-    ///
-    /// This can cause data loss and only works on NFS mounts.
-    pub fn is_force(&self) -> bool { self.0 & MNT_FORCE != 0 }
-
-    /// If this flag is set, then the mount point cannot be accessed anymore and the
-    /// device is unmounted when the last access is done.
-    pub fn is_lazy(&self) -> bool { self.0 & MNT_DETACH != 0 }
-
-    /// If this flag is set, then an "expire" flag is set on the filesystem.
-    ///
-    /// The "expire" flag is automatically unset when the filesystem is accessed again. If
-    /// an unmount operation with this flag set is used and the "expire" flag is already
-    /// set on the filesystem, then the device is unmounted.
-    pub fn is_expire(&self) -> bool { self.0 & MNT_EXPIRE != 0 }
-
-    /// If this flag is not set and `dst` is a symbolic link, then we don't follow the
-    /// link.
-    pub fn is_follow(&self) -> bool { self.0 & UMOUNT_NOFOLLOW == 0 }
-
-    pub fn set_force(&mut  self, val: bool) -> &mut UnmountFlags { self.set_bit(MNT_FORCE,       val);  self }
-    pub fn set_lazy(&mut   self, val: bool) -> &mut UnmountFlags { self.set_bit(MNT_DETACH,      val);  self }
-    pub fn set_expire(&mut self, val: bool) -> &mut UnmountFlags { self.set_bit(MNT_EXPIRE,      val);  self }
-    pub fn set_follow(&mut self, val: bool) -> &mut UnmountFlags { self.set_bit(UMOUNT_NOFOLLOW, !val); self }
-
-    fn set_bit(&mut self, bit: c_int, val: bool) {
-        self.0 = (self.0 & !bit) | (bit * val as c_int);
+impl BitOr for MountFlags {
+    type Output = MountFlags;
+    fn bitor(self, other: MountFlags) -> MountFlags {
+        MountFlags(self.0 | other.0)
     }
 }
 
-/// Unmounts the device mounted at `dst` with the flags `flags`.
-pub fn unmount<P>(dst: P, flags: UnmountFlags) -> Result
-    where P: ToCString,
-{
-    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let dst: Rmo<_, FbHeap> = try!(dst.rmo_cstr(&mut buf));
-    rv!(syscall::umount(&dst, flags.0))
+impl BitAnd for MountFlags {
+    type Output = MountFlags;
+    fn bitand(self, other: MountFlags) -> MountFlags {
+        MountFlags(self.0 & other.0)
+    }
+}
+
+impl Not for MountFlags {
+    type Output = MountFlags;
+    fn not(self) -> MountFlags {
+        MountFlags(!self.0)
+    }
+}
+
+pub const MOUNT_NONE: MountFlags = MountFlags(0);
+
+macro_rules! create {
+    ($($(#[$meta:meta])* flag $name:ident = $val:expr;)*) => {
+        $($(#[$meta])* pub const $name: MountFlags = MountFlags($val);)*
+
+        impl Debug for MountFlags {
+            fn fmt<W: Write>(&self, w: &mut W) -> Result {
+                let mut first = true;
+                $(
+                    if self.0 & $val != 0 {
+                        if !first { try!(w.write(b"|")); }
+                        first = false;
+                        try!(w.write_all(stringify!($name).as_bytes()));
+                    }
+                )*
+                let _ = first;
+                Ok(())
+            }
+        }
+    }
+}
+
+create! {
+    #[doc = "Mount the filesystem read-only.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:mount(2) and MS_RDONLY therein"]
+    flag MOUNT_READ_ONLY = MS_RDONLY;
+    
+    #[doc = "Don't respect set-user-id and set-group-id flags on the filesystem.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:mount(2) and MS_NOSUID therein"]
+    flag MOUNT_NO_SET_ID = MS_NOSUID;
+    
+    #[doc = "Don't allow access to devices on this filesystem.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:mount(2) and MS_NODEV therein"]
+    flag MOUNT_NO_DEVICE_ACCESS = MS_NODEV;
+    
+    #[doc = "Don't allow execution of programs on this filesystem.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:mount(2) and MS_NOEXEC therein"]
+    flag MOUNT_NO_EXEC = MS_NOEXEC;
+    
+    #[doc = "Flush all data and meta-data changes to this filesystem to the disk \
+             immediately.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:mount(2) and MS_SYNCHRONOUS therein"]
+    flag MOUNT_SYNC = MS_SYNCHRONOUS;
+    
+    #[doc = "Perform a remount operation.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:mount(2) and MS_REMOUNT therein"]
+    flag MOUNT_REMOUNT = MS_REMOUNT;
+    
+    #[doc = "Allow mandatory locking on the monut point.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:mount(2) and MS_MANBLOCK therein"]
+    flag MOUNT_MANDATORY_LOCKING = MS_MANDLOCK;
+    
+    #[doc = "Make directory changes on this filesystem synchonous.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:mount(2) and MS_DIRSYNC therein"]
+    flag MOUNT_DIR_SYNC = MS_DIRSYNC;
+    
+    #[doc = "Don't update the access times of files on this filesystem.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:mount(2) and MS_NOATIME therein"]
+    flag MOUNT_NO_ACCESS_TIME = MS_NOATIME;
+    
+    #[doc = "Don't update the access times of directories on this filesystem.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:mount(2) and MS_NODIRATIME therein"]
+    flag MOUNT_NO_DIR_ACCESS_TIME = MS_NODIRATIME;
+    
+    #[doc = "Perform a bind operation.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:mount(2) and MS_BIND therein"]
+    flag MOUNT_BIND = MS_BIND;
+    
+    #[doc = "Atomically move a mount to another mount point.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:mount(2) and MS_MOVE therein"]
+    flag MOUNT_MOVE = MS_MOVE;
+    
+    #[doc = "Not documented."]
+    flag MOUNT_REC = MS_REC;
+    
+    #[doc = "Omit certain warning messages from the kernel log.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:mount(2) and MS_SILENT therein"]
+    flag MOUNT_SILENT = MS_SILENT;
+    
+    #[doc = "Not documented."]
+    flag MOUNT_POSIX_ACL = MS_POSIXACL;
+    
+    #[doc = "Not documented."]
+    flag MOUNT_UNBINDABLE = MS_UNBINDABLE;
+    
+    #[doc = "Not documented."]
+    flag MOUNT_PRIVATE = MS_PRIVATE;
+    
+    #[doc = "Not documented."]
+    flag MOUNT_SLAVE = MS_SLAVE;
+    
+    #[doc = "Not documented."]
+    flag MOUNT_SHARED = MS_SHARED;
+    
+    #[doc = "Perform an access time update after every access.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:mount(2) and MS_STRICTATIME therein"]
+    flag MOUNT_STRICT_ACCESS_TIME = MS_STRICTATIME;
+
+    #[doc = "Maintain changes to access/modification/status-change times in memory and \
+             only update the inodes under special circumstances.\n"]
+    #[doc = "= Remarks"]
+    #[doc = ":lazy: link:man:mount(2)"]
+    #[doc = "See the {lazy}[manual page] and MS_LAZYTIME therein for the details.\n"]
+    #[doc = "== Kernel versions"]
+    #[doc = "The required kernel version is 4.0.\n"]
+    #[doc = "= See also"]
+    #[doc = "* {lazy} and MS_LAZYTIME therein"]
+    flag MOUNT_LAZY_TIME = MS_LAZYTIME;
+}
+
+impl MountFlags {
+    /// Sets a flag.
+    ///
+    /// [argument, flag]
+    /// The flag to be set.
+    pub fn set(&mut self, flag: MountFlags) {
+        self.0 |= flag.0
+    }
+
+    /// Clears a flag.
+    ///
+    /// [argument, flag]
+    /// The flag to be cleared.
+    pub fn unset(&mut self, flag: MountFlags) {
+        self.0 &= !flag.0
+    }
+
+    /// Returns whether a flag is set.
+    ///
+    /// [argument, flag]
+    /// The flag to be checked.
+    pub fn is_set(&self, flag: MountFlags) -> bool {
+        self.0 & flag.0 != 0
+    }
 }

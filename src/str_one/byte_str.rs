@@ -4,7 +4,7 @@
 
 #[prelude_import] use base::prelude::*;
 use core::ops::{Index, IndexMut, Range, RangeFrom, RangeTo, RangeFull};
-use core::{str};
+use core::{mem, str};
 use base::rmo::{AsRef, AsMut};
 use fmt::{self, Debug, Display, UpperHex, Write};
 use parse::{Parse, Parsable};
@@ -16,6 +16,24 @@ use no_null_str::{AsNoNullStr, AsMutNoNullStr, NoNullStr};
 /// contain UTF-8.
 pub struct ByteStr {
     data: [u8],
+}
+
+/// Objects that can be borrowed as a byte string.
+///
+/// = Remarks
+///
+/// This will likely be replaced by type ascription.
+pub trait AsByteStr {
+    fn as_byte_str(&self) -> &ByteStr;
+}
+
+/// Objects that can be mutably borrowed as a byte string.
+///
+/// = Remarks
+///
+/// This will likely be replaced by type ascription.
+pub trait AsMutByteStr {
+    fn as_mut_byte_str(&mut self) -> &mut ByteStr;
 }
 
 impl ByteStr {
@@ -138,7 +156,7 @@ impl ToCStr for ByteStr {
 
 impl Debug for ByteStr {
     fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
-        let mut bytes = self.as_ref();
+        let mut bytes: &[u8] = self.as_ref();
         try!(w.write_all(b"\""));
         while bytes.len() > 0 {
             let remove = {
@@ -166,20 +184,56 @@ impl Display for ByteStr {
 
 impl Parse for ByteStr {
     fn parse<P: Parsable>(&self) -> Result<P> {
-        self.as_ref().parse()
+        let bytes: &[u8] = self.as_ref();
+        bytes.parse()
     }
 }
 
-////////////////////////
-
-/// Objects that can be borrowed as a byte string.
-pub trait AsByteStr {
-    fn as_byte_str(&self) -> &ByteStr;
+impl AsRef<ByteStr> for [u8] {
+    fn as_ref(&self) -> &ByteStr {
+        unsafe { mem::cast(self) }
+    }
 }
 
-/// Objects that can be mutably borrowed as a byte string.
-pub trait AsMutByteStr: AsByteStr {
-    fn as_mut_byte_str(&mut self) -> &mut ByteStr;
+impl AsMut<ByteStr> for [u8] {
+    fn as_mut(&mut self) -> &mut ByteStr {
+        unsafe { mem::cast(self) }
+    }
+}
+
+impl AsRef<ByteStr> for [i8] {
+    fn as_ref(&self) -> &ByteStr {
+        let bytes: &[u8] = self.as_ref();
+        bytes.as_ref()
+    }
+}
+
+impl AsMut<ByteStr> for [i8] {
+    fn as_mut(&mut self) -> &mut ByteStr {
+        let bytes: &mut [u8] = self.as_mut();
+        bytes.as_mut()
+    }
+}
+
+impl AsRef<ByteStr> for str {
+    fn as_ref(&self) -> &ByteStr {
+        let bytes: &[u8] = self.as_ref();
+        bytes.as_ref()
+    }
+}
+
+impl AsRef<ByteStr> for NoNullStr {
+    fn as_ref(&self) -> &ByteStr {
+        let bytes: &[u8] = self.as_ref();
+        bytes.as_ref()
+    }
+}
+
+impl AsRef<ByteStr> for CStr {
+    fn as_ref(&self) -> &ByteStr {
+        let bytes: &[u8] = self.as_ref();
+        bytes[..bytes.len()-1].as_ref()
+    }
 }
 
 impl<T: ?Sized> AsByteStr for T
@@ -191,7 +245,7 @@ impl<T: ?Sized> AsByteStr for T
 }
 
 impl<T: ?Sized> AsMutByteStr for T
-    where T: AsRef<ByteStr> + AsMut<ByteStr>,
+    where T: AsMut<ByteStr>,
 {
     fn as_mut_byte_str(&mut self) -> &mut ByteStr {
         self.as_mut()

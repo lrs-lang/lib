@@ -17,8 +17,8 @@ extern crate lrs_cty       as cty;
 extern crate lrs_syscall   as syscall;
 extern crate lrs_rv        as rv;
 extern crate lrs_str_three as str_three;
-extern crate lrs_alloc as alloc;
-extern crate lrs_rmo as rmo;
+extern crate lrs_alloc     as alloc;
+extern crate lrs_rmo       as rmo;
 
 mod lrs {
     pub use fmt::lrs::*;
@@ -29,6 +29,7 @@ use syscall::{sync};
 
 pub mod info;
 pub mod mount;
+pub mod unmount;
 
 /// Writes all buffered data and metadata to the disks.
 pub fn sync_all() {

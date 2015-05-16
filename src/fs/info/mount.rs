@@ -8,27 +8,48 @@ use cty::{ST_RDONLY, ST_NOSUID, ST_NODEV, ST_NOEXEC, ST_SYNCHRONOUS, ST_MANDLOCK
           ST_NOATIME, ST_NODIRATIME, ST_RELATIME, c_ulong};
 
 /// Mount flags of a filesystem.
+///
+/// [field, 1]
+/// The integer representing the flags.
 #[derive(Pod, Eq)]
 pub struct Flags(pub c_ulong);
 
 impl Flags {
-    /// Read only
+    /// Returns whether the filesystem is mounted read only.
     pub fn read_only(self)                   -> bool { self.0 & ST_RDONLY      != 0 }
-    /// No set-user-ID / set-group-ID
+
+    /// Returns whether the filesystem is mounted without support for set-user-ID and
+    /// set-group-ID executables.
     pub fn no_set_id(self)                   -> bool { self.0 & ST_NOSUID      != 0 }
-    /// No access to device special files.
+
+    /// Returns whether the filesystem is mounted without support for device special
+    /// files.
     pub fn no_dev(self)                      -> bool { self.0 & ST_NODEV       != 0 }
-    /// No execution.
+
+    /// Returns whether the filesystem is mounted without support for executables.
+    ///
+    /// = Remarks
+    ///
+    /// That is, no programs located in this filesystem can be executed.
     pub fn no_exec(self)                     -> bool { self.0 & ST_NOEXEC      != 0 }
-    /// Data and metadata is written to disk immediately.
+
+    /// Returns whether data and metadata modifications to this filesystem are flushed to
+    /// the disk immediately.
     pub fn synchronous(self)                 -> bool { self.0 & ST_SYNCHRONOUS != 0 }
-    /// Mandatory locking is enabled.
+
+    /// Returns whether the filesystem is mounted with support for mandatory locking.
     pub fn mandatory_locking(self)           -> bool { self.0 & ST_MANDLOCK    != 0 }
-    /// Access time is not automatically updated.
+
+    /// Returns whether the access time of files in this filesystem is not automatically
+    /// updated.
     pub fn no_access_time_update(self)       -> bool { self.0 & ST_NOATIME     != 0 }
-    /// Access time is not automatically updated for directorise.
+
+    /// Returns whether the access time of directories in this filesystem is not
+    /// automatically updated.
     pub fn no_dir_access_time_update(self)   -> bool { self.0 & ST_NODIRATIME  != 0 }
-    /// Access time is updated relative to creation and modification time.
+
+    /// Returns whether the access time is only updated if its older than the modification
+    /// or status change times.
     pub fn relative_access_time_update(self) -> bool { self.0 & ST_RELATIME    != 0 }
 }
 
