@@ -551,25 +551,15 @@ impl Display for AccessMode {
 
 impl Parsable for AccessMode {
     fn parse_bytes_init(s: &[u8]) -> Result<(AccessMode, usize)> {
-        if s.len() < 3 {
-            return Err(error::InvalidSequence);
-        }
         let mut mode = AccessMode(0);
-        match s[0] {
-            b'r' => mode.set_readable(true),
-            b'-' => { },
-            _ => return Err(error::InvalidSequence),
+        for &c in s {
+            match c {
+                b'r' => mode.set_readable(true),
+                b'w' => mode.set_writable(true),
+                b'x' => mode.set_executable(true),
+                _ => return Err(error::InvalidSequence),
+            }
         }
-        match s[1] {
-            b'w' => mode.set_writable(true),
-            b'-' => { },
-            _ => return Err(error::InvalidSequence),
-        }
-        match s[2] {
-            b'x' => mode.set_executable(true),
-            b'-' => { },
-            _ => return Err(error::InvalidSequence),
-        }
-        Ok((mode, 3))
+        Ok((mode, s.len()))
     }
 }

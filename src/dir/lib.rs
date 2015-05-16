@@ -41,7 +41,7 @@ use rmo::{Rmo, ToOwned};
 use alloc::{FbHeap};
 
 use file::{File, Seek};
-use file::flags::{Flags};
+use file::flags::{FILE_ONLY_DIRECTORY, Mode};
 use file::info::{Type, file_type_from_mode};
 
 /// The default buffer size used for reading directory entries.
@@ -82,9 +82,7 @@ pub struct Iter<'a> {
 
 impl<'a> Iter<'a> {
     fn new(path: &CStr, error: Option<&'a mut Result>) -> Iter<'a> {
-        let mut flags = Flags::new();
-        flags.set_only_directory(true);
-        match File::open(path, flags) {
+        match File::open(path, FILE_ONLY_DIRECTORY, Mode(0)) {
             Ok(file) => {
                 match Vec::with_capacity(DEFAULT_BUF_SIZE) {
                     Ok(v) => Iter {
