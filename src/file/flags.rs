@@ -8,10 +8,11 @@ use fmt::{Debug, Display, Write};
 use base::{error};
 use parse::{Parsable};
 use cty::{
-    self, c_int, umode_t, S_IROTH, S_IWOTH, S_IXOTH, O_CLOEXEC, O_DIRECT, O_DIRECTORY,
+    c_int, umode_t, S_IROTH, S_IWOTH, S_IXOTH, O_CLOEXEC, O_DIRECT, O_DIRECTORY,
     O_EXCL, O_NOATIME, O_NOCTTY, O_NOFOLLOW, O_TRUNC, O_APPEND, O_ASYNC, O_DSYNC,
     O_NONBLOCK, O_SYNC, O_PATH, O_TMPFILE, O_RDWR, O_RDONLY, O_WRONLY, O_LARGEFILE,
-    O_CREAT,
+    O_CREAT, S_ISUID, S_ISGID, S_ISVTX, S_IRUSR, S_IWUSR, S_IXUSR, S_IRGRP, S_IWGRP,
+    S_IXGRP,
 };
 
 /// Flags for opening and modifying a file.
@@ -39,7 +40,7 @@ impl Not for FileFlags {
     }
 }
 
-macro_rules! create {
+macro_rules! create_flags {
     ($($(#[$meta:meta])* flag $name:ident = $val:expr;)*) => {
         $($(#[$meta])* pub const $name: FileFlags = FileFlags($val);)*
 
@@ -60,7 +61,7 @@ macro_rules! create {
     }
 }
 
-create! {
+create_flags! {
     #[doc = "Create a regulary file if it doesn't already exist.\n"]
     #[doc = "= See also"]
     #[doc = "* link:man:open(2) and O_CREAT therein"]
@@ -170,10 +171,17 @@ create! {
 
     #[doc = "Create a temporary file that has no name in the filesystem.\n"]
     #[doc = "= Remarks"]
+    #[doc = ":link: link:lrs::file::File::link[link]"]
     #[doc = "The provided path should specify a directory in which the unnamed inode \
              will be created.\n"]
+    #[doc = "If this flag is set, then one of FILE_WRITE_ONLY and FILE_READ_WRITE also \
+             has to be set. Additionally, the FILE_EXCULSIVE flag can be set. If this \
+             flag is not set, then the file can later be made visible in the filesystem \
+             via the {link} function. The mode of the file will be the mode passed to \
+             `open`.\n"]
     #[doc = "= See also"]
     #[doc = "* link:man:open(2) and O_TMPFILE therein"]
+    #[doc = "* {link}"]
     flag FILE_TEMP = O_TMPFILE;
 
     #[doc = "Allow opening large files on 32 bit systems.\n"]
@@ -214,157 +222,159 @@ impl FileFlags {
 #[derive(Pod, Eq)]
 pub struct Mode(pub umode_t);
 
+impl BitOr for Mode {
+    type Output = Mode;
+    fn bitor(self, other: Mode) -> Mode {
+        Mode(self.0 | other.0)
+    }
+}
+
+impl BitAnd for Mode {
+    type Output = Mode;
+    fn bitand(self, other: Mode) -> Mode {
+        Mode(self.0 & other.0)
+    }
+}
+
+impl Not for Mode {
+    type Output = Mode;
+    fn not(self) -> Mode {
+        Mode(!self.0)
+    }
+}
+
+/// A mode with the default bits for a file:
+///
+/// * `user readable`
+/// * `user writable`
+/// * `group readable`
+/// * `world readable`
+pub const MODE_FILE: Mode = Mode(S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+/// A mode with the default bits for a directory:
+///
+/// * `owner readable`
+/// * `owner writable`
+/// * `owner executable`
+/// * `group readable`
+/// * `group executable`
+/// * `world readable`
+/// * `world executable`
+pub const MODE_DIRECTORY: Mode = Mode(S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP |
+                                      S_IROTH | S_IXOTH);
+
+/// When the file is executed, the effective user id is set to the owner's user id.
+pub const MODE_SET_USER_ID: Mode = Mode(S_ISUID);
+
+/// See the remarks.
+///
+/// = Remarks
+///
+/// This flag has different meanings when applied to regular files and directories.
+///
+/// == On regular files
+///
+/// When the file is executed, the effective group id is set to the owning group's id.
+///
+/// == On directories
+///
+/// When a file is created in this directory, the group owner of the file is the same as
+/// for this directory. When a directory is created in this directory, it additionally
+/// inherits the set-group-id flag.
+///
+/// = See also
+///
+/// * link:man:stat(2) and S_ISGID therein.
+pub const MODE_SET_GROUP_ID: Mode = Mode(S_ISGID);
+
+/// Files in a directory with this flag can only be deleted by their owners, the owner of
+/// the directory, or a privileged process.
+///
+/// = See also
+///
+/// * link:man:stat(2) and S_ISVTX therein.
+pub const MODE_STICKY: Mode = Mode(S_ISVTX);
+
+/// The owner of the file can read from it.
+pub const MODE_USER_READ: Mode = Mode(S_IRUSR);
+
+/// The owner of the file can write to it.
+pub const MODE_USER_WRITE: Mode = Mode(S_IWUSR);
+
+/// See the remarks.
+///
+/// This flag has different meanings when applied to regular files and directories.
+///
+/// == On regular files
+///
+/// The owner of this file can execute it.
+///
+/// == On directories
+///
+/// The owner of the directory can read the contents of the directory.
+pub const MODE_USER_EXEC: Mode = Mode(S_IXUSR);
+
+/// Members of the owning group of the file can read from it.
+pub const MODE_GROUP_READ: Mode = Mode(S_IRGRP);
+
+/// Members of the owning group of the file can write to it.
+pub const MODE_GROUP_WRITE: Mode = Mode(S_IWGRP);
+
+/// See the remarks.
+///
+/// This flag has different meanings when applied to regular files and directories.
+///
+/// == On regular files
+///
+/// Members of the owning group of this file can execute it.
+///
+/// == On directories
+///
+/// Members of the owning group of the directory can read the contents of the directory.
+pub const MODE_GROUP_EXEC: Mode = Mode(S_IXGRP);
+
+/// Everyone can read from the file.
+pub const MODE_WORLD_READ: Mode = Mode(S_IROTH);
+
+/// Everyone can write to the file.
+pub const MODE_WORLD_WRITE: Mode = Mode(S_IWOTH);
+
+/// See the remarks.
+///
+/// This flag has different meanings when applied to regular files and directories.
+///
+/// == On regular files
+///
+/// Everyone can execute the file.
+///
+/// == On directories
+///
+/// Everyone can read the contents of the directory.
+pub const MODE_WORLD_EXEC: Mode = Mode(S_IXOTH);
+
 impl Mode {
-    /// Create permissions will all bits unset.
-    pub fn empty() -> Mode {
-        Mode(0)
-    }
-
-    /// Create permissions with the default bits for a file:
+    /// Sets a mode.
     ///
-    /// - `owner readable`
-    /// - `owner writable`
-    /// - `group readable`
-    /// - `world readable`
-    pub fn new_file() -> Mode {
-        Mode(0o644)
+    /// [argument, mode]
+    /// The mode to be set.
+    pub fn set(&mut self, mode: Mode) {
+        self.0 |= mode.0
     }
 
-    /// Create permissions with the default bits for a directory:
+    /// Clears a mode.
     ///
-    /// - `owner readable`
-    /// - `owner writable`
-    /// - `owner executable`
-    /// - `group readable`
-    /// - `group executable`
-    /// - `world readable`
-    /// - `world executable`
-    pub fn new_directory() -> Mode {
-        Mode(0o755)
+    /// [argument, mode]
+    /// The mode to be cleared.
+    pub fn unset(&mut self, mode: Mode) {
+        self.0 &= !mode.0
     }
 
-    /// Checks if the `set user id` bit is set.
-    pub fn is_set_user_id(&self) -> bool {
-        self.0 & cty::S_ISUID != 0
-    }
-
-    /// Sets or unsets the `set user id` flag.
-    pub fn set_set_user_id(&mut self, val: bool) {
-        self.set_bit(cty::S_ISUID, val);
-    }
-
-    /// Checks if the `set group id` bit is set.
-    pub fn is_set_group_id(&self) -> bool {
-        self.0 & cty::S_ISUID != 0
-    }
-
-    /// Sets or unsets the `set group id` flag.
-    pub fn set_set_group_id(&mut self, val: bool) {
-        self.set_bit(cty::S_ISGID, val);
-    }
-
-    /// Checks if the `sticky` bit is set.
-    pub fn is_sticky(&self) -> bool {
-        self.0 & cty::S_ISVTX != 0
-    }
-
-    /// Sets or unsets the `sticky` flag.
-    pub fn set_sticky(&mut self, val: bool) {
-        self.set_bit(cty::S_ISVTX, val);
-    }
-
-    /// Checks if the `owner readable` bit is set.
-    pub fn is_owner_readable(&self) -> bool {
-        self.0 & cty::S_IRUSR != 0
-    }
-
-    /// Sets or unsets the `owner readable` flag.
-    pub fn set_owner_readable(&mut self, val: bool) {
-        self.set_bit(cty::S_IRUSR, val);
-    }
-
-    /// Checks if the `owner writable` bit is set.
-    pub fn is_owner_writable(&self) -> bool {
-        self.0 & cty::S_IWUSR != 0
-    }
-
-    /// Sets or unsets the `owner writable` flag.
-    pub fn set_owner_writable(&mut self, val: bool) {
-        self.set_bit(cty::S_IWUSR, val);
-    }
-
-    /// Checks if the `owner executable` bit is set.
-    pub fn is_owner_executable(&self) -> bool {
-        self.0 & cty::S_IXUSR != 0
-    }
-
-    /// Sets or unsets the `owner executable` flag.
-    pub fn set_owner_executable(&mut self, val: bool) {
-        self.set_bit(cty::S_IXUSR, val);
-    }
-
-    /// Checks if the `group readable` bit is set.
-    pub fn is_group_readable(&self) -> bool {
-        self.0 & cty::S_IRGRP != 0
-    }
-
-    /// Sets or unsets the `group readable` flag.
-    pub fn set_group_readable(&mut self, val: bool) {
-        self.set_bit(cty::S_IRGRP, val);
-    }
-
-    /// Checks if the `group writable` bit is set.
-    pub fn is_group_writable(&self) -> bool {
-        self.0 & cty::S_IWGRP != 0
-    }
-
-    /// Sets or unsets the `group writable` flag.
-    pub fn set_group_writable(&mut self, val: bool) {
-        self.set_bit(cty::S_IWGRP, val);
-    }
-
-    /// Checks if the `group executable` bit is set.
-    pub fn is_group_executable(&self) -> bool {
-        self.0 & cty::S_IXGRP != 0
-    }
-
-    /// Sets or unsets the `group executable` flag.
-    pub fn set_group_executable(&mut self, val: bool) {
-        self.set_bit(cty::S_IXGRP, val);
-    }
-
-    /// Checks if the `world readable` bit is set.
-    pub fn is_world_readable(&self) -> bool {
-        self.0 & cty::S_IROTH != 0
-    }
-
-    /// Sets or unsets the `world readable` flag.
-    pub fn set_world_readable(&mut self, val: bool) {
-        self.set_bit(cty::S_IROTH, val);
-    }
-
-    /// Checks if the `world writable` bit is set.
-    pub fn is_world_writable(&self) -> bool {
-        self.0 & cty::S_IWOTH != 0
-    }
-
-    /// Sets or unsets the `world writable` flag.
-    pub fn set_world_writable(&mut self, val: bool) {
-        self.set_bit(cty::S_IWOTH, val);
-    }
-
-    /// Checks if the `world executable` bit is set.
-    pub fn is_world_executable(&self) -> bool {
-        self.0 & cty::S_IXOTH != 0
-    }
-
-    /// Sets or unsets the `world executable` flag.
-    pub fn set_world_executable(&mut self, val: bool) {
-        self.set_bit(cty::S_IXOTH, val);
-    }
-
-    fn set_bit(&mut self, bit: umode_t, val: bool) {
-        self.0 = (self.0 & !bit) | (bit * val as umode_t);
+    /// Returns whether a mode is set.
+    ///
+    /// [argument, mode]
+    /// The mode to be checked.
+    pub fn is_set(&self, mode: Mode) -> bool {
+        self.0 & mode.0 != 0
     }
 }
 
@@ -373,23 +383,23 @@ impl Debug for Mode {
         macro_rules! w {
             ($cond:expr, $c:expr) => { try!(if $cond { w.write_str($c) } else { w.write_str("-") }) }
         };
-        w!(self.is_owner_readable(), "r");
-        w!(self.is_owner_writable(), "w");
-        match (self.is_owner_executable(), self.is_set_user_id()) {
+        w!(self.is_set(MODE_USER_READ), "r");
+        w!(self.is_set(MODE_USER_WRITE), "w");
+        match (self.is_set(MODE_USER_EXEC), self.is_set(MODE_SET_USER_ID)) {
             (true,  true)  => try!(w.write_str("s").ignore_ok()),
             (true,  false) => try!(w.write_str("x").ignore_ok()),
             (false, _)     => try!(w.write_str("-").ignore_ok()),
         }
-        w!(self.is_group_readable(), "r");
-        w!(self.is_group_writable(), "w");
-        match (self.is_group_executable(), self.is_set_group_id()) {
+        w!(self.is_set(MODE_GROUP_READ), "r");
+        w!(self.is_set(MODE_GROUP_WRITE), "w");
+        match (self.is_set(MODE_GROUP_EXEC), self.is_set(MODE_SET_GROUP_ID)) {
             (true,  true)  => try!(w.write_str("s").ignore_ok()),
             (true,  false) => try!(w.write_str("x").ignore_ok()),
             (false, _)     => try!(w.write_str("-").ignore_ok()),
         }
-        w!(self.is_world_readable(), "r");
-        w!(self.is_world_writable(), "w");
-        match (self.is_world_executable(), self.is_sticky()) {
+        w!(self.is_set(MODE_WORLD_READ), "r");
+        w!(self.is_set(MODE_WORLD_WRITE), "w");
+        match (self.is_set(MODE_WORLD_EXEC), self.is_set(MODE_STICKY)) {
             (true,  true)  => try!(w.write_str("t").ignore_ok()),
             (true,  false) => try!(w.write_str("x").ignore_ok()),
             (false, true)  => try!(w.write_str("T").ignore_ok()),
@@ -412,60 +422,60 @@ impl Parsable for Mode {
         }
         let mut mode = Mode(0);
         match s[0] {
-            b'r' => mode.set_owner_readable(true),
+            b'r' => mode.set(MODE_USER_READ),
             b'-' => { },
             _ => return Err(error::InvalidSequence),
         }
         match s[1] {
-            b'w' => mode.set_owner_writable(true),
+            b'w' => mode.set(MODE_USER_WRITE),
             b'-' => { },
             _ => return Err(error::InvalidSequence),
         }
         match s[2] {
             b's' => {
-                mode.set_owner_executable(true);
-                mode.set_set_user_id(true);
+                mode.set(MODE_USER_EXEC);
+                mode.set(MODE_SET_USER_ID);
             },
-            b'x' => mode.set_owner_executable(true),
+            b'x' => mode.set(MODE_USER_EXEC),
             b'-' => { },
             _ => return Err(error::InvalidSequence),
         }
         match s[3] {
-            b'r' => mode.set_group_readable(true),
+            b'r' => mode.set(MODE_GROUP_READ),
             b'-' => { },
             _ => return Err(error::InvalidSequence),
         }
         match s[4] {
-            b'w' => mode.set_group_writable(true),
+            b'w' => mode.set(MODE_GROUP_WRITE),
             b'-' => { },
             _ => return Err(error::InvalidSequence),
         }
         match s[5] {
             b's' => {
-                mode.set_group_executable(true);
-                mode.set_set_group_id(true);
+                mode.set(MODE_GROUP_EXEC);
+                mode.set(MODE_SET_GROUP_ID);
             },
-            b'x' => mode.set_group_executable(true),
+            b'x' => mode.set(MODE_GROUP_EXEC),
             b'-' => { },
             _ => return Err(error::InvalidSequence),
         }
         match s[6] {
-            b'r' => mode.set_world_readable(true),
+            b'r' => mode.set(MODE_WORLD_READ),
             b'-' => { },
             _ => return Err(error::InvalidSequence),
         }
         match s[7] {
-            b'w' => mode.set_world_writable(true),
+            b'w' => mode.set(MODE_WORLD_WRITE),
             b'-' => { },
             _ => return Err(error::InvalidSequence),
         }
         match s[8] {
             b't' => {
-                mode.set_world_executable(true);
-                mode.set_sticky(true);
+                mode.set(MODE_WORLD_EXEC);
+                mode.set(MODE_STICKY);
             },
-            b'x' => mode.set_world_executable(true),
-            b'T' => mode.set_sticky(true),
+            b'x' => mode.set(MODE_WORLD_EXEC),
+            b'T' => mode.set(MODE_STICKY),
             b'-' => { },
             _ => return Err(error::InvalidSequence),
         }

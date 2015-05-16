@@ -1254,13 +1254,16 @@ impl File {
     /// [argument, flags]
     /// The flags to be used when opening a file.
     ///
+    /// [argument, mode]
+    /// The mode a new file has.
+    ///
     /// [return_value]
     /// Return the opened file.
     ///
     /// = Remarks
     ///
-    /// If the path refers to a symbolic link, the link is recursively resolved and the
-    /// first non-link target is opened.
+    /// The mode argument is ignored unless a new file is created via the `FILE_CREATE` or
+    /// the `FILE_TEMP` flags.
     ///
     /// If the path is relative, it is interpreted relative to the current working
     /// directory.
@@ -1786,13 +1789,13 @@ impl File {
     ///
     /// = Remarks
     ///
+    /// :tmpfile: link:lrs::file::flags::FILE_TEMP[FILE_TEMP]
+    ///
     /// The new path must be in the same mount point as the opened file.
     ///
     /// In general, this function cannot be used if there are no links to the file, e.g.,
-    /// because the last link was deleted after the file was opened. However, this is
-    /// possible if the file was opened with the `temp file` and without the `exclusive`
-    /// flag. This can be used to securely create files and only make them visible in the
-    /// file system once they have been completely written.
+    /// because the last link was deleted after the file was opened. However, see
+    /// {tmpfile}.
     ///
     /// If the path is relative, it is interpreted relative to the current working
     /// directory.
@@ -2231,6 +2234,9 @@ impl File {
     /// Returns the opened path.
     ///
     /// = Remarks
+    ///
+    /// The mode argument is ignored unless a new file is created via the `FILE_CREATE` or
+    /// the `FILE_TEMP` flags.
     ///
     /// If the path is relative, this file must be a directory and the path will be
     /// interpreted relative to it.
