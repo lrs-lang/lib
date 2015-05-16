@@ -98,7 +98,7 @@ impl Info {
 
     /// Returns the mode of the file.
     pub fn mode(&self) -> Mode {
-        Mode::from_mode(self.0.st_mode as umode_t)
+        Mode(self.0.st_mode as umode_t)
     }
 
     /// Returns the user id of the owner.

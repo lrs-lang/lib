@@ -731,6 +731,7 @@ pub const __NR_memfd_create           : usize = 319;
 pub const __NR_kexec_file_load        : usize = 320;
 pub const __NR_bpf                    : usize = 321;
 
+// XXX is there a better constant?
 pub const GARBAGE_SYSCALL_NR : usize = !0;
 
 pub const __NR_bdflush          : usize = GARBAGE_SYSCALL_NR;

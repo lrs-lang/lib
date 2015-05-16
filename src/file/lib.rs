@@ -71,8 +71,7 @@ use fs::info::{FileSystemInfo, from_statfs};
 
 use dev::{Device, DeviceType};
 
-use flags::{Flags, Mode, AccessMode, access_mode_to_int, flags_from_int, flags_to_int,
-            mode_to_int};
+use flags::{FileFlags, Mode, AccessMode, FILE_READ_ONLY};
 use info::{Info, info_from_stat, Type, file_type_to_mode};
 
 pub mod flags;
@@ -1197,9 +1196,7 @@ impl File {
     /// working directory of the process, use the following code:
     ///
     /// ----
-    /// let mut flags = Flags::new();
-    /// flags.set_path_fd(true);
-    /// let file = try!(File::open(".", flags);
+    /// let file = try!(File::open(".", FILE_PATH);
     /// ----
     ///
     /// This call is mostly useful when working with interfaces that require an argument
@@ -1272,10 +1269,10 @@ impl File {
     ///
     /// * link:open(2)
     /// * link:lrs::file::File::open_read
-    pub fn open<P>(path: P, flags: Flags) -> Result<File>
+    pub fn open<P>(path: P, flags: FileFlags, mode: Mode) -> Result<File>
         where P: ToCString,
     {
-        File::current_dir().rel_open(path, flags)
+        File::current_dir().rel_open(path, flags, mode)
     }
 
     /// Reads from the file.
@@ -1436,12 +1433,12 @@ impl File {
     ///
     /// * link:man:fcntl(2) and the description of `F_GETFL` therein.
     /// * link:lrs::file::File::set_status_flags
-    pub fn get_status_flags(&self) -> Result<Flags> {
+    pub fn get_status_flags(&self) -> Result<FileFlags> {
         let ret = fcntl_getfl(self.fd);
         if ret < 0 {
             Err(Errno(-ret as c_int))
         } else {
-            Ok(flags_from_int(ret))
+            Ok(FileFlags(ret))
         }
     }
 
@@ -1464,8 +1461,8 @@ impl File {
     ///
     /// * link:man:fcntl(2) and the description of `F_SETFL` therein.
     /// * link:lrs::file::File::get_status_flags
-    pub fn set_status_flags(&self, flags: Flags) -> Result {
-        let ret = fcntl_setfl(self.fd, flags_to_int(flags));
+    pub fn set_status_flags(&self, flags: FileFlags) -> Result {
+        let ret = fcntl_setfl(self.fd, flags.0);
         rv!(ret)
     }
 
@@ -1913,7 +1910,7 @@ impl File {
     ///
     /// * link:man:fchmod(2)
     pub fn change_mode(&self, mode: Mode) -> Result {
-        rv!(fchmod(self.fd, mode_to_int(mode)))
+        rv!(fchmod(self.fd, mode.0))
     }
 
     /// Initiates readahead of the specified range.
@@ -2211,7 +2208,7 @@ impl File {
     /// If the path is relative, this file must be a directory and the path will be
     /// interpreted relative to it.
     ///
-    /// This is equivalent to `self.rel_open` with the default flags.
+    /// This is equivalent to `self.rel_open` with the `FILE_READ_ONLY` flag.
     ///
     /// = See also
     ///
@@ -2219,7 +2216,7 @@ impl File {
     pub fn rel_open_read<P>(&self, path: P) -> Result<File>
         where P: ToCString,
     {
-        self.rel_open(path, Flags::new())
+        self.rel_open(path, FILE_READ_ONLY, Mode(0))
     }
 
     /// Opens a path relative to this file.
@@ -2241,14 +2238,13 @@ impl File {
     /// = See also
     ///
     /// * link:man:openat(2)
-    pub fn rel_open<P>(&self, path: P, flags: Flags) -> Result<File>
+    pub fn rel_open<P>(&self, path: P, mut flags: FileFlags, mode: Mode) -> Result<File>
         where P: ToCString,
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
         let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
-        let mode = flags.mode().map(|m| mode_to_int(m)).unwrap_or(0);
-        let fd = match retry(|| openat(self.fd, &path,
-                                       flags_to_int(flags) | cty::O_LARGEFILE, mode)) {
+        flags.0 |= cty::O_CLOEXEC | cty::O_LARGEFILE;
+        let fd = match retry(|| openat(self.fd, &path, flags.0, mode.0)) {
             Ok(fd) => fd,
             // Due to a bug in the kernel, open returns WrongDeviceType instead of
             // NoSuchDevice.
@@ -2370,7 +2366,7 @@ impl File {
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
         let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
-        let res = faccessat(self.fd, &path, access_mode_to_int(mode));
+        let res = faccessat(self.fd, &path, mode.0);
         if res >= 0 {
             Ok(true)
         } else {
@@ -2533,7 +2529,7 @@ impl File {
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
         let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
-        rv!(mkdirat(self.fd, &path, mode_to_int(mode)))
+        rv!(mkdirat(self.fd, &path, mode.0))
     }
 
     /// Removes a link.
@@ -2718,7 +2714,7 @@ impl File {
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
         let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
-        rv!(fchmodat(self.fd, &path, mode_to_int(mode)))
+        rv!(fchmodat(self.fd, &path, mode.0))
     }
 
     /// Creates a file at a path relative to this file.
@@ -2751,7 +2747,7 @@ impl File {
         }
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
         let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
-        rv!(mknodat(self.fd, &path, file_type_to_mode(ty) | mode_to_int(mode), 0))
+        rv!(mknodat(self.fd, &path, file_type_to_mode(ty) | mode.0, 0))
     }
 
     /// Creates a device special file relative to this file.
@@ -2782,7 +2778,7 @@ impl File {
         };
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
         let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
-        rv!(mknodat(self.fd, &path, file_type_to_mode(ty) | mode_to_int(mode), dev.id()))
+        rv!(mknodat(self.fd, &path, file_type_to_mode(ty) | mode.0, dev.id()))
     }
 }
 

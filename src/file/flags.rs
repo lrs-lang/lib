@@ -3,192 +3,221 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
+use core::ops::{BitOr, Not, BitAnd};
 use fmt::{Debug, Display, Write};
 use base::{error};
 use parse::{Parsable};
-use cty::{self, c_int, umode_t, S_IROTH, S_IWOTH, S_IXOTH};
+use cty::{
+    self, c_int, umode_t, S_IROTH, S_IWOTH, S_IXOTH, O_CLOEXEC, O_DIRECT, O_DIRECTORY,
+    O_EXCL, O_NOATIME, O_NOCTTY, O_NOFOLLOW, O_TRUNC, O_APPEND, O_ASYNC, O_DSYNC,
+    O_NONBLOCK, O_SYNC, O_PATH, O_TMPFILE, O_RDWR, O_RDONLY, O_WRONLY, O_LARGEFILE,
+    O_CREAT,
+};
 
 /// Flags for opening and modifying a file.
 #[derive(Pod, Eq)]
-pub struct Flags {
-    flags: c_int,
-    mode: umode_t,
+pub struct FileFlags(pub c_int);
+
+impl BitOr for FileFlags {
+    type Output = FileFlags;
+    fn bitor(self, other: FileFlags) -> FileFlags {
+        FileFlags(self.0 | other.0)
+    }
 }
 
-impl Flags {
-    /// Return the mode used for creating a file.
-    pub fn mode(&self) -> Option<Mode> {
-        if self.is_create() {
-            Some(Mode { mode: self.mode })
-        } else {
-            None
+impl BitAnd for FileFlags {
+    type Output = FileFlags;
+    fn bitand(self, other: FileFlags) -> FileFlags {
+        FileFlags(self.0 & other.0)
+    }
+}
+
+impl Not for FileFlags {
+    type Output = FileFlags;
+    fn not(self) -> FileFlags {
+        FileFlags(!self.0)
+    }
+}
+
+macro_rules! create {
+    ($($(#[$meta:meta])* flag $name:ident = $val:expr;)*) => {
+        $($(#[$meta])* pub const $name: FileFlags = FileFlags($val);)*
+
+        impl Debug for FileFlags {
+            fn fmt<W: Write>(&self, w: &mut W) -> Result {
+                let mut first = true;
+                $(
+                    if self.0 & $val != 0 {
+                        if !first { try!(w.write(b"|")); }
+                        first = false;
+                        try!(w.write_all(stringify!($name).as_bytes()));
+                    }
+                )*
+                let _ = first;
+                Ok(())
+            }
         }
     }
-
-    /// Create new flags with the default flags set.
-    ///
-    /// The default flags are:
-    ///
-    /// - `readable`
-    /// - `close on exec`
-    /// - `access time update`
-    /// - `controlling term`
-    /// - `follow links`
-    pub fn new() -> Flags {
-        let mut flags = Flags { flags: 0, mode: 0 };
-        flags.set_readable(true).set_close_on_exec(true);
-        flags
-    }
-
-    /// If this flag is set and the file does not exist, it will be created with the
-    /// specified mode.
-    pub fn is_create(&self) -> bool { self.flags & cty::O_CREAT != 0 }
-
-    /// Sets the `create` flag.
-    ///
-    /// The mode will be used to create the file.
-    pub fn enable_create(&mut self, mode: Mode) {
-        self.set_bit(cty::O_CREAT, true);
-        self.mode = mode.mode;
-    }
-
-    /// Unsets the `create` flag.
-    pub fn disable_create(&mut self) {
-        self.set_bit(cty::O_CREAT, false);
-    }
-
-    pub fn is_readable(&self) -> bool {
-        self.flags & cty::O_ACCMODE == cty::O_RDWR ||
-            self.flags & cty::O_ACCMODE == cty::O_RDONLY
-    }
-
-    pub fn is_writable(&self) -> bool {
-        self.flags & cty::O_ACCMODE == cty::O_RDWR ||
-            self.flags & cty::O_ACCMODE == cty::O_WRONLY
-    }
-
-    /// If this flag is set, the associated file descriptor will be closed when `exec` is
-    /// called.
-    pub fn is_close_on_exec(&self) -> bool { self.flags & cty::O_CLOEXEC != 0 }
-
-    /// If this flag is set, writes and reads bypass the kernel buffers and access the
-    /// disk directly. Some limitations apply.
-    pub fn is_bypass_buffer(&self) -> bool { self.flags & cty::O_DIRECT != 0 }
-
-    /// If this flag is set, opening fails if the path does not refer to a directory.
-    pub fn is_only_directory(&self) -> bool { self.flags & cty::O_DIRECTORY != 0 }
-
-    /// If this flag and the `create` flag is set and the file already exists, opening the
-    /// file fails.
-    pub fn is_exclusive(&self) -> bool { self.flags & cty::O_EXCL != 0 }
-
-    /// If this flag is not set, the access time won't be updated when the file is opened.
-    pub fn is_access_time_update(&self) -> bool { self.flags & cty::O_NOATIME == 0 }
-
-    /// If this flag is not set and a terminal is opened, the terminal will not become the
-    /// controlling terminal of this process.
-    pub fn is_controlling_term(&self) -> bool { self.flags & cty::O_NOCTTY == 0 }
-
-    /// If this flag is not set and the path refers to a symlink, the symlink will be
-    /// opened.
-    pub fn is_follow_links(&self) -> bool { self.flags & cty::O_NOFOLLOW == 0 }
-
-    /// If this flag and the `writable` flag is set and the file already exists, the file
-    /// will be truncated to size `0`.
-    pub fn is_truncate(&self) -> bool { self.flags & cty::O_TRUNC != 0 }
-
-    /// If this flag is set, all writes will append to the end of the file.
-    pub fn is_append(&self) -> bool { self.flags & cty::O_APPEND != 0 }
-
-    /// If this flag is set and the file becomes ready for reading or writing, a signal
-    /// will be sent to the process.
-    pub fn is_signal_io(&self) -> bool { self.flags & cty::O_ASYNC != 0 }
-
-    /// If this flag is set and writing succeeds, then all data necessary for reading the
-    /// written data has been transferred to the disk hardware.
-    pub fn is_data_synchronized(&self) -> bool { self.flags & cty::O_DSYNC != 0 }
-
-    /// If this flag is set and reading or writing would block, an error will be returned
-    /// instead.
-    pub fn is_non_blocking(&self) -> bool { self.flags & cty::O_NONBLOCK != 0 }
-
-    /// If this flag is set and writing succeeds, then all data has been transferred to
-    /// the disk hardware.
-    pub fn is_synchronized(&self) -> bool { self.flags & cty::O_SYNC != 0 }
-
-    /// If this flag is set, then the returned file will not refer to an opened file but
-    /// merely indicate a location in the file system. Such a location can be used to
-    /// perform a subset of the available operations.
-    pub fn is_path_fd(&self) -> bool { self.flags & cty::O_PATH != 0 }
-
-    /// If this flag is set, an unnamed file will be created in the directory specified by
-    /// the path. The file will be automatically deleted when the file is closed.
-    pub fn is_temp_file(&self) -> bool { self.flags & cty::O_TMPFILE != 0 }
-
-    pub fn set_readable(&mut self, val: bool) -> &mut Flags {
-        self.flags = (self.flags & !cty::O_ACCMODE) | match (val, self.is_writable()) {
-            (true,  true)  => cty::O_RDWR,
-            (true,  false) => cty::O_RDONLY,
-            (false, true)  => cty::O_WRONLY,
-            (false, false) => 0,
-        };
-        self
-    }
-
-    pub fn set_writable(&mut self, val: bool) -> &mut Flags {
-        self.flags = (self.flags & !cty::O_ACCMODE) | match (val, self.is_readable()) {
-            (true,  true)  => cty::O_RDWR,
-            (true,  false) => cty::O_WRONLY,
-            (false, true)  => cty::O_RDONLY,
-            (false, false) => 0,
-        };
-        self
-    }
-
-    pub fn set_close_on_exec(      &mut self, val: bool) -> &mut Flags { self.set_bit(cty::O_CLOEXEC,   val);  self }
-    pub fn set_bypass_buffer(      &mut self, val: bool) -> &mut Flags { self.set_bit(cty::O_DIRECT,    val);  self }
-    pub fn set_only_directory(     &mut self, val: bool) -> &mut Flags { self.set_bit(cty::O_DIRECTORY, val);  self }
-    pub fn set_exclusive(          &mut self, val: bool) -> &mut Flags { self.set_bit(cty::O_EXCL,      val);  self }
-    pub fn set_access_time_update( &mut self, val: bool) -> &mut Flags { self.set_bit(cty::O_NOATIME,   !val); self }
-    pub fn set_controlling_term(   &mut self, val: bool) -> &mut Flags { self.set_bit(cty::O_NOCTTY,    !val); self }
-    pub fn set_follow_links(       &mut self, val: bool) -> &mut Flags { self.set_bit(cty::O_NOFOLLOW,  !val); self }
-    pub fn set_truncate(           &mut self, val: bool) -> &mut Flags { self.set_bit(cty::O_TRUNC,     val);  self }
-    pub fn set_append(             &mut self, val: bool) -> &mut Flags { self.set_bit(cty::O_APPEND,    val);  self }
-    pub fn set_signal_io(          &mut self, val: bool) -> &mut Flags { self.set_bit(cty::O_ASYNC,     val);  self }
-    pub fn set_data_synchronized(  &mut self, val: bool) -> &mut Flags { self.set_bit(cty::O_DSYNC,     val);  self }
-    pub fn set_non_blocking(       &mut self, val: bool) -> &mut Flags { self.set_bit(cty::O_NONBLOCK,  val);  self }
-    pub fn set_synchronized(       &mut self, val: bool) -> &mut Flags { self.set_bit(cty::O_SYNC,      val);  self }
-    pub fn set_path_fd(            &mut self, val: bool) -> &mut Flags { self.set_bit(cty::O_PATH,      val);  self }
-    pub fn set_temp_file(          &mut self, val: bool) -> &mut Flags { self.set_bit(cty::O_TMPFILE,   val);  self }
-
-    fn set_bit(&mut self, bit: c_int, val: bool) {
-        self.flags = (self.flags & !bit) | (bit * val as c_int);
-    }
 }
 
-pub fn flags_from_int(f: c_int) -> Flags {
-    Flags { flags: f, mode: 0 }
+create! {
+    #[doc = "Create a regulary file if it doesn't already exist.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:open(2) and O_CREAT therein"]
+    flag FILE_CREATE = O_CREAT;
+
+    #[doc = "Open the file in read-only mode.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This flag cannot be combined with FILE_WRITE_ONLY to open a file for \
+             reading and writing. Use FILE_READ_WRITE instead.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:open(2) and O_RDONLY therein"]
+    flag FILE_READ_ONLY = O_RDONLY;
+
+    #[doc = "Open the file in write-only mode.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This flag cannot be combined with FILE_READ_ONLY to open a file for \
+             reading and writing. Use FILE_READ_WRITE instead.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:open(2) and O_WRONLY therein"]
+    flag FILE_WRITE_ONLY = O_WRONLY;
+
+    #[doc = "Open the file for reading and writing.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:open(2) and O_RDWR therein"]
+    flag FILE_READ_WRITE = O_RDWR;
+
+    #[doc = "Close the file when `exec` is called.\n"]
+    #[doc = "= Remarks"]
+    #[doc = ":setcloexec: link:lrs::file::File::set_close_on_exec[set_close_on_exec]"]
+    #[doc = "It's not possible to *not* use this flag when opening a file as lrs will \
+             always add this flag before performing an open syscall. If you want to \
+             prevent a file from being closed after an `exec` call use {setcloexec}.\n"]
+    #[doc = "The rationale is that setting the close-on-exec flag is a racy operation \
+             while unsetting it is not.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:open(2) and O_CLOEXEC therein"]
+    #[doc = "* {setcloexec}"]
+    flag FILE_CLOSE_ON_EXEC = O_CLOEXEC;
+
+    #[doc = "Bypass kernel buffers and write directly to the disk.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:open(2) and O_DIRECT therein"]
+    flag FILE_BYPASS_BUFFER = O_DIRECT;
+
+    #[doc = "Fail opening the file if it's not a directory.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:open(2) and O_DIRECTORY therein"]
+    flag FILE_ONLY_DIRECTORY = O_DIRECTORY;
+
+    #[doc = "Fail creating a new file if it already exists.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:open(2) and O_EXCL therein"]
+    flag FILE_EXCLUSIVE = O_EXCL;
+
+    #[doc = "Don't update the access time of the file.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:open(2) and O_NOATIME therein"]
+    flag FILE_NO_ACCESS_TIME_UPDATE = O_NOATIME;
+
+    #[doc = "Don't make the opened file the controlling terminal of this process.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:open(2) and O_NOCTTY therein"]
+    flag FILE_NO_CONTROLLING_TERM = O_NOCTTY;
+
+    #[doc = "Don't follow symlinks during the opening process.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:open(2) and O_NOFOLLOW therein"]
+    flag FILE_DONT_FOLLOW_LINKS = O_NOFOLLOW;
+
+    #[doc = "Truncate the file to size `0` for writing.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:open(2) and O_TRUNC therein"]
+    flag FILE_TRUNCATE = O_TRUNC;
+
+    #[doc = "Perform all writes to the file at the end of the file.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:open(2) and O_APPEND therein"]
+    flag FILE_APPEND = O_APPEND;
+
+    #[doc = "Send a signal to the process when the file becomes ready for reading or \
+             writing.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:open(2) and O_ASYNC therein"]
+    flag FILE_SIGNAL_IO = O_ASYNC;
+
+    #[doc = "Ensure that all data has been passed to the hardware after a write.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:open(2) and O_SYNC therein"]
+    flag FILE_SYNC = O_SYNC;
+
+    #[doc = "Ensure that enough data has been passed to the hardware after a write so \
+             that the data can be read back.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:open(2) and O_DSYNC therein"]
+    flag FILE_DATA_SYNC = O_DSYNC;
+
+    #[doc = "Return an error instead of blocking.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:open(2) and O_NONBLOCK therein"]
+    flag FILE_DONT_BLOCK = O_NONBLOCK;
+
+    #[doc = "Create a file that can only be used to identify a position in the \
+             filesystem.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:open(2) and O_PATH therein"]
+    flag FILE_PATH = O_PATH;
+
+    #[doc = "Create a temporary file that has no name in the filesystem.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "The provided path should specify a directory in which the unnamed inode \
+             will be created.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:open(2) and O_TMPFILE therein"]
+    flag FILE_TEMP = O_TMPFILE;
+
+    #[doc = "Allow opening large files on 32 bit systems.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "The implementation always sets this flag.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:open(2) and O_LARGEFILE therein"]
+    flag FILE_LARGE = O_LARGEFILE;
 }
 
-pub fn flags_to_int(f: Flags) -> c_int {
-    f.flags
+impl FileFlags {
+    /// Sets a flag.
+    ///
+    /// [argument, flag]
+    /// The flag to be set.
+    pub fn set(&mut self, flag: FileFlags) {
+        self.0 |= flag.0
+    }
+
+    /// Clears a flag.
+    ///
+    /// [argument, flag]
+    /// The flag to be cleared.
+    pub fn unset(&mut self, flag: FileFlags) {
+        self.0 &= !flag.0
+    }
+
+    /// Returns whether a flag is set.
+    ///
+    /// [argument, flag]
+    /// The flag to be checked.
+    pub fn is_set(&self, flag: FileFlags) -> bool {
+        self.0 & flag.0 != 0
+    }
 }
 
 /// The permissions of a file.
 #[derive(Pod, Eq)]
-pub struct Mode {
-    mode: umode_t,
-}
+pub struct Mode(pub umode_t);
 
 impl Mode {
-    /// Create the permissions from an integer.
-    pub fn from_mode(mode: umode_t) -> Mode {
-        Mode { mode: mode }
-    }
-
     /// Create permissions will all bits unset.
     pub fn empty() -> Mode {
-        Mode::from_mode(0)
+        Mode(0)
     }
 
     /// Create permissions with the default bits for a file:
@@ -198,7 +227,7 @@ impl Mode {
     /// - `group readable`
     /// - `world readable`
     pub fn new_file() -> Mode {
-        Mode::from_mode(0o644)
+        Mode(0o644)
     }
 
     /// Create permissions with the default bits for a directory:
@@ -211,12 +240,12 @@ impl Mode {
     /// - `world readable`
     /// - `world executable`
     pub fn new_directory() -> Mode {
-        Mode::from_mode(0o755)
+        Mode(0o755)
     }
 
     /// Checks if the `set user id` bit is set.
     pub fn is_set_user_id(&self) -> bool {
-        self.mode & cty::S_ISUID != 0
+        self.0 & cty::S_ISUID != 0
     }
 
     /// Sets or unsets the `set user id` flag.
@@ -226,7 +255,7 @@ impl Mode {
 
     /// Checks if the `set group id` bit is set.
     pub fn is_set_group_id(&self) -> bool {
-        self.mode & cty::S_ISUID != 0
+        self.0 & cty::S_ISUID != 0
     }
 
     /// Sets or unsets the `set group id` flag.
@@ -236,7 +265,7 @@ impl Mode {
 
     /// Checks if the `sticky` bit is set.
     pub fn is_sticky(&self) -> bool {
-        self.mode & cty::S_ISVTX != 0
+        self.0 & cty::S_ISVTX != 0
     }
 
     /// Sets or unsets the `sticky` flag.
@@ -246,7 +275,7 @@ impl Mode {
 
     /// Checks if the `owner readable` bit is set.
     pub fn is_owner_readable(&self) -> bool {
-        self.mode & cty::S_IRUSR != 0
+        self.0 & cty::S_IRUSR != 0
     }
 
     /// Sets or unsets the `owner readable` flag.
@@ -256,7 +285,7 @@ impl Mode {
 
     /// Checks if the `owner writable` bit is set.
     pub fn is_owner_writable(&self) -> bool {
-        self.mode & cty::S_IWUSR != 0
+        self.0 & cty::S_IWUSR != 0
     }
 
     /// Sets or unsets the `owner writable` flag.
@@ -266,7 +295,7 @@ impl Mode {
 
     /// Checks if the `owner executable` bit is set.
     pub fn is_owner_executable(&self) -> bool {
-        self.mode & cty::S_IXUSR != 0
+        self.0 & cty::S_IXUSR != 0
     }
 
     /// Sets or unsets the `owner executable` flag.
@@ -276,7 +305,7 @@ impl Mode {
 
     /// Checks if the `group readable` bit is set.
     pub fn is_group_readable(&self) -> bool {
-        self.mode & cty::S_IRGRP != 0
+        self.0 & cty::S_IRGRP != 0
     }
 
     /// Sets or unsets the `group readable` flag.
@@ -286,7 +315,7 @@ impl Mode {
 
     /// Checks if the `group writable` bit is set.
     pub fn is_group_writable(&self) -> bool {
-        self.mode & cty::S_IWGRP != 0
+        self.0 & cty::S_IWGRP != 0
     }
 
     /// Sets or unsets the `group writable` flag.
@@ -296,7 +325,7 @@ impl Mode {
 
     /// Checks if the `group executable` bit is set.
     pub fn is_group_executable(&self) -> bool {
-        self.mode & cty::S_IXGRP != 0
+        self.0 & cty::S_IXGRP != 0
     }
 
     /// Sets or unsets the `group executable` flag.
@@ -306,7 +335,7 @@ impl Mode {
 
     /// Checks if the `world readable` bit is set.
     pub fn is_world_readable(&self) -> bool {
-        self.mode & cty::S_IROTH != 0
+        self.0 & cty::S_IROTH != 0
     }
 
     /// Sets or unsets the `world readable` flag.
@@ -316,7 +345,7 @@ impl Mode {
 
     /// Checks if the `world writable` bit is set.
     pub fn is_world_writable(&self) -> bool {
-        self.mode & cty::S_IWOTH != 0
+        self.0 & cty::S_IWOTH != 0
     }
 
     /// Sets or unsets the `world writable` flag.
@@ -326,7 +355,7 @@ impl Mode {
 
     /// Checks if the `world executable` bit is set.
     pub fn is_world_executable(&self) -> bool {
-        self.mode & cty::S_IXOTH != 0
+        self.0 & cty::S_IXOTH != 0
     }
 
     /// Sets or unsets the `world executable` flag.
@@ -335,12 +364,8 @@ impl Mode {
     }
 
     fn set_bit(&mut self, bit: umode_t, val: bool) {
-        self.mode = (self.mode & !bit) | (bit * val as umode_t);
+        self.0 = (self.0 & !bit) | (bit * val as umode_t);
     }
-}
-
-pub fn mode_to_int(m: Mode) -> umode_t {
-    m.mode
 }
 
 impl Debug for Mode {
@@ -385,7 +410,7 @@ impl Parsable for Mode {
         if s.len() < 9 {
             return Err(error::InvalidSequence);
         }
-        let mut mode = Mode::empty();
+        let mut mode = Mode(0);
         match s[0] {
             b'r' => mode.set_owner_readable(true),
             b'-' => { },
@@ -453,19 +478,17 @@ impl Parsable for Mode {
 /// This type is used to check whether a file can be accessed with a certain set of
 /// permissions.
 #[derive(Pod, Eq)]
-pub struct AccessMode {
-    mode: umode_t,
-}
+pub struct AccessMode(pub umode_t);
 
 impl AccessMode {
     /// Create an access mode with all bits unset.
     pub fn empty() -> AccessMode {
-        AccessMode { mode: 0 }
+        AccessMode(0)
     }
 
     /// Checks if the `readable` bit is set.
     pub fn is_readable(&self) -> bool {
-        self.mode & S_IROTH != 0
+        self.0 & S_IROTH != 0
     }
 
     /// Sets or unsets the `readable` flag.
@@ -475,7 +498,7 @@ impl AccessMode {
 
     /// Checks if the `writable` bit is set.
     pub fn is_writable(&self) -> bool {
-        self.mode & S_IWOTH != 0
+        self.0 & S_IWOTH != 0
     }
 
     /// Sets or unsets the `writable` flag.
@@ -485,7 +508,7 @@ impl AccessMode {
 
     /// Checks if the `executable` bit is set.
     pub fn is_executable(&self) -> bool {
-        self.mode & S_IXOTH != 0
+        self.0 & S_IXOTH != 0
     }
 
     /// Sets or unsets the `executable` flag.
@@ -494,7 +517,7 @@ impl AccessMode {
     }
 
     fn set_bit(&mut self, bit: umode_t, val: bool) {
-        self.mode = (self.mode & !bit) | (bit * val as umode_t);
+        self.0 = (self.0 & !bit) | (bit * val as umode_t);
     }
 }
 
@@ -521,7 +544,7 @@ impl Parsable for AccessMode {
         if s.len() < 3 {
             return Err(error::InvalidSequence);
         }
-        let mut mode = AccessMode::empty();
+        let mut mode = AccessMode(0);
         match s[0] {
             b'r' => mode.set_readable(true),
             b'-' => { },
@@ -539,8 +562,4 @@ impl Parsable for AccessMode {
         }
         Ok((mode, 3))
     }
-}
-
-pub fn access_mode_to_int(mode: AccessMode) -> umode_t {
-    mode.mode
 }
