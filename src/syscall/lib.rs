@@ -30,114 +30,477 @@ use cty::{
 
 // XXX: iovec _MUST_ be the same as &mut [u8]
 
+/// Opens a file relative to a file descriptor.
+///
+/// [argument, dir]
+/// The file descriptor relative to which relative paths are interpreted.
+///
+/// [argument, path]
+/// The path of the file.
+///
+/// [argument, flags]
+/// The flags used to open the file.
+///
+/// [argument, mode]
+/// The mode used to create new files.
+///
+/// [return_value]
+/// Rteruns an open file descriptor or an error value.
+///
+/// = See also
+///
+/// * link:man:openat(2)
 pub fn openat(dir: c_int, path: &CStr, flags: c_int, mode: umode_t) -> c_int {
     unsafe { r::openat(dir, path.as_ptr(), flags, mode) }
 }
 
+/// Closes a file descriptor.
+///
+/// [argument, fd]
+/// The file descriptor to close.
+///
+/// [return_value]
+/// Returns a success value or an error value.
+///
+/// = See also
+///
+/// * link:man:close(2)
 pub fn close(fd: c_int) -> c_int {
     unsafe { r::close(fd as k_uint) }
 }
 
+/// Seeks in a file descriptor.
+///
+/// [argument, fd]
+/// The file descriptor in which to seek.
+///
+/// [argument, offset]
+/// The range to seek.
+///
+/// [argument, whence]
+/// How to seek.
+///
+/// [return_value]
+/// Returns the new position in the file descriptor or an error value.
+///
+/// = See also
+///
+/// * link:man:lseek(2)
 pub fn lseek(fd: c_int, offset: loff_t, whence: c_uint) -> loff_t {
     unsafe { r::lseek(fd as k_uint, offset, whence) }
 }
 
+/// Duplicates a file descriptor.
+///
+/// [argument, fd]
+/// The file descriptor to duplicate.
+///
+/// [argument, arg]
+/// The smalest value of the new file descriptor.
+///
+/// [return_value]
+/// Returns the new file descriptor or an error value.
+///
+/// = See also
+///
+/// * link:man:fcntl(2) and F_DUPFD_CLOEXEC therein
 pub fn fcntl_dupfd_cloexec(fd: c_int, arg: c_int) -> c_int {
     unsafe { r::fcntl(fd as k_uint, F_DUPFD_CLOEXEC, arg as k_ulong) }
 }
 
+/// Retrieves the file access mode and file status flags of a file descriptor.
+///
+/// [argument, fd]
+/// The file descriptor to inspect.
+///
+/// [return_value]
+/// Returns the file access mode and file status flags or an error value.
+///
+/// = See also
+///
+/// * link:man:fcntl(2) and F_GETFL therein
 pub fn fcntl_getfl(fd: c_int) -> c_int {
     unsafe { r::fcntl(fd as k_uint, F_GETFL, 0) }
 }
 
+/// Sets the file status flags of a file descriptor.
+///
+/// [argument, fd]
+/// The file descriptor to modify.
+///
+/// [argument, arg]
+/// The new file status flags.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:fcntl(2) and F_SETFL therein
 pub fn fcntl_setfl(fd: c_int, arg: c_int) -> c_int {
     unsafe { r::fcntl(fd as k_uint, F_SETFL, arg as k_ulong) }
 }
 
+/// Retrieves the file descriptor flags of a file descriptor.
+///
+/// [argument, fd]
+/// The file descriptor to inspect.
+///
+/// [return_value]
+/// Returns the file descriptor flags or an error value.
+///
+/// = See also
+///
+/// * link:man:fcntl(2) and F_GETFD therein
 pub fn fcntl_getfd(fd: c_int) -> c_int {
     unsafe { r::fcntl(fd as k_uint, F_GETFD, 0) }
 }
 
+/// Sets the file descriptor flags of a file descriptor.
+///
+/// [argument, fd]
+/// The file descriptor to modify.
+///
+/// [argument, arg]
+/// The new file descriptor flags.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:fcntl(2) and F_SETFD therein
 pub fn fcntl_setfd(fd: c_int, arg: c_int) -> c_int {
     unsafe { r::fcntl(fd as k_uint, F_SETFD, arg as k_ulong) }
 }
 
+/// Truncates a file descriptor to a certain length.
+///
+/// [argument, fd]
+/// The file descriptor to truncate.
+///
+/// [argument, offset]
+/// The new length.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:ftruncate(2)
 pub fn ftruncate(fd: c_int, offset: loff_t) -> c_int {
     unsafe { r::ftruncate(fd as k_uint, offset as k_ulong) }
 }
 
+/// Returns the process id of this process.
+///
+/// = See also
+///
+/// * link:man:getpid(2)
 pub fn getpid() -> pid_t {
     unsafe { r::getpid() }
 }
 
+/// Returns the process id of the parent of this process.
+///
+/// = See also
+///
+/// * link:man:getppid(2)
 pub fn getppid() -> pid_t {
     unsafe { r::getppid() }
 }
 
+/// Sets the real, effective, and saved user ids of this process.
+///
+/// [argument, ruid]
+/// The real user id.
+///
+/// [argument, ruid]
+/// The effective user id.
+///
+/// [argument, ruid]
+/// The saved user id.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:setresuid(2)
 pub fn setresuid(ruid: uid_t, euid: uid_t, suid: uid_t) -> c_int {
     unsafe { r::setresuid(ruid, euid, suid) }
 }
 
+/// Sets the real, effective, and saved group ids of this process.
+///
+/// [argument, ruid]
+/// The real user id.
+///
+/// [argument, ruid]
+/// The effective user id.
+///
+/// [argument, ruid]
+/// The saved user id.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:setresgid(2)
 pub fn setresgid(rgid: gid_t, egid: gid_t, sgid: gid_t) -> c_int {
     unsafe { r::setresgid(rgid, egid, sgid) }
 }
 
+/// Transfers the kernel state of a file descriptor to the disk.
+///
+/// [argument, fd]
+/// The file descriptor to be synchronized.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:fsync(2)
 pub fn fsync(fd: c_int) -> c_int {
     unsafe { r::fsync(fd as k_uint) }
 }
 
+/// Transfers most of the kernel state of a file descriptor to the disk.
+///
+/// [argument, fd]
+/// The file descriptor to be synchronized.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:fdatasync(2)
 pub fn fdatasync(fd: c_int) -> c_int {
     unsafe { r::fdatasync(fd as k_uint) }
 }
 
+/// Transfers the kernel state to disk.
+///
+/// = See also
+///
+/// * link:man:sync(2)
 pub fn sync() {
     unsafe { r::sync() }
 }
 
+/// Transfers the kernel state of a filesystem to disk.
+///
+/// [argument, fd]
+/// An open file descriptor in the filesystem.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:syncfs(2)
 pub fn syncfs(fd: c_int) -> c_int {
     unsafe { r::syncfs(fd) }
 }
 
-pub fn fadvise(fd: c_int, offset: loff_t, len: loff_t, advise: c_int) -> c_int {
-    unsafe { r::fadvise(fd, offset, len as k_ulong, advise) }
+/// Advises the kernel of a certain usage pattern of a file descriptor.
+///
+/// [argument, fd]
+/// The file descriptor.
+///
+/// [argument, offset]
+/// The start of the usage.
+///
+/// [argument, len]
+/// The length of the usage.
+///
+/// [argument, advice]
+/// The advice given to the kernel.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:fadvise(2)
+pub fn fadvise(fd: c_int, offset: loff_t, len: loff_t, advice: c_int) -> c_int {
+    unsafe { r::fadvise(fd, offset, len as k_ulong, advice) }
 }
 
+/// Changes the mode of an inode represented by a file descriptor.
+///
+/// [argument, fd]
+/// An open file descriptor referring to an inode.
+///
+/// [argument, mode]
+/// The new mode of the inode.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:fchmod(2)
 pub fn fchmod(fd: c_int, mode: umode_t) -> c_int {
     unsafe { r::fchmod(fd as k_uint, mode) }
 }
 
+/// Allocates memory for a file descriptor.
+///
+/// [argument, fd]
+/// The affected file descriptor.
+///
+/// [argument, mode]
+/// The mode of the allocation.
+///
+/// [argument, base]
+/// The base of the allocation.
+///
+/// [argument, len]
+/// The length of the allocation.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:fallocate(2)
 pub fn fallocate(fd: c_int, mode: c_int, base: loff_t, len: loff_t) -> c_int {
     unsafe { r::fallocate(fd, mode, base, len) }
 }
 
+/// Creates a new timerfd.
+///
+/// [argument, clock]
+/// The clock to be used for timekeeping.
+///
+/// [argument, flags]
+/// The flags to be used for creating the file descriptor.
+///
+/// [return_value]
+/// Returns the file descriptor or an error value.
+///
+/// = See also
+///
+/// * link:man:timerfd_create(2)
 pub fn timerfd_create(clock: c_int, flags: c_int) -> c_int {
     unsafe { r::timerfd_create(clock, flags) }
 }
 
+/// Creates a new epoll instance.
+///
+/// [argument, flags]
+/// The flags to be used for creating the file descriptor.
+///
+/// [return_value]
+/// Returns the file descriptor or an error value.
+///
+/// = See also
+///
+/// * link:man:epoll_create1(2)
 pub fn epoll_create(flags: c_int) -> c_int {
     unsafe { r::epoll_create1(flags) }
 }
 
+/// Applies or removes an advisory lock on a file descriptor.
+///
+/// [argument, fd]
+/// The affected file descriptor.
+///
+/// [argument, op]
+/// The operation to be used.
+///
+/// [return_value]
+/// Returns succcess or an error value.
+///
+/// = See also
+///
+/// * link:man:flock(2)
 pub fn flock(fd: c_int, op: c_int) -> c_int {
     unsafe { r::flock(fd as k_uint, op as k_uint) }
 }
 
+/// Initiates readahead for a file descriptor in the kernel.
+///
+/// [argument, fd]
+/// The affected file descriptor.
+///
+/// [argument, offset]
+/// The start of the readahead.
+///
+/// [argument, count]
+/// The number of bytes to read.
+///
+/// [return_value]
+/// Returns succcess or an error value.
+///
+/// = See also
+///
+/// * link:man:readahead(2)
 pub fn readahead(fd: c_int, offset: loff_t, count: size_t) -> ssize_t {
     unsafe { r::readahead(fd, offset, count) }
 }
 
+/// Reads from a file descriptor.
+///
+/// [argument, fd]
+/// The affected file descriptor.
+///
+/// [argument, buf]
+/// The buffer to read into.
+///
+/// [return_value]
+/// Returns the number of bytes read or an error value.
+///
+/// = See also
+///
+/// * link:man:read(2)
 pub fn read(fd: c_int, buf: &mut [u8]) -> ssize_t {
     unsafe {
         r::read(fd as k_uint, buf.as_mut_ptr() as *mut _, buf.len().saturating_cast())
     }
 }
 
+/// Writes to a file descriptor.
+///
+/// [argument, fd]
+/// The affected file descriptor.
+///
+/// [argument, buf]
+/// The buffer to write.
+///
+/// [return_value]
+/// Returns the number of bytes written or an error value.
+///
+/// = See also
+///
+/// * link:man:write(2)
 pub fn write(fd: c_int, buf: &[u8]) -> ssize_t {
     unsafe {
         r::write(fd as k_uint, buf.as_ptr() as *const _, buf.len().saturating_cast())
     }
 }
 
+/// Reads from an offset in a file descriptor.
+///
+/// [argument, fd]
+/// The affected file descriptor.
+///
+/// [argument, buf]
+/// The buffer to read into.
+///
+/// [argument, offset]
+/// The offset from which to read.
+///
+/// [return_value]
+/// Returns the number of bytes read or an error value.
+///
+/// = See also
+///
+/// * link:man:pread(2)
 pub fn pread(fd: c_int, buf: &mut [u8], offset: loff_t) -> ssize_t {
     unsafe {
         r::pread(fd as k_uint, buf.as_mut_ptr() as *mut _, buf.len().saturating_cast(),
@@ -145,6 +508,24 @@ pub fn pread(fd: c_int, buf: &mut [u8], offset: loff_t) -> ssize_t {
     }
 }
 
+
+/// Writes to an offset in a file descriptor.
+///
+/// [argument, fd]
+/// The affected file descriptor.
+///
+/// [argument, buf]
+/// The buffer to write.
+///
+/// [argument, offset]
+/// The offset at which to write.
+///
+/// [return_value]
+/// Returns the number of bytes written or an error value.
+///
+/// = See also
+///
+/// * link:man:pwrite(2)
 pub fn pwrite(fd: c_int, buf: &[u8], offset: loff_t) -> ssize_t {
     unsafe {
         r::pwrite(fd as k_uint, buf.as_ptr() as *const _, buf.len().saturating_cast(),
@@ -152,18 +533,63 @@ pub fn pwrite(fd: c_int, buf: &[u8], offset: loff_t) -> ssize_t {
     }
 }
 
+/// Reads from a file descriptor into multiple buffers.
+///
+/// [argument, fd]
+/// The affected file descriptor.
+///
+/// [argument, bufs]
+/// The buffers to read into.
+///
+/// [return_value]
+/// Returns the number of bytes read or an error value.
+///
+/// = See also
+///
+/// * link:man:readv(2)
 pub fn readv(fd: c_int, bufs: &mut [&mut [u8]]) -> ssize_t {
     unsafe {
         r::readv(fd as k_ulong, bufs.as_mut_ptr() as *mut _, bufs.len().saturating_cast())
     }
 }
 
+/// Writes to a file descriptor from multiple buffers.
+///
+/// [argument, fd]
+/// The affected file descriptor.
+///
+/// [argument, bufs]
+/// The buffers to write.
+///
+/// [return_value]
+/// Returns the number of bytes written or an error value.
+///
+/// = See also
+///
+/// * link:man:writev(2)
 pub fn writev(fd: c_int, bufs: &[&[u8]]) -> ssize_t {
     unsafe {
         r::writev(fd as k_ulong, bufs.as_ptr() as *const _, bufs.len().saturating_cast())
     }
 }
 
+/// Reads from an offset in a file descriptor into multiple buffers.
+///
+/// [argument, fd]
+/// The affected file descriptor.
+///
+/// [argument, bufs]
+/// The buffers to read into.
+///
+/// [argument, offset]
+/// The offset from which to read.
+///
+/// [return_value]
+/// Returns the number of bytes read or an error value.
+///
+/// = See also
+///
+/// * link:man:preadv(2)
 pub fn preadv(fd: c_int, bufs: &mut [&mut [u8]], offset: loff_t) -> ssize_t {
     let lo = ((offset as u64) & 0xFFFF_FFFF) as k_ulong;
     let hi = ((offset as u64) > 32) as k_ulong;
@@ -173,6 +599,23 @@ pub fn preadv(fd: c_int, bufs: &mut [&mut [u8]], offset: loff_t) -> ssize_t {
     }
 }
 
+/// Writes to an offset in a file descriptor from multiple buffers.
+///
+/// [argument, fd]
+/// The affected file descriptor.
+///
+/// [argument, bufs]
+/// The buffers to write.
+///
+/// [argument, offset]
+/// The offset at which to write.
+///
+/// [return_value]
+/// Returns the number of bytes written or an error value.
+///
+/// = See also
+///
+/// * link:man:pwritev(2)
 pub fn pwritev(fd: c_int, bufs: &[&[u8]], offset: loff_t) -> ssize_t {
     let lo = ((offset as u64) & 0xFFFF_FFFF) as k_ulong;
     let hi = ((offset as u64) > 32) as k_ulong;
@@ -182,30 +625,134 @@ pub fn pwritev(fd: c_int, bufs: &[&[u8]], offset: loff_t) -> ssize_t {
     }
 }
 
+/// Retrieves the real, effective, and saved user ids of the process.
+///
+/// [argument, ruid]
+/// The place where the real id will be stored.
+///
+/// [argument, euid]
+/// The place where the effective id will be stored.
+///
+/// [argument, suid]
+/// The place where the saved id will be stored.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:getresuid(2)
 pub fn getresuid(ruid: &mut uid_t, euid: &mut uid_t, suid: &mut uid_t) -> c_int {
     unsafe { r::getresuid(ruid, euid, suid) }
 }
 
+/// Retrieves the real, effective, and saved group ids of the process.
+///
+/// [argument, ruid]
+/// The place where the real id will be stored.
+///
+/// [argument, euid]
+/// The place where the effective id will be stored.
+///
+/// [argument, suid]
+/// The place where the saved id will be stored.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:getresgid(2)
 pub fn getresgid(rgid: &mut gid_t, egid: &mut gid_t, sgid: &mut gid_t) -> c_int {
     unsafe { r::getresgid(rgid, egid, sgid) }
 }
 
+/// Retrieves the supplementary groups of this process.
+///
+/// [argument, buf]
+/// The buffer in which the groups will be stored.
+///
+/// [return_value]
+/// Returns the number of groups stored or an error value.
+///
+/// = See also
+///
+/// * link:man:getgroups(2)
 pub fn getgroups(buf: &mut [gid_t]) -> c_int {
     unsafe { r::getgroups(buf.len().saturating_cast(), buf.as_mut_ptr()) }
 }
 
+/// Sets the supplementary groups of this process.
+///
+/// [argument, buf]
+/// The buffer that contains the groups.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:setgroups(2)
 pub fn setgroups(buf: &[gid_t]) -> c_int {
     unsafe { r::setgroups(buf.len().saturating_cast(), buf.as_ptr() as *mut _) }
 }
 
+/// Retrieves filesystem statistics from a path.
+///
+/// [argument, path]
+/// A path in a mountpoint of the filesystem.
+///
+/// [argument, buf]
+/// The buffer in which the statistics will be stored.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:statfs(2)
 pub fn statfs(path: &CStr, buf: &mut statfs) -> c_int {
     unsafe { r::statfs(path.as_ptr(), buf) }
 }
 
+/// Retrieves filesystem statistics from a file descriptor.
+///
+/// [argument, fd]
+/// An open file descriptor in the filesystem.
+///
+/// [argument, buf]
+/// The buffer in which the statistics will be stored.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:fstatfs(2)
 pub fn fstatfs(fd: c_int, buf: &mut statfs) -> c_int {
     unsafe { r::fstatfs(fd as k_uint, buf) }
 }
 
+/// Retrieves or sets resource limits of a process.
+///
+/// [argument, pid]
+/// The affected process.
+///
+/// [argument, res]
+/// The affected resource.
+///
+/// [argument, new]
+/// The (optional) new value of the resource.
+///
+/// [argument, old]
+/// A place where the previous value of the object will be stored.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:prlimit(2)
 pub fn prlimit(pid: pid_t, res: c_int, new: Option<&rlimit64>,
                mut old: Option<&mut rlimit64>) -> c_int {
     let new_p = new.map(|v| v as *const _).unwrap_or(0 as *const _);
@@ -213,35 +760,166 @@ pub fn prlimit(pid: pid_t, res: c_int, new: Option<&rlimit64>,
     unsafe { r::prlimit(pid, res as k_uint, new_p, old_p) }
 }
 
+/// Retrieves entries in a opened directory.
+///
+/// [argument, fd]
+/// An open directory file descriptor.
+///
+/// [argument, buf]
+/// The buffer in which the entries will be stored.
+///
+/// [return_value]
+/// Returns the number of bytes read or an error value.
+///
+/// = See also
+///
+/// * link:man:getdents(2)
 pub fn getdents(fd: c_int, buf: &mut [u8]) -> c_int {
     unsafe {
         r::getdents(fd as k_uint, buf.as_mut_ptr() as *mut _, buf.len().saturating_cast())
     }
 }
 
+/// Retrieves information about a file relative to a file descriptor.
+///
+/// [argument, dir]
+/// The directory relative to which relative paths will be interpreted.
+///
+/// [argument, file]
+/// The path of the file.
+///
+/// [argument, buf]
+/// Where the information will be stored.
+///
+/// [argument, flags]
+/// Flags to use while retrieving the information.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:fstatat(2)
 pub fn fstatat(dir: c_int, file: &CStr, buf: &mut stat, flags: c_int) -> c_int {
     unsafe { r::fstatat(dir, file.as_ptr(), buf, flags) }
 }
 
+/// Checks whether a file relative to a file descriptor can be accessed.
+///
+/// [argument, dir]
+/// The directory relative to which relative paths will be interpreted.
+///
+/// [argument, file]
+/// The path of the file.
+///
+/// [argument, mode]
+/// The mode to access the file with.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:faccessat(2)
 pub fn faccessat(dir: c_int, file: &CStr, mode: umode_t) -> c_int {
     unsafe { r::faccessat(dir, file.as_ptr(), mode as c_int) }
 }
 
+/// Truncates a file.
+///
+/// [argument, file]
+/// The path of the file to truncate.
+///
+/// [argument, len]
+/// The new length of the file.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:truncate(2)
 pub fn truncate(file: &CStr, len: loff_t) -> c_int {
     unsafe { r::truncate(file.as_ptr(), len) }
 }
 
+/// Creates a hardlink relative to directories.
+///
+/// [argument, olddir]
+/// The directory relative to which relative oldfile paths will be interpreted.
+///
+/// [argument, oldfile]
+/// The path of the existing file.
+///
+/// [argument, newdir]
+/// The directory relative to which relative newfile paths will be interpreted.
+///
+/// [argument, newfile]
+/// The path of the new link.
+///
+/// [argument, flags]
+/// Flags to use while creating the link.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:linkat(2)
 pub fn linkat(olddir: c_int, oldfile: &CStr, newdir: c_int, newfile: &CStr,
               flags: c_int) -> c_int {
     unsafe { r::linkat(olddir, oldfile.as_ptr(), newdir, newfile.as_ptr(), flags) }
 }
 
+/// Changes the access and modification times of a file relative to a directory.
+///
+/// [argument, dir]
+/// The directory relative to which relative paths will be interpreted.
+///
+/// [argument, file]
+/// The path of the file.
+///
+/// [argument, times]
+/// The new times of the file.
+///
+/// [argument, flags]
+/// Flags to use while modifying the file.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:utimensat(2)
 pub fn utimensat(dir: c_int, file: Option<&CStr>, times: &[timespec; 2],
                  flags: c_int) -> c_int {
     let file = file.map(|f| f.as_ptr()).unwrap_or(0 as *const _);
     unsafe { r::utimensat(dir, file, times.as_ptr(), flags) }
 }
 
+/// Renames a file relative to a directory.
+///
+/// [argument, olddir]
+/// The directory relative to which relative oldfile paths will be interpreted.
+///
+/// [argument, oldfile]
+/// The path of the existing file.
+///
+/// [argument, newdir]
+/// The directory relative to which relative newfile paths will be interpreted.
+///
+/// [argument, newfile]
+/// The path of the new file.
+///
+/// [argument, flags]
+/// Flags to use while renaming the file.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:renameat2(2)
 pub fn renameat2(olddir: c_int, oldfile: &CStr, newdir: c_int, newfile: &CStr,
                  flags: c_int) -> c_int {
     unsafe {
@@ -254,6 +932,23 @@ pub fn renameat2(olddir: c_int, oldfile: &CStr, newdir: c_int, newfile: &CStr,
     }
 }
 
+/// Creates a directory relative to a directory.
+///
+/// [argument, dir]
+/// The directory relative to which relative paths will be interpreted.
+///
+/// [argument, file]
+/// The path of the new directory.
+///
+/// [argument, mode]
+/// The mode of the new directory.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:mkdirat(2)
 pub fn mkdirat(dir: c_int, file: &CStr, mode: umode_t) -> c_int {
     unsafe {  r::mkdirat(dir, file.as_ptr(), mode) }
 }

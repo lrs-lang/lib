@@ -24,19 +24,30 @@ pub trait AsNoNullStr {
     fn as_no_null_str(&self) -> Result<&NoNullStr>;
 }
 
-/// Like `AsNoNullStr`.
+/// Objects that can be borrowed as a mutable `NoNullStr`.
 pub trait AsMutNoNullStr {
+    /// Tries to borrow the object as a `NoNullStr`.
     fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr>;
 }
 
 impl NoNullStr {
-    /// Sets a byte in the slice to the specified value.
+    /// Sets a byte in the slice to a value.
+    ///
+    /// [argument, idx]
+    /// The index of the byte to be set.
+    ///
+    /// [argument, val]
+    /// The value of the byte.
+    ///
+    /// = Remarks
+    ///
+    /// If `val == 0`, the process is aborted.
     pub fn set(&mut self, idx: usize, val: u8) {
         assert!(val != 0);
         self.data[idx] = val;
     }
 
-    /// Returns the part after the last '/'.
+    /// Returns a `NoNullStr` that consists of the segment after the last '/'.
     pub fn file(&self) -> &NoNullStr {
         let bytes = &self.data;
         match memrchr(bytes, b'/') {
@@ -45,12 +56,12 @@ impl NoNullStr {
         }
     }
 
-    /// Like `file`.
+    /// Returns a mutable `NoNullStr` that consists of the segment after the last '/'.
     pub fn file_mut(&mut self) -> &mut NoNullStr {
         unsafe { &mut *(self.file() as *const _ as *mut _) }
     }
 
-    /// Returns the part before the last '/'.
+    /// Returns a `NoNullStr` that consists of the segment before the last '/'.
     pub fn dir(&self) -> &NoNullStr {
         let bytes = &self.data;
         match memrchr(bytes, b'/') {
@@ -59,16 +70,20 @@ impl NoNullStr {
         }
     }
 
-    /// Like `dir`.
+    /// Returns a mutable `NoNullStr` that consists of the segment before the last '/'.
     pub fn dir_mut(&mut self) -> &mut NoNullStr {
         unsafe { &mut *(self.dir() as *const _ as *mut _) }
     }
 
-    /// Returns the length of the object.
+    /// Returns the length of the string.
     pub fn len(&self) -> usize {
         self.data.len()
     }
 
+    /// Returns whether the tring starts with a byte slice.
+    ///
+    /// [argument, arg]
+    /// The byte slice to be checked.
     pub fn starts_with<A>(&self, arg: A) -> bool
         where A: AsRef<[u8]>,
     {
@@ -76,12 +91,26 @@ impl NoNullStr {
         bytes.starts_with(arg.as_ref())
     }
 
-    /// Converts the bytes to a `NoNullStr` without checking for null bytes.
+    /// Casts a byte slice to a `NoNullStr` without checking it for validity.
+    ///
+    /// [argument, bytes]
+    /// The slice to be interpreted as a `NoNullStr`.
+    ///
+    /// = Remarks
+    ///
+    /// If the slice contains null bytes, the behavior is undefined.
     pub unsafe fn from_bytes_unchecked(bytes: &[u8]) -> &NoNullStr {
         mem::cast(bytes)
     }
 
-    /// Like `from_bytes_unchecked`.
+    /// Casts a byte slice to a mutable `NoNullStr` without checking it for validity.
+    ///
+    /// [argument, bytes]
+    /// The slice to be interpreted as a `NoNullStr`.
+    ///
+    /// = Remarks
+    ///
+    /// If the slice contains null bytes, the behavior is undefined.
     pub unsafe fn from_bytes_unchecked_mut(bytes: &mut [u8]) -> &mut NoNullStr {
         mem::cast(bytes)
     }

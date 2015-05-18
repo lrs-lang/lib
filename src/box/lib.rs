@@ -16,12 +16,44 @@ extern crate lrs_alloc as alloc;
 extern crate lrs_fmt   as fmt;
 
 #[prelude_import] use base::prelude::*;
-use core::{ptr, mem};
+use core::{ptr, mem, intrinsics};
 use core::ops::{Deref, DerefMut};
-use base::error::{Errno};
 use fmt::{Debug, Write};
 
 mod lrs { pub use fmt::lrs::*; }
+
+/// A heap-allocated object.
+pub struct BoxBuf<T, Heap = alloc::Heap>
+    where Heap: alloc::Allocator,
+{
+    data: *mut T,
+    _marker: PhantomData<Heap>,
+}
+
+impl<T, H> BoxBuf<T, H>
+    where H: alloc::Allocator,
+{
+    /// Stores a value in the buffer, creating a real `Box`.
+    ///
+    /// [argument, val]
+    /// The value to be stored in the buffer.
+    pub fn set(self, val: T) -> Box<T, H> {
+        unsafe {
+            let data = self.data;
+            intrinsics::forget(self);
+            ptr::write(data, val);
+            Box { data: data, _marker: PhantomData }
+        }
+    }
+}
+
+impl<T, H> Drop for BoxBuf<T, H>
+    where H: alloc::Allocator,
+{
+    fn drop(&mut self) {
+        unsafe { H::free(self.data); }
+    }
+}
 
 /// A heap-allocated object.
 pub struct Box<T, Heap = alloc::Heap>
@@ -34,21 +66,23 @@ pub struct Box<T, Heap = alloc::Heap>
 impl<T, H> Box<T, H>
     where H: alloc::Allocator,
 {
-    /// Creates a new box and stores a value in it.
+    /// Creates a new box.
     ///
-    /// [argument, val]
-    /// The value to be stored in the box.
+    /// = Remarks
     ///
-    /// [return_value]
-    /// On success, the box is returned, otherwise the error and the value are returned.
-    pub fn new(val: T) -> Result<Box<T, H>, (T, Errno)> {
+    /// This function first creates an `BoxBuf` which can then be used to create a real
+    /// `Box` as shown in the example. The function does not take a value argument itself
+    /// since this would complicate handling the case where allocating memory fails.
+    /// 
+    /// = Examples
+    ///
+    /// ----
+    /// let bx: Box<u8> = try!(Box::new()).set(0);
+    /// ----
+    pub fn new() -> Result<BoxBuf<T, H>> {
         unsafe {
-            let ptr = match H::allocate() {
-                Ok(p) => p,
-                Err(e) => return Err((val, e)),
-            };
-            ptr::write(ptr, val);
-            Ok(Box { data: ptr, _marker: PhantomData })
+            let ptr = try!(H::allocate());
+            Ok(BoxBuf { data: ptr, _marker: PhantomData })
         }
     }
 }

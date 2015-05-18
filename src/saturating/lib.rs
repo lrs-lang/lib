@@ -13,7 +13,11 @@ extern crate lrs_core as core;
 
 use core::{num};
 
-/// TODO: Not sure how to document this since its only an extension trait.
+/// Objects that can be cast to another object in a saturating way.
+///
+/// = Remarks
+///
+/// This is used to cast between integer type so that `256.saturating_cast():u8 == 255`.
 pub trait SaturatingCast<T> {
     fn saturating_cast(self) -> T;
 }

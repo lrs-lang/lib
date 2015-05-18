@@ -23,3 +23,6 @@ pub mod lrs { pub use ::fmt::lrs::*; }
 
 pub mod rc;
 pub mod arc;
+
+// TODO: Arc is actually just an Rc with some atomic operations. Maybe Arc should just
+// wrap an Rc?

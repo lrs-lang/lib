@@ -4,10 +4,9 @@
 
 #[prelude_import] use base::prelude::*;
 use core::ops::{Deref};
-use core::{mem, ptr};
+use core::{mem, ptr, intrinsics};
 use core::marker::{Leak};
 use base::clone::{Clone};
-use base::error::{Errno};
 use atomic::{AtomicUsize};
 use fmt::{Debug, Write};
 use alloc::{self, Allocator};
@@ -17,6 +16,46 @@ struct Inner<T> {
     val: T,
 }
 
+/// A buffer used when creating a new `Arc`.
+pub struct ArcBuf<T, Heap = alloc::Heap>
+    where Heap: Allocator,
+          T: Leak,
+{
+    data: *mut Inner<T>,
+    _marker: PhantomData<Heap>,
+}
+
+impl<T, H> ArcBuf<T, H>
+    where H: Allocator,
+          T: Leak,
+{
+    /// Stores a value in the buffer, creating a real `Arc`.
+    ///
+    /// [argument, val]
+    /// The value to be stored in the buffer.
+    pub fn set(self, val: T) -> Arc<T, H> {
+        unsafe {
+            let data = self.data;
+            intrinsics::forget(self);
+            ptr::write(&mut (*data).val, val);
+            Arc { data: data, _marker: PhantomData }
+        }
+    }
+}
+
+unsafe impl<T, H> Send for ArcBuf<T, H> where H: Send { }
+unsafe impl<T, H> Sync for ArcBuf<T, H> { }
+
+impl<T, H> Drop for ArcBuf<T, H>
+    where H: Allocator,
+          T: Leak,
+{
+    fn drop(&mut self) {
+        unsafe { H::free(self.data); }
+    }
+}
+
+/// An atomically reference-counted container.
 pub struct Arc<T, Heap = alloc::Heap>
     where Heap: Allocator,
           T: Leak,
@@ -29,19 +68,28 @@ impl<T, H> Arc<T, H>
     where H: Allocator,
           T: Leak,
 {
-    pub fn new(val: T) -> Result<Arc<T, H>, (T, Errno)> {
+    /// Creates a new Arc.
+    ///
+    /// = Remarks
+    ///
+    /// This function first creates an `ArcBuf` which can then be used to create a real
+    /// `Arc` as shown in the example. The function does not take a value argument itself
+    /// since this would complicate handling the case where allocating memory fails.
+    /// 
+    /// = Examples
+    ///
+    /// ----
+    /// let arc: Arc<Vec<u8>> = try!(Arc::new()).set(Vec::new());
+    /// ----
+    pub fn new() -> Result<ArcBuf<T, H>> {
         unsafe {
-            let data_ptr = match H::allocate::<Inner<T>>() {
-                Ok(p) => p,
-                Err(e) => return Err((val, e)),
-            };
-            let mut data = &mut *data_ptr;
-            data.count.store(1);
-            ptr::write(&mut data.val, val);
-            Ok(Arc { data: data_ptr, _marker: PhantomData })
+            let data_ptr = try!(H::allocate::<Inner<T>>());
+            (*data_ptr).count.store(1);
+            Ok(ArcBuf { data: data_ptr, _marker: PhantomData })
         }
     }
 
+    /// Returns a mutable reference to the contained data if this is the only reference.
     pub fn as_mut(&mut self) -> Option<&mut T> {
         let data = unsafe { &mut *self.data };
         match data.count.load() {
@@ -50,7 +98,8 @@ impl<T, H> Arc<T, H>
         }
     }
 
-    pub fn new_ref(&self) -> Arc<T, H> {
+    /// Adds a new reference, returning an `Arc` that points to the same data.
+    pub fn add_ref(&self) -> Arc<T, H> {
         unsafe {
             let data = &mut *self.data;
             data.count.add(1);
@@ -59,7 +108,7 @@ impl<T, H> Arc<T, H>
     }
 }
 
-unsafe impl<T, H> Send for Arc<T, H> where T: Sync+Send, H: Sync { }
+unsafe impl<T, H> Send for Arc<T, H> where T: Sync+Send, H: Send { }
 unsafe impl<T, H> Sync for Arc<T, H> where T: Sync { }
 
 impl<T, H> Drop for Arc<T, H>
@@ -95,7 +144,7 @@ impl<T, H> Clone for Arc<T, H>
           T: Leak,
 {
     fn clone(&self) -> Result<Arc<T, H>> {
-        Ok(self.new_ref())
+        Ok(self.add_ref())
     }
 }
 

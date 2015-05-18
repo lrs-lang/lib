@@ -11,6 +11,15 @@ use fmt::{Debug, Display, Write};
 use vec::{Vec};
 use alloc::{self, Allocator};
 
+/// An owned byte sequence that can be interpreted as a string.
+///
+/// = Remarks
+///
+/// The Debug implementation prints strings in the formk `"string"` where all letters that
+/// are not in the printable ASCII set are printed as escape sequences of the form
+/// `\u{number}`.
+///
+/// The Display implementation writes the contained bytes directly to the output.
 pub struct ByteString<'a, Heap = alloc::Heap>
     where Heap: Allocator,
 {
@@ -20,6 +29,7 @@ pub struct ByteString<'a, Heap = alloc::Heap>
 impl<H> ByteString<'static, H>
     where H: Allocator,
 {
+    /// Creates a new allocated `ByteString`.
     pub fn new() -> ByteString<'static, H> {
         ByteString { data: Vec::new() }
     }
@@ -28,10 +38,15 @@ impl<H> ByteString<'static, H>
 impl<'a, H> ByteString<'a, H>
     where H: Allocator,
 {
+    /// Creates a `ByteString` by wrapping a vector.
+    ///
+    /// [argument, v]
+    /// The vector to be wrapped.
     pub fn from_vec(v: Vec<'a, u8, H>) -> ByteString<'a, H> {
         ByteString { data: v }
     }
 
+    /// Unwraps the vector contained in the string.
     pub fn unwrap(self) -> Vec<'a, u8, H> {
         self.data
     }

@@ -22,6 +22,8 @@ pub struct CStr {
 
 /// Objects that can be interpreted as `CStr`s.
 ///
+/// = Remarks
+///
 /// This operation can fail if the object has interior null bytes, e.g.,
 /// `"Hello World\0\0\0"` will succeed but `"Hello\0World\0"` will fail.
 pub trait AsCStr : ToCStr+AsRef<[u8]> {
@@ -31,7 +33,12 @@ pub trait AsCStr : ToCStr+AsRef<[u8]> {
     }
 }
 
-/// Like `AsCStr`.
+/// Objects that can be interpreted as mutable `CStr`s.
+///
+/// = Remarks
+///
+/// This operation can fail if the object has interior null bytes, e.g.,
+/// `"Hello World\0\0\0"` will succeed but `"Hello\0World\0"` will fail.
 pub trait AsMutCStr {
     /// Borrows the object mutably as a `CStr`.
     fn as_mut_cstr(&mut self) -> Result<&mut CStr>;
@@ -40,20 +47,48 @@ pub trait AsMutCStr {
 /// Objects that can be transformed into `CStr`s provided they have some scratch space
 /// available.
 ///
+/// = Remarks
+///
 /// For example, "Hello World" needs to be copied and a `0` appended to form a valid
 /// `CStr`. This operation can fail under the same conditions as `AsCStr`.
 pub trait ToCStr {
-    /// Converts the object by copying it into `buf`.
+    /// Converts the object by copying it.
+    ///
+    /// [argument, buf]
+    /// The buffer in which the `CStr` will be stored.
+    ///
+    /// [return_value]
+    /// Returns the created `CStr`.
     fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr>;
 
-    /// Tries to create a `CStr` without copying and copies if it's not possible.
+    /// Tries to create a `CStr` without copying and copies if that's not possible.
     ///
-    /// E.g. `"Hello World\0"` does not have to be copied.
+    /// [argument, buf]
+    /// The buffer in which the `CStr` will be created if it has to be copied.
+    ///
+    /// [return_value]
+    /// Returns the borrowed or created `CStr`.
+    ///
+    /// = Remarks
+    ///
+    /// For example, `"Hello World\0"` does not have to be copied. The default
+    /// implementation simply calls `to_cstr`.
     fn to_or_as_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<&'a CStr> {
         self.to_cstr(buf).map(|r| &*r)
     }
 
-    /// Like `to_or_as_cstr`.
+    /// Tries to create a mutable `CStr` without copying and copies if that's not
+    /// possible.
+    ///
+    /// [argument, buf]
+    /// The buffer in which the `CStr` will be created if it has to be copied.
+    ///
+    /// [return_value]
+    /// Returns the borrowed or created `CStr`.
+    ///
+    /// = Remarks
+    ///
+    /// The default implementation simply calls `to_cstr`.
     fn to_or_as_mut_cstr<'a>(&'a mut self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
         self.to_cstr(buf)
     }
@@ -62,7 +97,12 @@ pub trait ToCStr {
 impl CStr {
     /// Creates a new `CStr` from a pointer.
     ///
-    /// If `ptr` is not a null terminated array of bytes the behavior is undefined.
+    /// [argument, ptr]
+    /// A pointer to a null-terminated string.
+    ///
+    /// = Remarks
+    ///
+    /// If `ptr` is not a null terminated array of bytes, the behavior is undefined.
     pub unsafe fn from_ptr(ptr: *const c_char) -> &'static CStr {
         mem::cast(slice::from_ptr(ptr, strlen(ptr as *const _) + 1))
     }
@@ -78,17 +118,33 @@ impl CStr {
         self.data.as_ptr() as *const c_char
     }
 
-    /// Like `as_ptr`.
+    /// Returns a mutable pointer to the first byte in the `CStr`.
     pub fn as_mut_ptr(&mut self) -> *mut c_char {
         self.data.as_mut_ptr() as *mut c_char
     }
 
-    /// Casts the byte slice directly to a `CStr` without checking it for validity.
+    /// Casts a byte slice to a `CStr` without checking it for validity.
+    ///
+    /// [argument, bytes]
+    /// The slice to be interpreted as a `CStr`.
+    ///
+    /// = Remarks
+    ///
+    /// If the slice doesn't have exactly one null byte as its last entry, the behavior is
+    /// undefined.
     pub unsafe fn from_bytes_unchecked(bytes: &[u8]) -> &CStr {
         mem::cast(bytes)
     }
 
-    /// Like `from_bytes_unchecked`.
+    /// Casts a byte slice to a mutable `CStr` without checking it for validity.
+    ///
+    /// [argument, bytes]
+    /// The slice to be interpreted as a `CStr`.
+    ///
+    /// = Remarks
+    ///
+    /// If the slice doesn't have exactly one null byte as its last entry, the behavior is
+    /// undefined.
     pub unsafe fn from_bytes_unchecked_mut(bytes: &mut [u8]) -> &mut CStr {
         mem::cast(bytes)
     }
@@ -98,10 +154,14 @@ impl CStr {
         self.data.len() - 1
     }
 
+    /// Returns whether the `CStr` starts with a byte slice.
+    ///
+    /// [argument, arg]
+    /// The byte slice to be checked.
     pub fn starts_with<A>(&self, arg: A) -> bool
         where A: AsRef<[u8]>,
     {
-        self.data[..self.data.len()-1].starts_with(arg.as_ref())
+        self.data.starts_with(arg.as_ref())
     }
 }
 

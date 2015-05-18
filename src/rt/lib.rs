@@ -36,14 +36,17 @@ fn lang_start(main: *const u8, argc: isize, argv: *const *const u8) -> isize {
     0
 }
 
+/// Returns the number of command line arguments.
 pub fn arg_count() -> usize {
     unsafe { ARGC as usize }
 }
 
+/// Returns an iterator over the command line arguments.
 pub fn args() -> ArgsIter {
     unsafe { ArgsIter { argv: ARGV } }
 }
 
+/// An iterator over the command line arguments.
 pub struct ArgsIter {
     argv: *const *const u8,
 }
@@ -67,6 +70,7 @@ pub fn raw_env() -> *const *const c_char {
     unsafe { libc::environ as *const _ }
 }
 
+/// Returns an iterator over the environment variables.
 pub fn env() -> EnvIter {
     unsafe { ArgsIter { argv: libc::environ } }
 }

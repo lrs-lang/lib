@@ -28,8 +28,12 @@ use lock::{Lock, LockGuard, RawCondvar, LOCK_INIT, RAW_CONDVAR_INIT};
 
 pub mod lrs { pub use base::lrs::*; }
 
-/// A queue.
-pub struct Queue<T, Heap = alloc::Heap>
+/// A multi-threaded queue.
+///
+/// = Remarks
+///
+/// This queue can be used for sending messages between threads.
+pub struct Queue<'a, T, Heap = alloc::Heap>
     where Heap: Allocator,
 {
     // The buffer we store the massages in.
@@ -61,14 +65,21 @@ pub struct Queue<T, Heap = alloc::Heap>
     // Mutex that protects the two atomic variables above.
     sleep_lock: Lock,
 
-    _marker: PhantomData<Heap>,
+    _marker: PhantomData<(&'a (), Heap)>,
 }
 
-impl<T, H> Queue<T, H>
+impl<T, H> Queue<'static, T, H>
     where H: Allocator,
 {
-    /// Creates a new queue with capacity at least `cap`.
-    pub fn new(cap: usize) -> Result<Queue<T, H>> {
+    /// Creates a new queue with allocated memory.
+    ///
+    /// [argument, cap]
+    /// The number of elements that can be stored in the queue.
+    ///
+    /// = Remarks
+    ///
+    /// The capacity will be increased to the next power of two.
+    pub fn new(cap: usize) -> Result<Queue<'static, T, H>> {
         let cap = match cap.checked_next_power_of_two() {
             Some(c) => c,
             _ => return Err(error::NoMemory),
@@ -98,7 +109,11 @@ impl<T, H> Queue<T, H>
             _marker: PhantomData,
         })
     }
+}
 
+impl<'a, T, H> Queue<'a, T, H>
+    where H: Allocator,
+{
     /// Get a position to write to if the queue isn't full
     fn get_write_pos(&self) -> Option<usize> {
         loop {
@@ -157,12 +172,21 @@ impl<T, H> Queue<T, H>
         None
     }
 
-    /// Tries to add an element to the queue. Returns the element if the queue is full.
+    /// Tries to add an element to the queue.
+    ///
+    /// [argument, val]
+    /// The element to be added.
+    ///
+    /// [return_value]
+    /// Returns the element if the queue is full.
     pub fn push(&self, val: T) -> Option<T> {
         self.push_int(val, None)
     }
 
     /// Blocks until it can add the element to the queue.
+    ///
+    /// [argument, val]
+    /// The element to be added.
     pub fn push_wait(&self, mut val: T) {
         val = match self.push_int(val, None) {
             Some(v) => v,
@@ -190,8 +214,7 @@ impl<T, H> Queue<T, H>
             if write_end.wrapping_sub(next_next_read) > self.cap_mask {
                 return None;
             }
-            if self.next_read.compare_exchange(next_read,
-                                                      next_next_read) == next_read {
+            if self.next_read.compare_exchange(next_read, next_next_read) == next_read {
                 if cfg!(target_pointer_width = "32") {
                     let write_end = self.write_end.load();
                     if write_end.wrapping_sub(next_next_read) > self.cap_mask {
@@ -240,12 +263,18 @@ impl<T, H> Queue<T, H>
         Some(val)
     }
 
-    /// Removes an element to the queue. Returns None if the queue is empty.
+    /// Removes an element to the queue.
+    ///
+    /// [return_value]
+    /// Returns the removed element.
     pub fn pop(&self) -> Option<T> {
         self.pop_int(None)
     }
 
     /// Blocks until there is an element in the queue.
+    ///
+    /// [return_value]
+    /// Returns the removed element.
     pub fn pop_wait(&self) -> T {
         let mut rv = self.pop_int(None);
 
@@ -266,10 +295,10 @@ impl<T, H> Queue<T, H>
     }
 }
 
-unsafe impl<T: Send, H> Send for Queue<T, H> { }
-unsafe impl<T: Send, H> Sync for Queue<T, H> { }
+unsafe impl<'a, T, H> Send for Queue<'a, T, H> where T: Send, H: Allocator+Send { }
+unsafe impl<'a, T, H> Sync for Queue<'a, T, H> where T: Send, H: Allocator { }
 
-impl<T, H> Drop for Queue<T, H>
+impl<'a, T, H> Drop for Queue<'a, T, H>
     where H: Allocator,
 {
     fn drop(&mut self) {

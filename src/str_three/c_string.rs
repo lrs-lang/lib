@@ -11,9 +11,24 @@ use str_one::{CStr, NoNullStr, ByteStr, AsByteStr};
 use str_two::{CString, NoNullString, ByteString};
 use alloc::{Allocator};
 
+/// Objects that can be turned into a `CString` by allocating.
 pub trait ToCString {
+    /// Converts the object into an allocated `CString`.
     fn to_cstring<H>(&self) -> Result<CString<'static, H>> where H: Allocator;
 
+    /// Tries to convert the object into an `Rmo<CStr>` with or without allocating.
+    ///
+    /// [argument, _buf]
+    /// Scratch space.
+    ///
+    /// = Remarks
+    ///
+    /// The general strategy is as follows: If the object can be interpreted as a `CStr`,
+    /// a borrowed `Rmo` is returned. If it can be interpreted as a `CStr` by copying it
+    /// into the provided buffer, it's copied and returned as a borrowed `Rmo`. Otherwise,
+    /// a `CString` is allocated.
+    ///
+    /// The default implementation simply calls `to_cstring`.
     fn rmo_cstr<'a, H>(&'a self, _buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
         where H: Allocator,
     {

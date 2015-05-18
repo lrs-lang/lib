@@ -10,6 +10,7 @@ use fmt::{Debug, Write};
 use vec::{Vec};
 use alloc::{self, Allocator};
 
+/// An owned byte slice that has exactly one null byte at the very end.
 pub struct CString<'a, Heap = alloc::Heap>
     where Heap: Allocator,
 {
@@ -19,7 +20,15 @@ pub struct CString<'a, Heap = alloc::Heap>
 impl<'a, H> CString<'a, H>
     where H: Allocator,
 {
-    /// Casts the byte vector directly to a `CString` without checking it for validity.
+    /// Creates a `CString` by wrapping a vector without checking the vector for validity.
+    ///
+    /// [argument, bytes]
+    /// The vector to be wrapped.
+    ///
+    /// = Remarks
+    ///
+    /// If the vector doesn't have exactly one null byte as its last entry, the behavior
+    /// is undefined.
     pub unsafe fn from_bytes_unchecked(bytes: Vec<'a, u8, H>) -> CString<'a, H> {
         CString { data: bytes }
     }

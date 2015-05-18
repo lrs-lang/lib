@@ -67,6 +67,8 @@ pub struct StrInfo {
 impl StrInfo {
     /// Creates a new StrInfo.
     ///
+    /// = Remarks
+    ///
     /// This instance has not yet any information in it. You have to call `update` to fill
     /// it.
     #[inline(always)]
@@ -74,7 +76,7 @@ impl StrInfo {
         mem::zeroed()
     }
 
-    /// Retrieves information from the system and stores it in the Strinfo.
+    /// Retrieves information from the system and stores it in the object.
     pub fn update(&mut self) -> Result {
         try!(rv!(uname(&mut self.buf)));
         self.sysname_len    = self.buf.sysname.as_cstr().unwrap().len()    as u8;
@@ -86,32 +88,32 @@ impl StrInfo {
         Ok(())
     }
 
-    /// The name of the system.
+    /// Returns the name of the system.
     pub fn system_name(&self) -> &ByteStr {
         self.buf.sysname[..self.sysname_len as usize].as_ref()
     }
 
-    /// The hostname.
+    /// Returns the hostname of the system.
     pub fn host_name(&self) -> &ByteStr {
         self.buf.nodename[..self.nodename_len as usize].as_ref()
     }
 
-    /// The kernel release.
+    /// Returns the kernel release of the system.
     pub fn release(&self) -> &ByteStr {
         self.buf.release[..self.release_len as usize].as_ref()
     }
 
-    /// The kernel version.
+    /// Returns the kernel version of the system.
     pub fn version(&self) -> &ByteStr {
         self.buf.version[..self.version_len as usize].as_ref()
     }
 
-    /// The machine.
+    /// Returns the machine.
     pub fn machine(&self) -> &ByteStr {
         self.buf.machine[..self.machine_len as usize].as_ref()
     }
 
-    /// The domain name.
+    /// Returns the domain name of the system.
     pub fn domain_name(&self) -> &ByteStr {
         self.buf.domainname[..self.domainname_len as usize].as_ref()
     }
@@ -147,8 +149,6 @@ impl fmt::Debug for StrInfo {
 }
 
 /// Returns information about the system in form of numbers.
-///
-/// Someone should find out what the undocumented fields mean.
 #[derive(Pod, Eq)]
 pub struct NumInfo {
     data: sysinfo,
@@ -156,6 +156,8 @@ pub struct NumInfo {
 
 impl NumInfo {
     /// Creates a new NumInfo.
+    ///
+    /// = Remarks
     ///
     /// This instance has not yet any information in it. You have to call `update` to fill
     /// it.
@@ -257,19 +259,34 @@ impl fmt::Debug for NumInfo {
     }
 }
 
-/// Stores random bytes in a prefix of the buffer.
+/// Retrieves random bytes from the system.
+///
+/// [argument, buf]
+/// The buffer in which the bytes will be stored.
+///
+/// [return_value]
+/// Returns an initial sequence of the slice that contains random bytes.
 pub fn get_random(buf: &mut [u8]) -> Result<&mut [u8]> {
     let num = try!(retry(|| getrandom(buf, 0)));
     Ok(&mut buf[..num as usize])
 }
 
-/// Stores random bytes in a prefix of the buffer without blocking.
+/// Retrieves random bytes from the system without blocking.
+///
+/// [argument, buf]
+/// The buffer in which the bytes will be stored.
+///
+/// [return_value]
+/// Returns an initial sequence of the slice that contains random bytes.
 pub fn get_random_non_blocking(buf: &mut [u8]) -> Result<&mut [u8]> {
     let num = try!(retry(|| getrandom(buf, GRND_NONBLOCK)));
     Ok(&mut buf[..num as usize])
 }
 
 /// Enables process accounting.
+///
+/// [argument, path]
+/// The file to which the accounting information will be written.
 pub fn enable_accounting<P>(path: P) -> Result
     where P: ToCString,
 {
@@ -279,6 +296,9 @@ pub fn enable_accounting<P>(path: P) -> Result
 }
 
 /// Sets the hostname of the system
+///
+/// [argument, name]
+/// The new hostname.
 pub fn set_host_name<P>(name: P) -> Result
     where P: AsRef<[u8]>,
 {
@@ -286,6 +306,9 @@ pub fn set_host_name<P>(name: P) -> Result
 }
 
 /// Sets the domain name of the system
+///
+/// [argument, name]
+/// The new domain name.
 pub fn set_domain_name<P>(name: P) -> Result
     where P: AsRef<[u8]>,
 {

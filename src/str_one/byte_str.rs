@@ -12,8 +12,15 @@ use parse::{Parse, Parsable};
 use c_str::{CStr, ToCStr};
 use no_null_str::{AsNoNullStr, AsMutNoNullStr, NoNullStr};
 
-/// A borrowed byte sequence that can be interpreted as a string but doesn't necessarily
-/// contain UTF-8.
+/// A borrowed byte sequence that can be interpreted as a string.
+///
+/// = Remarks
+///
+/// The Debug implementation prints strings in the formk `"string"` where all letters that
+/// are not in the printable ASCII set are printed as escape sequences of the form
+/// `\u{number}`.
+///
+/// The Display implementation writes the contained bytes directly to the output.
 pub struct ByteStr {
     data: [u8],
 }
@@ -24,6 +31,7 @@ pub struct ByteStr {
 ///
 /// This will likely be replaced by type ascription.
 pub trait AsByteStr {
+    /// Borrows the object as a byte string.
     fn as_byte_str(&self) -> &ByteStr;
 }
 
@@ -33,15 +41,18 @@ pub trait AsByteStr {
 ///
 /// This will likely be replaced by type ascription.
 pub trait AsMutByteStr {
+    /// Borrows the object as a mutable byte string.
     fn as_mut_byte_str(&mut self) -> &mut ByteStr;
 }
 
 impl ByteStr {
-    /// Returns the length in bytes.
+    /// Returns the length of the string in bytes.
     pub fn len(&self) -> usize {
         self.data.len()
     }
 
+    /// Returns a byte string created by removing spaces and tabs from the start and end
+    /// of the string.
     pub fn trim(&self) -> &ByteStr {
         let mut start = 0;
         let mut end = self.data.len();

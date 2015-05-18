@@ -8,6 +8,7 @@ use fmt::{Debug, Display, Write};
 use vec::{Vec};
 use alloc::{self, Allocator};
 
+/// An owned UTF-8 string.
 pub struct String<'a, Heap = alloc::Heap>
     where Heap: Allocator,
 {
