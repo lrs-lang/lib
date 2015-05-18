@@ -29,6 +29,10 @@ pub trait Int {
     /// Returns whether the value is negative.
     fn negative(&self) -> bool;
     /// Casts the value to an `i64` and possibly discards significant bits.
+    ///
+    /// = Remarks
+    ///
+    /// For example, `u64::MAX.cast_i64() == -1`.
     fn cast_i64(&self) -> i64;
 }
 
@@ -56,9 +60,13 @@ int_impl!(isize);
 pub trait UnsignedInt : Int {
     /// Calculates the next power of two greater or equal the current value.
     ///
-    /// On overflow `1` is returned.
+    /// [return_value]
+    /// The next power of two or `1` on overflow.
     fn next_power_of_two(&self) -> Self;
-    /// Like `next_power_of_two` but returns `None` on overflow.
+    /// Calculates the next power of two greater or equal the current value.
+    ///
+    /// [return_value]
+    /// The next power of two or `None` on overflow.
     fn checked_next_power_of_two(&self) -> Option<Self>;
 }
 

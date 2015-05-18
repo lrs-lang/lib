@@ -15,20 +15,70 @@ extern crate lrs_arch_fns as arch_fns;
 
 #[prelude_import] use base::prelude::*;
 use core::{mem, cmp};
-use base::error::{Errno, DeviceFull};
+use base::error::{DeviceFull};
 use arch_fns::{memchr};
 
 mod lrs { pub use base::lrs::*; }
 
-pub type Result<T> = base::result::Result<T, Errno>;
-
+/// Objects that wrap a byte-stream for reading.
 pub trait Read {
+    /// Reads from the byte-stream into multiple buffers.
+    ///
+    /// [argument, buf]
+    /// The buffers that will be filled.
+    ///
+    /// [return_value]
+    /// Returns the total number of bytes read.
+    ///
+    /// = Remarks
+    ///
+    /// The method starts at the first buffer and fills a buffer completely before moving
+    /// to the next one. A `0` return value usually signals end-of-file unless the
+    /// implementation documentation says something else. Many functions and structures
+    /// will assume the `0` <-> end-of-file equivalence.
     fn scatter_read(&mut self, buf: &mut [&mut [u8]]) -> Result<usize>;
 
+    /// Reads from the byte-stream into a buffer.
+    ///
+    /// [argument, buf]
+    /// The buffer that will be filled.
+    ///
+    /// [return_value]
+    /// Returns the total number of bytes read.
+    ///
+    /// = Remarks
+    ///
+    /// :scatter: link:lrs::io::Read::scatter_read[scatter_read]
+    ///
+    /// The default implementation calls {scatter} with a single buffer element.
+    ///
+    /// = See also
+    ///
+    /// * {scatter}
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
         self.scatter_read(&mut [buf])
     }
 
+    /// Tries to read bytes until the buffer is buffer.
+    ///
+    /// [argument, buf]
+    /// The buffer that will be filled.
+    ///
+    /// [return_value]
+    /// Returns the total number of bytes read.
+    ///
+    /// = Remarks
+    ///
+    /// :read: link:lrs::io::Read::read[read]
+    ///
+    /// The default implementation calls {read} multiple times until the buffer is full or
+    /// `0` is returned. If an error occurs the error is returned immediately and all
+    /// bytes read up to that point are lost. This convenience method should thus not be
+    /// used in reliable programs.
+    ///
+    /// = See also
+    ///
+    /// * {read}
     fn read_all(&mut self, mut buf: &mut [u8]) -> Result<usize> {
         let mut read = 0;
         while buf.len() > 0 {
@@ -45,18 +95,96 @@ pub trait Read {
     }
 }
 
-pub trait BufRead {
+/// Objects that wrap a byte-stream and contain a buffer.
+pub trait BufRead : Read {
+    /// Copies bytes from the stream to a writer until a certain byte occurs.
+    ///
+    /// [argument, dst]
+    /// The writer into which the stream will be piped.
+    ///
+    /// [argument, b]
+    /// The byte at which to stop.
+    ///
+    /// [return_value]
+    /// Returns the total number of bytes copied.
+    ///
+    /// = Remarks
+    ///
+    /// The stop-byte itself is copied to the destination. The copied bytes are no longer
+    /// available for further read operations. If an error occurs, the error is returned
+    /// immediately. In this case no bytes are lost since all read bytes have already been
+    /// copied to the dst variable. The number of copied bytes is lost unless the dst
+    /// variable has a means to obtain the number of copied bytes.
     fn copy_until<W: Write>(&mut self, dst: &mut W, b: u8) -> Result<usize>;
+
+    /// Removes a certain number of bytes from the buffer.
+    ///
+    /// [argument, num]
+    /// The number of bytes to remove.
+    ///
+    /// [return_value]
+    /// Returns the actual number of bytes removed.
+    ///
+    /// = Remarks
+    ///
+    /// The returned value can be less than the num argument because there are fewer than
+    /// num bytes currently buffered.
     fn consume(&mut self, num: usize) -> usize;
 }
 
+/// Objects that wrap a byte-stream for writing.
 pub trait Write {
+    /// Writes multiple buffers to the byte-stream.
+    ///
+    /// [argument, buf]
+    /// The buffers to be written.
+    ///
+    /// [return_value]
+    /// Returns the total number of bytes written.
+    ///
+    /// = Remarks
+    ///
+    /// The method starts at the first buffer and writes each buffer completely before
+    /// moving to the next one.
     fn gather_write(&mut self, buf: &[&[u8]]) -> Result<usize>;
 
+    /// Write a buffer to the byte stream.
+    ///
+    /// [argument, buf]
+    /// The buffer to be written.
+    ///
+    /// [return_value]
+    /// Returns the total number of bytes written.
+    ///
+    /// = Remarks
+    ///
+    /// :gather: link:lrs::io::Write::gather_write[gather_write]
+    ///
+    /// The default implementation calls {gather} with a single buffer.
+    ///
+    /// = See also
+    ///
+    /// * {gather}
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         self.gather_write(&[buf])
     }
 
+    /// Tries to write the complete buffer to the byte-stream.
+    ///
+    /// [argument, buf]
+    /// The buffer to be written.
+    ///
+    /// [return_value]
+    /// Returns the total number of bytes written.
+    ///
+    /// = Remarks
+    ///
+    /// :write: link:lrs::io::Write::write[write]
+    ///
+    /// The default implementation calls `write` multiple times until the whole buffer has
+    /// been written. If an error occurs, the error is returned immediately and the number
+    /// of bytes written is lost. This method should thus not be used in reliable
+    /// applications.
     fn write_all(&mut self, mut buf: &[u8]) -> Result<usize> {
         let mut written = 0;
         while buf.len() > 0 {
@@ -72,6 +200,17 @@ pub trait Write {
         Ok(written)
     }
 
+    /// Writes a string to the byte-stream.
+    ///
+    /// [argument, buf]
+    /// The string to be written.
+    ///
+    /// [return_value]
+    /// Returns the total number of bytes written.
+    ///
+    /// = Remarks
+    ///
+    /// This is a convenience method that simply calls `write`.
     fn write_str(&mut self, buf: &str) -> Result<usize> {
         self.write(buf.as_bytes())
     }

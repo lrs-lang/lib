@@ -1157,7 +1157,7 @@ pub fn list_attr_no_follow<P>(path: P) -> Result<ListAttrIterator>
     list_attr_common(|buf| llistxattr(&path, buf))
 }
 
-/// An opened file in a file system.
+/// An opened file in a filesystem.
 #[derive(Eq)]
 pub struct File {
     fd: c_int,
