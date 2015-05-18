@@ -57,6 +57,7 @@ fn init() {
     }
 }
 
+/// Returns the major and minor version of the kernel we're running on.
 pub fn version() -> Result<(u8, u8)> {
     init();
     unsafe {
@@ -68,7 +69,7 @@ pub fn version() -> Result<(u8, u8)> {
 }
 
 macro_rules! kver {
-    ($($name:ident >= $major:expr,$minor:expr)+) => {
+    ($($(#[$meta:meta])* fn $name:ident >= $major:expr,$minor:expr;)+) => {
         $(
             pub fn $name() -> bool {
                 init();
@@ -79,24 +80,147 @@ macro_rules! kver {
 }
 
 kver! {
-    has_bpf                      >= 3,18
-    has_execveat                 >= 3,19
-    has_finit_module             >= 3,8
-    has_getrandom                >= 3,17
-    has_kcmp                     >= 3,5
-    has_kexec_file_load          >= 3,17
-    has_memfd_create             >= 3,17
-    has_process_vm_readv         >= 3,2
-    has_process_vm_writev        >= 3,2
-    has_renameat2                >= 3,15
-    has_sched_getattr            >= 3,14
-    has_sched_setattr            >= 3,14
-    has_seccomp                  >= 3,17
-    has_o_tmpfile                >= 3,11
-    has_seek_data                >= 3,1
-    has_seek_hole                >= 3,1
-    has_falloc_fl_collapse_range >= 3,15
-    has_falloc_fl_zero_range     >= 3,15
-    has_tfd_ioc_set_ticks        >= 3,17
-    has_epollwakeup              >= 3,5
+    #[doc = "Returns whether this kernel version has the `bpf` system call.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This system call was introduced in 3.18.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:bpf(2)"]
+    fn has_bpf >= 3,18;
+
+    #[doc = "Returns whether this kernel version has the `execveat` system call.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This system call was introduced in 3.19.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:execveat(2)"]
+    fn has_execveat >= 3,19;
+
+    #[doc = "Returns whether this kernel version has the `finit_module` system call.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This system call was introduced in 3.8.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:finit_module(2)"]
+    fn has_finit_module >= 3,8;
+
+    #[doc = "Returns whether this kernel version has the `getrandom` system call.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This system call was introduced in 3.17.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:getrandom(2)"]
+    fn has_getrandom >= 3,17;
+
+    #[doc = "Returns whether this kernel version has the `kcmp` system call.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This system call was introduced in 3.5.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:kcmp(2)"]
+    fn has_kcmp >= 3,5;
+
+    #[doc = "Returns whether this kernel version has the `kexec_file_load` system \
+             call.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This system call was introduced in 3.17.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:kexec_file_load(2)"]
+    fn has_kexec_file_load >= 3,17;
+
+    #[doc = "Returns whether this kernel version has the `memfd_create` system call.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This system call was introduced in 3.17.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:memfd_create(2)"]
+    fn has_memfd_create >= 3,17;
+
+    #[doc = "Returns whether this kernel version has the `process_vm_readv` system \
+             call.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This system call was introduced in 3.2.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:process_vm_readv(2)"]
+    fn has_process_vm_readv >= 3,2;
+
+    #[doc = "Returns whether this kernel version has the `process_vm_writev` system \
+             call.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This system call was introduced in 3.2.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:process_vm_writev(2)"]
+    fn has_process_vm_writev >= 3,2;
+
+    #[doc = "Returns whether this kernel version has the `renameat2` system call.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This system call was introduced in 3.15.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:renameat2(2)"]
+    fn has_renameat2 >= 3,15;
+
+    #[doc = "Returns whether this kernel version has the `sched_getattr` system call.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This system call was introduced in 3.14.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:sched_getattr(2)"]
+    fn has_sched_getattr >= 3,14;
+
+    #[doc = "Returns whether this kernel version has the `sched_settattr` system call.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This system call was introduced in 3.14.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:sched_setattr(2)"]
+    fn has_sched_setattr >= 3,14;
+
+    #[doc = "Returns whether this kernel version has the `seccomp` system call.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This system call was introduced in 3.17.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:seccomp(2)"]
+    fn has_seccomp >= 3,17;
+
+    #[doc = "Returns whether this kernel version has the `O_TMPFILE` flag.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This flag was introduced in 3.11.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:open(2)"]
+    fn has_o_tmpfile >= 3,11;
+
+    #[doc = "Returns whether this kernel version has the `SEEK_DATA` flag.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This flag was introduced in 3.1.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:lseek(2)"]
+    fn has_seek_data >= 3,1;
+
+    #[doc = "Returns whether this kernel version has the `SEEK_HOLE` flag.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This flag was introduced in 3.1.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:lseek(2)"]
+    fn has_seek_hole >= 3,1;
+
+    #[doc = "Returns whether this kernel version has the `FALLOC_FL_COLLAPSE_RANGE` \
+             flag.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This flag was introduced in 3.15.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:fallocate(2)"]
+    fn has_falloc_fl_collapse_range >= 3,15;
+
+    #[doc = "Returns whether this kernel version has the `FALLOC_FL_ZERO_RANGE` flag.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This flag was introduced in 3.15.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:fallocate(2)"]
+    fn has_falloc_fl_zero_range >= 3,15;
+
+    #[doc = "Returns whether this kernel version has the `TFD_IOC_SET_TICKS` flag.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This flag was introduced in 3.17.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:timerfd_create(2)"]
+    fn has_tfd_ioc_set_ticks >= 3,17;
+
+    #[doc = "Returns whether this kernel version has the `EPOLLWAKEUP` flag.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This flag was introduced in 3.5.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:epoll_ctl(2)"]
+    fn has_epollwakeup >= 3,5;
 }

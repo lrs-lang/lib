@@ -14,14 +14,50 @@ use syscall::{waitid};
 use rv::{retry};
 use fmt::{Debug, Write};
 
+/// The status of a child process.
 #[derive(Copy, Eq)]
 pub enum ChildStatus {
+    /// No status.
+    ///
+    /// = Remarks
+    ///
+    /// This can be returned by non-blocking calls.
     None,
+
+    /// The child has exited.
+    ///
+    /// [field, 1]
+    /// The exit status of the child.
     Exited(c_int),
+
+    /// The child has been killed.
+    ///
+    /// [field, 1]
+    /// The signal that killed the child.
     Killed(c_int),
+
+    /// The child has been killed and created a core dump.
+    ///
+    /// [field, 1]
+    /// The signal that killed the child.
     Dumped(c_int),
+
+    /// The child has been stopped by a signal.
+    ///
+    /// [field, 1]
+    /// The signal that stopped the child.
     Stopped(c_int),
+
+    /// The child has been trapped.
+    ///
+    /// [field, 1]
+    /// The signal that stopped the child.
     Trapped(c_int),
+
+    /// The child has been continued.
+    ///
+    /// [field, 1]
+    /// The signal that continued the child.
     Continued(c_int),
 }
 
@@ -40,6 +76,7 @@ impl Debug for ChildStatus {
     }
 }
 
+/// Flags used for waiting for child processes.
 #[derive(Pod, Eq)]
 pub struct WaitFlags(c_int);
 
@@ -58,16 +95,62 @@ impl Not for WaitFlags {
     fn not(self) -> WaitFlags { WaitFlags(!self.0) }
 }
 
-pub const WAIT_EXITED:       WaitFlags = WaitFlags( WEXITED    );
-pub const WAIT_STOPPED:      WaitFlags = WaitFlags( WSTOPPED   );
-pub const WAIT_CONTINUED:    WaitFlags = WaitFlags( WCONTINUED );
-pub const WAIT_NON_BLOCKING: WaitFlags = WaitFlags( WNOHANG    );
-pub const WAIT_DONT_REAP:    WaitFlags = WaitFlags( WNOWAIT    );
+/// Wait for the child to exit.
+///
+/// = See also
+///
+/// * link:man:waitid(2) and WEXITED therein
+pub const WAIT_EXITED: WaitFlags = WaitFlags(WEXITED);
 
+/// Wait for the child to stop.
+///
+/// = See also
+///
+/// * link:man:waitid(2) and WSTOPPED therein
+pub const WAIT_STOPPED: WaitFlags = WaitFlags(WSTOPPED);
+
+/// Wait for the child to continue.
+///
+/// = See also
+///
+/// * link:man:waitid(2) and WCONTINUED therein
+pub const WAIT_CONTINUED: WaitFlags = WaitFlags(WCONTINUED);
+
+/// Don't block if the status change to wait for has not occurred.
+///
+/// = See also
+///
+/// * link:man:waitid(2) and WNOHANG therein
+pub const WAIT_DONT_BLOCK: WaitFlags = WaitFlags(WNOHANG);
+
+/// Don't reap the child process.
+///
+/// = See also
+///
+/// * link:man:waitid(2) and WNOWAIT therein
+pub const WAIT_DONT_REAP: WaitFlags = WaitFlags(WNOWAIT);
+
+/// Wait for all child processes.
+///
+/// [argument, flags]
+/// The flags used for this wait operation.
+///
+/// [return_value]
+/// Returns the process id of the child and its status.
 pub fn wait_all(flags: WaitFlags) -> Result<(ProcessId, ChildStatus)> {
     wait_inner(P_ALL, 0, flags)
 }
 
+/// Wait for a certain child process.
+///
+/// [argument, id]
+/// The process id of the child.
+///
+/// [argument, flags]
+/// The flags used for this wait operation.
+///
+/// [return_value]
+/// Returns the status of the child.
 pub fn wait_id(id: ProcessId, flags: WaitFlags) -> Result<ChildStatus> {
     wait_inner(P_PID, id, flags).map(|o| o.1)
 }

@@ -16,17 +16,29 @@ const UNLOCKED: c_int = 0;
 const LOCKED:   c_int = 1;
 const WAITING:  c_int = 2;
 
+/// The status of a lock.
 pub enum LockStatus {
+    /// The lock is unlocked.
     Unlocked,
+    /// The lock is locked and nobody is waiting for it to be unlocked.
     Locked,
+    /// The lock is locked and there are threads waiting for it to be unlocked.
     Waiting,
 }
 
+/// A lock.
+///
+/// = Remarks
+///
+/// This lock can be used for inter-process synchronization.
 #[repr(C)]
 pub struct Lock {
     val: AtomicCInt,
 }
 
+/// = Remarks
+///
+/// Two locks are equal if their addresses are equal.
 impl Eq for Lock {
     fn eq(&self, other: &Lock) -> bool {
         self as *const Lock as usize == other as *const Lock as usize
@@ -38,6 +50,7 @@ impl<'a> Lock {
         LockGuard { lock: self }
     }
 
+    /// Returns the status of the lock.
     pub fn status(&self) -> LockStatus {
         match self.val.load_unordered() {
             UNLOCKED => LockStatus::Unlocked,
@@ -46,6 +59,10 @@ impl<'a> Lock {
         }
     }
 
+    /// Tries to lock the lock if it's currently unlocked.
+    ///
+    /// [return_value]
+    /// Returns a guard if the operation succeeded.
     pub fn try_lock(&'a self) -> Option<LockGuard<'a>> {
         if self.val.compare_exchange(UNLOCKED, LOCKED) == UNLOCKED {
             Some(self.guard())
@@ -54,6 +71,10 @@ impl<'a> Lock {
         }
     }
 
+    /// Locks the lock by sleeping until the lock is unlocked if it's currently locked.
+    ///
+    /// [return_value]
+    /// Returns a lock guard.
     pub fn lock(&'a self) -> LockGuard<'a> {
         let mut status = self.val.compare_exchange(UNLOCKED, LOCKED);
         if status == UNLOCKED {
@@ -72,15 +93,22 @@ impl<'a> Lock {
     }
 }
 
+/// A lock-guard.
+///
+/// = Remarks
+///
+/// This guard automatically unlocks the lock when it goes out of scope.
 pub struct LockGuard<'a> {
     lock: &'a Lock,
 }
 
 impl<'a> LockGuard<'a> {
+    /// Returns the lock guarded by this guard.
     pub fn as_lock(&self) -> &'a Lock {
         self.lock
     }
 
+    /// Unlocks the lock and returns a reference to the lock.
     pub fn unlock(self) -> &'a Lock {
         self.lock
     }

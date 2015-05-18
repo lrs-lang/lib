@@ -41,11 +41,11 @@ pub mod exec;
 pub mod wait;
 
 /// Returns the process id of this process.
-pub fn this_process_id() -> ProcessId {
+pub fn process_id() -> ProcessId {
     getpid()
 }
 
-/// Returns the process id of the process that created this process.
+/// Returns the process id of the parent process.
 pub fn parent_process_id() -> ProcessId {
     getppid()
 }

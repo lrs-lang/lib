@@ -18,12 +18,15 @@ use core::ops::{Add};
 use core::iter::{Iterator};
 use vec::{Vec};
 
-/// Returns an iterator which yields the provided value indefinitely.
+/// Returns an iterator which yields a value indefinitely.
+///
+/// [argument, val]
+/// The value to be repeated.
 pub fn repeat<T: Copy>(val: T) -> Repeat<T> {
     Repeat { val: val }
 }
 
-/// See `repeat`.
+/// An iterator that yields the same value indefinitely.
 pub struct Repeat<T> {
     val: T,
 }
@@ -39,13 +42,21 @@ impl<T: Iterator> IteratorExt for T { }
 
 /// Extensions for the `Iterator` trait.
 pub trait IteratorExt : Iterator+Sized {
+    /// Collects all elements of the iterator into a vector.
+    ///
+    /// = Remarks
+    ///
+    /// If no space can be allocated for the elements, the process is aborted.
     fn collect(self) -> Vec<'static, Self::Item> {
         let mut vec = Vec::new();
         vec.extend(self);
         vec
     }
 
-    /// Sums all elements in the iterator, starting with `start`.
+    /// Sums all elements in the iterator.
+    ///
+    /// [argument, start]
+    /// The base value.
     fn sum(self, start: Self::Item) -> Self::Item
         where <Self as Iterator>::Item: Add<Self::Item, Output=Self::Item>
     {
@@ -54,23 +65,44 @@ pub trait IteratorExt : Iterator+Sized {
         sum
     }
 
-    /// Returns a new iterator where `f` is applied to all elements.
+    /// Returns a new iterator that applies a function to all elements.
+    ///
+    /// [argument, f]
+    /// The function that will be applied.
     fn map<T, F>(self, f: F) -> Map<T, F, Self>
         where F: FnMut(Self::Item) -> T,
     {
         Map { iter: self, f: f }
     }
 
+    /// Returns a new iterator that filters elements via a function.
+    ///
+    /// [argument, f]
+    /// The predicate.
+    ///
+    /// = Remarks
+    ///
+    /// An element is passed through if `f` returns true.
     fn filter<F>(self, f: F) -> Filter<F, Self>
         where F: FnMut(&Self::Item) -> bool,
     {
         Filter { iter: self, f: f }
     }
 
+    /// Returns a new iterator that returns the number of the element in addition to the
+    /// element.
     fn enumerate(self) -> Enumerate<Self> {
         Enumerate { iter: self, pos: 0 }
     }
 
+    /// Removes a number of elements from the start of the iterator.
+    ///
+    /// [argument, n]
+    /// The number of elements to remove.
+    ///
+    /// = Remarks
+    ///
+    /// This function calls `next` `n` times.
     fn consume(&mut self, n: usize) -> &mut Self {
         for _ in 0..n {
             self.next();
@@ -78,10 +110,14 @@ pub trait IteratorExt : Iterator+Sized {
         self
     }
 
-    /// Runs the iterator and places the elements into the buffer until the buffer or the
-    /// iterator are exhausted.
+    /// Places the elements of the iterator into a slice until the slice or the iterator
+    /// are exhausted.
     ///
-    /// Returns the number of elements stored in the buffer.
+    /// [argument, buf]
+    /// The buffer in which the elements will be placed.
+    ///
+    /// [return_value]
+    /// Returns the number of elements placed in the buffer.
     fn collect_into(&mut self, mut buf: &mut [Self::Item]) -> usize {
         let mut count = 0;
         while buf.len() > 0 {
@@ -97,7 +133,8 @@ pub trait IteratorExt : Iterator+Sized {
     }
 }
 
-/// See `map`.
+/// An iterator that wraps another iterator and applies a function to every element before
+/// yielding it.
 pub struct Map<T, F, I>
     where I: Iterator,
           F: FnMut(I::Item) -> T,
@@ -116,7 +153,8 @@ impl<T, F, I> Iterator for Map<T, F, I>
     }
 }
 
-/// See `filter`.
+/// An iterator that wraps another iterator and yields only those elements that satisfy a
+/// predicate.
 pub struct Filter<F, I>
     where I: Iterator,
           F: FnMut(&I::Item) -> bool,
@@ -142,6 +180,8 @@ impl<F, I> Iterator for Filter<F, I>
     }
 }
 
+/// An iterator that wrap another iterator and returns the number of the returned value in
+/// addition to the value.
 pub struct Enumerate<I>
     where I: Iterator,
 {

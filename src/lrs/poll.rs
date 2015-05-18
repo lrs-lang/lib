@@ -4,4 +4,7 @@
 
 //! File descriptor polling.
 
-pub use lrs_poll::{Flags, Event, Epoll, EMPTY_EVENT};
+pub use lrs_poll::{
+    PollFlags, Event, Epoll, EMPTY_EVENT, POLL_READ, POLL_WRITE, POLL_READ_HANG_UP,
+    POLL_PRIORITY, POLL_EDGE_TRIGGERED, POLL_ONE_SHOT, POLL_WAKE_UP,
+};

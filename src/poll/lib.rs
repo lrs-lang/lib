@@ -23,7 +23,11 @@ extern crate lrs_time_base  as time_base;
 mod lrs { pub use base::lrs::*; pub use {cty}; }
 
 use core::{mem};
-use cty::{c_int, EPOLL_CLOEXEC, EPOLL_CTL_ADD, EPOLL_CTL_MOD, EPOLL_CTL_DEL, epoll_event};
+use core::ops::{BitOr, Not, BitAnd};
+use cty::{
+    c_int, EPOLL_CLOEXEC, EPOLL_CTL_ADD, EPOLL_CTL_MOD, EPOLL_CTL_DEL, epoll_event,
+    POLLIN, POLLOUT, POLLRDHUP, POLLPRI, EPOLLET, EPOLLONESHOT, EPOLLWAKEUP,
+};
 use syscall::{epoll_create, epoll_ctl, epoll_pwait, close};
 use fd::{FDContainer};
 use rv::{retry};
@@ -33,52 +37,127 @@ use fmt::{Debug, Write};
 use time_base::{Time};
 
 /// Flags for modifying a polled file descriptor.
+///
+/// [field, 1]
+/// The numeric representation of the flags.
 #[derive(Pod, Eq)]
-pub struct Flags(u32);
+pub struct PollFlags(pub u32);
 
-impl Flags {
-    /// Creates a new Flags with all flags unset.
-    pub fn new() -> Flags {
-        Flags(0)
+impl BitOr for PollFlags {
+    type Output = PollFlags;
+    fn bitor(self, other: PollFlags) -> PollFlags {
+        PollFlags(self.0 | other.0)
+    }
+}
+
+impl BitAnd for PollFlags {
+    type Output = PollFlags;
+    fn bitand(self, other: PollFlags) -> PollFlags {
+        PollFlags(self.0 & other.0)
+    }
+}
+
+impl Not for PollFlags {
+    type Output = PollFlags;
+    fn not(self) -> PollFlags {
+        PollFlags(!self.0)
+    }
+}
+
+/// Dummy flag with all flags unset.
+pub const POLL_NONE: PollFlags = PollFlags(0);
+
+macro_rules! create {
+    ($($(#[$meta:meta])* flag $name:ident = $val:expr;)*) => {
+        $($(#[$meta])* pub const $name: PollFlags = PollFlags($val);)*
+
+        impl Debug for PollFlags {
+            fn fmt<W: Write>(&self, w: &mut W) -> Result {
+                let mut first = true;
+                $(
+                    if self.0 & $val != 0 {
+                        if !first { try!(w.write(b"|")); }
+                        first = false;
+                        try!(w.write_all(stringify!($name).as_bytes()));
+                    }
+                )*
+                let _ = first;
+                Ok(())
+            }
+        }
+    }
+}
+
+create! {
+    #[doc = "Signal when the file descriptor becomes ready for reading.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:epoll_ctl(2) and EPOLLIN therein"]
+    flag POLL_READ = POLLIN;
+
+    #[doc = "Signal when the file descriptor becomes ready for writing.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:epoll_ctl(2) and EPOLLOUT therein"]
+    flag POLL_WRITE = POLLOUT;
+
+    #[doc = "Signal when the peer has hung up his write end.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:epoll_ctl(2) and EPOLLRDHUP therein"]
+    flag POLL_READ_HANG_UP = POLLRDHUP;
+
+    #[doc = "Signal when priority data becomes available for reading.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:epoll_ctl(2) and EPOLLPRI therein"]
+    flag POLL_PRIORITY = POLLPRI;
+
+    #[doc = "Enable edge-triggered polling.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:epoll_ctl(2) and EPOLLET therein"]
+    flag POLL_EDGE_TRIGGERED = EPOLLET;
+
+    #[doc = "Signal only once for this file descriptor.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:epoll_ctl(2) and EPOLLONESHOT therein"]
+    flag POLL_ONE_SHOT = EPOLLONESHOT;
+
+    #[doc = "Don't allow the system to suspend after data becomes available.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "== Kernel versions"]
+    #[doc = "The required kernel version is 3.5.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:epoll_ctl(2) and EPOLLWAKEUP therein"]
+    flag POLL_WAKE_UP = EPOLLWAKEUP;
+}
+
+impl PollFlags {
+    /// Sets a flag.
+    ///
+    /// [argument, flag]
+    /// The flag to be set.
+    pub fn set(&mut self, flag: PollFlags) {
+        self.0 |= flag.0
     }
 
-    /// If set the poll will check for readability.
-    pub fn readable(&self)       -> bool { self.0 & cty::POLLIN      != 0 }
-    /// If set the poll will check for writability.
-    pub fn writable(&self)       -> bool { self.0 & cty::POLLOUT     != 0 }
-    /// If set the poll checks that the peer has hung up his write end.
-    pub fn read_hang_up(&self)   -> bool { self.0 & cty::POLLRDHUP  != 0 }
-    /// If set the poll checks for priority data.
-    pub fn priority(&self)       -> bool { self.0 & cty::POLLPRI    != 0 }
-    /// If set the poll is edge triggered.
-    pub fn edge_triggered(&self) -> bool { self.0 & cty::EPOLLET      != 0 }
-    /// If set the fd will checked only once and then has to be re-enabled. 
-    pub fn one_shot(&self)       -> bool { self.0 & cty::EPOLLONESHOT != 0 }
-    /// If set then the system cannot suspend after this file descriptor becomes ready and
-    /// before another call to `wait` is made.
-    pub fn wake_up(&self)        -> bool { self.0 & cty::EPOLLWAKEUP  != 0 }
+    /// Clears a flag.
+    ///
+    /// [argument, flag]
+    /// The flag to be cleared.
+    pub fn unset(&mut self, flag: PollFlags) {
+        self.0 &= !flag.0
+    }
 
-    pub fn set_readable(&mut       self, val: bool) { self.set_bit(cty::POLLIN      , val) }
-    pub fn set_writable(&mut       self, val: bool) { self.set_bit(cty::POLLOUT     , val) }
-    pub fn set_read_hang_up(&mut   self, val: bool) { self.set_bit(cty::POLLRDHUP  , val) }
-    pub fn set_priority(&mut       self, val: bool) { self.set_bit(cty::POLLPRI    , val) }
-    pub fn set_edge_triggered(&mut self, val: bool) { self.set_bit(cty::EPOLLET      , val) }
-    pub fn set_one_shot(&mut       self, val: bool) { self.set_bit(cty::EPOLLONESHOT , val) }
-    pub fn set_wake_up(&mut        self, val: bool) { self.set_bit(cty::EPOLLWAKEUP  , val) }
-
-    fn set_bit(&mut self, bit: u32, val: bool) {
-        if val {
-            self.0 |= bit
-        } else {
-            self.0 &= !bit
-        }
+    /// Returns whether a flag is set.
+    ///
+    /// [argument, flag]
+    /// The flag to be checked.
+    pub fn is_set(&self, flag: PollFlags) -> bool {
+        self.0 & flag.0 != 0
     }
 }
 
 /// Constructor for creating `Event` arrays.
 pub const EMPTY_EVENT: Event = Event { data: epoll_event { events: 0, data: 0 } };
 
-/// An event returned from a `wait` call.
+/// An event returned after polling.
 #[repr(C)]
 #[derive(Pod, Eq)]
 pub struct Event {
@@ -86,23 +165,23 @@ pub struct Event {
 }
 
 impl Event {
-    /// If set the descriptor is readable.
-    pub fn readable(self) -> bool { self.data.events & cty::POLLIN != 0 }
+    /// Returns whether the file descriptor is readable.
+    pub fn is_read(self) -> bool { self.data.events & cty::POLLIN != 0 }
 
-    /// If set the descriptor is writable.
-    pub fn writable(self) -> bool { self.data.events & cty::POLLOUT != 0 }
+    /// Returns whether the file descriptor is writable.
+    pub fn is_write(self) -> bool { self.data.events & cty::POLLOUT != 0 }
 
-    /// If set the peer has hung up his write end.
-    pub fn read_hang_up(self) -> bool { self.data.events & cty::POLLRDHUP != 0 }
+    /// Returns whether the peer has hung up his write end.
+    pub fn is_read_hang_up(self) -> bool { self.data.events & cty::POLLRDHUP != 0 }
 
-    /// If set there is priority data.
-    pub fn priority(self) -> bool { self.data.events & cty::POLLPRI != 0 }
+    /// Returns whether priority data is available for reading.
+    pub fn is_priority(self) -> bool { self.data.events & cty::POLLPRI != 0 }
 
-    /// If set an error condition happened on the file descriptor.
-    pub fn error(self) -> bool { self.data.events & cty::POLLERR != 0 }
+    /// Returns whether an error condition occurred on the file descriptor.
+    pub fn is_error(self) -> bool { self.data.events & cty::POLLERR != 0 }
 
-    /// If set the file descriptor was hung up.
-    pub fn hang_up(self) -> bool { self.data.events & cty::POLLHUP != 0 }
+    /// Returns whether the peer has hung up.
+    pub fn is_hang_up(self) -> bool { self.data.events & cty::POLLHUP != 0 }
 
     /// Returns the associated file descriptor.
     pub fn fd(self) -> c_int { self.data.data as c_int }
@@ -129,28 +208,58 @@ impl Epoll {
     }
 
     /// Adds a file descriptor to the epoll instance.
-    pub fn add<T: FDContainer>(&self, fd: &T, flags: Flags) -> Result {
+    ///
+    /// [argument, fd]
+    /// The file descriptor to add.
+    ///
+    /// [argument, flags]
+    /// The flags to be set.
+    pub fn add<T: FDContainer>(&self, fd: &T, flags: PollFlags) -> Result {
         let mut event = epoll_event { events: flags.0, data: fd.borrow() as u64 };
         rv!(epoll_ctl(self.fd, EPOLL_CTL_ADD, fd.borrow(), Some(&mut event)))
     }
 
     /// Modifies the flags associated with an added file descriptor.
-    pub fn modify<T: FDContainer>(&self, fd: &T, flags: Flags) -> Result {
+    ///
+    /// [argument, fd]
+    /// The file descriptor to modify.
+    ///
+    /// [argument, flags]
+    /// The new flags.
+    pub fn modify<T: FDContainer>(&self, fd: &T, flags: PollFlags) -> Result {
         let mut event = epoll_event { events: flags.0, data: fd.borrow() as u64 };
         rv!(epoll_ctl(self.fd, EPOLL_CTL_MOD, fd.borrow(), Some(&mut event)))
     }
 
     /// Removes a file descriptor from an epoll instance.
+    ///
+    /// [argument, fd]
+    /// The file descriptor to remove.
     pub fn remove<T: FDContainer>(&self, fd: &T) -> Result {
         rv!(epoll_ctl(self.fd, EPOLL_CTL_DEL, fd.borrow(), None))
     }
 
     /// Waits for an event to occur.
+    ///
+    /// [argument, events]
+    /// The buffer in which events will be stored.
+    ///
+    /// [return_value]
+    /// Returns a slice of events that occurred.
     pub fn wait<'a>(&self, events: &'a mut [Event]) -> Result<&'a mut [Event]> {
         self.wait_common(events, -1)
     }
 
-    /// Waits for an event to occur or the timeout to expire.
+    /// Waits for an event to occur or a timeout to expire.
+    ///
+    /// [argument, events]
+    /// The buffer in which events will be stored.
+    ///
+    /// [argument, timeout]
+    /// The maximum time this call will block.
+    ///
+    /// [return_value]
+    /// Returns a slice of events that occurred.
     pub fn wait_timeout<'a>(&self, events: &'a mut [Event],
                             timeout: Time) -> Result<&'a mut [Event]> {
         let timeout = timeout.seconds * 1_000 + timeout.nanoseconds / 1_000_000;
@@ -158,7 +267,7 @@ impl Epoll {
     }
 
     fn wait_common<'a>(&self, events: &'a mut [Event],
-                           timeout: c_int) -> Result<&'a mut [Event]> {
+                       timeout: c_int) -> Result<&'a mut [Event]> {
         let events: &mut [epoll_event] = unsafe { mem::cast(events) };
         let ret = try!(retry(|| epoll_pwait(self.fd, events, timeout, None)));
         let events: &mut [Event] = unsafe { mem::cast(events) };

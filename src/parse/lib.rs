@@ -23,7 +23,7 @@ mod int;
 
 /// Types that can be parsed.
 pub trait Parse {
-    /// Tries to parse the object as an object of type `P`.
+    /// Tries to parse the object.
     fn parse<P: Parsable>(&self) -> Result<P>;
 }
 
@@ -39,12 +39,27 @@ impl<'a, T: Parse+?Sized> Parse for &'a T {
 
 /// Types that are parsable.
 pub trait Parsable : Sized {
-    /// Tries to parse an initial sequence of bytes as an object of type `P`.
+    /// Tries to parse an initial sequence of bytes as an object of this type.
     ///
-    /// Returns the object and the number of bytes consumed on success.
+    /// [argument, bytes]
+    /// The bytes to be parsed.
+    ///
+    /// [return_value]
+    /// Returns the object and the number of bytes consumed.
     fn parse_bytes_init(bytes: &[u8]) -> Result<(Self, usize)>;
 
-    /// Like `parse_bytes_init` but returns an error if the whole slice wasn't consumed.
+    /// Tries to parse a byte slice as an object of this type.
+    ///
+    /// [argument, bytes]
+    /// The bytes to be parsed.
+    ///
+    /// [return_value]
+    /// Returns the object.
+    ///
+    /// = Remarks
+    ///
+    /// This fails if the whole sequence cannot be parsed, that is, if `parse_bytes_init`
+    /// returns that not all of the bytes were parsed.
     fn parse_bytes(bytes: &[u8]) -> Result<Self> {
         match Self::parse_bytes_init(bytes) {
             Ok((v, l)) => {

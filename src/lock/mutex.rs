@@ -9,12 +9,17 @@ use fmt::{Debug};
 use cell::cell::{Cell};
 use lock::{LOCK_INIT, Lock, LockGuard};
 
+/// A mutex protecting some data.
 pub struct Mutex<T> {
     lock: Lock,
     data: Cell<T>,
 }
 
 impl<T> Mutex<T> {
+    /// Creates a new mutex.
+    ///
+    /// [argument, data]
+    /// The data to be protected by the mutex.
     pub fn new(data: T) -> Mutex<T> {
         Mutex {
             lock: LOCK_INIT,
@@ -30,31 +35,64 @@ impl<T> Mutex<T> {
         }
     }
 
+    /// Returns the underlying lock of this mutex.
     pub fn as_lock(&self) -> &Lock {
         &self.lock
     }
 
+    /// Tries to lock the mutex if it's currently unlocked.
+    ///
+    /// [return_value]
+    /// Returns a guard if the operation succeeded.
     pub fn try_lock<'a>(&'a self) -> Option<MutexGuard<'a, T>> {
         self.lock.try_lock().map(|g| self.guard(g))
     }
 
+    /// Locks the mutex by sleeping until the mutex is unlocked if it's currently locked.
+    ///
+    /// [return_value]
+    /// Returns a mutex-guard.
     pub fn lock<'a>(&'a self) -> MutexGuard<'a, T> {
         self.guard(self.lock.lock())
     }
 
+    /// Turns a lock-guard of the underlying lock into a mutex-guard.
+    ///
+    /// [argument, guard]
+    /// The lock-guard of the underlying lock.
+    ///
+    /// [return_value]
+    /// Returns a mutex-guard of this mutex.
+    ///
+    /// = Remarks
+    ///
+    /// The provided lock-guard must be a lock-guard of the underlying lock or the process
+    /// is aborted.
     pub fn existing_lock<'a>(&'a self, guard: LockGuard<'a>) -> MutexGuard<'a, T> {
         assert!(&self.lock == guard.as_lock());
         self.guard(guard)
     }
 
+    /// Provides mutable access to the protected data without locking the lock.
+    ///
+    /// = Remarks
+    ///
+    /// This is safe because the availability of a mutable reference implies that there
+    /// are currently no mutex-guards borrowing the mutex. Vice versa, no mutex guards can
+    /// be created while the data is borrowed.
     pub fn data(&mut self) -> &mut T {
         unsafe { &mut *self.data.ptr() }
     }
 }
 
-unsafe impl<T> Sync for Mutex<T> where T: Sync { }
+unsafe impl<T> Sync for Mutex<T> where T: Send { }
 unsafe impl<T> Send for Mutex<T> where T: Send { }
 
+/// A mutex-guard.
+///
+/// = Remarks
+///
+/// This guard automatically unlocks the mutex when it goes out of scope.
 pub struct MutexGuard<'a, T: 'a> {
     guard: LockGuard<'a>,
     mutex: &'a Mutex<T>,
@@ -62,25 +100,29 @@ pub struct MutexGuard<'a, T: 'a> {
 }
 
 impl<'a, T> MutexGuard<'a, T> {
+    /// Returns a reference to the underlying lock-guard.
     pub fn as_lock_guard(&self) -> &LockGuard<'a> {
         &self.guard
     }
 
+    /// Turns the mutex-guard into the underlying lock-guard.
     pub fn into_lock_guard(self) -> LockGuard<'a> {
         self.guard
     }
 
+    /// Returns a reference to the underlying mutex.
     pub fn as_mutex(&self) -> &'a Mutex<T> {
         self.mutex
     }
 
+    /// Unlocks the mutex and returns a reference to it.
     pub fn unlock(self) -> &'a Mutex<T> {
         self.mutex
     }
 }
 
-unsafe impl<'a, T> Sync for MutexGuard<'a, T> where T: Sync { }
-unsafe impl<'a, T> Send for MutexGuard<'a, T> where T: Sync { }
+unsafe impl<'a, T> Sync for MutexGuard<'a, T> where T: Send { }
+unsafe impl<'a, T> Send for MutexGuard<'a, T> where T: Send { }
 
 impl<'a, T> Deref for MutexGuard<'a, T> {
     type Target = T;

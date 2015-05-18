@@ -25,6 +25,7 @@ struct Inner {
     user_lock: Option<*const Lock>,
 }
 
+/// An initializer for static condition variables.
 pub const RAW_CONDVAR_INIT: RawCondvar = RawCondvar {
     lock: LOCK_INIT,
     inner: Cell {
@@ -36,16 +37,57 @@ pub const RAW_CONDVAR_INIT: RawCondvar = RawCondvar {
     },
 };
 
+/// A condition variable to wait on locks.
+///
+/// = Remarks
+///
+/// This implementation cannot be used for inter-process synchronization.
 pub struct RawCondvar {
     lock: Lock,
     inner: Cell<Inner>,
 }
 
 impl RawCondvar {
+    /// Atomically unlocks a lock guard and waits for a signal on this condvar before
+    /// re-locking the lock.
+    ///
+    /// [argument, guard]
+    /// The lock guard to be unlocked.
+    ///
+    /// [return_value]
+    /// Returns a guard created by re-locking the lock of the guard argument.
+    ///
+    /// = Remarks
+    ///
+    /// While the condition variable is in use, the condition variable can only be used
+    /// with the same lock. The condition variable is in use while there are users
+    /// waiting on it. If the condition variable is used with another a lock, the process
+    /// is aborted.
     pub fn wait<'a>(&self, guard: LockGuard<'a>) -> LockGuard<'a> {
         self.wait2(guard.as_lock(), guard)
     }
 
+    /// Atomically unlocks a lock guard and waits for a signal on this condvar.
+    ///
+    /// [argument, guard]
+    /// The lock guard to be unlocked.
+    ///
+    /// [argument, lock]
+    /// The lock to be locked before returning.
+    ///
+    /// [return_value]
+    /// Returns a guard created by locking the `lock` argument.
+    ///
+    /// = Remarks
+    ///
+    /// While the condition variable is in use, the condition variable can only be used
+    /// with the same lock. The condition variable is in use while there are users
+    /// waiting on it. If the condition variable is used with another a lock, the process
+    /// is aborted.
+    ///
+    /// The lock in question in the above paragraph is the lock passed as the `lock`
+    /// argument. The `guard` argument doesn't have to be related to the `lock` in any
+    /// way.
     pub fn wait2<'a, 'b>(&self, lock: &'a Lock, guard: LockGuard<'b>) -> LockGuard<'a> {
         unsafe { self.unsafe_wait(lock, guard) }
     }
@@ -93,6 +135,15 @@ impl RawCondvar {
         user_guard
     }
 
+    /// Wakes a number of threads waiting on this condvar.
+    ///
+    /// [argument, n]
+    /// The number of threads to be woken.
+    ///
+    /// = Remarks
+    ///
+    /// It's possible that fewer than `n` threads are woken because fewer than `n` threads
+    /// are currently waiting on this condvar.
     pub fn signal(&self, n: usize) {
         unsafe { self._signal(n) }
     }

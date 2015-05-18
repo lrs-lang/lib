@@ -12,11 +12,11 @@ use fmt::{Debug, Write};
 #[derive(Pod, Eq)]
 pub struct UserIds {
     /// Real id
-    pub real:      UserId,
+    pub real: UserId,
     /// Effective id
     pub effective: UserId,
     /// Saved id
-    pub saved:     UserId,
+    pub saved: UserId,
 }
 
 impl UserIds {
@@ -48,11 +48,11 @@ impl Debug for UserIds {
 #[derive(Pod, Eq)]
 pub struct GroupIds {
     /// Real id
-    pub real:      GroupId,
+    pub real: GroupId,
     /// Effective id
     pub effective: GroupId,
     /// Saved id
-    pub saved:     GroupId,
+    pub saved: GroupId,
 }
 
 impl GroupIds {
@@ -81,7 +81,7 @@ impl Debug for GroupIds {
 }
 
 /// Sets all user ids to the real id.
-pub fn user_drop_privileges() -> Result {
+pub fn drop_user_privileges() -> Result {
     let mut ids = UserIds::get();
     ids.effective = ids.real;
     ids.saved     = ids.real;
@@ -89,39 +89,57 @@ pub fn user_drop_privileges() -> Result {
 }
 
 /// Sets all group ids to the real id.
-pub fn group_drop_privileges() -> Result {
+pub fn drop_group_privileges() -> Result {
     let mut ids = GroupIds::get();
     ids.effective = ids.real;
     ids.saved     = ids.real;
     ids.set()
 }
 
-/// Sets the effective user id.
-pub fn user_set_effective_ids(id: UserId) -> Result {
+/// Sets the effective user id of this process.
+///
+/// [argument, id]
+/// The new effective user id of the process.
+pub fn set_effective_user_id(id: UserId) -> Result {
     rv!(setresuid(-1, id, -1))
 }
 
 /// Sets the effective group id.
-pub fn group_set_effective_ids(id: GroupId) -> Result {
+///
+/// [argument, id]
+/// The new effective group id of the process.
+pub fn set_effective_group_id(id: GroupId) -> Result {
     rv!(setresgid(-1, id, -1))
 }
 
-/// Gets the number of supplementary groups.
+/// Returns the number of supplementary groups.
 pub fn num_supplementary_groups() -> usize {
     getgroups(&mut []) as usize
 }
 
-/// Retreives the supplementary groups.
+const MAX_SUP_GROUPS: usize = 65536;
+
+/// Retrieves the supplementary groups.
+///
+/// [argument, buf]
+/// The buffer in which the supplementary groups will be stored.
+///
+/// [return_value]
+/// Returns the number of supplementary groups stored
 pub fn supplementary_groups(buf: &mut [GroupId]) -> Result<usize> {
-    if buf.len() > 65536 {
-        return Err(error::InvalidArgument);
+    if buf.len() > MAX_SUP_GROUPS {
+        rv!(getgroups(&mut buf[..MAX_SUP_GROUPS]), -> usize)
+    } else {
+        rv!(getgroups(buf), -> usize)
     }
-    rv!(getgroups(buf), -> usize)
 }
 
 /// Sets the supplementary groups.
+///
+/// [argument, buf]
+/// The buffer which contains the new supplementary groups.
 pub fn set_supplementary_groups(buf: &[GroupId]) -> Result {
-    if buf.len() > 65536 {
+    if buf.len() > MAX_SUP_GROUPS {
         return Err(error::InvalidArgument);
     }
     rv!(setgroups(buf))
