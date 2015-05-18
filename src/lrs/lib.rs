@@ -96,6 +96,7 @@ pub mod share;
 pub mod slice;
 pub mod string;
 pub mod sys;
+pub mod syscall;
 pub mod time;
 pub mod user;
 pub mod util;

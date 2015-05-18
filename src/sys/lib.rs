@@ -292,7 +292,7 @@ pub fn enable_accounting<P>(path: P) -> Result
 {
     let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
-    rv!(acct(&path))
+    rv!(acct(Some(&path)))
 }
 
 /// Sets the hostname of the system

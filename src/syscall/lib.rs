@@ -953,107 +953,498 @@ pub fn mkdirat(dir: c_int, file: &CStr, mode: umode_t) -> c_int {
     unsafe {  r::mkdirat(dir, file.as_ptr(), mode) }
 }
 
+/// Unlinks a file relative to a directory.
+///
+/// [argument, dir]
+/// The directory relative to which relative paths will be interpreted.
+///
+/// [argument, file]
+/// The path of the file.
+///
+/// [argument, flags]
+/// The flags used while unlinking the file.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:unlinkat(2)
 pub fn unlinkat(dir: c_int, file: &CStr, flags: c_int) -> c_int {
     unsafe { r::unlinkat(dir, file.as_ptr(), flags) }
 }
 
+/// Creates a symbolic link relative to a directory.
+///
+/// [argument, target]
+/// The target of the link.
+///
+/// [argument, dir]
+/// The directory relative to which the `link` argument is interpreted.
+///
+/// [argument, link]
+/// The path of the new link.
+///
+/// [argument, flags]
+/// The flags used while unlinking the file.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:symlinkat(2)
 pub fn symlinkat(target: &CStr, dir: c_int, link: &CStr) -> c_int {
     unsafe { r::symlinkat(target.as_ptr(), dir, link.as_ptr()) }
 }
 
+/// Reads the target of a symbolic link relative to a directory.
+///
+/// [argument, dir]
+/// The directory relative to which relative paths are interpreted.
+///
+/// [argument, path]
+/// The path of the link.
+///
+/// [argument, buf]
+/// The buffer in which the target will be placed.
+///
+/// [return_value]
+/// Returns the length of the target or an error value.
+///
+/// = See also
+///
+/// * link:man:readlinkat(2)
 pub fn readlinkat(dir: c_int, path: &CStr, buf: &mut [u8]) -> ssize_t {
     unsafe { r::readlinkat(dir, path.as_ptr(), buf.as_mut_ptr() as *mut c_char,
                           buf.len().saturating_cast()) }
 }
 
+/// Changes the owner of a file relative to a directory.
+///
+/// [argument, dir]
+/// The directory relative to which relative paths are interpreted.
+///
+/// [argument, path]
+/// The path of the file.
+///
+/// [argument, user]
+/// The new user owner.
+///
+/// [argument, user]
+/// The new user group.
+///
+/// [argument, flags]
+/// Flags to use while changing the owner.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:fchownat(2)
 pub fn fchownat(dir: c_int, path: &CStr, user: uid_t, group: gid_t,
                 flags: c_int) -> c_int {
     unsafe { r::fchownat(dir, path.as_ptr(), user, group, flags) }
 }
 
+/// Changes the mode of a file relative to a directory.
+///
+/// [argument, dir]
+/// The directory relative to which relative paths are interpreted.
+///
+/// [argument, path]
+/// The path of the file.
+///
+/// [argument, mode]
+/// The new mode of the file.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:fchmodat(2)
 pub fn fchmodat(dir: c_int, path: &CStr, mode: umode_t) -> c_int {
     unsafe { r::fchmodat(dir, path.as_ptr(), mode) }
 }
 
+/// Creates a file relative to a directory.
+///
+/// [argument, dir]
+/// The directory relative to which relative paths are interpreted.
+///
+/// [argument, path]
+/// The path of the new file.
+///
+/// [argument, mode]
+/// The mode of a new file.
+///
+/// [argument, dev]
+/// The device type of a new device.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:mknodat(2)
 pub fn mknodat(dir: c_int, path: &CStr, mode: umode_t, dev: dev_t) -> c_int {
     unsafe { r::mknodat(dir, path.as_ptr(), mode, dev) }
 }
 
+/// Sets an extended attribute of a file.
+///
+/// [argument, path]
+/// The path of the file.
+///
+/// [argument, name]
+/// The name of the attribute.
+///
+/// [argument, val]
+/// The value of the attribute.
+///
+/// [argument, flags]
+/// The flags used while setting the attribute.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:setxattr(2)
 pub fn setxattr(path: &CStr, name: &CStr, val: &[u8], flags: c_int) -> c_int {
     unsafe { r::setxattr(path.as_ptr(), name.as_ptr(), val.as_ptr() as *const c_void,
                         val.len().saturating_cast(), flags) }
 }
 
+/// Sets an extended attribute of a file without following symlinks.
+///
+/// [argument, path]
+/// The path of the file.
+///
+/// [argument, name]
+/// The name of the attribute.
+///
+/// [argument, val]
+/// The value of the attribute.
+///
+/// [argument, flags]
+/// The flags used while setting the attribute.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:lsetxattr(2)
 pub fn lsetxattr(path: &CStr, name: &CStr, val: &[u8], flags: c_int) -> c_int {
     unsafe { r::lsetxattr(path.as_ptr(), name.as_ptr(), val.as_ptr() as *const c_void,
                          val.len().saturating_cast(), flags) }
 }
 
+/// Sets an extended attribute of a file descriptor.
+///
+/// [argument, fd]
+/// The file descriptor.
+///
+/// [argument, name]
+/// The name of the attribute.
+///
+/// [argument, val]
+/// The value of the attribute.
+///
+/// [argument, flags]
+/// The flags used while setting the attribute.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:fsetxattr(2)
 pub fn fsetxattr(fd: c_int, name: &CStr, val: &[u8], flags: c_int) -> c_int {
     unsafe { r::fsetxattr(fd, name.as_ptr(), val.as_ptr() as *const c_void,
                          val.len().saturating_cast(), flags) }
 }
 
+/// Retrieves an extended attribute of a file.
+///
+/// [argument, path]
+/// The path of the file.
+///
+/// [argument, name]
+/// The name of the attribute.
+///
+/// [argument, val]
+/// The buffer in which the value will be placed.
+///
+/// [return_value]
+/// Returns the size of the value or an error value.
+///
+/// = See also
+///
+/// * link:man:getxattr(2)
 pub fn getxattr(path: &CStr, name: &CStr, val: &mut [u8]) -> ssize_t {
     unsafe { r::getxattr(path.as_ptr(), name.as_ptr(), val.as_mut_ptr() as *mut c_void,
                         val.len().saturating_cast()) }
 }
 
+/// Retrieves an extended attribute of a file without following symlinks.
+///
+/// [argument, path]
+/// The path of the file.
+///
+/// [argument, name]
+/// The name of the attribute.
+///
+/// [argument, val]
+/// The buffer in which the value will be placed.
+///
+/// [return_value]
+/// Returns the size of the value or an error value.
+///
+/// = See also
+///
+/// * link:man:lgetxattr(2)
 pub fn lgetxattr(path: &CStr, name: &CStr, val: &mut [u8]) -> ssize_t {
     unsafe { r::lgetxattr(path.as_ptr(), name.as_ptr(), val.as_mut_ptr() as *mut c_void,
                          val.len().saturating_cast()) }
 }
 
+/// Retrieves an extended attribute of a file descriptor.
+///
+/// [argument, fd]
+/// The file descriptor.
+///
+/// [argument, name]
+/// The name of the attribute.
+///
+/// [argument, val]
+/// The buffer in which the value will be placed.
+///
+/// [return_value]
+/// Returns the size of the value or an error value.
+///
+/// = See also
+///
+/// * link:man:fgetxattr(2)
 pub fn fgetxattr(fd: c_int, name: &CStr, val: &mut [u8]) -> ssize_t {
     unsafe { r::fgetxattr(fd, name.as_ptr(), val.as_mut_ptr() as *mut c_void,
                          val.len().saturating_cast()) }
 }
 
+/// Removes an extended attribute of a file.
+///
+/// [argument, path]
+/// The path of the file.
+///
+/// [argument, name]
+/// The name of the attribute.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:removexattr(2)
 pub fn removexattr(path: &CStr, name: &CStr) -> c_int {
     unsafe { r::removexattr(path.as_ptr(), name.as_ptr()) }
 }
 
+/// Removes an extended attribute of a file without following symlinks.
+///
+/// [argument, path]
+/// The path of the file.
+///
+/// [argument, name]
+/// The name of the attribute.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:lremovexattr(2)
 pub fn lremovexattr(path: &CStr, name: &CStr) -> c_int {
     unsafe { r::lremovexattr(path.as_ptr(), name.as_ptr()) }
 }
 
+/// Removes an extended attribute of a file descriptor.
+///
+/// [argument, fd]
+/// The file descriptor.
+///
+/// [argument, name]
+/// The name of the attribute.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:fremovexattr(2)
 pub fn fremovexattr(fd: c_int, name: &CStr) -> c_int {
     unsafe { r::fremovexattr(fd, name.as_ptr()) }
 }
 
+/// Retrieves all extended attribute of a file.
+///
+/// [argument, path]
+/// The path of the file.
+///
+/// [argument, list]
+/// The buffer in which the attributes will be placed.
+///
+/// [return_value]
+/// Returns the size of all attributes or an error value.
+///
+/// = See also
+///
+/// * link:man:listxattr(2)
 pub fn listxattr(path: &CStr, list: &mut [u8]) -> ssize_t {
     unsafe { r::listxattr(path.as_ptr(), list.as_mut_ptr() as *mut c_char,
                          list.len().saturating_cast()) }
 }
 
+/// Retrieves all extended attribute of a file without following symlinks.
+///
+/// [argument, path]
+/// The path of the file.
+///
+/// [argument, list]
+/// The buffer in which the attributes will be placed.
+///
+/// [return_value]
+/// Returns the size of all attributes or an error value.
+///
+/// = See also
+///
+/// * link:man:llistxattr(2)
 pub fn llistxattr(path: &CStr, list: &mut [u8]) -> ssize_t {
     unsafe { r::llistxattr(path.as_ptr(), list.as_mut_ptr() as *mut c_char,
                           list.len().saturating_cast()) }
 }
 
+/// Retrieves all extended attribute of a file descriptor.
+///
+/// [argument, fd]
+/// The file descriptor.
+///
+/// [argument, list]
+/// The buffer in which the attributes will be placed.
+///
+/// [return_value]
+/// Returns the size of all attributes or an error value.
+///
+/// = See also
+///
+/// * link:man:flistxattr(2)
 pub fn flistxattr(fd: c_int, list: &mut [u8]) -> ssize_t {
     unsafe {
         r::flistxattr(fd, list.as_mut_ptr() as *mut c_char, list.len().saturating_cast())
     }
 }
 
+/// Retrieves the resolution of a clock.
+///
+/// [argument, clock]
+/// The id of the clock.
+///
+/// [argument, res]
+/// The place in which the resolution will be stored.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:clock_getres(2)
 pub fn clock_getres(clock: clockid_t, res: &mut timespec) -> c_int {
     unsafe { r::clock_getres(clock, res) }
 }
 
+/// Retrieves the time of a clock.
+///
+/// [argument, clock]
+/// The id of the clock.
+///
+/// [argument, res]
+/// The place in which the time will be stored.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:clock_gettime(2)
 pub fn clock_gettime(clock: clockid_t, res: &mut timespec) -> c_int {
     unsafe { r::clock_gettime(clock, res) }
 }
 
+/// Sets the time of a clock.
+///
+/// [argument, clock]
+/// The id of the clock.
+///
+/// [argument, res]
+/// The new time of the clock.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:clock_settime(2)
 pub fn clock_settime(clock: clockid_t, res: &timespec) -> c_int {
     unsafe { r::clock_settime(clock, res) }
 }
 
+/// Sleeps for a certain amount of time.
+///
+/// [argument, clock]
+/// The clock used for timekeeping.
+///
+/// [argument, flags]
+/// Flags used for sleeping.
+///
+/// [argument, req]
+/// The requested amount of sleep.
+///
+/// [argument, rem]
+/// The place where the remaining amount of time is placed.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:clock_nanosleep(2)
 pub fn clock_nanosleep(clock: clockid_t, flags: c_int, req: &timespec,
                        rem: &mut timespec) -> c_int {
     unsafe { r::clock_nanosleep(clock, flags, req, rem) }
 }
 
+/// Arms or disarms a timerfd.
+///
+/// [argument, fd]
+/// The timerfd.
+///
+/// [argument, flags]
+/// Flags used to disarm or arm the timerfd.
+///
+/// [argument, new]
+/// The new settings of the timer.
+///
+/// [argument, old]
+/// An optional place where the old settings will be stored.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:timerfd_settime(2)
 pub fn timerfd_settime(fd: c_int, flags: c_int, new: &itimerspec,
                        old: Option<&mut itimerspec>) -> c_int {
     let old = match old {
@@ -1063,10 +1454,44 @@ pub fn timerfd_settime(fd: c_int, flags: c_int, new: &itimerspec,
     unsafe { r::timerfd_settime(fd, flags, new, old) }
 }
 
+/// Retrieves the current settings of a timerfd.
+///
+/// [argument, fd]
+/// The timerfd.
+///
+/// [argument, cur]
+/// A place where the settings of the timerfd will be stored.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:timerfd_gettime(2)
 pub fn timerfd_gettime(fd: c_int, cur: &mut itimerspec) -> c_int {
     unsafe { r::timerfd_gettime(fd, cur) }
 }
 
+/// Modifies a file descriptor in an epoll instance.
+///
+/// [argument, fd]
+/// The epoll instance.
+///
+/// [argument, op]
+/// The operation to perform on the `fd` argument.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, event]
+/// An argument used by some operations.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:epoll_ctl(2)
 pub fn epoll_ctl(epfd: c_int, op: c_int, fd: c_int,
                  event: Option<&mut epoll_event>) -> c_int {
     let event = match event {
@@ -1076,6 +1501,26 @@ pub fn epoll_ctl(epfd: c_int, op: c_int, fd: c_int,
     unsafe { r::epoll_ctl(epfd, op, fd, event) }
 }
 
+/// Waits on an epoll instance.
+///
+/// [argument, fd]
+/// The epoll instance.
+///
+/// [argument, events]
+/// The buffer into which events will be placed.
+///
+/// [argument, timeout]
+/// The timeout in milliseconds.
+///
+/// [argument, sigmask]
+/// A set of signals that will be masked during the operation.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:epoll_pwait(2)
 pub fn epoll_pwait(epfd: c_int, events: &mut [epoll_event], timeout: c_int,
                    sigmask: Option<&sigset_t>) -> c_int {
     let sigmask = match sigmask {
@@ -1086,28 +1531,113 @@ pub fn epoll_pwait(epfd: c_int, events: &mut [epoll_event], timeout: c_int,
                            timeout, sigmask, mem::size_of::<sigset_t>() as size_t) }
 }
 
+/// Retrieves a thread's CPU affinity mask.
+///
+/// [argument, tid]
+/// The id of the thread.
+///
+/// [argument, set]
+/// The buffer into which the mask will be stored.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:sched_getaffinity(2)
 pub fn sched_getaffinity(tid: pid_t, set: &mut [u8]) -> c_int {
     unsafe {
         r::sched_getaffinity(tid, set.len().saturating_cast(), set.as_mut_ptr() as *mut _)
     }
 }
 
+/// Retrieves string-style information about the system.
+///
+/// [argument, buf]
+/// The place in which the information will be stored.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:uname(2)
 pub fn uname(buf: &mut new_utsname) -> c_int {
     unsafe { r::uname(buf) }
 }
 
+/// Retrieves integer-style information about the system.
+///
+/// [argument, buf]
+/// The place in which the information will be stored.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:sysinfo(2)
 pub fn sysinfo(buf: &mut sysinfo) -> c_int {
     unsafe { r::sysinfo(buf) }
 }
 
+/// Retrieves random bytes from the system.
+///
+/// [argument, buf]
+/// The buffer in which the bytes will be stored.
+///
+/// [argument, flags]
+/// Flags used while retrieving the data.
+///
+/// [return_value]
+/// Returns the number of bytes read or an error value.
+///
+/// = See also
+///
+/// * link:man:getrandom(2)
 pub fn getrandom(buf: &mut [u8], flags: c_uint) -> c_int {
     unsafe { r::getrandom(buf.as_ptr() as *mut c_char, buf.len() as size_t, flags) }
 }
 
-pub fn acct(filename: &CStr) -> c_int {
-    unsafe { r::acct(filename.as_ptr()) }
+/// Enables or disables process accounting.
+///
+/// [argument, path]
+/// The path into which accounting information will be written.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:acct(2)
+pub fn acct(path: Option<&CStr>) -> c_int {
+    let ptr = path.map(|p| p.as_ptr()).unwrap_or(0 as *const _);
+    unsafe { r::acct(ptr) }
 }
 
+/// Mounts a filesystem.
+///
+/// [argument, src]
+/// The filesystem to mount.
+///
+/// [argument, dst]
+/// Where to mount it.
+///
+/// [argument, ty]
+/// The type of the filesystem.
+///
+/// [argument, flags]
+/// Flags used when mounting the filesystem.
+///
+/// [argument, data]
+/// Filesystem dependent data.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:mount(2)
 pub fn mount(src: &CStr, dst: &CStr, ty: &CStr, flags: c_ulong, data: &CStr) -> c_int {
     unsafe {
         r::mount(src.as_ptr() as *mut _, dst.as_ptr() as *mut _, ty.as_ptr() as *mut _,
@@ -1115,28 +1645,115 @@ pub fn mount(src: &CStr, dst: &CStr, ty: &CStr, flags: c_ulong, data: &CStr) -> 
     }
 }
 
+/// Unmounts a filesystem.
+///
+/// [argument, dst]
+/// Where the filesystem is mounted.
+///
+/// [argument, flags]
+/// Flags used when unmounting the filesystem.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:mount(2)
 pub fn umount(dst: &CStr, flags: c_int) -> c_int {
     unsafe { r::umount(dst.as_ptr() as *mut _, flags) }
 }
 
+/// Sets the hostname of the system.
+///
+/// [argument, name]
+/// The new hostname of the system.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:sethostname(2)
 pub fn sethostname(name: &[u8]) -> c_int {
     unsafe { r::sethostname(name.as_ptr() as *mut c_char, name.len().saturating_cast()) }
 }
 
+/// Sets the domain name of the system.
+///
+/// [argument, name]
+/// The new domain of the system.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:setdomainname(2)
 pub fn setdomainname(name: &[u8]) -> c_int {
     unsafe { r::setdomainname(name.as_ptr() as *mut c_char, name.len().saturating_cast()) }
 }
 
+/// Creates a socket.
+///
+/// [argument, domain]
+/// The domain of the socket.
+///
+/// [argument, ty]
+/// The type of the socket.
+///
+/// [argument, proto]
+/// The protocol of the socket.
+///
+/// [return_value]
+/// Returns the socket or an error value.
+///
+/// = See also
+///
+/// * link:man:socket(2)
 pub fn socket(domain: c_int, ty: c_int, proto: c_int) -> c_int {
     unsafe { r::socket(domain, ty, proto) }
 }
 
+/// Connects a socket to an address.
+///
+/// [argument, sockfd]
+/// The socket.
+///
+/// [argument, addr]
+/// The address to connect to.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:connect(2)
 pub fn connect(sockfd: c_int, addr: &[u8]) -> c_int {
     unsafe {
         r::connect(sockfd, addr.as_ptr() as *mut sockaddr, addr.len().saturating_cast())
     }
 }
 
+/// Accepts a connection request on a socket.
+///
+/// [argument, sockfd]
+/// The socket.
+///
+/// [argument, addr]
+/// Optional space in which the address of the peer will be stored.
+///
+/// [argument, addrlen]
+/// The length of the peer's address.
+///
+/// [argument, flags]
+/// Flags used for accepting a request.
+///
+/// [return_value]
+/// Returns the new socket.
+///
+/// = See also
+///
+/// * link:man:accept4(2)
 pub fn accept4(sockfd: c_int, addr: Option<&mut [u8]>, addrlen: &mut usize,
                flags: c_int) -> c_int {
     let addr = addr.unwrap_or(&mut []);
@@ -1148,6 +1765,29 @@ pub fn accept4(sockfd: c_int, addr: Option<&mut [u8]>, addrlen: &mut usize,
     res
 }
 
+/// Receives data on a socket.
+///
+/// [argument, sockfd]
+/// The socket on which to receive.
+///
+/// [argument, buf]
+/// The buffer into which the received data is placed.
+///
+/// [argument, flags]
+/// Flags used while receiving.
+///
+/// [argument, src_addr]
+/// An optional place where the address of the sender is placed.
+///
+/// [argument, addrlen]
+/// A place where the length of the senders address is placed.
+///
+/// [return_value]
+/// Returns the number of bytes received or an error value.
+///
+/// = See also
+///
+/// * link:man:recvfrom(2)
 pub fn recvfrom(sockfd: c_int, buf: &mut [u8], flags: c_int, src_addr: Option<&mut [u8]>,
                 addrlen: &mut usize) -> ssize_t {
     let src_addr = src_addr.unwrap_or(&mut []);
@@ -1160,10 +1800,47 @@ pub fn recvfrom(sockfd: c_int, buf: &mut [u8], flags: c_int, src_addr: Option<&m
     res
 }
 
+/// Receives a message on a socket.
+///
+/// [argument, sockfd]
+/// The socket on which to receive.
+///
+/// [argument, msghdr]
+/// The message buffer.
+///
+/// [argument, flags]
+/// Flags used while receiving.
+///
+/// [return_value]
+/// Returns the number of bytes received or an error value.
+///
+/// = See also
+///
+/// * link:man:recvmsg(2)
 pub fn recvmsg(sockfd: c_int, msg: &mut msghdr, flags: c_int) -> ssize_t {
     unsafe { r::recvmsg(sockfd, msg, flags as k_uint) }
 }
 
+/// Receives multiple messages on a socket.
+///
+/// [argument, sockfd]
+/// The socket on which to receive.
+///
+/// [argument, msgvec]
+/// A vector of message buffers.
+///
+/// [argument, flags]
+/// Flags used while receiving.
+///
+/// [argument, timeout]
+/// A timeout for the operation.
+///
+/// [return_value]
+/// Returns the number of messages received or an error value.
+///
+/// = See also
+///
+/// * link:man:recvmmsg(2)
 pub fn recvmmsg(sockfd: c_int, msgvec: &mut [mmsghdr], flags: c_uint,
                 timeout: Option<&mut timespec>) -> c_int {
     let timeout = timeout.map(|t| t as *mut timespec).unwrap_or(0 as *mut timespec);
@@ -1173,6 +1850,26 @@ pub fn recvmmsg(sockfd: c_int, msgvec: &mut [mmsghdr], flags: c_uint,
     }
 }
 
+/// Sends data to an address.
+///
+/// [argument, sockfd]
+/// The socket over which to send.
+///
+/// [argument, buf]
+/// The buffer to send.
+///
+/// [argument, flags]
+/// Flags used while sending.
+///
+/// [argument, dst_addr]
+/// An optional destination of the message.
+///
+/// [return_value]
+/// Returns the number of bytes sent or an error value.
+///
+/// = See also
+///
+/// * link:man:sendto(2)
 pub fn sendto(sockfd: c_int, buf: &[u8], flags: c_int,
               dst_addr: Option<&[u8]>) -> ssize_t {
     let (dst_ptr, dst_len) = match dst_addr {
@@ -1185,10 +1882,44 @@ pub fn sendto(sockfd: c_int, buf: &[u8], flags: c_int,
     }
 }
 
+/// Sends a message on a socket.
+///
+/// [argument, sockfd]
+/// The socket over which to send.
+///
+/// [argument, msghdr]
+/// The message buffer.
+///
+/// [argument, flags]
+/// Flags used while sending.
+///
+/// [return_value]
+/// Returns the number of bytes sent or an error value.
+///
+/// = See also
+///
+/// * link:man:sendmsg(2)
 pub fn sendmsg(sockfd: c_int, msg: &msghdr, flags: c_int) -> ssize_t {
     unsafe { r::sendmsg(sockfd, msg as *const _ as *mut _, flags as k_uint) }
 }
 
+/// Sends multiple messages on a socket.
+///
+/// [argument, sockfd]
+/// The socket over which to send.
+///
+/// [argument, msgvec]
+/// A vector of message buffers.
+///
+/// [argument, flags]
+/// Flags used while sending.
+///
+/// [return_value]
+/// Returns the number of messages sent or an error value.
+///
+/// = See also
+///
+/// * link:man:sendmmsg(2)
 pub fn sendmmsg(sockfd: c_int, msgvec: &[mmsghdr], flags: c_uint) -> c_int {
     unsafe {
         r::sendmmsg(sockfd, msgvec.as_ptr() as *mut mmsghdr,
@@ -1196,20 +1927,79 @@ pub fn sendmmsg(sockfd: c_int, msgvec: &[mmsghdr], flags: c_uint) -> c_int {
     }
 }
 
+/// Shuts down (part of) a socket.
+///
+/// [argument, sockfd]
+/// The socket.
+///
+/// [argument, how]
+/// Which parts to shut down.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:shutdown(2)
 pub fn shutdown(sockfd: c_int, how: c_int) -> c_int {
     unsafe { r::shutdown(sockfd, how) }
 }
 
+/// Binds a socket to an address.
+///
+/// [argument, sockfd]
+/// The socket.
+///
+/// [argument, addr]
+/// The address to bind to.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:bind(2)
 pub fn bind(sockfd: c_int, addr: &[u8]) -> c_int {
     unsafe {
         r::bind(sockfd, addr.as_ptr() as *mut sockaddr, addr.len().saturating_cast())
     }
 }
 
+/// Marks a socket as accepting connections.
+///
+/// [argument, sockfd]
+/// The socket.
+///
+/// [argument, backlog]
+/// The maximum number of pending connections.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:listen(2)
 pub fn listen(sockfd: c_int, backlog: u32) -> c_int {
     unsafe { r::listen(sockfd, backlog.saturating_cast()) }
 }
 
+/// Retrieves the address a socket is bound to.
+///
+/// [argument, sockfd]
+/// The socket.
+///
+/// [argument, addr]
+/// The buffer into which the address is placed.
+///
+/// [argument, addrlen]
+/// A place into which the length of the address is placed.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:getsockname(2)
 pub fn getsockname(sockfd: c_int, addr: &mut [u8], addrlen: &mut usize) -> c_int {
     let mut len = addr.len().saturating_cast();
     let res = unsafe {
@@ -1219,6 +2009,23 @@ pub fn getsockname(sockfd: c_int, addr: &mut [u8], addrlen: &mut usize) -> c_int
     res
 }
 
+/// Retrieves the address a socket is connected to.
+///
+/// [argument, sockfd]
+/// The socket.
+///
+/// [argument, addr]
+/// The buffer into which the address is placed.
+///
+/// [argument, addrlen]
+/// A place into which the length of the address is placed.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:getpeername(2)
 pub fn getpeername(sockfd: c_int, addr: &mut [u8], addrlen: &mut usize) -> c_int {
     let mut len = addr.len().saturating_cast();
     let res = unsafe {
@@ -1228,10 +2035,50 @@ pub fn getpeername(sockfd: c_int, addr: &mut [u8], addrlen: &mut usize) -> c_int
     res
 }
 
+/// Creates a pair of connected sockets.
+///
+/// [argument, domain]
+/// The domain of the sockets.
+///
+/// [argument, ty]
+/// The type of the sockets.
+///
+/// [argument, proto]
+/// The protocol of the sockets.
+///
+/// [argument, sv]
+/// The place where the sockets will be stored.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:socketpair(2)
 pub fn socketpair(domain: c_int, ty: c_int, proto: c_int, sv: &mut [c_int; 2]) -> c_int {
     unsafe { r::socketpair(domain, ty, proto, sv.as_mut_ptr()) }
 }
 
+/// Sets a socket option.
+///
+/// [argument, sockfd]
+/// The socket.
+///
+/// [argument, level]
+/// The level of the option.
+///
+/// [argument, optname]
+/// The name of the option.
+///
+/// [argument, optval]
+/// The value to set.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:setsockopt(2)
 pub fn setsockopt(sockfd: c_int, level: c_int, optname: c_int, optval: &[u8]) -> c_int {
     unsafe {
         r::setsockopt(sockfd, level, optname, optval.as_ptr() as *mut c_char,
@@ -1239,6 +2086,29 @@ pub fn setsockopt(sockfd: c_int, level: c_int, optname: c_int, optval: &[u8]) ->
     }
 }
 
+/// Retrieves a socket option.
+///
+/// [argument, sockfd]
+/// The socket.
+///
+/// [argument, level]
+/// The level of the option.
+///
+/// [argument, optname]
+/// The name of the option.
+///
+/// [argument, optval]
+/// The buffer in which the value will be stored.
+///
+/// [argument, optlen]
+/// A place into which the length of the value will be stored.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:getsockopt(2)
 pub fn getsockopt(sockfd: c_int, level: c_int, optname: c_int, optval: &mut [u8],
                   optlen: &mut usize) -> c_int {
     let mut len = optval.len().saturating_cast();
@@ -1250,6 +2120,23 @@ pub fn getsockopt(sockfd: c_int, level: c_int, optname: c_int, optval: &mut [u8]
     res
 }
 
+/// Waits on a futex.
+///
+/// [argument, addr]
+/// The address of the futex.
+///
+/// [argument, val]
+/// The expected value of the futex.
+///
+/// [argument, timeout]
+/// A timeout of the wait operation.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:futex(2) and FUTEX_WAIT therein
 pub fn futex_wait(addr: &mut c_int, val: c_int, timeout: Option<&timespec>) -> c_int {
     let timeout = timeout.map(|t| t as *const _ as *mut _).unwrap_or(0 as *mut _);
     unsafe {
@@ -1258,6 +2145,20 @@ pub fn futex_wait(addr: &mut c_int, val: c_int, timeout: Option<&timespec>) -> c
     }
 }
 
+/// Wakes processes sleeping on a futex.
+///
+/// [argument, addr]
+/// The address of the futex.
+///
+/// [argument, num]
+/// The number of processes to wake.
+///
+/// [return_value]
+/// Returns the number of processes woken or an error value.
+///
+/// = See also
+///
+/// * link:man:futex(2) and FUTEX_WAKE therein
 pub fn futex_wake(addr: &mut c_int, num: usize) -> c_int {
     let num: c_int = num.saturating_cast();
     unsafe {
@@ -1266,21 +2167,86 @@ pub fn futex_wake(addr: &mut c_int, num: usize) -> c_int {
     }
 }
 
+/// Terminates the thread.
+///
+/// [argument, val]
+/// The exit value of the thread.
+///
+/// = See also
+///
+/// * link:man:exit(2)
 pub fn exit(val: c_int) -> ! {
     unsafe { r::exit(val); }
     loop { }
 }
 
+/// Terminates the process.
+///
+/// [argument, val]
+/// The exit value of the process.
+///
+/// = See also
+///
+/// * link:man:exit_group(2)
 pub fn exit_group(val: c_int) -> ! {
     unsafe { r::exit_group(val); }
     loop { }
 }
 
+/// Executes a file relative to a directory.
+///
+/// [argument, fd]
+/// The directory relative to which relative paths will be interpreted.
+///
+/// [argument, filename]
+/// The file to execute.
+///
+/// [argument, argv]
+/// The argument pointer.
+///
+/// [argument, envp]
+/// The environment pointer.
+///
+/// [argument, flags]
+/// Flags used when executing a process.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:execveat(2)
 pub fn execveat(fd: c_int, filename: &CStr, argv: *const *const c_char,
                 envp: *const *const c_char, flags: c_int) -> c_int {
     unsafe { r::execveat(fd, filename.as_ptr(), argv, envp, flags) }
 }
 
+/// Maps a file into memory.
+///
+/// [argument, addr]
+/// The address at which to map the file.
+///
+/// [argument, len]
+/// The length of the map.
+///
+/// [argument, prot]
+/// How the memory will be protected.
+///
+/// [argument, flags]
+/// Flags used when mapping a file.
+///
+/// [argument, fd]
+/// The file to map.
+///
+/// [argument, off]
+/// The offset of the file at which the map is started.
+///
+/// [return_value]
+/// Returns a pointer to the map or an error value.
+///
+/// = See also
+///
+/// * link:man:mmap(2)
 pub fn mmap(addr: usize, len: usize, prot: c_int, flags: c_int, fd: c_int,
             off: u64) -> isize {
     unsafe {
@@ -1289,10 +2255,47 @@ pub fn mmap(addr: usize, len: usize, prot: c_int, flags: c_int, fd: c_int,
     }
 }
 
+/// Unmaps a file.
+///
+/// [argument, addr]
+/// The address of the map.
+///
+/// [argument, len]
+/// The length of the map.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:munmap(2)
 pub fn munmap(addr: usize, len: usize) -> c_int {
     unsafe { r::munmap(addr as k_ulong, len as size_t) }
 }
 
+/// Remaps a file in memory.
+///
+/// [argument, addr]
+/// The address of the map.
+///
+/// [argument, old_len]
+/// The current length of the map.
+///
+/// [argument, new_len]
+/// The new length of the map.
+///
+/// [argument, flags]
+/// Flags used to remap the memory.
+///
+/// [argument, new_addr]
+/// The new address at which the memory will be mapped.
+///
+/// [return_value]
+/// Returns a pointer to the new map or an error value.
+///
+/// = See also
+///
+/// * link:man:mremap(2)
 pub fn mremap(addr: usize, old_len: usize, new_len: usize, flags: c_int,
               new_addr: usize) -> isize {
     unsafe {
@@ -1301,24 +2304,99 @@ pub fn mremap(addr: usize, old_len: usize, new_len: usize, flags: c_int,
     }
 }
 
+/// Waits for a child process.
+///
+/// [argument, which]
+/// The type of process to wait for.
+///
+/// [argument, upid]
+/// The id to wait for.
+///
+/// [argument, infop]
+/// A place into which the process information will be placed.
+///
+/// [argument, options]
+/// What changes to wait for.
+///
+/// [argument, ru]
+/// An optional place where resource usage of the process will be placed.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:waitid(2)
 pub fn waitid(which: c_int, upid: pid_t, infop: &mut siginfo_t, options: c_int,
               ru: Option<&mut rusage>) -> c_int {
     let ru = ru.map(|r| r as *mut _).unwrap_or(0 as *mut _);
     unsafe { r::waitid(which, upid, infop, options, ru) }
 }
 
+/// Retrieves the current working directory.
+///
+/// [argument, buf]
+/// The buffer into which the directory will be placed.
+///
+/// [return_value]
+/// Returns the length of the current working directory or an error value.
+///
+/// = See also
+///
+/// * link:man:getcwd(2)
 pub fn getcwd(buf: &mut [u8]) -> c_int {
     unsafe { r::getcwd(buf.as_mut_ptr() as *mut c_char, buf.len() as k_ulong) }
 }
 
+/// Changes the current working directory.
+///
+/// [argument, path]
+/// The new working directory.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:chdir(2)
 pub fn chdir(path: &CStr) -> c_int {
     unsafe { r::chdir(path.as_ptr()) }
 }
 
+/// Executes ioctl with the SIOCGSTAMPNS option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, time]
+/// A place into which the retrieved time will be placed.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:ioctl(2)
+/// * link:man:socket(7) and SIOCGSTAMP therein
 pub fn ioctl_siocgstampns(fd: c_int, time: &mut timespec) -> c_int {
     unsafe { r::ioctl(fd as k_uint, SIOCGSTAMPNS as k_uint, time as *mut _ as k_ulong) }
 }
 
+/// Executes ioctl with the SIOCINQ option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, unread]
+/// A place into which number of unread bytes will be placed.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:ioctl(2)
+/// * link:man:tcp(7) and SIOCINQ therein
 pub fn ioctl_siocinq(fd: c_int, unread: &mut usize) -> c_int {
     let mut u: c_int = 0;
     let rv = unsafe {
@@ -1328,6 +2406,21 @@ pub fn ioctl_siocinq(fd: c_int, unread: &mut usize) -> c_int {
     rv
 }
 
+/// Executes ioctl with the SIOCOUTQ option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, unread]
+/// A place into which number of unread bytes will be placed.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:ioctl(2)
+/// * link:man:tcp(7) and SIOCOUTQ therein
 pub fn ioctl_siocoutq(fd: c_int, unread: &mut usize) -> c_int {
     let mut u: c_int = 0;
     let rv = unsafe {
