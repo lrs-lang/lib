@@ -16,33 +16,55 @@ use super::{Time, time_from_timespec, time_to_timespec};
 use timer::{Timer};
 
 /// A clock that can be used to measure time.
+///
+/// [field, 1]
+/// The integer representing the clock.
 #[derive(Pod, Eq)]
-pub struct Clock(clockid_t);
+pub struct Clock(pub clockid_t);
 
 /// Real ("wall time") clock that measures the time since 1970-01-01T00:00:00+00:00.
-pub const Real: Clock = Clock(0);
-/// Like `Real` but more efficient and less precise.
-pub const RealCoarse: Clock = Clock(5);
+pub const REAL: Clock = Clock(0);
+
+/// Real coarse ("wall time") clock that measures the time since
+/// 1970-01-01T00:00:00+00:00.
+///
+/// = Remarks
+///
+/// This is less precise but more efficient than `REAL`.
+pub const REAL_COARSE: Clock = Clock(5);
+
 /// A monotonic clock since some arbitrary point in the past which isn't affected by time
 /// jumps.
-pub const Mono: Clock = Clock(1);
-/// Like `Mono` but more efficient and less precise.
-pub const MonoCoarse: Clock = Clock(6);
-/// Like `Mono` but it's also not affected by `adjtime`.
-pub const MonoRaw: Clock = Clock(4);
+pub const MONO: Clock = Clock(1);
+
+/// A coarse monotonic clock since some arbitrary point in the past which isn't affected
+/// by time jumps.
+///
+/// = Remarks
+///
+/// This is less precise but more efficient than `MONO`.
+pub const MONO_COARSE: Clock = Clock(6);
+
+/// A monotonic clock since some arbitrary point in the past which isn't affected by time
+/// jumps or time adjustments.
+pub const MONO_RAW: Clock = Clock(4);
+
 /// A clock that measures the CPU time used by this process.
-pub const Process: Clock = Clock(2);
+pub const PROCESS: Clock = Clock(2);
+
 /// A clock that measures the CPU time used by this thread.
-pub const Thread: Clock = Clock(3);
-/// Like `Mono` but doesn't stop when the machine is suspended.
-pub const Boot: Clock = Clock(7);
+pub const THREAD: Clock = Clock(3);
+
+/// A monotonic clock since some arbitrary point in the past which isn't affected by time
+/// jumps and continues to run while the system is suspended.
+pub const BOOT: Clock = Clock(7);
 
 // TODO: Names for the clocks below
 
-pub const CLOCK_REALTIME_ALARM     : Clock = Clock(8);
-pub const CLOCK_BOOTTIME_ALARM     : Clock = Clock(9);
-pub const CLOCK_SGI_CYCLE          : Clock = Clock(10);
-pub const CLOCK_TAI                : Clock = Clock(11);
+// pub const CLOCK_REALTIME_ALARM     : Clock = Clock(8);
+// pub const CLOCK_BOOTTIME_ALARM     : Clock = Clock(9);
+// pub const CLOCK_SGI_CYCLE          : Clock = Clock(10);
+// pub const CLOCK_TAI                : Clock = Clock(11);
 
 impl Clock {
     /// Returns the current time of the clock.
@@ -53,6 +75,9 @@ impl Clock {
     }
 
     /// Sets the time of the clock.
+    ///
+    /// [argument, t]
+    /// The new time of the clock.
     pub fn set_time(self, t: Time) -> Result {
         let timespec = time_to_timespec(t);
         rv!(clock_settime(self.0, &timespec))
@@ -65,14 +90,20 @@ impl Clock {
         Ok(time_from_timespec(timespec))
     }
 
-    /// Sleeps to the specified absolute time.
+    /// Sleeps until an absolute time.
+    ///
+    /// [argument, t]
+    /// The time until which to sleep.
     pub fn sleep_to(self, t: Time) -> Result {
         let time = time_to_timespec(t);
         let mut rem = mem::zeroed();
         retry(|| clock_nanosleep(self.0, TIMER_ABSTIME, &time, &mut rem)).map(|_| ())
     }
 
-    /// Sleeps for the specified amount of time.
+    /// Sleeps for an amount of time.
+    ///
+    /// [argument, t]
+    /// The amount of time to sleep.
     pub fn sleep_for(self, t: Time) -> Result {
         let now = try!(self.get_time());
         self.sleep_to(now + t)

@@ -35,12 +35,19 @@ mod convert;
 /// A weekday.
 #[derive(Copy, Eq)]
 pub enum Weekday {
+    /// Monday
     Monday,
+    /// Tuesday
     Tuesday,
-    Wednsday,
+    /// Wednesday
+    Wednesday,
+    /// Thursday
     Thursday,
+    /// Friday
     Friday,
+    /// Saturday
     Saturday,
+    /// Sunday
     Sunday,
 }
 
@@ -49,6 +56,7 @@ pub enum Weekday {
 pub struct DateTime {
     /// The offset from UTC in seconds.
     pub offset:      i64,
+    /// The year.
     pub year:        i64,
     /// The day in the year starting at 0.
     pub day_in_year: i16,
@@ -56,11 +64,15 @@ pub struct DateTime {
     pub month:       i8,
     /// The day in the month starting at 1.
     pub day:         i8,
+    /// The hour.
     pub hour:        i8,
+    /// The minute.
     pub minute:      i8,
+    /// The second.
     pub second:      i8,
+    /// The weekday.
     pub weekday:     Weekday,
-    /// True if the date falls into summer time.
+    /// Whether the date falls into summer time.
     pub summer_time: bool,
 }
 
@@ -97,6 +109,11 @@ impl Zone {
 
     /// Loads a time zone from a well known name.
     ///
+    /// [argument, zone]
+    /// The name of the zone.
+    ///
+    /// = Remarks
+    ///
     /// For example: "Europe/Berlin", "Asia/Tokyo". The full list of name can be found on
     /// wikipedia.
     pub fn load<S>(zone: S) -> Result<Zone>
@@ -122,12 +139,20 @@ impl Zone {
     }
 
     /// Expands a time since the epoch to a `DateTime` in the given time zone.
+    ///
+    /// [argument, time]
+    /// The time to expand.
     pub fn expand(&self, time: Time) -> DateTime {
         convert::explode(self, time.seconds)
     }
 
-    /// Returns a normalized version of `date` and a time such that expands to the
-    /// normalized `date`.
+    /// Returns a normalized version of a `DateTime` and a time that expands to the
+    /// normalized date.
+    ///
+    /// [argument, date]
+    /// The date to compact.
+    ///
+    /// = Remarks
     ///
     /// This function looks at the following fields: year, month, day, hour, minute,
     /// second. All other fields will be calculated from these fields. Note that, if the
@@ -139,16 +164,16 @@ impl Zone {
     ///
     /// The fields mentioned above are normalized according to the following algorithm:
     ///
-    /// 1. second is reduced so that it is in the [0, 60) range and minute is adjusted
-    ///    accordingly (this means that times that coincide with leap seconds will not be
-    ///    normalized correctly.)
-    /// 2. minute is reduced so that it is in the [0, 60) range and hour is adjusted
-    ///    accordingly.
-    /// 3. hour is reduced so that it is in the [0, 24) range and day is adjusted
-    ///    accordingly.
-    /// 4. month is reduced so that it is in the [0, 12) range and year is adjusted
-    ///    accordingly.
-    /// 5. day, month, and year are adjusted until day is a valid day in the month.
+    /// * second is reduced so that it is in the [0, 60) range and minute is adjusted
+    ///   accordingly (this means that times that coincide with leap seconds will not be
+    ///   normalized correctly.)
+    /// * minute is reduced so that it is in the [0, 60) range and hour is adjusted
+    ///   accordingly.
+    /// * hour is reduced so that it is in the [0, 24) range and day is adjusted
+    ///   accordingly.
+    /// * month is reduced so that it is in the [0, 12) range and year is adjusted
+    ///   accordingly.
+    /// * day, month, and year are adjusted until day is a valid day in the month.
     pub fn compact(&self, date: DateTime) -> (DateTime, Time) {
         convert::compact(self, date)
     }

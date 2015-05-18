@@ -28,19 +28,32 @@ mod lrs { pub use base::lrs::*; pub use cty; }
 
 /// Terminates the current thread.
 ///
-/// This is unsafe because other threads might be referencing our stack.
+/// [argument, code]
+/// The exit code of the thread.
+///
+/// = Remarks
+///
+/// This is unsafe because `!Leak` data will not be destroyed.
 pub unsafe fn exit(code: c_int) -> ! {
     syscall::exit(code)
 }
 
-/// Spawns a new thread starting at the closure.
+/// Spawns a new thread.
+///
+/// [argument, f]
+/// The closure that will be run in the new thread.
 pub fn spawn<F>(f: F) -> Result
     where F: FnOnce() + Send + 'static
 {
     Builder::new().chain(|b| b.spawn(f))
 }
 
-/// Spawns a new scoped thread starting at the closure.
+/// Spawns a new scoped thread.
+///
+/// [argument, f]
+/// The closure that will be run in the new thread.
+///
+/// = Remarks
 ///
 /// The thread will automatically be joined when the guard's destructor runs.
 pub fn scoped<'a, F>(f: F) -> Result<JoinGuard<'a>>
@@ -50,6 +63,8 @@ pub fn scoped<'a, F>(f: F) -> Result<JoinGuard<'a>>
 }
 
 /// A join-guard
+///
+/// = Remarks
 ///
 /// Note that this is `!Leak` because it allows other threads to reference objects on our
 /// stack and those threads have to be joined before the end of the objects' lifetimes.
@@ -68,6 +83,8 @@ impl<'a> !Leak for JoinGuard<'a> { }
 
 /// A thread-builder
 ///
+/// = Remarks
+///
 /// This can be used to modify properties of the thread before spawning it.
 #[derive(Pod)]
 pub struct Builder {
@@ -85,11 +102,14 @@ impl Builder {
     }
 
     /// Sets the size of the guard page at the end of the thread's stack.
+    ///
+    /// [argument, size]
+    /// The size of the guard page.
     pub fn set_guard_size(&mut self, size: usize) -> Result {
         unsafe { rv!(-libc::pthread_attr_setguardsize(&mut self.attr, size)) }
     }
 
-    /// Like `set_guard_size`.
+    /// Returns the size of the guard page at the end of the thread's stack.
     pub fn guard_size(&mut self) -> Result<usize> {
         unsafe {
             let mut size = 0;
@@ -99,11 +119,14 @@ impl Builder {
     }
 
     /// Sets the size of the thread's stack.
+    ///
+    /// [argument, size]
+    /// The size of the thread's stack.
     pub fn set_stack_size(&mut self, size: usize) -> Result {
         unsafe { rv!(-libc::pthread_attr_setstacksize(&mut self.attr, size)) }
     }
 
-    /// Like `set_stack_size`.
+    /// Returns the size of the thread's stack.
     pub fn stack_size(&mut self) -> Result<usize> {
         unsafe {
             let mut size = 0;
@@ -112,7 +135,10 @@ impl Builder {
         }
     }
 
-    /// See the documentation of the top-level function.
+    /// Spawns a new thread.
+    ///
+    /// [argument, f]
+    /// The closure that will be run in the new thread.
     pub fn spawn<F>(mut self, f: F) -> Result
         where F: FnOnce() + Send + 'static
     {
@@ -129,7 +155,14 @@ impl Builder {
         }
     }
 
-    /// See the documentation of the top-level function.
+    /// Spawns a new scoped thread.
+    ///
+    /// [argument, f]
+    /// The closure that will be run in the new thread.
+    ///
+    /// = Remarks
+    ///
+    /// The thread will automatically be joined when the guard's destructor runs.
     pub fn scoped<'a, F>(self, f: F) -> Result<JoinGuard<'a>>
         where F: FnOnce() + Send + 'a
     {

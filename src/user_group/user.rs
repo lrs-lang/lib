@@ -35,12 +35,24 @@ pub struct Info<'a> {
 }
 
 impl<'a> Info<'a> {
-    /// Retrieves user info of the user with id `id`.
+    /// Retrieves user info of the user with a certain id.
+    ///
+    /// [argument, buf]
+    /// The buffer in which the information will be stored.
+    ///
+    /// [argument, id]
+    /// The id of the user.
     pub fn from_user_id(buf: &'a mut [u8], id: UserId) -> Result<Info<'a>> {
         Info::find_by(buf, |user| user.user_id == id)
     }
 
-    /// Retrieves user info of the user with name `name`.
+    /// Retrieves user info of the user with a certain name.
+    ///
+    /// [argument, buf]
+    /// The buffer in which the information will be stored.
+    ///
+    /// [argument, name]
+    /// The name of the user.
     pub fn from_user_name<S>(buf: &'a mut [u8], name: S) -> Result<Info<'a>>
         where S: AsByteStr,
     {
@@ -48,7 +60,13 @@ impl<'a> Info<'a> {
         Info::find_by(buf, |user| user.name == name)
     }
 
-    /// Finds the first user that satisfies the predicate.
+    /// Finds the first user that satisfies a predicate.
+    ///
+    /// [argument, buf]
+    /// The buffer in which the information will be stored.
+    ///
+    /// [argument, pred]
+    /// The predicate.
     pub fn find_by<F>(buf: &'a mut [u8], pred: F) -> Result<Info<'a>>
         where F: Fn(&Info) -> bool,
     {
@@ -103,13 +121,19 @@ pub struct Information {
 }
 
 impl Information {
-    /// Retrieves user info of the user with id `id`.
+    /// Retrieves user info of the user with a certain id.
+    ///
+    /// [argument, id]
+    /// The id of the user.
     pub fn from_user_id(id: UserId) -> Result<Information> {
         let mut buf = [0; INFO_BUF_SIZE];
         Info::from_user_id(&mut buf, id).chain(|i| i.to_owned())
     }
 
-    /// Retrieves user info of the user with name `name`.
+    /// Retrieves user info of the user with a certain name.
+    ///
+    /// [argument, name]
+    /// The name of the user.
     pub fn from_user_name<S>(name: S) -> Result<Information>
         where S: AsByteStr
     {
@@ -118,6 +142,9 @@ impl Information {
     }
 
     /// Finds the first user that satisfies the predicate.
+    ///
+    /// [argument, pred]
+    /// The predicate.
     pub fn find_by<F>(pred: F) -> Result<Information>
         where F: Fn(&Info) -> bool,
     {
@@ -125,6 +152,7 @@ impl Information {
         Info::find_by(&mut buf, pred).chain(|i| i.to_owned())
     }
 
+    /// Borrows the information.
     pub fn to_info<'a>(&'a self) -> Info<'a> {
         Info {
             name:     &self.name,
@@ -138,21 +166,21 @@ impl Information {
     }
 }
 
-/// Trait for types that hold user info.
+/// Objects that hold user info.
 pub trait UserInfo {
-    /// Name of the user.
+    /// Returns the name of the user.
     fn name(&self)     -> &ByteStr;
-    /// Password of the user.
+    /// Returns the password of the user.
     fn password(&self) -> &ByteStr;
-    /// User id of the user.
+    /// Returns the user id of the user.
     fn user_id(&self)  -> UserId;
-    /// Group id of the user.
+    /// Returns the group id of the user.
     fn group_id(&self) -> GroupId;
-    /// Comment of the user.
+    /// Returns the comment of the user.
     fn comment(&self)  -> &ByteStr;
-    /// Home folder of the user.
+    /// Returns the home folder of the user.
     fn home(&self)     -> &ByteStr;
-    /// Shell of the user.
+    /// Returns the shell of the user.
     fn shell(&self)    -> &ByteStr;
 }
 

@@ -55,17 +55,24 @@ const SECS_PER_MIN: i64 = 60;
 const SECS_PER_HOUR: i64 = 60 * SECS_PER_MIN;
 const SECS_PER_DAY: i64 = 24 * SECS_PER_HOUR;
 
-/// A time.
+/// A time offset.
 ///
-/// This can have various meanings.
+/// = Remarks
+///
+/// This can have various meanings such as the duration of a timeout parameter or the
+/// offset from the epoch when a file was created.
 #[derive(Pod, Eq)]
 pub struct Time {
+    /// The seconds part of the offset.
     pub seconds: i64,
+    /// The nanoseconds part of the offset.
     pub nanoseconds: i64,
 }
 
 impl Time {
     /// Normalizes the time.
+    ///
+    /// = Remarks
     ///
     /// That is, transforms `self` into an equivalent representation where `nanoseconds`
     /// is in [0, 1_000_000_000).
@@ -78,40 +85,61 @@ impl Time {
         Time { seconds: self.seconds.saturating_add(sec), nanoseconds: nano }
     }
 
-    /// Creates a `Time` that represents `n` nanoseconds.
+    /// Creates a `Time` that represents a number of nanoseconds.
+    ///
+    /// [argument, n]
+    /// The number of nanoseconds.
     pub fn nanoseconds(n: i64) -> Time {
         let (s, n) = n.div_rem(NANOS_PER_SEC);
         Time { seconds: s, nanoseconds: n }
     }
 
-    /// Creates a `Time` that represents `m` microseconds.
+    /// Creates a `Time` that represents a number of microseconds.
+    ///
+    /// [argument, m]
+    /// The number of microseconds.
     pub fn microseconds(m: i64) -> Time {
         let (s, m) = m.div_rem(MICROS_PER_SEC);
         Time { seconds: s, nanoseconds: m * NANOS_PER_MICRO }
     }
 
-    /// Creates a `Time` that represents `m` miliseconds.
+    /// Creates a `Time` that represents a number of milliseconds.
+    ///
+    /// [argument, m]
+    /// The number of milliseconds.
     pub fn milliseconds(m: i64) -> Time {
         let (s, m) = m.div_rem(MILLIS_PER_SEC);
         Time { seconds: s, nanoseconds: m * NANOS_PER_MILLI }
     }
 
-    /// Creates a `Time` that represents `s` seconds.
+    /// Creates a `Time` that represents a number of seconds.
+    ///
+    /// [argument, s]
+    /// The number of seconds.
     pub fn seconds(s: i64) -> Time {
         Time { seconds: s, nanoseconds: 0 }
     }
 
-    /// Creates a `Time` that represents `m` minutes.
+    /// Creates a `Time` that represents a number of minutes.
+    ///
+    /// [argument, m]
+    /// The number of minutes.
     pub fn minutes(m: i64) -> Time {
         Time::seconds(m.wrapping_mul(SECS_PER_MIN))
     }
 
-    /// Creates a `Time` that represents `h` hours.
+    /// Creates a `Time` that represents  a number of hours.
+    ///
+    /// [argument, h]
+    /// The number of hours.
     pub fn hours(h: i64) -> Time {
         Time::seconds(h.wrapping_mul(SECS_PER_HOUR))
     }
 
-    /// Creates a `Time` that represents `d` days.
+    /// Creates a `Time` that represents  a number of days.
+    ///
+    /// [argument, d]
+    /// The number of days.
     pub fn days(d: i64) -> Time {
         Time::seconds(d.wrapping_mul(SECS_PER_DAY))
     }
