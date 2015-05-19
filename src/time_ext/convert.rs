@@ -106,7 +106,7 @@ pub fn explode(zone: &Zone, time: i64) -> DateTime {
     let weekday = match weekday {
         0 => Weekday::Monday,
         1 => Weekday::Tuesday,
-        2 => Weekday::Wednsday,
+        2 => Weekday::Wednesday,
         3 => Weekday::Thursday,
         4 => Weekday::Friday,
         5 => Weekday::Saturday,

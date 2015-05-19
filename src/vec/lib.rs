@@ -26,7 +26,7 @@ use core::{mem, ptr, cmp, slice};
 use base::clone::{Clone};
 use core::ops::{Eq, Deref, DerefMut};
 use core::iter::{IntoIterator};
-use io::{Read, Write};
+use io::{Read, Write, BufWrite};
 use fmt::{Debug};
 use alloc::{Allocator, empty_ptr};
 use base::rmo::{AsRef, AsMut};
@@ -35,6 +35,7 @@ use str_one::{ByteStr, CStr, AsCStr, AsMutCStr, ToCStr, NoNullStr, AsMutNoNullSt
 
 pub type SVec<T, Heap = alloc::Heap> = Vec<'static, T, Heap>;
 
+/// A vector.
 pub struct Vec<'a, T, Heap = alloc::Heap>
     where Heap: Allocator,
 {
@@ -45,6 +46,10 @@ pub struct Vec<'a, T, Heap = alloc::Heap>
 }
 
 impl<'a, T> Vec<'a, T, alloc::NoMem> {
+    /// Creates a vector which is backed by borrowed memory.
+    ///
+    /// [argument, buf]
+    /// The buffer which will be used to store elements it.
     pub fn buffered(buf: &'a mut [u8]) -> Vec<'a, T, alloc::NoMem> {
         if mem::size_of::<T>() == 0 {
             return Vec { ptr: empty_ptr(), len: 0, cap: 0, _marker: PhantomData };
@@ -69,10 +74,12 @@ impl<'a, T> Vec<'a, T, alloc::NoMem> {
 impl<T, H> Vec<'static, T, H>
     where H: Allocator,
 {
+    /// Creates a new allocating vector.
     pub fn new() -> SVec<T, H> {
         Vec { ptr: empty_ptr(), len: 0, cap: 0, _marker: PhantomData, }
     }
 
+    /// Creates a new allocating vector and reserves a certain amount of space for it.
     pub fn with_capacity(cap: usize) -> Result<SVec<T, H>> {
         if cap == 0 || mem::size_of::<T>() == 0 {
             return Ok(Vec { ptr: empty_ptr(), len: 0, cap: cap, _marker: PhantomData });
@@ -85,14 +92,20 @@ impl<T, H> Vec<'static, T, H>
 impl<'a, T, H> Vec<'a, T, H>
     where H: Allocator,
 {
+    /// Returns the capacity of the vector.
     pub fn capacity(&self) -> usize {
         self.cap
     }
 
+    /// Returns the number of available but unused slots.
     pub fn available(&self) -> usize {
         self.cap - self.len
     }
 
+    /// Reserves memory for additional elements.
+    ///
+    /// [argument, n]
+    /// The number of elements for which memory should be reserved.
     pub fn reserve(&mut self, n: usize) -> Result {
         if self.cap - self.len >= n {
             return Ok(());
@@ -113,6 +126,15 @@ impl<'a, T, H> Vec<'a, T, H>
         Ok(())
     }
 
+    /// Appends an element to the vector.
+    ///
+    /// [argument, val]
+    /// The element to append.
+    ///
+    /// = Remarks
+    ///
+    /// This method aborts the process if no memory is available and allocating additional
+    /// memory fails. To avoid this, use `reserve` or `try_push`.
     pub fn push(&mut self, val: T) {
         if self.cap == self.len {
             self.reserve(1).unwrap();
@@ -121,6 +143,10 @@ impl<'a, T, H> Vec<'a, T, H>
         self.len += 1;
     }
 
+    /// Tries to append a copyable element to the vector.
+    ///
+    /// [argument, val]
+    /// The element to append.
     pub fn try_push(&mut self, val: T) -> Result where T: Copy {
         if self.cap == self.len {
             try!(self.reserve(1));
@@ -130,14 +156,28 @@ impl<'a, T, H> Vec<'a, T, H>
         Ok(())
     }
 
+    /// Appends a slice of copyable elements to the vector.
+    ///
+    /// [argument, vals]
+    /// The elements to append.
+    ///
+    /// = Remarks
+    ///
+    /// If this operation fails, no elements have been appended.
     pub fn push_all(&mut self, vals: &[T]) -> Result where T: Copy {
         unsafe { self.try_unsafe_push_all(vals) }
     }
 
-    pub unsafe fn unsafe_push_all(&mut self, vals: &[T]) {
-        self.try_unsafe_push_all(vals).unwrap();
-    }
-
+    /// Appends a slice of non-copyable elements to the vector.
+    ///
+    /// [argument, vals]
+    /// The elements to append.
+    ///
+    /// = Remarks
+    ///
+    /// If this operation fails, no elements have been appended. The elements will be
+    /// copied as if they were copyable. The user has to ensure the safety of this
+    /// operation.
     pub unsafe fn try_unsafe_push_all(&mut self, vals: &[T]) -> Result {
         try!(self.reserve(vals.len()));
         let tail = slice::from_ptr(self.ptr.add(self.len), vals.len());
@@ -146,12 +186,22 @@ impl<'a, T, H> Vec<'a, T, H>
         Ok(())
     }
 
+    /// Extends the vector by the elements of an iterator.
+    ///
+    /// [argument, iter]
+    /// The iter whose elements will be appended to the vector.
+    ///
+    /// = Remarks
+    ///
+    /// This method aborts the process if no memory is available and allocating additional
+    /// memory fails.
     pub fn extend<I: IntoIterator<Item=T>>(&mut self, iter: I) {
         for item in iter {
             self.push(item);
         }
     }
 
+    /// Removes an element from the end of the vector.
     pub fn pop(&mut self) -> Option<T> {
         match self.len {
             0 => None,
@@ -162,6 +212,14 @@ impl<'a, T, H> Vec<'a, T, H>
         }
     }
 
+    /// Reduces the length of the vector.
+    ///
+    /// [argument, len]
+    /// The new length of the vector.
+    ///
+    /// = Remarks
+    ///
+    /// If len is greater than the current length of the vector, the process is aborted.
     pub fn truncate(&mut self, len: usize) {
         assert!(len <= self.len);
         if mem::needs_drop::<T>() {
@@ -172,16 +230,24 @@ impl<'a, T, H> Vec<'a, T, H>
         self.len = len;
     }
 
+    /// Sets the length of the vector.
+    ///
+    /// [argument, len]
+    /// The new length of the vector.
+    ///
+    /// = Remarks
+    ///
+    /// If len is greater than the current capacity of the vector, the process is aborted.
     pub unsafe fn set_len(&mut self, len: usize) {
         assert!(len <= self.cap);
         self.len = len;
     }
 }
 
-impl<'a, H> Vec<'a, u8, H>
+impl<'a, H> BufWrite for Vec<'a, u8, H>
     where H: Allocator,
 {
-    pub fn read_to_eof<R>(&mut self, mut r: R) -> Result<usize>
+    fn read_to_eof<R>(&mut self, mut r: R) -> Result<usize>
         where R: Read,
     {
         const BUF_READ_STEP_SIZE: usize = 4096;

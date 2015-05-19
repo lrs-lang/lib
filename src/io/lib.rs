@@ -95,7 +95,7 @@ pub trait Read {
     }
 }
 
-/// Objects that wrap a byte-stream and contain a buffer.
+/// Objects that wrap a byte-stream for reading and contain a buffer.
 pub trait BufRead : Read {
     /// Copies bytes from the stream to a writer until a certain byte occurs.
     ///
@@ -214,6 +214,24 @@ pub trait Write {
     fn write_str(&mut self, buf: &str) -> Result<usize> {
         self.write(buf.as_bytes())
     }
+}
+
+/// Objects that wrap a byte-stream for writing and contain a buffer.
+pub trait BufWrite : Write {
+    /// Reads bytes from a `Read` object and writes them to the stream until end-of-file.
+    ///
+    /// [argument, r]
+    /// The object from which to read.
+    ///
+    /// [return_value]
+    /// Returns the number of bytes written.
+    ///
+    /// = Remarks
+    ///
+    /// If an error occurs, the error is returned immediately and the number of bytes
+    /// copied is lost. No data is lost even if an error occurs.
+    fn read_to_eof<R>(&mut self, r: R) -> Result<usize>
+        where R: Read;
 }
 
 impl<'a> Read for &'a [u8] {

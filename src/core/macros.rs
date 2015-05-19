@@ -86,7 +86,7 @@ macro_rules! vec {
             let base = [$($x),*];
             let mut vec = ::lrs::vec::Vec::with_capacity(base.len()).unwrap();
             unsafe {
-                vec.unsafe_push_all(&base[..]);
+                vec.try_unsafe_push_all(&base[..]).unwrap();
                 ::lrs::mem::forget(base);
             }
             vec

@@ -28,6 +28,7 @@ use fmt::{Debug, Write};
 use vec::{SVec, Vec};
 use str_one::{AsNoNullStr};
 use file::{File};
+use io::{BufWrite};
 
 mod parse;
 mod convert;

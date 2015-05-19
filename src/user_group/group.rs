@@ -32,12 +32,24 @@ pub struct Info<'a> {
 }
 
 impl<'a> Info<'a> {
-    /// Retrieves group info of the group with id `id`.
+    /// Retrieves group info of the group with a certain id.
+    ///
+    /// [argument, buf]
+    /// The buffer in which the information will be stored.
+    ///
+    /// [argument, id]
+    /// The group id.
     pub fn from_group_id(buf: &'a mut [u8], id: GroupId) -> Result<Info<'a>> {
         Info::find_by(buf, |group| group.id == id)
     }
 
-    /// Retrieves group info of the group with name `name`.
+    /// Retrieves group info of the group with a certain name.
+    ///
+    /// [argument, buf]
+    /// The buffer in which the information will be stored.
+    ///
+    /// [argument, name]
+    /// The group name.
     pub fn from_group_name<S>(buf: &'a mut [u8], name: S) -> Result<Info<'a>>
         where S: AsByteStr,
     {
@@ -45,7 +57,13 @@ impl<'a> Info<'a> {
         Info::find_by(buf, |group| group.name == name)
     }
 
-    /// Finds the first group that satisfies the predicate.
+    /// Finds the first group that satisfies a predicate.
+    ///
+    /// [argument, buf]
+    /// The buffer in which the information will be stored.
+    ///
+    /// [argument, pred]
+    /// The predicate.
     pub fn find_by<F>(buf: &'a mut [u8], pred: F) -> Result<Info<'a>>
         where F: Fn(&Info) -> bool,
     {
@@ -123,13 +141,19 @@ pub struct Information {
 }
 
 impl Information {
-    /// Retrieves group info of the group with id `id`.
+    /// Retrieves group info of the group with a certain id.
+    ///
+    /// [argument, id]
+    /// The group id.
     pub fn from_group_id(id: GroupId) -> Result<Information> {
         let mut buf = [0; INFO_BUF_SIZE];
         Info::from_group_id(&mut buf, id).chain(|i| i.to_owned())
     }
 
-    /// Retrieves group info of the group with name `name`.
+    /// Retrieves group info of the group with a certain name.
+    ///
+    /// [argument, name]
+    /// The group name.
     pub fn from_group_name<S>(name: S) -> Result<Information>
         where S: AsByteStr,
     {
@@ -137,7 +161,10 @@ impl Information {
         Info::from_group_name(&mut buf, name).chain(|i| i.to_owned())
     }
 
-    /// Finds the first group that satisfies the predicate.
+    /// Finds the first group that satisfies a predicate.
+    ///
+    /// [argument, pred]
+    /// The predicate.
     pub fn find_by<F>(pred: F) -> Result<Information>
         where F: Fn(&Info) -> bool,
     {
@@ -161,13 +188,13 @@ pub trait GroupInfo<'a>
 {
     type Iterator;
 
-    /// Name of the group.
+    /// Returns the name of the group.
     fn name(&self)       -> &ByteStr;
-    /// Password of the group.
+    /// Returns the password of the group.
     fn password(&self)   -> &ByteStr;
-    /// Id of the group.
+    /// Returns the id of the group.
     fn id(&self)         -> GroupId;
-    /// Iterator over the members of the group.
+    /// Returns an iterator over the members of the group.
     fn members(&'a self) -> <Self as GroupInfo>::Iterator;
 }
 
@@ -225,7 +252,12 @@ impl<'a> Iterator for InformationMemberIter<'a> {
 
 /// Returns an iterator over the groups in `/etc/group`.
 ///
-/// Errors can optionally be stored in `error`.
+/// [argument, error]
+/// An optional parameter in which errors that occur during the iteration will be stored.
+///
+/// = Remarks
+///
+/// If the error value was supplied, it should be inspected after the end of the loop.
 pub fn iter<'a>(error: Option<&'a mut Result>) -> InformationIter<'a> {
     InformationIter::new(error)
 }
@@ -329,12 +361,17 @@ impl<'a> Iterator for InformationIter<'a> {
 
 /// Returns an non-allocating iterator over the groups in `/etc/group`.
 ///
-/// Errors can optionally be stored in `error`.
+/// [argument, error]
+/// An optional parameter in which errors that occur during the iteration will be stored.
+///
+/// = Remarks
+///
+/// If the error value was supplied, it should be inspected after the end of the loop.
 pub fn iter_buf<'a>(error: Option<&'a mut Result>) -> InfoIter<'a> {
     InfoIter::new(error)
 }
 
-/// An non-allocating iterator over groups.
+/// A non-allocating iterator over groups.
 pub struct InfoIter<'a> {
     reader: LineReader<'a>,
 }
@@ -346,8 +383,13 @@ impl<'a> InfoIter<'a> {
 
     /// Reads the next group.
     ///
+    /// [argument, buf]
+    /// Scratch space for the iterator.
+    ///
+    /// = Remarks
+    ///
     /// The same buffer must be used for each call to `next`, otherwise the function can
-    /// panic, return errors, or return nonsense results.
+    /// abort, return errors, or return nonsense results.
     pub fn next<'b>(&mut self, buf: &'b mut [u8]) -> Option<Info<'b>> { 
         let buf = self.reader.fill(buf);
         if buf.len() == 0 {

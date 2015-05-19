@@ -206,7 +206,12 @@ impl UserInfo for Information {
 
 /// Returns an allocating iterator over the users in `/etc/passwd`.
 ///
-/// Errors can optionally be stored in `error`.
+/// [argument, error]
+/// An optional parameter in which errors that occur during the iteration will be stored.
+///
+/// = Remarks
+///
+/// If the error value was supplied, it should be inspected after the end of the loop.
 pub fn iter<'a>(error: Option<&'a mut Result>) -> InformationIter<'a> {
     InformationIter::new(error)
 }
@@ -287,7 +292,12 @@ impl<'a> Iterator for InformationIter<'a> {
 
 /// Returns an non-allocating iterator over the users in `/etc/passwd`.
 ///
-/// Errors can optionally be stored in `error`.
+/// [argument, error]
+/// An optional parameter in which errors that occur during the iteration will be stored.
+///
+/// = Remarks
+///
+/// If the error value was supplied, it should be inspected after the end of the loop.
 pub fn iter_buf<'a>(error: Option<&'a mut Result>) -> InfoIter<'a> {
     InfoIter::new(error)
 }
@@ -304,8 +314,13 @@ impl<'a> InfoIter<'a> {
 
     /// Reads the next user.
     ///
+    /// [argument, buf]
+    /// Scratch space for the iterator.
+    ///
+    /// = Remarks
+    ///
     /// The same buffer must be used for each call to `next`, otherwise the function can
-    /// panic, return errors, or return nonsense results.
+    /// abort, return errors, or return nonsense results.
     pub fn next<'b>(&mut self, buf: &'b mut [u8]) -> Option<Info<'b>> { 
         let buf = self.reader.fill(buf);
         if buf.len() == 0 {

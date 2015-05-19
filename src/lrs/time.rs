@@ -68,7 +68,6 @@
 pub use lrs_time_base::{Time};
 pub use lrs_time_base::timer::{Timer};
 pub use lrs_time_base::clock::{Clock};
-pub use lrs_time_base::clock::{Real, Mono, Process, Thread, MonoRaw, RealCoarse,
-                                 MonoCoarse, Boot, CLOCK_REALTIME_ALARM,
-                                 CLOCK_BOOTTIME_ALARM, CLOCK_SGI_CYCLE, CLOCK_TAI};
+pub use lrs_time_base::clock::{REAL, MONO, PROCESS, THREAD, MONO_RAW, REAL_COARSE,
+                                 MONO_COARSE, BOOT};
 pub use lrs_time_ext::{DateTime, Weekday, Zone};
