@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//! Syscall wrappers
+//! Syscall wrappers.
 
 pub use lrs_syscall::{
     openat, close, lseek, fcntl_dupfd_cloexec, fcntl_getfl, fcntl_setfl, fcntl_getfd,

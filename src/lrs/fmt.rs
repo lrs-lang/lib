@@ -3,10 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 //! Object formatting
-//!
-//! = Description
-//!
-//! This module contains traits for formatting objects into writers.
 
 pub use lrs_fmt::{
     Write, LowerHex, UpperHex, Debug, Display,

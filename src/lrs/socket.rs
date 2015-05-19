@@ -2,13 +2,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+//! Socket handling.
+
 pub use lrs_socket::domain::{Domain};
 pub use lrs_socket::kind::{Kind};
 pub use lrs_socket::flags::{Flags};
 pub use lrs_socket::socket::{Socket};
 pub use lrs_socket::addr::{SockAddr, AddrType};
 
-/// Kernel domain constants
+/// Kernel domain constants.
 ///
 /// = Description
 ///

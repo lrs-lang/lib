@@ -2,15 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//! Experimental Linux standard library.
-//!
-//! = Description
-//!
-//! This library tries to create a rust standard library on top of the Linux API. It is
-//! not bound by any other standards. In particular, it does not try to create a
-//! POSIX-like api or an API that can easily be ported to other platforms.
-//!
-//! Currently only `x86_64` is supported.
+//! The lrs standard library.
 
 #![crate_name = "lrs"]
 #![crate_type = "lib"]
@@ -108,22 +100,9 @@ pub mod sync;
 pub mod cmp;
 pub mod socket;
 pub mod bx;
-pub mod cell;
 
-// Annoying that these have to be top-modules.
-pub mod i8;
-pub mod i16;
-pub mod i32;
-pub mod i64;
-pub mod u8;
-pub mod u16;
-pub mod u32;
-pub mod u64;
-pub mod isize;
-pub mod usize;
-
+/// The prelude.
 pub mod prelude {
-    //! The prelude.
 
     pub use lrs_core::cmp::{PartialOrd, Ord};
     pub use lrs_base::prelude::*;
@@ -135,8 +114,6 @@ pub mod prelude {
 }
 
 pub mod core {
-    //! This sad existence is needed because for loops are hard-coded to use this path.
-
     pub mod option {
         pub use lrs_core::option::{Option};
     }

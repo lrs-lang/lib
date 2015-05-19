@@ -17,6 +17,7 @@ pub use lrs_file::flags::{FileFlags, Mode, AccessMode};
 pub use lrs_file::info::{Info, Type};
 pub use lrs_dev::{Device, DeviceType};
 
+/// File flag constants.
 pub mod flags {
     pub use lrs_file::flags::{
         FILE_CREATE, FILE_READ_ONLY, FILE_WRITE_ONLY, FILE_READ_WRITE, FILE_CLOSE_ON_EXEC,
@@ -27,6 +28,7 @@ pub mod flags {
     };
 }
 
+/// File mode constants.
 pub mod mode {
     pub use lrs_file::flags::{
         MODE_FILE, MODE_DIRECTORY, MODE_SET_USER_ID, MODE_SET_GROUP_ID, MODE_STICKY,

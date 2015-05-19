@@ -3,8 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 //! Iterators
-//!
-//! TODO: Don't always write the same "this module provides [the obvious]" bullshit.
 
 pub use lrs_core::iter::{
     Iterator, Empty, IntoIterator,

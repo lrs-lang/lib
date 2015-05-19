@@ -6,7 +6,7 @@
 //!
 //! = Examples
 //!
-//! ```
+//! ----
 //! let mut array = [1u8; 1024];
 //! {
 //!     let res = scoped(|| {
@@ -23,6 +23,6 @@
 //! for i in 0..SIZE {
 //!     assert!(array[i] == 2);
 //! }
-//! ```
+//! ----
 
 pub use lrs_thread::{Builder, spawn, scoped, JoinGuard};
