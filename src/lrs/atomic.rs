@@ -4,7 +4,7 @@
 
 //! Atomic integers
 //!
-//! = Description
+//! = Remarks
 //!
 //! This module contains integer wrappers with atomic operations. All types support the
 //! same operations:
@@ -48,9 +48,9 @@
 //! See the C++11 standard for a concise description of these orderings.
 
 pub use lrs_atomic::{
-    fence_release, fence_acquire, fence_acquire_release, fence, AtomicU8,
-    ATOMIC_U8_INIT, AtomicU16,   ATOMIC_U16_INIT, AtomicU32,   ATOMIC_U32_INIT, AtomicU64,
-    ATOMIC_U64_INIT, AtomicUsize, ATOMIC_USIZE_INIT, AtomicI8,    ATOMIC_I8_INIT,
-    AtomicI16,   ATOMIC_I16_INIT, AtomicI32,   ATOMIC_I32_INIT, AtomicI64,
-    ATOMIC_I64_INIT, AtomicIsize, ATOMIC_ISIZE_INIT, AtomicCInt, ATOMIC_CINT_INIT,
+    fence_release, fence_acquire, fence_acquire_release, fence, AtomicU8, ATOMIC_U8_INIT,
+    AtomicU16, ATOMIC_U16_INIT, AtomicU32, ATOMIC_U32_INIT, AtomicU64, ATOMIC_U64_INIT,
+    AtomicUsize, ATOMIC_USIZE_INIT, AtomicI8, ATOMIC_I8_INIT, AtomicI16, ATOMIC_I16_INIT,
+    AtomicI32, ATOMIC_I32_INIT, AtomicI64, ATOMIC_I64_INIT, AtomicIsize,
+    ATOMIC_ISIZE_INIT, AtomicCInt, ATOMIC_CINT_INIT,
 };

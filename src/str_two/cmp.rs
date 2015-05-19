@@ -49,13 +49,6 @@ macro_rules! borrowed {
                 self.deref() == other
             }
         }
-        impl<'a, H> Eq<$one<'a, H>> for $two
-            where H: Allocator,
-        {
-            fn eq(&self, other: &$one<'a, H>) -> bool {
-                self == other.deref()
-            }
-        }
     }
 }
 

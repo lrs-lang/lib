@@ -27,7 +27,7 @@ extern crate lrs_vec       as vec;
 mod lrs { pub use fmt::lrs::*; }
 
 use cty::{linux_dirent64, MODE_TYPE_SHIFT, umode_t, PATH_MAX};
-use str_one::{CStr};
+use str_one::{CStr, ByteStr};
 use str_two::{ByteString};
 use str_three::{ToCString};
 use syscall::{getdents};
@@ -180,11 +180,11 @@ impl<'a> Iterator for Iter<'a> {
             if name == "." || name == ".." {
                 self.next()
             } else {
-                match AsRef::<[u8]>::as_ref(name).to_owned() {
+                match AsRef::<ByteStr>::as_ref(name).to_owned() {
                     Ok(n) => Some(Entry {
                         inode: ent.d_ino,
                         ty:    ty,
-                        name:  ByteString::from_vec(n),
+                        name:  n,
                     }),
                     Err(e) => {
                         self.set_err(e);

@@ -16,8 +16,8 @@ extern crate lrs_cell as cell;
 extern crate lrs_alloc as alloc;
 extern crate lrs_atomic as atomic;
 
-pub use rc::{Rc};
-pub use arc::{Arc};
+pub use rc::{Rc, RcBuf};
+pub use arc::{Arc, ArcBuf};
 
 pub mod lrs { pub use ::fmt::lrs::*; }
 

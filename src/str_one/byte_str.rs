@@ -3,7 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use core::ops::{Index, IndexMut, Range, RangeFrom, RangeTo, RangeFull};
+use core::ops::{Index, IndexMut, Range, RangeFrom, RangeTo, RangeFull, PartialOrd};
+use core::cmp::{Ord, Ordering};
 use core::{mem, str};
 use base::rmo::{AsRef, AsMut};
 use fmt::{self, Debug, Display, UpperHex, Write};
@@ -72,6 +73,16 @@ impl ByteStr {
         }
         self.data[start..end].as_ref()
     }
+
+    /// Returns whether the string starts with a byte slice.
+    ///
+    /// [argument, arg]
+    /// The byte slice to be checked.
+    pub fn starts_with<A>(&self, arg: A) -> bool
+        where A: AsRef<[u8]>,
+    {
+        self.data.starts_with(arg.as_ref())
+    }
 }
 
 impl Index<usize> for ByteStr {
@@ -135,6 +146,18 @@ impl IndexMut<Range<usize>> for ByteStr {
     }
 }
 
+impl<T: AsRef<[u8]>> PartialOrd<T> for ByteStr {
+    fn partial_cmp(&self, other: &T) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl<T: AsRef<[u8]>> Ord<T> for ByteStr {
+    fn cmp(&self, other: &T) -> Ordering {
+        self.data.cmp(other.as_ref())
+    }
+}
+
 impl AsRef<[u8]> for ByteStr {
     fn as_ref(&self) -> &[u8] {
         &self.data
@@ -195,8 +218,7 @@ impl Display for ByteStr {
 
 impl Parse for ByteStr {
     fn parse<P: Parsable>(&self) -> Result<P> {
-        let bytes: &[u8] = self.as_ref();
-        bytes.parse()
+        self.data.parse()
     }
 }
 

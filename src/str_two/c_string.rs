@@ -55,7 +55,7 @@ impl<'a, H> AsRef<CStr> for CString<'a, H>
     where H: Allocator,
 {
     fn as_ref(&self) -> &CStr {
-        unsafe { CStr::from_bytes_unchecked(&self.data[..]) }
+        self.deref()
     }
 }
 

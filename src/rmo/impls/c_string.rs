@@ -3,7 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use base::rmo::{AsRef};
 use str_one::c_str::{CStr};
 use str_two::c_string::{CString};
 use {ToOwned};
@@ -14,7 +13,7 @@ impl<H> ToOwned<H> for CStr
 {
     type Owned = CString<'static, H>;
     fn to_owned(&self) -> Result<CString<'static, H>> {
-        let bytes: &[u8] = self.as_ref();
+        let bytes = self.bytes_with_null();
         bytes.to_owned().map(|o| unsafe { CString::from_bytes_unchecked(o) })
     }
 }

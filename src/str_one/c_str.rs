@@ -28,9 +28,7 @@ pub struct CStr {
 /// `"Hello World\0\0\0"` will succeed but `"Hello\0World\0"` will fail.
 pub trait AsCStr : ToCStr+AsRef<[u8]> {
     /// Borrows the object as a `CStr`.
-    fn as_cstr(&self) -> Result<&CStr> {
-        self.as_ref().as_cstr()
-    }
+    fn as_cstr(&self) -> Result<&CStr>;
 }
 
 /// Objects that can be interpreted as mutable `CStr`s.
@@ -163,11 +161,16 @@ impl CStr {
     {
         self.data.starts_with(arg.as_ref())
     }
+
+    /// Returns the contained bytes including the null byte.
+    pub fn bytes_with_null(&self) -> &[u8] {
+        &self.data
+    }
 }
 
 impl AsRef<[u8]> for CStr {
     fn as_ref(&self) -> &[u8] {
-        &self.data
+        &self.data[..self.data.len()-1]
     }
 }
 
@@ -244,7 +247,7 @@ impl AsMutNoNullStr for CStr {
 
 impl AsRef<NoNullStr> for CStr {
     fn as_ref(&self) -> &NoNullStr {
-        unsafe { NoNullStr::from_bytes_unchecked(&self.data[..self.data.len() - 1]) }
+        unsafe { NoNullStr::from_bytes_unchecked(self.as_ref()) }
     }
 }
 
