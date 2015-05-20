@@ -180,7 +180,7 @@ pub struct linux_dirent64 {
     pub d_name:   [c_char; 0],
 }
 
-pub const SI_LOAD_SHIFT	: __kernel_ulong_t = 16;
+pub const SI_LOAD_SHIFT : __kernel_ulong_t = 16;
 
 #[repr(C)]
 #[derive(Pod, Eq)]
@@ -727,7 +727,7 @@ pub struct timex {
     pub calcnt:    __kernel_long_t,
     pub errcnt:    __kernel_long_t,
     pub stbcnt:    __kernel_long_t,
-    
+
     pub tai: c_int,
 
     pub _unused: [u32; 11],
@@ -851,9 +851,9 @@ pub struct iocb {
 #[repr(C)]
 #[derive(Pod, Eq)]
 pub struct file_handle {
-	pub handle_bytes: __u32,
-	pub handle_type: k_int,
-	pub f_handle: [c_uchar; 0],
+    pub handle_bytes: __u32,
+    pub handle_type: k_int,
+    pub f_handle: [c_uchar; 0],
 }
 
 // getcpu.h
@@ -861,7 +861,7 @@ pub struct file_handle {
 #[repr(C)]
 #[derive(Pod, Eq)]
 pub struct getcpu_cache {
-	pub blob: [k_long; 128 / BYTES_PER_LONG],
+    pub blob: [k_long; 128 / BYTES_PER_LONG],
 }
 
 // kexec.h
@@ -892,10 +892,10 @@ pub const KEXEC_SEGMENT_MAX : c_int = 16;
 #[repr(C)]
 #[derive(Pod, Eq)]
 pub struct kexec_segment {
-	buf: *const c_void,
-	bufsz: user_size_t,
-	mem: *const c_void,
-	memsz: user_size_t,
+    pub buf: *const c_void,
+    pub bufsz: user_size_t,
+    pub mem: *const c_void,
+    pub memsz: user_size_t,
 }
 
 // straight from fs/readdir.c
@@ -903,9 +903,9 @@ pub struct kexec_segment {
 #[repr(C)]
 #[derive(Pod, Eq)]
 pub struct linux_dirent {
-	pub d_ino:    k_ulong,
-	pub d_off:    k_ulong,
-	pub d_reclen: k_ushort,
+    pub d_ino:    k_ulong,
+    pub d_off:    k_ulong,
+    pub d_reclen: k_ushort,
     pub d_name: [k_char; 1],
 }
 
@@ -923,12 +923,12 @@ pub struct old_linux_dirent {
 #[repr(C)]
 #[derive(Pod, Eq)]
 pub struct mmap_arg_struct {
-	pub addr:   k_ulong,
-	pub len:    k_ulong,
-	pub prot:   k_ulong,
-	pub flags:  k_ulong,
-	pub fd:     k_ulong,
-	pub offset: k_ulong,
+    pub addr:   k_ulong,
+    pub len:    k_ulong,
+    pub prot:   k_ulong,
+    pub flags:  k_ulong,
+    pub fd:     k_ulong,
+    pub offset: k_ulong,
 }
 
 // mqueue.h
@@ -939,10 +939,10 @@ pub const MQ_BYTES_MAX : c_int = 819200;
 #[repr(C)]
 #[derive(Pod, Eq)]
 pub struct mq_attr {
-    pub mq_flags:	__kernel_long_t,
-    pub mq_maxmsg:	__kernel_long_t,
-    pub mq_msgsize:	__kernel_long_t,
-    pub mq_curmsgs:	__kernel_long_t,
+    pub mq_flags:   __kernel_long_t,
+    pub mq_maxmsg:  __kernel_long_t,
+    pub mq_msgsize: __kernel_long_t,
+    pub mq_curmsgs: __kernel_long_t,
     pub __reserved: [__kernel_long_t; 4],
 }
 
@@ -985,8 +985,8 @@ pub const IPC_64  : c_int = 0x0100;
 #[repr(C)]
 #[derive(Pod, Eq)]
 pub struct ipc_kludge {
-	msgp: *mut msgbuf,
-	msgtyp: c_long, // XXX: Maybe use k_long here?
+    pub msgp: *mut msgbuf,
+    pub msgtyp: c_long, // XXX: Maybe use k_long here?
 }
 
 pub const SEMOP      : c_int = 1;
@@ -1017,21 +1017,21 @@ pub const MSG_COPY    : c_int = 0o40000;
 #[repr(C)]
 #[derive(Pod, Eq)]
 pub struct msgbuf {
-	pub mtype: __kernel_long_t,
-	pub mtext: [c_char; 1],
+    pub mtype: __kernel_long_t,
+    pub mtext: [c_char; 1],
 }
 
 #[repr(C)]
 #[derive(Pod, Eq)]
 pub struct msginfo {
-	msgpool: c_int,
-	msgmap:  c_int,
-	msgmax:  c_int,
-	msgmnb:  c_int,
-	msgmni:  c_int,
-	msgssz:  c_int,
-	msgtql:  c_int,
-	msgseg:  c_ushort,
+    pub msgpool: c_int,
+    pub msgmap:  c_int,
+    pub msgmax:  c_int,
+    pub msgmnb:  c_int,
+    pub msgmni:  c_int,
+    pub msgssz:  c_int,
+    pub msgtql:  c_int,
+    pub msgseg:  c_ushort,
 }
 
 pub const MSGMNI : c_int = 32000;
@@ -1086,10 +1086,10 @@ pub struct new_utsname {
 #[repr(C)]
 #[derive(Pod)]
 pub struct old_sigaction {
-	pub sa_handler:  __sighandler_t,
-	pub sa_mask:     old_sigset_t,
-	pub sa_flags:    k_ulong,
-	pub sa_restorer: __sigrestore_t,
+    pub sa_handler:  __sighandler_t,
+    pub sa_mask:     old_sigset_t,
+    pub sa_flags:    k_ulong,
+    pub sa_restorer: __sigrestore_t,
 }
 
 // perf_event.h
@@ -1362,35 +1362,35 @@ pub const PERF_IOC_FLAG_GROUP : c_uint = 1;
 #[repr(C)]
 #[derive(Pod)]
 pub struct perf_event_mmap_page {
-	pub version:        __u32,
-	pub compat_version: __u32,
-	pub lock:           __u32,
-	pub index:          __u32,
-	pub offset:         __s64,
-	pub time_enabled:   __u64,
-	pub time_running:   __u64,
-	//union {
-	//	__u64	capabilities;
-	//	struct {
-	//		__u64	cap_bit0		: 1,
-	//			cap_bit0_is_deprecated	: 1,
+    pub version:        __u32,
+    pub compat_version: __u32,
+    pub lock:           __u32,
+    pub index:          __u32,
+    pub offset:         __s64,
+    pub time_enabled:   __u64,
+    pub time_running:   __u64,
+    //union {
+    //	__u64	capabilities;
+    //	struct {
+    //		__u64	cap_bit0		: 1,
+    //			cap_bit0_is_deprecated	: 1,
 
-	//			cap_user_rdpmc		: 1,
-	//			cap_user_time		: 1,
-	//			cap_user_time_zero	: 1,
-	//			cap_____res		: 59;
-	//	};
-	//};
+    //			cap_user_rdpmc		: 1,
+    //			cap_user_time		: 1,
+    //			cap_user_time_zero	: 1,
+    //			cap_____res		: 59;
+    //	};
+    //};
     __union_one: __u64,
-	pub pmc_width:   __u16,
-	pub time_shift:  __u16,
-	pub time_mult:   __u32,
-	pub time_offset: __u64,
-	pub time_zero:   __u64,
-	pub size:        __u32,
-	pub __reserved:  [__u8; 118*8+4],
-	pub data_head:   __u64,
-	pub data_tail:   __u64,
+    pub pmc_width:   __u16,
+    pub time_shift:  __u16,
+    pub time_mult:   __u32,
+    pub time_offset: __u64,
+    pub time_zero:   __u64,
+    pub size:        __u32,
+    pub __reserved:  [__u8; 118*8+4],
+    pub data_head:   __u64,
+    pub data_tail:   __u64,
 }
 
 impl perf_event_mmap_page {
@@ -1522,11 +1522,11 @@ pub const PERF_MEM_TLB_SHIFT    : c_int = 26;
 pub struct perf_branch_entry {
     pub from: __u64,
     pub to: __u64,
-	//__u64	mispred:1,
-	//	predicted:1,
-	//	in_tx:1,
-	//	abort:1,
-	//	reserved:60;
+    //__u64	mispred:1,
+    //	predicted:1,
+    //	in_tx:1,
+    //	abort:1,
+    //	reserved:60;
     __bitfield_one: __u64,
 }
 
@@ -1632,7 +1632,7 @@ pub const FUTEX_CMP_REQUEUE_PI_PRIVATE  : c_int = FUTEX_CMP_REQUEUE_PI  | FUTEX_
 #[repr(C)]
 #[derive(Pod, Eq)]
 pub struct robust_list {
-	pub next: *mut robust_list,
+    pub next: *mut robust_list,
 }
 
 #[repr(C)]
@@ -2614,7 +2614,7 @@ pub fn RNDCLEARPOOL   () -> c_uint { _IO(b'R' as c_uint, 0x06) }
 pub struct rand_pool_info {
     pub entropy_count: c_int,
     pub buf_size:      c_int,
-    pub buf:        [__u32; 0], 
+    pub buf:        [__u32; 0],
 }
 
 pub const GRND_NONBLOCK : c_uint = 0x0001;
@@ -2867,10 +2867,10 @@ pub struct cisco_proto {
 pub const IFNAMSIZ : usize = 16;
 pub const IFALIASZ : usize = 256;
 
-// XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX 
-// XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX 
-// XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX 
-// XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX 
+// XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX
+// XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX
+// XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX
+// XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX
 
 //////////////////////////
 // include/uapi/linux/in.h
@@ -2999,7 +2999,7 @@ pub struct ip_msfilter {
 }
 
 pub fn IP_MSFILTER_SIZE(numsrc: usize) -> usize {
-	mem::size_of::<ip_msfilter>() - mem::size_of::<__u32>()
+    mem::size_of::<ip_msfilter>() - mem::size_of::<__u32>()
                 + numsrc * mem::size_of::<__u32>()
 }
 
@@ -3029,7 +3029,7 @@ pub struct group_filter {
 }
 
 pub fn GROUP_FILTER_SIZE(numsrc: usize ) -> usize {
-	mem::size_of::<group_filter>() - mem::size_of::<__kernel_sockaddr_storage>()
+    mem::size_of::<group_filter>() - mem::size_of::<__kernel_sockaddr_storage>()
             + numsrc * mem::size_of::<__kernel_sockaddr_storage>()
 }
 
@@ -3065,13 +3065,13 @@ pub const IN_CLASSB_HOST   : u32 = 0xffffffff & !IN_CLASSB_NET;
 pub const IN_CLASSB_MAX    : u32 = 65536;
 
 pub fn IN_CLASSC(a: u32) -> bool { (a & 0xe0000000) == 0xc0000000 }
-pub const IN_CLASSC_NET		: u32 = 0xffffff00;
-pub const IN_CLASSC_NSHIFT	: u32 = 8;
-pub const IN_CLASSC_HOST	: u32 = 0xffffffff & !IN_CLASSC_NET;
+pub const IN_CLASSC_NET    : u32 = 0xffffff00;
+pub const IN_CLASSC_NSHIFT : u32 = 8;
+pub const IN_CLASSC_HOST   : u32 = 0xffffffff & !IN_CLASSC_NET;
 
 pub fn IN_CLASSD(a: u32) -> bool { (a & 0xf0000000) == 0xe0000000 }
 pub fn IN_MULTICAST(a: u32) -> bool { IN_CLASSD(a) }
-pub const IN_MULTICAST_NET	: u32 = 0xF0000000;
+pub const IN_MULTICAST_NET : u32 = 0xF0000000;
 
 pub fn IN_EXPERIMENTAL(a: u32) -> bool { (a & 0xf0000000) == 0xf0000000 }
 pub fn IN_BADCLASS(a: u32) -> bool { IN_EXPERIMENTAL(a) }
@@ -3376,3 +3376,653 @@ pub const UDP_NO_CHECK6_RX           : c_int = 102;
 pub const UDP_ENCAP_ESPINUDP_NON_IKE : c_int = 1;
 pub const UDP_ENCAP_ESPINUDP         : c_int = 2;
 pub const UDP_ENCAP_L2TPINUDP        : c_int = 3;
+
+///////////////////////////////
+// include/uapi/linux/netlink.h
+///////////////////////////////
+
+pub const NETLINK_ROUTE          : c_int = 0;
+pub const NETLINK_UNUSED         : c_int = 1;
+pub const NETLINK_USERSOCK       : c_int = 2;
+pub const NETLINK_FIREWALL       : c_int = 3;
+pub const NETLINK_SOCK_DIAG      : c_int = 4;
+pub const NETLINK_NFLOG          : c_int = 5;
+pub const NETLINK_XFRM           : c_int = 6;
+pub const NETLINK_SELINUX        : c_int = 7;
+pub const NETLINK_ISCSI          : c_int = 8;
+pub const NETLINK_AUDIT          : c_int = 9;
+pub const NETLINK_FIB_LOOKUP     : c_int = 10;
+pub const NETLINK_CONNECTOR      : c_int = 11;
+pub const NETLINK_NETFILTER      : c_int = 12;
+pub const NETLINK_IP6_FW         : c_int = 13;
+pub const NETLINK_DNRTMSG        : c_int = 14;
+pub const NETLINK_KOBJECT_UEVENT : c_int = 15;
+pub const NETLINK_GENERIC        : c_int = 16;
+pub const NETLINK_SCSITRANSPORT  : c_int = 18;
+pub const NETLINK_ECRYPTFS       : c_int = 19;
+pub const NETLINK_RDMA           : c_int = 20;
+pub const NETLINK_CRYPTO         : c_int = 21;
+pub const NETLINK_INET_DIAG      : c_int = NETLINK_SOCK_DIAG;
+pub const MAX_LINKS              : c_int = 32;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct sockaddr_nl {
+    pub nl_family: __kernel_sa_family_t,
+    pub nl_pad:    c_ushort,
+    pub nl_pid:    __u32,
+    pub nl_groups: __u32,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct nlmsghdr {
+    pub nlmsg_len:   __u32,
+    pub nlmsg_type:  __u16,
+    pub nlmsg_flags: __u16,
+    pub nlmsg_seq:   __u32,
+    pub nlmsg_pid:   __u32,
+}
+
+pub const NLM_F_REQUEST   : __u16 = 1;
+pub const NLM_F_MULTI     : __u16 = 2;
+pub const NLM_F_ACK       : __u16 = 4;
+pub const NLM_F_ECHO      : __u16 = 8;
+pub const NLM_F_DUMP_INTR : __u16 = 16;
+pub const NLM_F_ROOT      : __u16 = 0x100;
+pub const NLM_F_MATCH     : __u16 = 0x200;
+pub const NLM_F_ATOMIC    : __u16 = 0x400;
+pub const NLM_F_DUMP      : __u16 = NLM_F_ROOT|NLM_F_MATCH;
+pub const NLM_F_REPLACE   : __u16 = 0x100;
+pub const NLM_F_EXCL      : __u16 = 0x200;
+pub const NLM_F_CREATE    : __u16 = 0x400;
+pub const NLM_F_APPEND    : __u16 = 0x800;
+
+pub const NLMSG_ALIGNTO	: c_uint = 4;
+
+pub fn NLMSG_ALIGN(len: c_uint) -> c_uint {
+    (len + NLMSG_ALIGNTO - 1) & !(NLMSG_ALIGNTO - 1)
+}
+
+pub fn NLMSG_LENGTH(len: c_uint) -> c_uint {
+    len + NLMSG_ALIGN(mem::size_of::<nlmsghdr>() as c_uint)
+}
+
+pub fn NLMSG_SPACE(len: c_uint) -> c_uint {
+    NLMSG_ALIGN(NLMSG_LENGTH(len))
+}
+
+pub unsafe fn NLMSG_DATA(nlh: *mut nlmsghdr) -> *mut c_void {
+    (nlh as usize + NLMSG_LENGTH(0) as usize) as *mut c_void
+}
+
+pub unsafe fn NLMSG_NEXT(nlh: *mut nlmsghdr, len: &mut c_uint) -> *mut nlmsghdr {
+    *len -= NLMSG_ALIGN((*nlh).nlmsg_len);
+    (nlh as usize + NLMSG_ALIGN((*nlh).nlmsg_len as c_uint) as usize) as *mut nlmsghdr
+}
+
+pub unsafe fn NLMSG_OK(nlh: *mut nlmsghdr, len: c_uint) -> bool {
+       len >= mem::size_of::<nlmsghdr>() as c_uint
+    && (*nlh).nlmsg_len >= mem::size_of::<nlmsghdr>() as c_uint
+    && (*nlh).nlmsg_len <= len
+}
+
+pub unsafe fn NLMSG_PAYLOAD(nlh: *mut nlmsghdr, len: c_uint) -> c_uint {
+    (*nlh).nlmsg_len as c_uint - NLMSG_SPACE(len)
+}
+
+pub const NLMSG_NOOP     : __u16 = 0x1;
+pub const NLMSG_ERROR    : __u16 = 0x2;
+pub const NLMSG_DONE     : __u16 = 0x3;
+pub const NLMSG_OVERRUN  : __u16 = 0x4;
+pub const NLMSG_MIN_TYPE : __u16 = 0x10;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct nlmsgerr {
+    pub error: c_int,
+    pub msg:   nlmsghdr,
+}
+
+pub const NETLINK_ADD_MEMBERSHIP  : c_int = 1;
+pub const NETLINK_DROP_MEMBERSHIP : c_int = 2;
+pub const NETLINK_PKTINFO         : c_int = 3;
+pub const NETLINK_BROADCAST_ERROR : c_int = 4;
+pub const NETLINK_NO_ENOBUFS      : c_int = 5;
+pub const NETLINK_RX_RING         : c_int = 6;
+pub const NETLINK_TX_RING         : c_int = 7;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct nl_pktinfo {
+    pub group: __u32,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct nl_mmap_req {
+    pub nm_block_size: c_uint,
+    pub nm_block_nr:   c_uint,
+    pub nm_frame_size: c_uint,
+    pub nm_frame_nr:   c_uint,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct nl_mmap_hdr {
+    pub nm_status: c_uint,
+    pub nm_len:    c_uint,
+    pub nm_group:  __u32,
+    pub nm_pid:    __u32,
+    pub nm_uid:    __u32,
+    pub nm_gid:    __u32,
+}
+
+pub type nl_mmap_status = c_int;
+
+pub const NL_MMAP_STATUS_UNUSED:   nl_mmap_status = 0;
+pub const NL_MMAP_STATUS_RESERVED: nl_mmap_status = 1;
+pub const NL_MMAP_STATUS_VALID:    nl_mmap_status = 2;
+pub const NL_MMAP_STATUS_COPY:     nl_mmap_status = 3;
+pub const NL_MMAP_STATUS_SKIP:     nl_mmap_status = 4;
+
+pub const NL_MMAP_MSG_ALIGNMENT : c_uint = NLMSG_ALIGNTO;
+// #define NL_MMAP_MSG_ALIGN(sz)		__ALIGN_KERNEL(sz, NL_MMAP_MSG_ALIGNMENT)
+// #define NL_MMAP_HDRLEN			NL_MMAP_MSG_ALIGN(sizeof(struct nl_mmap_hdr))
+
+pub const NET_MAJOR : c_int = 36;
+
+pub const NETLINK_UNCONNECTED : c_int = 0;
+pub const NETLINK_CONNECTED   : c_int = 1;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct nlattr {
+    pub nla_len:  __u16,
+    pub nla_type: __u16,
+}
+
+pub const NLA_F_NESTED        : c_int = 1 << 15;
+pub const NLA_F_NET_BYTEORDER : c_int = 1 << 14;
+pub const NLA_TYPE_MASK       : c_int = !(NLA_F_NESTED | NLA_F_NET_BYTEORDER);
+
+pub const NLA_ALIGNTO : c_uint = 4;
+pub unsafe fn NLA_ALIGN(len: c_uint) -> c_uint {
+    (len + NLA_ALIGNTO - 1) & !(NLA_ALIGNTO - 1)
+}
+// #define NLA_HDRLEN		((int) NLA_ALIGN(sizeof(struct nlattr)))
+
+/////////////////////////////////
+// include/uapi/linux/rtnetlink.h
+/////////////////////////////////
+
+pub const RTNL_FAMILY_IPMR  : c_int = 128;
+pub const RTNL_FAMILY_IP6MR : c_int = 129;
+pub const RTNL_FAMILY_MAX   : c_int = 129;
+
+pub const RTM_BASE         : c_int = 16;
+pub const RTM_NEWLINK      : c_int = 16;
+pub const RTM_DELLINK      : c_int = 17;
+pub const RTM_GETLINK      : c_int = 18;
+pub const RTM_SETLINK      : c_int = 19;
+pub const RTM_NEWADDR      : c_int = 20;
+pub const RTM_DELADDR      : c_int = 21;
+pub const RTM_GETADDR      : c_int = 22;
+pub const RTM_NEWROUTE     : c_int = 24;
+pub const RTM_DELROUTE     : c_int = 25;
+pub const RTM_GETROUTE     : c_int = 26;
+pub const RTM_NEWNEIGH     : c_int = 28;
+pub const RTM_DELNEIGH     : c_int = 29;
+pub const RTM_GETNEIGH     : c_int = 30;
+pub const RTM_NEWRULE      : c_int = 32;
+pub const RTM_DELRULE      : c_int = 33;
+pub const RTM_GETRULE      : c_int = 34;
+pub const RTM_NEWQDISC     : c_int = 36;
+pub const RTM_DELQDISC     : c_int = 37;
+pub const RTM_GETQDISC     : c_int = 38;
+pub const RTM_NEWTCLASS    : c_int = 40;
+pub const RTM_DELTCLASS    : c_int = 41;
+pub const RTM_GETTCLASS    : c_int = 42;
+pub const RTM_NEWTFILTER   : c_int = 44;
+pub const RTM_DELTFILTER   : c_int = 45;
+pub const RTM_GETTFILTER   : c_int = 46;
+pub const RTM_NEWACTION    : c_int = 48;
+pub const RTM_DELACTION    : c_int = 49;
+pub const RTM_GETACTION    : c_int = 50;
+pub const RTM_NEWPREFIX    : c_int = 52;
+pub const RTM_GETMULTICAST : c_int = 58;
+pub const RTM_GETANYCAST   : c_int = 62;
+pub const RTM_NEWNEIGHTBL  : c_int = 64;
+pub const RTM_GETNEIGHTBL  : c_int = 66;
+pub const RTM_SETNEIGHTBL  : c_int = 67;
+pub const RTM_NEWNDUSEROPT : c_int = 68;
+pub const RTM_NEWADDRLABEL : c_int = 72;
+pub const RTM_DELADDRLABEL : c_int = 73;
+pub const RTM_GETADDRLABEL : c_int = 74;
+pub const RTM_GETDCB       : c_int = 78;
+pub const RTM_SETDCB       : c_int = 79;
+pub const RTM_NEWNETCONF   : c_int = 80;
+pub const RTM_GETNETCONF   : c_int = 82;
+pub const RTM_NEWMDB       : c_int = 84;
+pub const RTM_DELMDB       : c_int = 85;
+pub const RTM_GETMDB       : c_int = 86;
+pub const RTM_NEWNSID      : c_int = 88;
+pub const RTM_GETNSID      : c_int = 90;
+pub const __RTM_MAX        : c_int = 91;
+
+pub const RTM_MAX : c_int = ((__RTM_MAX + 3) & !3) - 1;
+
+pub const RTM_NR_MSGTYPES : c_int = RTM_MAX + 1 - RTM_BASE;
+pub const RTM_NR_FAMILIES : c_int = RTM_NR_MSGTYPES >> 2;
+pub fn RTM_FAM(cmd: c_int) -> c_int { (((cmd) - RTM_BASE) >> 2) }
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct rtattr {
+    pub rta_len:  c_ushort,
+    pub rta_type: c_ushort,
+}
+
+pub const RTA_ALIGNTO : c_uint = 4;
+
+pub fn RTA_ALIGN(len: c_uint) -> c_uint {
+    (len + RTA_ALIGNTO - 1) & !(RTA_ALIGNTO - 1)
+}
+
+pub unsafe fn RTA_OK(rta: *const rtattr, len: c_uint) -> bool {
+       len >= mem::size_of::<rtattr>() as c_uint
+    && (*rta).rta_len >= mem::size_of::<rtattr>() as c_ushort
+    && (*rta).rta_len as c_uint <= len
+}
+
+pub unsafe fn RTA_NEXT(rta: *mut rtattr, attrlen: &mut c_uint) -> *mut rtattr {
+    *attrlen -= RTA_ALIGN((*rta).rta_len as c_uint);
+    (rta as usize + RTA_ALIGN((*rta).rta_len as c_uint) as usize) as *mut rtattr
+}
+
+pub fn RTA_LENGTH(len: c_uint) -> c_uint {
+    RTA_ALIGN(mem::size_of::<rtattr>() as c_uint) + len
+}
+
+pub fn RTA_SPACE(len: c_uint) -> c_uint {
+    RTA_ALIGN(RTA_LENGTH(len))
+}
+
+pub unsafe fn RTA_DATA(rta: *mut rtattr) -> *mut c_void {
+    (rta as usize + RTA_LENGTH(0) as usize) as *mut c_void
+}
+
+pub unsafe fn RTA_PAYLOAD(rta: *mut rtattr) -> c_uint {
+    (*rta).rta_len as c_uint - RTA_LENGTH(0)
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct rtmsg {
+    pub rtm_family:   c_uchar,
+    pub rtm_dst_len:  c_uchar,
+    pub rtm_src_len:  c_uchar,
+    pub rtm_tos:      c_uchar,
+    pub rtm_table:    c_uchar,
+    pub rtm_protocol: c_uchar,
+    pub rtm_scope:    c_uchar,
+    pub rtm_type:     c_uchar,
+    pub rtm_flags:    c_uint,
+}
+
+pub const RTN_UNSPEC:      c_int = 0;
+pub const RTN_UNICAST:     c_int = 1;
+pub const RTN_LOCAL:       c_int = 2;
+pub const RTN_BROADCAST:   c_int = 3;
+pub const RTN_ANYCAST:     c_int = 4;
+pub const RTN_MULTICAST:   c_int = 5;
+pub const RTN_BLACKHOLE:   c_int = 6;
+pub const RTN_UNREACHABLE: c_int = 7;
+pub const RTN_PROHIBIT:    c_int = 8;
+pub const RTN_THROW:       c_int = 9;
+pub const RTN_NAT:         c_int = 10;
+pub const RTN_XRESOLVE:    c_int = 11;
+pub const __RTN_MAX:       c_int = 12;
+
+pub const RTN_MAX : c_int = __RTN_MAX - 1;
+
+pub const RTPROT_UNSPEC   : c_int = 0;
+pub const RTPROT_REDIRECT : c_int = 1;
+pub const RTPROT_KERNEL   : c_int = 2;
+pub const RTPROT_BOOT     : c_int = 3;
+pub const RTPROT_STATIC   : c_int = 4;
+pub const RTPROT_GATED    : c_int = 8;
+pub const RTPROT_RA       : c_int = 9;
+pub const RTPROT_MRT      : c_int = 10;
+pub const RTPROT_ZEBRA    : c_int = 11;
+pub const RTPROT_BIRD     : c_int = 12;
+pub const RTPROT_DNROUTED : c_int = 13;
+pub const RTPROT_XORP     : c_int = 14;
+pub const RTPROT_NTK      : c_int = 15;
+pub const RTPROT_DHCP     : c_int = 16;
+pub const RTPROT_MROUTED  : c_int = 17;
+pub const RTPROT_BABEL    : c_int = 42;
+
+pub type rt_scope_t = c_int;
+pub const RT_SCOPE_UNIVERSE : rt_scope_t = 0;
+pub const RT_SCOPE_SITE     : rt_scope_t = 200;
+pub const RT_SCOPE_LINK     : rt_scope_t = 253;
+pub const RT_SCOPE_HOST     : rt_scope_t = 254;
+pub const RT_SCOPE_NOWHERE  : rt_scope_t = 255;
+
+pub const RTM_F_NOTIFY   : c_int = 0x100;
+pub const RTM_F_CLONED   : c_int = 0x200;
+pub const RTM_F_EQUALIZE : c_int = 0x400;
+pub const RTM_F_PREFIX   : c_int = 0x800;
+
+pub type rt_class_t = c_int;
+pub const RT_TABLE_UNSPEC  : rt_class_t = 0;
+pub const RT_TABLE_COMPAT  : rt_class_t = 252;
+pub const RT_TABLE_DEFAULT : rt_class_t = 253;
+pub const RT_TABLE_MAIN    : rt_class_t = 254;
+pub const RT_TABLE_LOCAL   : rt_class_t = 255;
+pub const RT_TABLE_MAX     : rt_class_t = 0xFFFFFFFF;
+
+pub type rtattr_type_t = c_int;
+pub const RTA_UNSPEC:    rtattr_type_t = 0;
+pub const RTA_DST:       rtattr_type_t = 1;
+pub const RTA_SRC:       rtattr_type_t = 2;
+pub const RTA_IIF:       rtattr_type_t = 3;
+pub const RTA_OIF:       rtattr_type_t = 4;
+pub const RTA_GATEWAY:   rtattr_type_t = 5;
+pub const RTA_PRIORITY:  rtattr_type_t = 6;
+pub const RTA_PREFSRC:   rtattr_type_t = 7;
+pub const RTA_METRICS:   rtattr_type_t = 8;
+pub const RTA_MULTIPATH: rtattr_type_t = 9;
+pub const RTA_PROTOINFO: rtattr_type_t = 10;
+pub const RTA_FLOW:      rtattr_type_t = 11;
+pub const RTA_CACHEINFO: rtattr_type_t = 12;
+pub const RTA_SESSION:   rtattr_type_t = 13;
+pub const RTA_MP_ALGO:   rtattr_type_t = 14;
+pub const RTA_TABLE:     rtattr_type_t = 15;
+pub const RTA_MARK:      rtattr_type_t = 16;
+pub const RTA_MFC_STATS: rtattr_type_t = 17;
+pub const __RTA_MAX:     rtattr_type_t = 18;
+
+pub const RTA_MAX : rtattr_type_t = __RTA_MAX - 1;
+
+// pub unsafe fn RTM_RTA(r)  ((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct rtmsg))))
+// pub unsafe fn RTM_PAYLOAD(n) NLMSG_PAYLOAD(n,sizeof(struct rtmsg))
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct rtnexthop {
+    pub rtnh_len:     c_ushort,
+    pub rtnh_flags:   c_uchar,
+    pub rtnh_hops:    c_uchar,
+    pub rtnh_ifindex: c_int,
+}
+
+pub const RTNH_F_DEAD      : c_uchar = 1;
+pub const RTNH_F_PERVASIVE : c_uchar = 2;
+pub const RTNH_F_ONLINK    : c_uchar = 4;
+
+pub const RTNH_ALIGNTO : c_uint = 4;
+
+pub fn RTNH_ALIGN(len: c_uint) -> c_uint {
+    (len + RTNH_ALIGNTO - 1) & !(RTNH_ALIGNTO-1)
+}
+
+pub unsafe fn RTNH_OK(rtnh: *mut rtnexthop, len: c_uint) -> bool {
+       (*rtnh).rtnh_len >= mem::size_of::<rtnexthop>() as c_ushort
+    && (*rtnh).rtnh_len as c_uint <= len
+}
+
+pub unsafe fn RTNH_NEXT(rtnh: *mut rtnexthop) -> *mut rtnexthop {
+    (rtnh as usize + RTNH_ALIGN((*rtnh).rtnh_len as c_uint) as usize) as *mut rtnexthop
+}
+
+pub fn RTNH_LENGTH(len: c_uint) -> c_uint {
+    RTNH_ALIGN(mem::size_of::<rtnexthop>() as c_uint) + len
+}
+
+pub fn RTNH_SPACE(len: c_uint) -> c_uint {
+    RTNH_ALIGN(RTNH_LENGTH(len))
+}
+
+pub unsafe fn RTNH_DATA(rtnh: *mut rtnexthop) -> *mut rtattr {
+    (rtnh as usize + RTNH_LENGTH(0) as usize) as *mut rtattr
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct rta_cacheinfo {
+    pub rta_clntref: __u32,
+    pub rta_lastuse: __u32,
+    pub rta_expires: __s32,
+    pub rta_error:   __u32,
+    pub rta_used:    __u32,
+    pub rta_id:      __u32,
+    pub rta_ts:      __u32,
+    pub rta_tsage:   __u32,
+}
+
+pub const RTNETLINK_HAVE_PEERINFO: bool = true;
+
+pub const RTAX_UNSPEC     : c_int = 0;
+pub const RTAX_LOCK       : c_int = 1;
+pub const RTAX_MTU        : c_int = 2;
+pub const RTAX_WINDOW     : c_int = 3;
+pub const RTAX_RTT        : c_int = 4;
+pub const RTAX_RTTVAR     : c_int = 5;
+pub const RTAX_SSTHRESH   : c_int = 6;
+pub const RTAX_CWND       : c_int = 7;
+pub const RTAX_ADVMSS     : c_int = 8;
+pub const RTAX_REORDERING : c_int = 9;
+pub const RTAX_HOPLIMIT   : c_int = 10;
+pub const RTAX_INITCWND   : c_int = 11;
+pub const RTAX_FEATURES   : c_int = 12;
+pub const RTAX_RTO_MIN    : c_int = 13;
+pub const RTAX_INITRWND   : c_int = 14;
+pub const RTAX_QUICKACK   : c_int = 15;
+pub const RTAX_CC_ALGO    : c_int = 16;
+pub const __RTAX_MAX      : c_int = 17;
+
+pub const RTAX_MAX : c_int = __RTAX_MAX - 1;
+
+pub const RTAX_FEATURE_ECN       : c_int = 0x00000001;
+pub const RTAX_FEATURE_SACK      : c_int = 0x00000002;
+pub const RTAX_FEATURE_TIMESTAMP : c_int = 0x00000004;
+pub const RTAX_FEATURE_ALLFRAG   : c_int = 0x00000008;
+
+// #[repr(C)]
+// #[derive(Pod, Eq)]
+// pub struct rta_session {
+// 	__u8	proto;
+// 	__u8	pad1;
+// 	__u16	pad2;
+// 
+// 	union {
+// 		struct {
+// 			__u16	sport;
+// 			__u16	dport;
+// 		} ports;
+// 
+// 		struct {
+// 			__u8	type;
+// 			__u8	code;
+// 			__u16	ident;
+// 		} icmpt;
+// 
+// 		__u32		spi;
+// 	} u;
+// }
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct rta_mfc_stats {
+    pub mfcs_packets:  __u64,
+    pub mfcs_bytes:    __u64,
+    pub mfcs_wrong_if: __u64,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct rtgenmsg {
+    pub rtgen_family: c_uchar,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ifinfomsg {
+    pub ifi_family: c_uchar,
+    pub __ifi_pad:  c_uchar,
+    pub ifi_type:   c_ushort,
+    pub ifi_index:  c_int,
+    pub ifi_flags:  c_uint,
+    pub ifi_change: c_uint,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct prefixmsg {
+    pub prefix_family:  c_uchar,
+    pub prefix_pad1:    c_uchar,
+    pub prefix_pad2:    c_ushort,
+    pub prefix_ifindex: c_int,
+    pub prefix_type:    c_uchar,
+    pub prefix_len:     c_uchar,
+    pub prefix_flags:   c_uchar,
+    pub prefix_pad3:    c_uchar,
+}
+
+pub const PREFIX_UNSPEC    : c_int = 0;
+pub const PREFIX_ADDRESS   : c_int = 1;
+pub const PREFIX_CACHEINFO : c_int = 2;
+pub const __PREFIX_MAX     : c_int = 3;
+
+pub const PREFIX_MAX : c_int = __PREFIX_MAX - 1;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct prefix_cacheinfo {
+    pub preferred_time: __u32,
+    pub valid_time:     __u32,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct tcmsg {
+    pub tcm_family:  c_uchar,
+    pub tcm__pad1:   c_uchar,
+    pub tcm__pad2:   c_ushort,
+    pub tcm_ifindex: c_int,
+    pub tcm_handle:  __u32,
+    pub tcm_parent:  __u32,
+    pub tcm_info:    __u32,
+}
+
+pub const TCA_UNSPEC  : c_int = 0;
+pub const TCA_KIND    : c_int = 1;
+pub const TCA_OPTIONS : c_int = 2;
+pub const TCA_STATS   : c_int = 3;
+pub const TCA_XSTATS  : c_int = 4;
+pub const TCA_RATE    : c_int = 5;
+pub const TCA_FCNT    : c_int = 6;
+pub const TCA_STATS2  : c_int = 7;
+pub const TCA_STAB    : c_int = 8;
+pub const __TCA_MAX   : c_int = 9;
+
+pub const TCA_MAX : c_int = __TCA_MAX - 1;
+
+pub unsafe fn TCA_RTA(r: *mut tcmsg) -> *mut rtattr {
+    (r as usize + NLMSG_ALIGN(mem::size_of::<tcmsg>() as c_uint) as usize) as *mut rtattr
+}
+
+pub unsafe fn TCA_PAYLOAD(n: *mut nlmsghdr) -> c_uint {
+    NLMSG_PAYLOAD(n, mem::size_of::<tcmsg>() as c_uint)
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct nduseroptmsg {
+    pub nduseropt_family:    c_uchar,
+    pub nduseropt_pad1:      c_uchar,
+    pub nduseropt_opts_len:  c_ushort,
+    pub nduseropt_ifindex:   c_int,
+    pub nduseropt_icmp_type: __u8,
+    pub nduseropt_icmp_code: __u8,
+    pub nduseropt_pad2:      c_ushort,
+    pub nduseropt_pad3:      c_uint,
+}
+
+pub const NDUSEROPT_UNSPEC  : c_int = 0;
+pub const NDUSEROPT_SRCADDR : c_int = 1;
+pub const __NDUSEROPT_MAX   : c_int = 2;
+
+pub const NDUSEROPT_MAX	: c_int = __NDUSEROPT_MAX - 1;
+
+pub const RTMGRP_LINK          : c_int = 1;
+pub const RTMGRP_NOTIFY        : c_int = 2;
+pub const RTMGRP_NEIGH         : c_int = 4;
+pub const RTMGRP_TC            : c_int = 8;
+pub const RTMGRP_IPV4_IFADDR   : c_int = 0x10;
+pub const RTMGRP_IPV4_MROUTE   : c_int = 0x20;
+pub const RTMGRP_IPV4_ROUTE    : c_int = 0x40;
+pub const RTMGRP_IPV4_RULE     : c_int = 0x80;
+pub const RTMGRP_IPV6_IFADDR   : c_int = 0x100;
+pub const RTMGRP_IPV6_MROUTE   : c_int = 0x200;
+pub const RTMGRP_IPV6_ROUTE    : c_int = 0x400;
+pub const RTMGRP_IPV6_IFINFO   : c_int = 0x800;
+pub const RTMGRP_DECnet_IFADDR : c_int = 0x1000;
+pub const RTMGRP_DECnet_ROUTE  : c_int = 0x4000;
+pub const RTMGRP_IPV6_PREFIX   : c_int = 0x20000;
+
+pub type rtnetlink_groups = c_int;
+pub const RTNLGRP_NONE          : rtnetlink_groups = 0;
+pub const RTNLGRP_LINK          : rtnetlink_groups = 1;
+pub const RTNLGRP_NOTIFY        : rtnetlink_groups = 2;
+pub const RTNLGRP_NEIGH         : rtnetlink_groups = 3;
+pub const RTNLGRP_TC            : rtnetlink_groups = 4;
+pub const RTNLGRP_IPV4_IFADDR   : rtnetlink_groups = 5;
+pub const RTNLGRP_IPV4_MROUTE   : rtnetlink_groups = 6;
+pub const RTNLGRP_IPV4_ROUTE    : rtnetlink_groups = 7;
+pub const RTNLGRP_IPV4_RULE     : rtnetlink_groups = 8;
+pub const RTNLGRP_IPV6_IFADDR   : rtnetlink_groups = 9;
+pub const RTNLGRP_IPV6_MROUTE   : rtnetlink_groups = 10;
+pub const RTNLGRP_IPV6_ROUTE    : rtnetlink_groups = 11;
+pub const RTNLGRP_IPV6_IFINFO   : rtnetlink_groups = 12;
+pub const RTNLGRP_DECnet_IFADDR : rtnetlink_groups = 13;
+pub const RTNLGRP_NOP2          : rtnetlink_groups = 14;
+pub const RTNLGRP_DECnet_ROUTE  : rtnetlink_groups = 15;
+pub const RTNLGRP_DECnet_RULE   : rtnetlink_groups = 16;
+pub const RTNLGRP_NOP4          : rtnetlink_groups = 17;
+pub const RTNLGRP_IPV6_PREFIX   : rtnetlink_groups = 18;
+pub const RTNLGRP_IPV6_RULE     : rtnetlink_groups = 19;
+pub const RTNLGRP_ND_USEROPT    : rtnetlink_groups = 20;
+pub const RTNLGRP_PHONET_IFADDR : rtnetlink_groups = 21;
+pub const RTNLGRP_PHONET_ROUTE  : rtnetlink_groups = 22;
+pub const RTNLGRP_DCB           : rtnetlink_groups = 23;
+pub const RTNLGRP_IPV4_NETCONF  : rtnetlink_groups = 24;
+pub const RTNLGRP_IPV6_NETCONF  : rtnetlink_groups = 25;
+pub const RTNLGRP_MDB           : rtnetlink_groups = 26;
+pub const __RTNLGRP_MAX         : rtnetlink_groups = 27;
+
+pub const RTNLGRP_MAX : rtnetlink_groups = __RTNLGRP_MAX - 1;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct tcamsg {
+    pub tca_family: c_uchar,
+    pub tca__pad1:  c_uchar,
+    pub tca__pad2:  c_ushort,
+}
+
+pub unsafe fn TA_RTA(r: *mut tcamsg) -> *mut rtattr {
+    (r as usize + NLMSG_ALIGN(mem::size_of::<tcamsg>() as c_uint) as usize) as *mut rtattr
+}
+
+pub unsafe fn TA_PAYLOAD(n: *mut nlmsghdr) -> c_uint {
+    NLMSG_PAYLOAD(n, mem::size_of::<tcamsg>() as c_uint)
+}
+pub const TCA_ACT_TAB : c_int = 1;
+pub const TCAA_MAX : c_int = 1;
+
+pub const RTEXT_FILTER_VF                : c_int = 1 << 0;
+pub const RTEXT_FILTER_BRVLAN            : c_int = 1 << 1;
+pub const RTEXT_FILTER_BRVLAN_COMPRESSED : c_int = 1 << 2;
