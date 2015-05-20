@@ -3670,52 +3670,52 @@ pub struct rtmsg {
     pub rtm_flags:    c_uint,
 }
 
-pub const RTN_UNSPEC:      c_int = 0;
-pub const RTN_UNICAST:     c_int = 1;
-pub const RTN_LOCAL:       c_int = 2;
-pub const RTN_BROADCAST:   c_int = 3;
-pub const RTN_ANYCAST:     c_int = 4;
-pub const RTN_MULTICAST:   c_int = 5;
-pub const RTN_BLACKHOLE:   c_int = 6;
-pub const RTN_UNREACHABLE: c_int = 7;
-pub const RTN_PROHIBIT:    c_int = 8;
-pub const RTN_THROW:       c_int = 9;
-pub const RTN_NAT:         c_int = 10;
-pub const RTN_XRESOLVE:    c_int = 11;
-pub const __RTN_MAX:       c_int = 12;
+pub const RTN_UNSPEC:      c_ushort = 0;
+pub const RTN_UNICAST:     c_ushort = 1;
+pub const RTN_LOCAL:       c_ushort = 2;
+pub const RTN_BROADCAST:   c_ushort = 3;
+pub const RTN_ANYCAST:     c_ushort = 4;
+pub const RTN_MULTICAST:   c_ushort = 5;
+pub const RTN_BLACKHOLE:   c_ushort = 6;
+pub const RTN_UNREACHABLE: c_ushort = 7;
+pub const RTN_PROHIBIT:    c_ushort = 8;
+pub const RTN_THROW:       c_ushort = 9;
+pub const RTN_NAT:         c_ushort = 10;
+pub const RTN_XRESOLVE:    c_ushort = 11;
+pub const __RTN_MAX:       c_ushort = 12;
 
-pub const RTN_MAX : c_int = __RTN_MAX - 1;
+pub const RTN_MAX : c_ushort = __RTN_MAX - 1;
 
-pub const RTPROT_UNSPEC   : c_int = 0;
-pub const RTPROT_REDIRECT : c_int = 1;
-pub const RTPROT_KERNEL   : c_int = 2;
-pub const RTPROT_BOOT     : c_int = 3;
-pub const RTPROT_STATIC   : c_int = 4;
-pub const RTPROT_GATED    : c_int = 8;
-pub const RTPROT_RA       : c_int = 9;
-pub const RTPROT_MRT      : c_int = 10;
-pub const RTPROT_ZEBRA    : c_int = 11;
-pub const RTPROT_BIRD     : c_int = 12;
-pub const RTPROT_DNROUTED : c_int = 13;
-pub const RTPROT_XORP     : c_int = 14;
-pub const RTPROT_NTK      : c_int = 15;
-pub const RTPROT_DHCP     : c_int = 16;
-pub const RTPROT_MROUTED  : c_int = 17;
-pub const RTPROT_BABEL    : c_int = 42;
+pub const RTPROT_UNSPEC   : c_uchar = 0;
+pub const RTPROT_REDIRECT : c_uchar = 1;
+pub const RTPROT_KERNEL   : c_uchar = 2;
+pub const RTPROT_BOOT     : c_uchar = 3;
+pub const RTPROT_STATIC   : c_uchar = 4;
+pub const RTPROT_GATED    : c_uchar = 8;
+pub const RTPROT_RA       : c_uchar = 9;
+pub const RTPROT_MRT      : c_uchar = 10;
+pub const RTPROT_ZEBRA    : c_uchar = 11;
+pub const RTPROT_BIRD     : c_uchar = 12;
+pub const RTPROT_DNROUTED : c_uchar = 13;
+pub const RTPROT_XORP     : c_uchar = 14;
+pub const RTPROT_NTK      : c_uchar = 15;
+pub const RTPROT_DHCP     : c_uchar = 16;
+pub const RTPROT_MROUTED  : c_uchar = 17;
+pub const RTPROT_BABEL    : c_uchar = 42;
 
-pub type rt_scope_t = c_int;
+pub type rt_scope_t = c_uchar;
 pub const RT_SCOPE_UNIVERSE : rt_scope_t = 0;
 pub const RT_SCOPE_SITE     : rt_scope_t = 200;
 pub const RT_SCOPE_LINK     : rt_scope_t = 253;
 pub const RT_SCOPE_HOST     : rt_scope_t = 254;
 pub const RT_SCOPE_NOWHERE  : rt_scope_t = 255;
 
-pub const RTM_F_NOTIFY   : c_int = 0x100;
-pub const RTM_F_CLONED   : c_int = 0x200;
-pub const RTM_F_EQUALIZE : c_int = 0x400;
-pub const RTM_F_PREFIX   : c_int = 0x800;
+pub const RTM_F_NOTIFY   : c_uint = 0x100;
+pub const RTM_F_CLONED   : c_uint = 0x200;
+pub const RTM_F_EQUALIZE : c_uint = 0x400;
+pub const RTM_F_PREFIX   : c_uint = 0x800;
 
-pub type rt_class_t = c_int;
+pub type rt_class_t = c_uchar;
 pub const RT_TABLE_UNSPEC  : rt_class_t = 0;
 pub const RT_TABLE_COMPAT  : rt_class_t = 252;
 pub const RT_TABLE_DEFAULT : rt_class_t = 253;
@@ -4041,18 +4041,18 @@ pub struct ifaddrmsg {
     pub ifa_index:     __u32,
 }
 
-pub const IFA_UNSPEC    : c_int = 0;
-pub const IFA_ADDRESS   : c_int = 1;
-pub const IFA_LOCAL     : c_int = 2;
-pub const IFA_LABEL     : c_int = 3;
-pub const IFA_BROADCAST : c_int = 4;
-pub const IFA_ANYCAST   : c_int = 5;
-pub const IFA_CACHEINFO : c_int = 6;
-pub const IFA_MULTICAST : c_int = 7;
-pub const IFA_FLAGS     : c_int = 8;
-pub const __IFA_MAX     : c_int = 9;
+pub const IFA_UNSPEC    : c_ushort = 0;
+pub const IFA_ADDRESS   : c_ushort = 1;
+pub const IFA_LOCAL     : c_ushort = 2;
+pub const IFA_LABEL     : c_ushort = 3;
+pub const IFA_BROADCAST : c_ushort = 4;
+pub const IFA_ANYCAST   : c_ushort = 5;
+pub const IFA_CACHEINFO : c_ushort = 6;
+pub const IFA_MULTICAST : c_ushort = 7;
+pub const IFA_FLAGS     : c_ushort = 8;
+pub const __IFA_MAX     : c_ushort = 9;
 
-pub const IFA_MAX : c_int = __IFA_MAX - 1;
+pub const IFA_MAX : c_ushort = __IFA_MAX - 1;
 
 pub const IFA_F_SECONDARY      : c_int = 0x01;
 pub const IFA_F_TEMPORARY      : c_int = IFA_F_SECONDARY;
@@ -4546,3 +4546,131 @@ pub const IFLA_HSR_SEQ_NR           : c_int = 5;
 pub const __IFLA_HSR_MAX            : c_int = 6;
 
 pub const IFLA_HSR_MAX : c_int = __IFLA_HSR_MAX - 1;
+
+/////////////////////////////////
+// include/uapi/linux/neighbour.h
+/////////////////////////////////
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ndmsg {
+    pub ndm_family:  __u8,
+    pub ndm_pad1:    __u8,
+    pub ndm_pad2:    __u16,
+    pub ndm_ifindex: __s32,
+    pub ndm_state:   __u16,
+    pub ndm_flags:   __u8,
+    pub ndm_type:    __u8,
+}
+
+pub const NDA_UNSPEC       : c_int = 0;
+pub const NDA_DST          : c_int = 1;
+pub const NDA_LLADDR       : c_int = 2;
+pub const NDA_CACHEINFO    : c_int = 3;
+pub const NDA_PROBES       : c_int = 4;
+pub const NDA_VLAN         : c_int = 5;
+pub const NDA_PORT         : c_int = 6;
+pub const NDA_VNI          : c_int = 7;
+pub const NDA_IFINDEX      : c_int = 8;
+pub const NDA_MASTER       : c_int = 9;
+pub const NDA_LINK_NETNSID : c_int = 10;
+pub const __NDA_MAX        : c_int = 11;
+
+pub const NDA_MAX : c_int = __NDA_MAX - 1;
+
+pub const NTF_USE         : u8 = 0x01;
+pub const NTF_SELF        : u8 = 0x02;
+pub const NTF_MASTER      : u8 = 0x04;
+pub const NTF_PROXY       : u8 = 0x08;
+pub const NTF_EXT_LEARNED : u8 = 0x10;
+pub const NTF_ROUTER      : u8 = 0x80;
+
+pub const NUD_INCOMPLETE : u8 = 0x01;
+pub const NUD_REACHABLE  : u8 = 0x02;
+pub const NUD_STALE      : u8 = 0x04;
+pub const NUD_DELAY      : u8 = 0x08;
+pub const NUD_PROBE      : u8 = 0x10;
+pub const NUD_FAILED     : u8 = 0x20;
+pub const NUD_NOARP      : u8 = 0x40;
+pub const NUD_PERMANENT  : u8 = 0x80;
+pub const NUD_NONE       : u8 = 0x00;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct nda_cacheinfo {
+    pub ndm_confirmed: __u32,
+    pub ndm_used:      __u32,
+    pub ndm_updated:   __u32,
+    pub ndm_refcnt:    __u32,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ndt_stats {
+    pub ndts_allocs:           __u64,
+    pub ndts_destroys:         __u64,
+    pub ndts_hash_grows:       __u64,
+    pub ndts_res_failed:       __u64,
+    pub ndts_lookups:          __u64,
+    pub ndts_hits:             __u64,
+    pub ndts_rcv_probes_mcast: __u64,
+    pub ndts_rcv_probes_ucast: __u64,
+    pub ndts_periodic_gc_runs: __u64,
+    pub ndts_forced_gc_runs:   __u64,
+}
+
+pub const NDTPA_UNSPEC              : c_int = 0;
+pub const NDTPA_IFINDEX             : c_int = 1;
+pub const NDTPA_REFCNT              : c_int = 2;
+pub const NDTPA_REACHABLE_TIME      : c_int = 3;
+pub const NDTPA_BASE_REACHABLE_TIME : c_int = 4;
+pub const NDTPA_RETRANS_TIME        : c_int = 5;
+pub const NDTPA_GC_STALETIME        : c_int = 6;
+pub const NDTPA_DELAY_PROBE_TIME    : c_int = 7;
+pub const NDTPA_QUEUE_LEN           : c_int = 8;
+pub const NDTPA_APP_PROBES          : c_int = 9;
+pub const NDTPA_UCAST_PROBES        : c_int = 10;
+pub const NDTPA_MCAST_PROBES        : c_int = 11;
+pub const NDTPA_ANYCAST_DELAY       : c_int = 12;
+pub const NDTPA_PROXY_DELAY         : c_int = 13;
+pub const NDTPA_PROXY_QLEN          : c_int = 14;
+pub const NDTPA_LOCKTIME            : c_int = 15;
+pub const NDTPA_QUEUE_LENBYTES      : c_int = 16;
+pub const __NDTPA_MAX               : c_int = 17;
+
+pub const NDTPA_MAX : c_int = __NDTPA_MAX - 1;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ndtmsg {
+    pub ndtm_family: __u8,
+    pub ndtm_pad1:   __u8,
+    pub ndtm_pad2:   __u16,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ndt_config {
+    pub ndtc_key_len:       __u16,
+    pub ndtc_entry_size:    __u16,
+    pub ndtc_entries:       __u32,
+    pub ndtc_last_flush:    __u32,
+    pub ndtc_last_rand:     __u32,
+    pub ndtc_hash_rnd:      __u32,
+    pub ndtc_hash_mask:     __u32,
+    pub ndtc_hash_chain_gc: __u32,
+    pub ndtc_proxy_qlen:    __u32,
+}
+
+pub const NDTA_UNSPEC      : c_int = 0;
+pub const NDTA_NAME        : c_int = 1;
+pub const NDTA_THRESH1     : c_int = 2;
+pub const NDTA_THRESH2     : c_int = 3;
+pub const NDTA_THRESH3     : c_int = 4;
+pub const NDTA_CONFIG      : c_int = 5;
+pub const NDTA_PARMS       : c_int = 6;
+pub const NDTA_STATS       : c_int = 7;
+pub const NDTA_GC_INTERVAL : c_int = 8;
+pub const __NDTA_MAX       : c_int = 9;
+
+pub const NDTA_MAX : c_int = __NDTA_MAX - 1;
