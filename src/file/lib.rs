@@ -1236,6 +1236,9 @@ impl File {
     ///
     /// This is equivalent to `File::open` with the default flags.
     ///
+    /// Unless lrs was compiled with the `no-auto-cloexec` flag, the opened file always
+    /// has the `O_CLOEXEC` flag set.
+    ///
     /// = See also
     ///
     /// * link:open(2)
@@ -1267,6 +1270,9 @@ impl File {
     ///
     /// If the path is relative, it is interpreted relative to the current working
     /// directory.
+    ///
+    /// Unless lrs was compiled with the `no-auto-cloexec` flag, the opened file always
+    /// has the `O_CLOEXEC` flag set.
     ///
     /// = See also
     ///
@@ -2213,6 +2219,9 @@ impl File {
     ///
     /// This is equivalent to `self.rel_open` with the `FILE_READ_ONLY` flag.
     ///
+    /// Unless lrs was compiled with the `no-auto-cloexec` flag, the opened file always
+    /// has the `O_CLOEXEC` flag set.
+    ///
     /// = See also
     ///
     /// * link:man:openat(2)
@@ -2241,15 +2250,17 @@ impl File {
     /// If the path is relative, this file must be a directory and the path will be
     /// interpreted relative to it.
     ///
+    /// Unless lrs was compiled with the `no-auto-cloexec` flag, the opened file always
+    /// has the `O_CLOEXEC` flag set.
+    ///
     /// = See also
     ///
     /// * link:man:openat(2)
-    pub fn rel_open<P>(&self, path: P, mut flags: FileFlags, mode: Mode) -> Result<File>
+    pub fn rel_open<P>(&self, path: P, flags: FileFlags, mode: Mode) -> Result<File>
         where P: ToCString,
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
         let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
-        flags.0 |= cty::O_CLOEXEC | cty::O_LARGEFILE;
         let fd = match retry(|| openat(self.fd, &path, flags.0, mode.0)) {
             Ok(fd) => fd,
             // Due to a bug in the kernel, open returns WrongDeviceType instead of

@@ -24,31 +24,35 @@ use core::ops::{BitOr, BitAnd, Not};
 ///
 /// * {flags}
 #[derive(Pod, Eq)]
-pub struct Flags(pub c_int);
+pub struct SockFlags(pub c_int);
 
-impl BitAnd for Flags {
-    type Output = Flags;
-    fn bitand(self, rhs: Flags) -> Flags { Flags(self.0 & rhs.0) }
+impl BitAnd for SockFlags {
+    type Output = SockFlags;
+    fn bitand(self, rhs: SockFlags) -> SockFlags { SockFlags(self.0 & rhs.0) }
 }
 
-impl BitOr for Flags {
-    type Output = Flags;
-    fn bitor(self, rhs: Flags) -> Flags { Flags(self.0 | rhs.0) }
+impl BitOr for SockFlags {
+    type Output = SockFlags;
+    fn bitor(self, rhs: SockFlags) -> SockFlags { SockFlags(self.0 | rhs.0) }
 }
 
-impl Not for Flags {
-    type Output = Flags;
-    fn not(self) -> Flags { Flags(!self.0) }
+impl Not for SockFlags {
+    type Output = SockFlags;
+    fn not(self) -> SockFlags { SockFlags(!self.0) }
 }
+
+/// Dummy flag with all flags unset.
+pub const SOCK_NONE: SockFlags = SockFlags(0);
+
 
 macro_rules! create {
     ($($(#[$meta:meta])* flag $name:ident = $val:expr;)*) => {
-        $($(#[$meta])*  pub const $name: Flags = Flags($val);)*
+        $($(#[$meta])*  pub const $name: SockFlags = SockFlags($val);)*
 
         /// = Remarks
         ///
         /// This prints the flags as a comma-separated list.
-        impl Debug for Flags {
+        impl Debug for SockFlags {
             fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
                 let raw = self.0;
                 const KNOWN_FLAGS: c_int = 0 $(| $val)*;
@@ -71,15 +75,12 @@ macro_rules! create {
 }
 
 create! {
-    #[doc = "No flags"]
-    flag None = 0;
-
     #[doc = "Sets the file descriptor to non-blocking"]
     #[doc = ""]
     #[doc = "= See also"]
     #[doc = ""]
     #[doc = "* link:man:socket(2) and SOCK_NONBLOCK therein"]
-    flag NonBlocking = SOCK_NONBLOCK;
+    flag SOCK_DONT_BLOCK = SOCK_NONBLOCK;
 
     #[doc = "Sets the close-on-exec flag on the file descriptor"]
     #[doc = ""]
@@ -90,5 +91,5 @@ create! {
     #[doc = "= See also"]
     #[doc = ""]
     #[doc = "* link:man:socket(2) and SOCK_CLOEXEC therein"]
-    flag CloseOnExec = SOCK_CLOEXEC;
+    flag SOCK_CLOSE_ON_EXEC = SOCK_CLOEXEC;
 }

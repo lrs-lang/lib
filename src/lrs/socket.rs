@@ -6,7 +6,7 @@
 
 pub use lrs_socket::domain::{Domain};
 pub use lrs_socket::kind::{Kind};
-pub use lrs_socket::flags::{Flags};
+pub use lrs_socket::flags::{SockFlags};
 pub use lrs_socket::socket::{Socket};
 pub use lrs_socket::addr::{SockAddr, AddrType};
 
@@ -98,7 +98,7 @@ pub mod cmsg {
 /// These flags can be used when creating sockets.
 pub mod flags {
     pub use lrs_socket::flags::{
-        None, NonBlocking, CloseOnExec,
+        SOCK_NONE, SOCK_DONT_BLOCK, SOCK_CLOSE_ON_EXEC,
     };
 }
 

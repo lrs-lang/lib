@@ -885,7 +885,7 @@ pub const SIGSTKSZ    : usize = 8192;
 #[repr(C)]
 #[derive(Pod, Eq)]
 pub struct sigset_t {
-    pub sig: [::c_ulong; ::_NSIG_WORDS],
+    pub sig: [::k_ulong; ::_NSIG_WORDS],
 }
 
 pub type old_sigset_t = ::c_ulong;

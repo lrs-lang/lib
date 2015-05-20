@@ -25,7 +25,7 @@ mod lrs { pub use base::lrs::*; pub use {cty}; }
 use core::{mem};
 use core::ops::{BitOr, Not, BitAnd};
 use cty::{
-    c_int, EPOLL_CLOEXEC, EPOLL_CTL_ADD, EPOLL_CTL_MOD, EPOLL_CTL_DEL, epoll_event,
+    c_int, EPOLL_CTL_ADD, EPOLL_CTL_MOD, EPOLL_CTL_DEL, epoll_event,
     POLLIN, POLLOUT, POLLRDHUP, POLLPRI, EPOLLET, EPOLLONESHOT, EPOLLWAKEUP,
 };
 use syscall::{epoll_create, epoll_ctl, epoll_pwait, close};
@@ -202,8 +202,17 @@ pub struct Epoll {
 
 impl Epoll {
     /// Creates a new epoll instance.
+    ///
+    /// = Remarks
+    ///
+    /// Unless lrs has been compiled with the `no-auto-cloexec` flag, this epoll instance
+    /// is created with the `EPOLL_CLOEXEC` flag set.
+    ///
+    /// = See also
+    ///
+    /// * link:man:epoll_create(2)
     pub fn new() -> Result<Epoll> {
-        let fd = try!(rv!(epoll_create(EPOLL_CLOEXEC), -> c_int));
+        let fd = try!(rv!(epoll_create(0), -> c_int));
         Ok(Epoll { fd: fd, owned: true })
     }
 

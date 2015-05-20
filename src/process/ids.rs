@@ -8,7 +8,7 @@ use base::error::{self};
 use cty::alias::{UserId, GroupId};
 use fmt::{Debug, Write};
 
-/// User ids of a process.
+/// User ids of a thread.
 #[derive(Pod, Eq)]
 pub struct UserIds {
     /// Real id
@@ -20,7 +20,7 @@ pub struct UserIds {
 }
 
 impl UserIds {
-    /// Retrieves the user ids of this process.
+    /// Retrieves the user ids of this thread.
     pub fn get() -> UserIds {
         let mut ids = UserIds {
             real:      0,
@@ -31,7 +31,7 @@ impl UserIds {
         ids
     }
 
-    /// Sets the user ids of this process.
+    /// Sets the user ids of this thread.
     pub fn set(&self) -> Result {
         rv!(setresuid(self.real, self.effective, self.saved))
     }
@@ -44,7 +44,7 @@ impl Debug for UserIds {
     }
 }
 
-/// Group ids of a process.
+/// Group ids of a thread.
 #[derive(Pod, Eq)]
 pub struct GroupIds {
     /// Real id
@@ -56,7 +56,7 @@ pub struct GroupIds {
 }
 
 impl GroupIds {
-    /// Retrieves the group ids of this process.
+    /// Retrieves the group ids of this thread.
     pub fn get() -> GroupIds {
         let mut ids = GroupIds {
             real:      0,
@@ -80,7 +80,7 @@ impl Debug for GroupIds {
     }
 }
 
-/// Sets all user ids to the real id.
+/// Sets all user ids of this thread to the real id.
 pub fn drop_user_privileges() -> Result {
     let mut ids = UserIds::get();
     ids.effective = ids.real;
@@ -88,7 +88,7 @@ pub fn drop_user_privileges() -> Result {
     ids.set()
 }
 
-/// Sets all group ids to the real id.
+/// Sets all group ids of this thread to the real id.
 pub fn drop_group_privileges() -> Result {
     let mut ids = GroupIds::get();
     ids.effective = ids.real;
@@ -96,30 +96,30 @@ pub fn drop_group_privileges() -> Result {
     ids.set()
 }
 
-/// Sets the effective user id of this process.
+/// Sets the effective user id of this thread.
 ///
 /// [argument, id]
-/// The new effective user id of the process.
+/// The new effective user id of the thread.
 pub fn set_effective_user_id(id: UserId) -> Result {
     rv!(setresuid(-1, id, -1))
 }
 
-/// Sets the effective group id.
+/// Sets the effective group id of this thread.
 ///
 /// [argument, id]
-/// The new effective group id of the process.
+/// The new effective group id of the thread.
 pub fn set_effective_group_id(id: GroupId) -> Result {
     rv!(setresgid(-1, id, -1))
 }
 
-/// Returns the number of supplementary groups.
+/// Returns the number of supplementary groups of this thread.
 pub fn num_supplementary_groups() -> usize {
     getgroups(&mut []) as usize
 }
 
 const MAX_SUP_GROUPS: usize = 65536;
 
-/// Retrieves the supplementary groups.
+/// Retrieves the supplementary groups of this thread.
 ///
 /// [argument, buf]
 /// The buffer in which the supplementary groups will be stored.
@@ -134,7 +134,7 @@ pub fn supplementary_groups(buf: &mut [GroupId]) -> Result<usize> {
     }
 }
 
-/// Sets the supplementary groups.
+/// Sets the supplementary groups of this thread.
 ///
 /// [argument, buf]
 /// The buffer which contains the new supplementary groups.

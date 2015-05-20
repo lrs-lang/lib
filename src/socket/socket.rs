@@ -7,7 +7,7 @@ use base::error::{self, Errno};
 use cty::{
     msghdr, c_void, iovec, c_int, AF_UNSPEC, sa_family_t, SHUT_RD, SHUT_WR, SHUT_RDWR,
     SOL_SOCKET, SO_ACCEPTCONN, SO_BINDTODEVICE, IFNAMSIZ, SO_BROADCAST, SO_DEBUG,
-    SO_DOMAIN, MSG_CMSG_CLOEXEC, MSG_NOSIGNAL, SOCK_CLOEXEC, SO_REUSEPORT, SO_REUSEADDR,
+    SO_DOMAIN, MSG_NOSIGNAL, SO_REUSEPORT, SO_REUSEADDR,
     SO_SNDTIMEO, SO_RCVTIMEO, SO_SNDBUF, SO_SNDBUFFORCE, SO_RCVBUF, SO_RCVBUFFORCE,
     timeval, SO_PRIORITY, SO_PEERCRED, SO_PEEK_OFF, SO_PASSCRED, SO_OOBINLINE,
     SO_MARK, SO_LINGER, SO_DONTROUTE, SO_KEEPALIVE, k_int, SO_ERROR, linger, INT_MAX,
@@ -26,7 +26,7 @@ use core::{num, slice, mem};
 use syscall::{
     socket, bind, getsockname, getpeername, connect, close, shutdown, listen, sendto,
     sendmsg, recvfrom, recvmsg, getsockopt, setsockopt, ioctl_siocgstampns, ioctl_siocinq,
-    ioctl_siocoutq,
+    ioctl_siocoutq, accept4,
 };
 use str_one::{ToCStr, CStr, AsMutCStr};
 use fd::{FDContainer};
@@ -43,7 +43,7 @@ use ip_proto::{self};
 use domain::{self, Domain};
 use kind::{self, Kind};
 use msg::{self};
-use flags::{self};
+use flags::{SockFlags};
 
 /// A Socket
 ///
@@ -71,9 +71,8 @@ impl Socket {
     ///
     /// * link:man:socket(2)
     pub fn new(domain: Domain, kind: Kind, protocol: c_int,
-               flags: Option<flags::Flags>) -> Result<Socket> {
-        let flags = flags.map(|f| f.0).unwrap_or(0);
-        let ty = kind.0 | SOCK_CLOEXEC | flags;
+               flags: SockFlags) -> Result<Socket> {
+        let ty = flags.0 | kind.0;
         let fd = try!(rv!(socket(domain.0, ty, protocol), -> c_int));
         Ok(Socket { fd: fd, owned: true })
     }
@@ -92,7 +91,7 @@ impl Socket {
     ///
     /// * link:man:unix(7)
     /// * link:man:tcp(7)
-    pub fn unix_stream(flags: Option<flags::Flags>) -> Result<Socket> {
+    pub fn unix_stream(flags: SockFlags) -> Result<Socket> {
         Socket::new(domain::Unix, kind::Stream, 0, flags)
     }
 
@@ -110,7 +109,7 @@ impl Socket {
     ///
     /// * link:man:unix(7)
     /// * link:man:tcp(7)
-    pub fn unix_datagram(flags: Option<flags::Flags>) -> Result<Socket> {
+    pub fn unix_datagram(flags: SockFlags) -> Result<Socket> {
         Socket::new(domain::Unix, kind::Datagram, 0, flags)
     }
 
@@ -127,7 +126,7 @@ impl Socket {
     /// = See also
     ///
     /// * link:man:unix(7)
-    pub fn unix_seqpacket(flags: Option<flags::Flags>) -> Result<Socket> {
+    pub fn unix_seqpacket(flags: SockFlags) -> Result<Socket> {
         Socket::new(domain::Unix, kind::SeqPacket, 0, flags)
     }
 
@@ -145,7 +144,7 @@ impl Socket {
     ///
     /// * link:man:ip(7)
     /// * link:man:tcp(7)
-    pub fn ipv4_stream(flags: Option<flags::Flags>) -> Result<Socket> {
+    pub fn ipv4_stream(flags: SockFlags) -> Result<Socket> {
         Socket::new(domain::Ipv4, kind::Stream, 0, flags)
     }
 
@@ -163,7 +162,7 @@ impl Socket {
     ///
     /// * link:man:ip(7)
     /// * link:man:udp(7)
-    pub fn ipv4_datagram(flags: Option<flags::Flags>) -> Result<Socket> {
+    pub fn ipv4_datagram(flags: SockFlags) -> Result<Socket> {
         Socket::new(domain::Ipv4, kind::Datagram, 0, flags)
     }
 
@@ -181,8 +180,7 @@ impl Socket {
     ///
     /// * link:man:ip(7)
     /// * link:man:raw(7)
-    pub fn ipv4_raw(proto: ip_proto::Proto,
-                    flags: Option<flags::Flags>) -> Result<Socket> {
+    pub fn ipv4_raw(proto: ip_proto::Proto, flags: SockFlags) -> Result<Socket> {
         Socket::new(domain::Ipv4, kind::Raw, proto.0 as c_int, flags)
     }
 
@@ -200,7 +198,7 @@ impl Socket {
     ///
     /// * link:man:ipv6(7)
     /// * link:man:tcp(7)
-    pub fn ipv6_stream(flags: Option<flags::Flags>) -> Result<Socket> {
+    pub fn ipv6_stream(flags: SockFlags) -> Result<Socket> {
         Socket::new(domain::Ipv6, kind::Stream, 0, flags)
     }
 
@@ -218,7 +216,7 @@ impl Socket {
     ///
     /// * link:man:ipv6(7)
     /// * link:man:udp(7)
-    pub fn ipv6_datagram(flags: Option<flags::Flags>) -> Result<Socket> {
+    pub fn ipv6_datagram(flags: SockFlags) -> Result<Socket> {
         Socket::new(domain::Ipv6, kind::Datagram, 0, flags)
     }
 
@@ -236,8 +234,7 @@ impl Socket {
     ///
     /// * link:man:ipv6(7)
     /// * link:man:raw(7)
-    pub fn ipv6_raw(proto: ip_proto::Proto,
-                    flags: Option<flags::Flags>) -> Result<Socket> {
+    pub fn ipv6_raw(proto: ip_proto::Proto, flags: SockFlags) -> Result<Socket> {
         Socket::new(domain::Ipv6, kind::Raw, proto.0 as c_int, flags)
     }
 
@@ -371,6 +368,59 @@ impl Socket {
     /// * link:man:listen(2)
     pub fn listen(&self, backlog: u32) -> Result {
         rv!(listen(self.fd, backlog))
+    }
+
+    /// Accepts a new connection on the socket.
+    ///
+    /// [argument, flags]
+    /// The flags that will be set on the returned socket.
+    ///
+    /// = Remarks
+    ///
+    /// The flags argument will be used to construct the new socket, similar to how they
+    /// are used in the constructors of the socket type.
+    ///
+    /// = See also
+    ///
+    /// * link:man:accept4(2)
+    pub fn accept<'a>(&self, flags: SockFlags) -> Result<Socket> {
+        let fd = try!(rv!(accept4(self.fd, None, &mut 0, flags.0), -> c_int));
+        Ok(Socket { fd: fd, owned: true })
+    }
+
+    /// Accepts a new connection on the socket and returns the peer's address.
+    ///
+    /// [argument, addr]
+    /// A buffer in which the address of the peer will be stored.
+    ///
+    /// [argument, flags]
+    /// The flags that will be set on the returned socket.
+    ///
+    /// = Remarks
+    ///
+    /// :getpeeraddr: link:lrs::socket::Socket::get_peer_addr[get_peer_addr]
+    ///
+    /// If the address buffer is too small, and in particular if the address buffer is
+    /// empty, the address of the peer will not be returned. It can still be obtained
+    /// afterwards with the {getpeeraddr} method.
+    ///
+    /// The flags argument will be used to construct the new socket, similar to how they
+    /// are used in the constructors of the socket type.
+    ///
+    /// = See also
+    ///
+    /// * link:man:accept4(2)
+    pub fn accept_addr<'a>(&self, addr: &'a mut [u8],
+                        flags: SockFlags) -> Result<(Result<&'a mut SockAddr>, Socket)> {
+        let mut len = 0;
+        let fd = try!(rv!(accept4(self.fd, Some(addr), &mut len, flags.0), -> c_int));
+        let sock = Socket { fd: fd, owned: true };
+        if len > addr.len() {
+            Ok((Err(error::NoMemory), sock))
+        } else {
+            let addr = SockAddr::from_mut_bytes(&mut addr[..len]);
+            Ok((addr, sock))
+        }
     }
 
     /// Sends a message over a connected socket.
@@ -671,9 +721,8 @@ impl Socket {
             msg_controllen: ctrl_len.saturating_cast(),
             msg_flags:      0,
         };
-        let flags = flags.0 | MSG_CMSG_CLOEXEC;
         let buf_len = try!(retry(|| recvmsg(self.fd, &mut msg,
-                                            flags)).map(|v| v as usize));
+                                            flags.0)).map(|v| v as usize));
 
         let addr_buf = &mut addr[..msg.msg_namelen as usize];
         let addr = match addr::type_supported(addr_buf) {

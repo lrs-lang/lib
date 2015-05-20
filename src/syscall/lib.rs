@@ -25,7 +25,8 @@ use cty::{
     timespec, dev_t, c_void, clockid_t, itimerspec, epoll_event, sigset_t, new_utsname,
     sysinfo, c_uint, c_ulong, umode_t, k_uint, loff_t, k_ulong, F_DUPFD_CLOEXEC, F_GETFL,
     F_SETFL, F_GETFD, F_SETFD, sockaddr, msghdr, mmsghdr, FUTEX_WAIT, FUTEX_WAKE,
-    siginfo_t, rusage, SIOCGSTAMPNS, SIOCINQ, SIOCOUTQ,
+    siginfo_t, rusage, SIOCGSTAMPNS, SIOCINQ, SIOCOUTQ, EPOLL_CLOEXEC, O_CLOEXEC,
+    O_LARGEFILE, SOCK_CLOEXEC, MSG_CMSG_CLOEXEC, TFD_CLOEXEC,
 };
 
 // XXX: iovec _MUST_ be the same as &mut [u8]
@@ -47,10 +48,19 @@ use cty::{
 /// [return_value]
 /// Rteruns an open file descriptor or an error value.
 ///
+/// = Remarks
+///
+/// Unless lrs was compiled with the `no-auto-cloexec` flag, this function automatically
+/// adds the `O_CLOEXEC` flag. This function automatically adds the `O_LARGEFILE` flag.
+///
 /// = See also
 ///
 /// * link:man:openat(2)
-pub fn openat(dir: c_int, path: &CStr, flags: c_int, mode: umode_t) -> c_int {
+pub fn openat(dir: c_int, path: &CStr, mut flags: c_int, mode: umode_t) -> c_int {
+    if cfg!(not(no_auto_cloexec)) {
+        flags |= O_CLOEXEC;
+    }
+    flags |= O_LARGEFILE;
     unsafe { r::openat(dir, path.as_ptr(), flags, mode) }
 }
 
@@ -383,10 +393,18 @@ pub fn fallocate(fd: c_int, mode: c_int, base: loff_t, len: loff_t) -> c_int {
 /// [return_value]
 /// Returns the file descriptor or an error value.
 ///
+/// = Remarks
+///
+/// Unless lrs was compiled with the `no-auto-cloexec` flag, this function automatically
+/// adds the `TFD_CLOEXEC` flag.
+///
 /// = See also
 ///
 /// * link:man:timerfd_create(2)
-pub fn timerfd_create(clock: c_int, flags: c_int) -> c_int {
+pub fn timerfd_create(clock: c_int, mut flags: c_int) -> c_int {
+    if cfg!(not(no_auto_cloexec)) {
+        flags |= TFD_CLOEXEC;
+    }
     unsafe { r::timerfd_create(clock, flags) }
 }
 
@@ -398,10 +416,18 @@ pub fn timerfd_create(clock: c_int, flags: c_int) -> c_int {
 /// [return_value]
 /// Returns the file descriptor or an error value.
 ///
+/// = Remarks
+///
+/// Unless lrs was compiled with the `no-auto-cloexec` flag, this function automatically
+/// adds the `EPOLL_CLOEXEC` flag.
+///
 /// = See also
 ///
 /// * link:man:epoll_create1(2)
-pub fn epoll_create(flags: c_int) -> c_int {
+pub fn epoll_create(mut flags: c_int) -> c_int {
+    if cfg!(not(no_auto_cloexec)) {
+        flags |= EPOLL_CLOEXEC;
+    }
     unsafe { r::epoll_create1(flags) }
 }
 
@@ -1707,10 +1733,18 @@ pub fn setdomainname(name: &[u8]) -> c_int {
 /// [return_value]
 /// Returns the socket or an error value.
 ///
+/// = Remarks
+///
+/// Unless lrs was compiled with the `no-auto-cloexec` flag, this function automatically
+/// adds the `SOCK_CLOEXEC` flag.
+///
 /// = See also
 ///
 /// * link:man:socket(2)
-pub fn socket(domain: c_int, ty: c_int, proto: c_int) -> c_int {
+pub fn socket(domain: c_int, mut ty: c_int, proto: c_int) -> c_int {
+    if cfg!(not(no_auto_cloexec)) {
+        ty |= SOCK_CLOEXEC;
+    }
     unsafe { r::socket(domain, ty, proto) }
 }
 
@@ -1814,10 +1848,18 @@ pub fn recvfrom(sockfd: c_int, buf: &mut [u8], flags: c_int, src_addr: Option<&m
 /// [return_value]
 /// Returns the number of bytes received or an error value.
 ///
+/// = Remarks
+///
+/// Unless lrs was compiled with the `no-auto-cloexec` flag, this function automatically
+/// adds the `MSG_CMSG_CLOEXEC` flag.
+///
 /// = See also
 ///
 /// * link:man:recvmsg(2)
-pub fn recvmsg(sockfd: c_int, msg: &mut msghdr, flags: c_int) -> ssize_t {
+pub fn recvmsg(sockfd: c_int, msg: &mut msghdr, mut flags: c_int) -> ssize_t {
+    if cfg!(not(no_auto_cloexec)) {
+        flags |= MSG_CMSG_CLOEXEC;
+    }
     unsafe { r::recvmsg(sockfd, msg, flags as k_uint) }
 }
 
@@ -2400,7 +2442,7 @@ pub fn ioctl_siocgstampns(fd: c_int, time: &mut timespec) -> c_int {
 pub fn ioctl_siocinq(fd: c_int, unread: &mut usize) -> c_int {
     let mut u: c_int = 0;
     let rv = unsafe {
-        r::ioctl(fd as k_uint, SIOCINQ as k_uint, &mut u as *mut _ as k_ulong) 
+        r::ioctl(fd as k_uint, SIOCINQ as k_uint, &mut u as *mut _ as k_ulong)
     };
     *unread = u as usize;
     rv
@@ -2424,7 +2466,7 @@ pub fn ioctl_siocinq(fd: c_int, unread: &mut usize) -> c_int {
 pub fn ioctl_siocoutq(fd: c_int, unread: &mut usize) -> c_int {
     let mut u: c_int = 0;
     let rv = unsafe {
-        r::ioctl(fd as k_uint, SIOCOUTQ as k_uint, &mut u as *mut _ as k_ulong) 
+        r::ioctl(fd as k_uint, SIOCOUTQ as k_uint, &mut u as *mut _ as k_ulong)
     };
     *unread = u as usize;
     rv

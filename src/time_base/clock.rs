@@ -6,7 +6,7 @@
 
 #[prelude_import] use base::prelude::*;
 use core::{mem};
-use cty::{clockid_t, c_int, TIMER_ABSTIME, TFD_NONBLOCK, TFD_CLOEXEC};
+use cty::{clockid_t, c_int, TIMER_ABSTIME, TFD_NONBLOCK};
 use syscall::{clock_gettime, clock_settime, clock_getres, clock_nanosleep,
                     timerfd_create};
 use rv::{retry};
@@ -111,13 +111,13 @@ impl Clock {
 
     /// Creates a new timer.
     pub fn timer(self) -> Result<Timer> {
-        let timer = try!(rv!(timerfd_create(self.0, TFD_CLOEXEC), -> c_int));
+        let timer = try!(rv!(timerfd_create(self.0, 0), -> c_int));
         Ok(Timer::from_owned(timer))
     }
 
     /// Creates a new non-blocking timer.
     pub fn timer_non_blocking(self) -> Result<Timer> {
-        let timer = try!(rv!(timerfd_create(self.0, TFD_NONBLOCK|TFD_CLOEXEC), -> c_int));
+        let timer = try!(rv!(timerfd_create(self.0, TFD_NONBLOCK), -> c_int));
         Ok(Timer::from_owned(timer))
     }
 }
