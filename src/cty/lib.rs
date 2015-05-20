@@ -4026,3 +4026,523 @@ pub const TCAA_MAX : c_int = 1;
 pub const RTEXT_FILTER_VF                : c_int = 1 << 0;
 pub const RTEXT_FILTER_BRVLAN            : c_int = 1 << 1;
 pub const RTEXT_FILTER_BRVLAN_COMPRESSED : c_int = 1 << 2;
+
+///////////////////////////////
+// include/uapi/linux/if_addr.h
+///////////////////////////////
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ifaddrmsg {
+    pub ifa_family:    __u8,
+    pub ifa_prefixlen: __u8,
+    pub ifa_flags:     __u8,
+    pub ifa_scope:     __u8,
+    pub ifa_index:     __u32,
+}
+
+pub const IFA_UNSPEC    : c_int = 0;
+pub const IFA_ADDRESS   : c_int = 1;
+pub const IFA_LOCAL     : c_int = 2;
+pub const IFA_LABEL     : c_int = 3;
+pub const IFA_BROADCAST : c_int = 4;
+pub const IFA_ANYCAST   : c_int = 5;
+pub const IFA_CACHEINFO : c_int = 6;
+pub const IFA_MULTICAST : c_int = 7;
+pub const IFA_FLAGS     : c_int = 8;
+pub const __IFA_MAX     : c_int = 9;
+
+pub const IFA_MAX : c_int = __IFA_MAX - 1;
+
+pub const IFA_F_SECONDARY      : c_int = 0x01;
+pub const IFA_F_TEMPORARY      : c_int = IFA_F_SECONDARY;
+pub const IFA_F_NODAD          : c_int = 0x02;
+pub const IFA_F_OPTIMISTIC     : c_int = 0x04;
+pub const IFA_F_DADFAILED      : c_int = 0x08;
+pub const IFA_F_HOMEADDRESS    : c_int = 0x10;
+pub const IFA_F_DEPRECATED     : c_int = 0x20;
+pub const IFA_F_TENTATIVE      : c_int = 0x40;
+pub const IFA_F_PERMANENT      : c_int = 0x80;
+pub const IFA_F_MANAGETEMPADDR : c_int = 0x100;
+pub const IFA_F_NOPREFIXROUTE  : c_int = 0x200;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ifa_cacheinfo {
+    pub ifa_prefered: __u32,
+    pub ifa_valid:    __u32,
+    pub cstamp:       __u32,
+    pub tstamp:       __u32,
+}
+
+///////////////////////////////
+// include/uapi/linux/if_link.h
+///////////////////////////////
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct rtnl_link_stats {
+    pub rx_packets:          __u32,
+    pub tx_packets:          __u32,
+    pub rx_bytes:            __u32,
+    pub tx_bytes:            __u32,
+    pub rx_errors:           __u32,
+    pub tx_errors:           __u32,
+    pub rx_dropped:          __u32,
+    pub tx_dropped:          __u32,
+    pub multicast:           __u32,
+    pub collisions:          __u32,
+    pub rx_length_errors:    __u32,
+    pub rx_over_errors:      __u32,
+    pub rx_crc_errors:       __u32,
+    pub rx_frame_errors:     __u32,
+    pub rx_fifo_errors:      __u32,
+    pub rx_missed_errors:    __u32,
+    pub tx_aborted_errors:   __u32,
+    pub tx_carrier_errors:   __u32,
+    pub tx_fifo_errors:      __u32,
+    pub tx_heartbeat_errors: __u32,
+    pub tx_window_errors:    __u32,
+    pub rx_compressed:       __u32,
+    pub tx_compressed:       __u32,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct rtnl_link_stats64 {
+    pub rx_packets:          __u64,
+    pub tx_packets:          __u64,
+    pub rx_bytes:            __u64,
+    pub tx_bytes:            __u64,
+    pub rx_errors:           __u64,
+    pub tx_errors:           __u64,
+    pub rx_dropped:          __u64,
+    pub tx_dropped:          __u64,
+    pub multicast:           __u64,
+    pub collisions:          __u64,
+    pub rx_length_errors:    __u64,
+    pub rx_over_errors:      __u64,
+    pub rx_crc_errors:       __u64,
+    pub rx_frame_errors:     __u64,
+    pub rx_fifo_errors:      __u64,
+    pub rx_missed_errors:    __u64,
+    pub tx_aborted_errors:   __u64,
+    pub tx_carrier_errors:   __u64,
+    pub tx_fifo_errors:      __u64,
+    pub tx_heartbeat_errors: __u64,
+    pub tx_window_errors:    __u64,
+    pub rx_compressed:       __u64,
+    pub tx_compressed:       __u64,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct rtnl_link_ifmap {
+    pub mem_start: __u64,
+    pub mem_end:   __u64,
+    pub base_addr: __u64,
+    pub irq:       __u16,
+    pub dma:       __u8,
+    pub port:      __u8,
+}
+
+pub const IFLA_UNSPEC          : c_int = 0;
+pub const IFLA_ADDRESS         : c_int = 1;
+pub const IFLA_BROADCAST       : c_int = 2;
+pub const IFLA_IFNAME          : c_int = 3;
+pub const IFLA_MTU             : c_int = 4;
+pub const IFLA_LINK            : c_int = 5;
+pub const IFLA_QDISC           : c_int = 6;
+pub const IFLA_STATS           : c_int = 7;
+pub const IFLA_COST            : c_int = 8;
+pub const IFLA_PRIORITY        : c_int = 9;
+pub const IFLA_MASTER          : c_int = 10;
+pub const IFLA_WIRELESS        : c_int = 11;
+pub const IFLA_PROTINFO        : c_int = 12;
+pub const IFLA_TXQLEN          : c_int = 13;
+pub const IFLA_MAP             : c_int = 14;
+pub const IFLA_WEIGHT          : c_int = 15;
+pub const IFLA_OPERSTATE       : c_int = 16;
+pub const IFLA_LINKMODE        : c_int = 17;
+pub const IFLA_LINKINFO        : c_int = 18;
+pub const IFLA_NET_NS_PID      : c_int = 19;
+pub const IFLA_IFALIAS         : c_int = 20;
+pub const IFLA_NUM_VF          : c_int = 21;
+pub const IFLA_VFINFO_LIST     : c_int = 22;
+pub const IFLA_STATS64         : c_int = 23;
+pub const IFLA_VF_PORTS        : c_int = 24;
+pub const IFLA_PORT_SELF       : c_int = 25;
+pub const IFLA_AF_SPEC         : c_int = 26;
+pub const IFLA_GROUP           : c_int = 27;
+pub const IFLA_NET_NS_FD       : c_int = 28;
+pub const IFLA_EXT_MASK        : c_int = 29;
+pub const IFLA_PROMISCUITY     : c_int = 30;
+pub const IFLA_NUM_TX_QUEUES   : c_int = 31;
+pub const IFLA_NUM_RX_QUEUES   : c_int = 32;
+pub const IFLA_CARRIER         : c_int = 33;
+pub const IFLA_PHYS_PORT_ID    : c_int = 34;
+pub const IFLA_CARRIER_CHANGES : c_int = 35;
+pub const IFLA_PHYS_SWITCH_ID  : c_int = 36;
+pub const IFLA_LINK_NETNSID    : c_int = 37;
+pub const __IFLA_MAX           : c_int = 38;
+
+pub const IFLA_MAX : c_int = __IFLA_MAX - 1;
+
+pub const IFLA_INET_UNSPEC : c_int = 0;
+pub const IFLA_INET_CONF   : c_int = 1;
+pub const __IFLA_INET_MAX  : c_int = 2;
+
+pub const IFLA_INET_MAX : c_int = __IFLA_INET_MAX - 1;
+
+pub const IFLA_INET6_UNSPEC        : c_int = 0;
+pub const IFLA_INET6_FLAGS         : c_int = 1;
+pub const IFLA_INET6_CONF          : c_int = 2;
+pub const IFLA_INET6_STATS         : c_int = 3;
+pub const IFLA_INET6_MCAST         : c_int = 4;
+pub const IFLA_INET6_CACHEINFO     : c_int = 5;
+pub const IFLA_INET6_ICMP6STATS    : c_int = 6;
+pub const IFLA_INET6_TOKEN         : c_int = 7;
+pub const IFLA_INET6_ADDR_GEN_MODE : c_int = 8;
+pub const __IFLA_INET6_MAX         : c_int = 9;
+
+pub const IFLA_INET6_MAX : c_int = __IFLA_INET6_MAX - 1;
+
+pub type in6_addr_gen_mode = c_int;
+pub const IN6_ADDR_GEN_MODE_EUI64 : in6_addr_gen_mode = 0;
+pub const IN6_ADDR_GEN_MODE_NONE  : in6_addr_gen_mode = 1;
+
+pub const IFLA_BR_UNSPEC        : c_int = 0;
+pub const IFLA_BR_FORWARD_DELAY : c_int = 1;
+pub const IFLA_BR_HELLO_TIME    : c_int = 2;
+pub const IFLA_BR_MAX_AGE       : c_int = 3;
+pub const __IFLA_BR_MAX         : c_int = 4;
+
+pub const IFLA_BR_MAX : c_int = __IFLA_BR_MAX - 1;
+
+pub const BRIDGE_MODE_UNSPEC  : c_int = 0;
+pub const BRIDGE_MODE_HAIRPIN : c_int = 1;
+
+pub const IFLA_BRPORT_UNSPEC        : c_int = 0;
+pub const IFLA_BRPORT_STATE         : c_int = 1;
+pub const IFLA_BRPORT_PRIORITY      : c_int = 2;
+pub const IFLA_BRPORT_COST          : c_int = 3;
+pub const IFLA_BRPORT_MODE          : c_int = 4;
+pub const IFLA_BRPORT_GUARD         : c_int = 5;
+pub const IFLA_BRPORT_PROTECT       : c_int = 6;
+pub const IFLA_BRPORT_FAST_LEAVE    : c_int = 7;
+pub const IFLA_BRPORT_LEARNING      : c_int = 8;
+pub const IFLA_BRPORT_UNICAST_FLOOD : c_int = 9;
+pub const IFLA_BRPORT_PROXYARP      : c_int = 10;
+pub const IFLA_BRPORT_LEARNING_SYNC : c_int = 11;
+pub const __IFLA_BRPORT_MAX         : c_int = 12;
+
+pub const IFLA_BRPORT_MAX : c_int = __IFLA_BRPORT_MAX - 1;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ifla_cacheinfo {
+    pub max_reasm_len:  __u32,
+    pub tstamp:         __u32,
+    pub reachable_time: __u32,
+    pub retrans_time:   __u32,
+}
+
+pub const IFLA_INFO_UNSPEC     : c_int = 0;
+pub const IFLA_INFO_KIND       : c_int = 1;
+pub const IFLA_INFO_DATA       : c_int = 2;
+pub const IFLA_INFO_XSTATS     : c_int = 3;
+pub const IFLA_INFO_SLAVE_KIND : c_int = 4;
+pub const IFLA_INFO_SLAVE_DATA : c_int = 5;
+pub const __IFLA_INFO_MAX      : c_int = 6;
+
+pub const IFLA_INFO_MAX : c_int = __IFLA_INFO_MAX - 1;
+
+pub const IFLA_VLAN_UNSPEC      : c_int = 0;
+pub const IFLA_VLAN_ID          : c_int = 1;
+pub const IFLA_VLAN_FLAGS       : c_int = 2;
+pub const IFLA_VLAN_EGRESS_QOS  : c_int = 3;
+pub const IFLA_VLAN_INGRESS_QOS : c_int = 4;
+pub const IFLA_VLAN_PROTOCOL    : c_int = 5;
+pub const __IFLA_VLAN_MAX       : c_int = 6;
+
+pub const IFLA_VLAN_MAX : c_int = __IFLA_VLAN_MAX - 1;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ifla_vlan_flags {
+    pub flags: __u32,
+    pub mask:  __u32,
+}
+
+pub const IFLA_VLAN_QOS_UNSPEC  : c_int = 0;
+pub const IFLA_VLAN_QOS_MAPPING : c_int = 1;
+pub const __IFLA_VLAN_QOS_MAX   : c_int = 2;
+
+pub const IFLA_VLAN_QOS_MAX : c_int = __IFLA_VLAN_QOS_MAX - 1;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ifla_vlan_qos_mapping {
+    pub from: __u32,
+    pub to:   __u32,
+}
+
+pub const IFLA_MACVLAN_UNSPEC        : c_int = 0;
+pub const IFLA_MACVLAN_MODE          : c_int = 1;
+pub const IFLA_MACVLAN_FLAGS         : c_int = 2;
+pub const IFLA_MACVLAN_MACADDR_MODE  : c_int = 3;
+pub const IFLA_MACVLAN_MACADDR       : c_int = 4;
+pub const IFLA_MACVLAN_MACADDR_DATA  : c_int = 5;
+pub const IFLA_MACVLAN_MACADDR_COUNT : c_int = 6;
+pub const __IFLA_MACVLAN_MAX         : c_int = 7;
+
+pub const IFLA_MACVLAN_MAX : c_int = __IFLA_MACVLAN_MAX - 1;
+
+pub type macvlan_mode = c_int;
+pub const MACVLAN_MODE_PRIVATE  : macvlan_mode = 1;
+pub const MACVLAN_MODE_VEPA     : macvlan_mode = 2;
+pub const MACVLAN_MODE_BRIDGE   : macvlan_mode = 4;
+pub const MACVLAN_MODE_PASSTHRU : macvlan_mode = 8;
+pub const MACVLAN_MODE_SOURCE   : macvlan_mode = 16;
+
+pub type macvlan_macaddr_mode = c_int;
+pub const MACVLAN_MACADDR_ADD   : macvlan_macaddr_mode = 0;
+pub const MACVLAN_MACADDR_DEL   : macvlan_macaddr_mode = 1;
+pub const MACVLAN_MACADDR_FLUSH : macvlan_macaddr_mode = 2;
+pub const MACVLAN_MACADDR_SET   : macvlan_macaddr_mode = 3;
+
+pub const MACVLAN_FLAG_NOPROMISC : macvlan_macaddr_mode = 1;
+
+pub const IFLA_IPVLAN_UNSPEC : c_int = 0;
+pub const IFLA_IPVLAN_MODE   : c_int = 1;
+pub const __IFLA_IPVLAN_MAX  : c_int = 2;
+
+pub const IFLA_IPVLAN_MAX : c_int = __IFLA_IPVLAN_MAX - 1;
+
+pub type ipvlan_mode = c_int;
+pub const IPVLAN_MODE_L2  : ipvlan_mode = 0;
+pub const IPVLAN_MODE_L3  : ipvlan_mode = 1;
+pub const IPVLAN_MODE_MAX : ipvlan_mode = 2;
+
+pub const IFLA_VXLAN_UNSPEC            : c_int = 0;
+pub const IFLA_VXLAN_ID                : c_int = 1;
+pub const IFLA_VXLAN_GROUP             : c_int = 2;
+pub const IFLA_VXLAN_LINK              : c_int = 3;
+pub const IFLA_VXLAN_LOCAL             : c_int = 4;
+pub const IFLA_VXLAN_TTL               : c_int = 5;
+pub const IFLA_VXLAN_TOS               : c_int = 6;
+pub const IFLA_VXLAN_LEARNING          : c_int = 7;
+pub const IFLA_VXLAN_AGEING            : c_int = 8;
+pub const IFLA_VXLAN_LIMIT             : c_int = 9;
+pub const IFLA_VXLAN_PORT_RANGE        : c_int = 10;
+pub const IFLA_VXLAN_PROXY             : c_int = 11;
+pub const IFLA_VXLAN_RSC               : c_int = 12;
+pub const IFLA_VXLAN_L2MISS            : c_int = 13;
+pub const IFLA_VXLAN_L3MISS            : c_int = 14;
+pub const IFLA_VXLAN_PORT              : c_int = 15;
+pub const IFLA_VXLAN_GROUP6            : c_int = 16;
+pub const IFLA_VXLAN_LOCAL6            : c_int = 17;
+pub const IFLA_VXLAN_UDP_CSUM          : c_int = 18;
+pub const IFLA_VXLAN_UDP_ZERO_CSUM6_TX : c_int = 19;
+pub const IFLA_VXLAN_UDP_ZERO_CSUM6_RX : c_int = 20;
+pub const IFLA_VXLAN_REMCSUM_TX        : c_int = 21;
+pub const IFLA_VXLAN_REMCSUM_RX        : c_int = 22;
+pub const IFLA_VXLAN_GBP               : c_int = 23;
+pub const IFLA_VXLAN_REMCSUM_NOPARTIAL : c_int = 24;
+pub const __IFLA_VXLAN_MAX             : c_int = 25;
+
+pub const IFLA_VXLAN_MAX : c_int = __IFLA_VXLAN_MAX - 1;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ifla_vxlan_port_range {
+    pub low:  __be16,
+    pub high: __be16,
+}
+
+pub const IFLA_BOND_UNSPEC            : c_int = 0;
+pub const IFLA_BOND_MODE              : c_int = 1;
+pub const IFLA_BOND_ACTIVE_SLAVE      : c_int = 2;
+pub const IFLA_BOND_MIIMON            : c_int = 3;
+pub const IFLA_BOND_UPDELAY           : c_int = 4;
+pub const IFLA_BOND_DOWNDELAY         : c_int = 5;
+pub const IFLA_BOND_USE_CARRIER       : c_int = 6;
+pub const IFLA_BOND_ARP_INTERVAL      : c_int = 7;
+pub const IFLA_BOND_ARP_IP_TARGET     : c_int = 8;
+pub const IFLA_BOND_ARP_VALIDATE      : c_int = 9;
+pub const IFLA_BOND_ARP_ALL_TARGETS   : c_int = 10;
+pub const IFLA_BOND_PRIMARY           : c_int = 11;
+pub const IFLA_BOND_PRIMARY_RESELECT  : c_int = 12;
+pub const IFLA_BOND_FAIL_OVER_MAC     : c_int = 13;
+pub const IFLA_BOND_XMIT_HASH_POLICY  : c_int = 14;
+pub const IFLA_BOND_RESEND_IGMP       : c_int = 15;
+pub const IFLA_BOND_NUM_PEER_NOTIF    : c_int = 16;
+pub const IFLA_BOND_ALL_SLAVES_ACTIVE : c_int = 17;
+pub const IFLA_BOND_MIN_LINKS         : c_int = 18;
+pub const IFLA_BOND_LP_INTERVAL       : c_int = 19;
+pub const IFLA_BOND_PACKETS_PER_SLAVE : c_int = 20;
+pub const IFLA_BOND_AD_LACP_RATE      : c_int = 21;
+pub const IFLA_BOND_AD_SELECT         : c_int = 22;
+pub const IFLA_BOND_AD_INFO           : c_int = 23;
+pub const __IFLA_BOND_MAX             : c_int = 24;
+
+pub const IFLA_BOND_MAX : c_int = __IFLA_BOND_MAX - 1;
+
+pub const IFLA_BOND_AD_INFO_UNSPEC      : c_int = 0;
+pub const IFLA_BOND_AD_INFO_AGGREGATOR  : c_int = 1;
+pub const IFLA_BOND_AD_INFO_NUM_PORTS   : c_int = 2;
+pub const IFLA_BOND_AD_INFO_ACTOR_KEY   : c_int = 3;
+pub const IFLA_BOND_AD_INFO_PARTNER_KEY : c_int = 4;
+pub const IFLA_BOND_AD_INFO_PARTNER_MAC : c_int = 5;
+pub const __IFLA_BOND_AD_INFO_MAX       : c_int = 6;
+
+pub const IFLA_BOND_AD_INFO_MAX : c_int = __IFLA_BOND_AD_INFO_MAX - 1;
+
+pub const IFLA_BOND_SLAVE_UNSPEC             : c_int = 0;
+pub const IFLA_BOND_SLAVE_STATE              : c_int = 1;
+pub const IFLA_BOND_SLAVE_MII_STATUS         : c_int = 2;
+pub const IFLA_BOND_SLAVE_LINK_FAILURE_COUNT : c_int = 3;
+pub const IFLA_BOND_SLAVE_PERM_HWADDR        : c_int = 4;
+pub const IFLA_BOND_SLAVE_QUEUE_ID           : c_int = 5;
+pub const IFLA_BOND_SLAVE_AD_AGGREGATOR_ID   : c_int = 6;
+pub const __IFLA_BOND_SLAVE_MAX              : c_int = 7;
+
+pub const IFLA_BOND_SLAVE_MAX : c_int = __IFLA_BOND_SLAVE_MAX - 1;
+
+pub const IFLA_VF_INFO_UNSPEC : c_int = 0;
+pub const IFLA_VF_INFO        : c_int = 1;
+pub const __IFLA_VF_INFO_MAX  : c_int = 2;
+
+pub const IFLA_VF_INFO_MAX : c_int = __IFLA_VF_INFO_MAX - 1;
+
+pub const IFLA_VF_UNSPEC     : c_int = 0;
+pub const IFLA_VF_MAC        : c_int = 1;
+pub const IFLA_VF_VLAN       : c_int = 2;
+pub const IFLA_VF_TX_RATE    : c_int = 3;
+pub const IFLA_VF_SPOOFCHK   : c_int = 4;
+pub const IFLA_VF_LINK_STATE : c_int = 5;
+pub const IFLA_VF_RATE       : c_int = 6;
+pub const __IFLA_VF_MAX      : c_int = 7;
+
+pub const IFLA_VF_MAX : c_int = __IFLA_VF_MAX - 1;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ifla_vf_mac {
+    pub vf: __u32,
+    pub mac: [__u8; 32],
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ifla_vf_vlan {
+    pub vf:   __u32,
+    pub vlan: __u32,
+    pub qos:  __u32,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ifla_vf_tx_rate {
+    pub vf:   __u32,
+    pub rate: __u32,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ifla_vf_rate {
+    pub vf:          __u32,
+    pub min_tx_rate: __u32,
+    pub max_tx_rate: __u32,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ifla_vf_spoofchk {
+    pub vf:      __u32,
+    pub setting: __u32,
+}
+
+pub const IFLA_VF_LINK_STATE_AUTO    : c_int = 0;
+pub const IFLA_VF_LINK_STATE_ENABLE  : c_int = 1;
+pub const IFLA_VF_LINK_STATE_DISABLE : c_int = 2;
+pub const __IFLA_VF_LINK_STATE_MAX   : c_int = 3;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ifla_vf_link_state {
+    pub vf:         __u32,
+    pub link_state: __u32,
+}
+
+pub const IFLA_VF_PORT_UNSPEC : c_int = 0;
+pub const IFLA_VF_PORT        : c_int = 1;
+pub const __IFLA_VF_PORT_MAX  : c_int = 2;
+
+pub const IFLA_VF_PORT_MAX : c_int = __IFLA_VF_PORT_MAX - 1;
+
+pub const IFLA_PORT_UNSPEC        : c_int = 0;
+pub const IFLA_PORT_VF            : c_int = 1;
+pub const IFLA_PORT_PROFILE       : c_int = 2;
+pub const IFLA_PORT_VSI_TYPE      : c_int = 3;
+pub const IFLA_PORT_INSTANCE_UUID : c_int = 4;
+pub const IFLA_PORT_HOST_UUID     : c_int = 5;
+pub const IFLA_PORT_REQUEST       : c_int = 6;
+pub const IFLA_PORT_RESPONSE      : c_int = 7;
+pub const __IFLA_PORT_MAX         : c_int = 8;
+
+pub const IFLA_PORT_MAX : c_int = __IFLA_PORT_MAX - 1;
+
+pub const PORT_PROFILE_MAX : c_int = 40;
+pub const PORT_UUID_MAX    : c_int = 16;
+pub const PORT_SELF_VF     : c_int = -1;
+
+pub const PORT_REQUEST_PREASSOCIATE    : c_int = 0;
+pub const PORT_REQUEST_PREASSOCIATE_RR : c_int = 1;
+pub const PORT_REQUEST_ASSOCIATE       : c_int = 2;
+pub const PORT_REQUEST_DISASSOCIATE    : c_int = 3;
+
+pub const PORT_VDP_RESPONSE_SUCCESS                : c_int = 0;
+pub const PORT_VDP_RESPONSE_INVALID_FORMAT         : c_int = 1;
+pub const PORT_VDP_RESPONSE_INSUFFICIENT_RESOURCES : c_int = 2;
+pub const PORT_VDP_RESPONSE_UNUSED_VTID            : c_int = 3;
+pub const PORT_VDP_RESPONSE_VTID_VIOLATION         : c_int = 4;
+pub const PORT_VDP_RESPONSE_VTID_VERSION_VIOALTION : c_int = 5;
+pub const PORT_VDP_RESPONSE_OUT_OF_SYNC            : c_int = 6;
+
+pub const PORT_PROFILE_RESPONSE_SUCCESS                : c_int = 256;
+pub const PORT_PROFILE_RESPONSE_INPROGRESS             : c_int = 257;
+pub const PORT_PROFILE_RESPONSE_INVALID                : c_int = 258;
+pub const PORT_PROFILE_RESPONSE_BADSTATE               : c_int = 259;
+pub const PORT_PROFILE_RESPONSE_INSUFFICIENT_RESOURCES : c_int = 260;
+pub const PORT_PROFILE_RESPONSE_ERROR                  : c_int = 261;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ifla_port_vsi {
+    pub vsi_mgr_id: __u8,
+    pub vsi_type_id: [__u8; 3],
+    pub vsi_type_version: __u8,
+    pub pad: [__u8; 3],
+}
+
+pub const IFLA_IPOIB_UNSPEC : c_int = 0;
+pub const IFLA_IPOIB_PKEY   : c_int = 1;
+pub const IFLA_IPOIB_MODE   : c_int = 2;
+pub const IFLA_IPOIB_UMCAST : c_int = 3;
+pub const __IFLA_IPOIB_MAX  : c_int = 4;
+
+pub const IPOIB_MODE_DATAGRAM  : c_int = 0;
+pub const IPOIB_MODE_CONNECTED : c_int = 1;
+
+pub const IFLA_IPOIB_MAX : c_int = __IFLA_IPOIB_MAX - 1;
+
+pub const IFLA_HSR_UNSPEC           : c_int = 0;
+pub const IFLA_HSR_SLAVE1           : c_int = 1;
+pub const IFLA_HSR_SLAVE2           : c_int = 2;
+pub const IFLA_HSR_MULTICAST_SPEC   : c_int = 3;
+pub const IFLA_HSR_SUPERVISION_ADDR : c_int = 4;
+pub const IFLA_HSR_SEQ_NR           : c_int = 5;
+pub const __IFLA_HSR_MAX            : c_int = 6;
+
+pub const IFLA_HSR_MAX : c_int = __IFLA_HSR_MAX - 1;
