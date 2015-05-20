@@ -3836,19 +3836,19 @@ pub const RTAX_FEATURE_ALLFRAG   : c_int = 0x00000008;
 // 	__u8	proto;
 // 	__u8	pad1;
 // 	__u16	pad2;
-// 
+//
 // 	union {
 // 		struct {
 // 			__u16	sport;
 // 			__u16	dport;
 // 		} ports;
-// 
+//
 // 		struct {
 // 			__u8	type;
 // 			__u8	code;
 // 			__u16	ident;
 // 		} icmpt;
-// 
+//
 // 		__u32		spi;
 // 	} u;
 // }
