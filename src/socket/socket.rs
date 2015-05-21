@@ -42,7 +42,7 @@ use time_base::{self};
 use ip_proto::{self};
 use domain::{self, Domain};
 use kind::{self, Kind};
-use msg::{self};
+use msg::{MsgFlags};
 use flags::{SockFlags};
 
 /// A Socket
@@ -437,7 +437,7 @@ impl Socket {
     /// = See also
     ///
     /// * link:man:send(2)
-    pub fn send(&self, buf: &[u8], flags: msg::Flags) -> Result<usize> {
+    pub fn send(&self, buf: &[u8], flags: MsgFlags) -> Result<usize> {
         let flags = flags.0 | MSG_NOSIGNAL;
         retry(|| sendto(self.fd, buf, flags, None)).map(|v| v as usize)
     }
@@ -459,7 +459,7 @@ impl Socket {
     /// = See also
     ///
     /// * link:man:sendto(2)
-    pub fn send_to<A>(&self, buf: &[u8], addr: A, flags: msg::Flags) -> Result<usize>
+    pub fn send_to<A>(&self, buf: &[u8], addr: A, flags: MsgFlags) -> Result<usize>
         where A: AsRef<[u8]>,
     {
         let flags = flags.0 | MSG_NOSIGNAL;
@@ -480,7 +480,7 @@ impl Socket {
     /// = See also
     ///
     /// * link:man:sendmsg(2)
-    pub fn gather_send(&self, buf: &[&[u8]], flags: msg::Flags) -> Result<usize> {
+    pub fn gather_send(&self, buf: &[&[u8]], flags: MsgFlags) -> Result<usize> {
         let addr: &[u8] = &[];
         let ctrl: &[u8] = &[];
         self.send_ctrl_to(buf, addr, ctrl, flags)
@@ -504,7 +504,7 @@ impl Socket {
     ///
     /// * link:man:sendmsg(2)
     pub fn gather_send_to<A>(&self, buf: &[&[u8]], addr: A,
-                             flags: msg::Flags) -> Result<usize>
+                             flags: MsgFlags) -> Result<usize>
         where A: AsRef<[u8]>,
     {
         let addr = addr.as_ref();
@@ -530,7 +530,7 @@ impl Socket {
     /// = See also
     ///
     /// * link:man:sendmsg(2)
-    pub fn send_ctrl<C>(&self, buf: &[&[u8]], ctrl: C, flags: msg::Flags) -> Result<usize>
+    pub fn send_ctrl<C>(&self, buf: &[&[u8]], ctrl: C, flags: MsgFlags) -> Result<usize>
         where C: AsRef<[u8]>,
     {
         let addr: &[u8] = &[];
@@ -560,7 +560,7 @@ impl Socket {
     ///
     /// * link:man:sendmsg(2)
     pub fn send_ctrl_to<A, C>(&self, buf: &[&[u8]], addr: A, ctrl: C,
-                              flags: msg::Flags) -> Result<usize>
+                              flags: MsgFlags) -> Result<usize>
         where A: AsRef<[u8]>,
               C: AsRef<[u8]>,
     {
@@ -601,7 +601,7 @@ impl Socket {
     /// = See also
     ///
     /// * link:man:recv(2)
-    pub fn recv<'a>(&self, buf: &'a mut [u8], flags: msg::Flags) -> Result<usize> {
+    pub fn recv<'a>(&self, buf: &'a mut [u8], flags: MsgFlags) -> Result<usize> {
         let mut addr_len = 0;
         retry(|| recvfrom(self.fd, buf, flags.0, None,
                           &mut addr_len)).map(|v| v as usize)
@@ -625,7 +625,7 @@ impl Socket {
     ///
     /// * link:man:recvfrom(2)
     pub fn recv_from<'a>(&self, buf: &mut [u8], addr_buf: &'a mut [u8],
-                         flags: msg::Flags) -> Result<(usize, Option<&'a mut SockAddr>)> {
+                         flags: MsgFlags) -> Result<(usize, Option<&'a mut SockAddr>)> {
         let mut addr_len = 0;
         let buf_len = try!(retry(|| recvfrom(self.fd, buf, flags.0, Some(addr_buf),
                                              &mut addr_len)).map(|v| v as usize));
@@ -652,7 +652,7 @@ impl Socket {
     ///
     /// * link:man:recvmsg(2)
     pub fn scatter_recv(&self, buf: &mut [&mut [u8]],
-                        flags: msg::Flags) -> Result<usize> {
+                        flags: MsgFlags) -> Result<usize> {
         let mut msg = msghdr {
             msg_name:       0 as *mut c_void,
             msg_namelen:    0,
@@ -691,8 +691,8 @@ impl Socket {
         buf: &mut [&mut [u8]],
         addr: &'a mut [u8],
         ctrl: &'b mut [u8],
-        flags: msg::Flags,
-        ) -> Result<(usize, Option<&'a mut SockAddr>, CMsgIter<'b>, msg::Flags)>
+        flags: MsgFlags,
+        ) -> Result<(usize, Option<&'a mut SockAddr>, CMsgIter<'b>, MsgFlags)>
     {
         let (addr_ptr, addr_len) = match addr.len() {
             0 => (0 as *mut u8, 0),
@@ -731,7 +731,7 @@ impl Socket {
         };
         let ctrl_buf = unsafe { slice::from_ptr(ctrl_ptr, msg.msg_controllen as usize) };
         let iter = CMsgIter::new(ctrl_buf).unwrap();
-        Ok((buf_len, addr, iter, msg::Flags(msg.msg_flags as c_int)))
+        Ok((buf_len, addr, iter, MsgFlags(msg.msg_flags as c_int)))
     }
 
     fn set_bool(&self, level: c_int, opt: c_int, val: bool) -> Result {

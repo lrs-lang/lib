@@ -92,6 +92,29 @@ impl<T, H> Vec<'static, T, H>
 impl<'a, T, H> Vec<'a, T, H>
     where H: Allocator,
 {
+    /// Creates a new vector from its raw parts.
+    ///
+    /// [argument, ptr]
+    /// The pointer to the first element of the vector.
+    ///
+    /// [argument, len]
+    /// The number of elements in the vector.
+    ///
+    /// [argument, cap]
+    /// The capacity of the array pointed to by the pointer.
+    ///
+    /// = Remarks
+    ///
+    /// The allocator must be the same allocator that was used to allocate the memory.
+    pub unsafe fn from_raw_parts(ptr: *mut T, len: usize, cap: usize) -> Vec<'a, T, H> {
+        Vec {
+            ptr: ptr,
+            len: len,
+            cap: cap,
+            _marker: PhantomData,
+        }
+    }
+
     /// Returns the capacity of the vector.
     pub fn capacity(&self) -> usize {
         self.cap

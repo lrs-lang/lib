@@ -7,8 +7,15 @@
 pub use lrs_socket::domain::{Domain};
 pub use lrs_socket::kind::{Kind};
 pub use lrs_socket::flags::{SockFlags};
+pub use lrs_socket::msg::{MsgFlags};
 pub use lrs_socket::socket::{Socket};
 pub use lrs_socket::addr::{SockAddr, AddrType};
+
+pub mod netlink {
+    pub use lrs_netlink::{
+        NlBuf, NlMsg, NlAttr,
+    };
+}
 
 /// Kernel domain constants.
 ///
@@ -109,10 +116,9 @@ pub mod flags {
 /// These are flags that can be set per receive/send call and which will be returned on
 /// received messages.
 pub mod msg {
-    pub use lrs_socket::msg::{Flags};
-
     pub use lrs_socket::msg::{
-        None, Confirm, DontRoute, DontBlock, EndOfRecord, More, OutOfBand,
-        Peek, RealSize, WaitAll, CMsgTruncated,
+        MSG_NONE, MSG_CONFIRM, MSG_DONT_ROUTE, MSG_DONT_BLOCK, MSG_END_OF_RECORD,
+        MSG_MORE, MSG_OUT_OF_BAND, MSG_PEEK, MSG_REAL_SIZE, MSG_WAIT_ALL,
+        MSG_CMSG_TRUNCATED,
     };
 }

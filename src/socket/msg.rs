@@ -3,12 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use cty::{
-    c_int,
-    MSG_OOB, MSG_PEEK, MSG_DONTROUTE, MSG_CTRUNC, MSG_TRUNC, MSG_DONTWAIT,
-    MSG_EOR, MSG_WAITALL, MSG_CONFIRM, MSG_ERRQUEUE, MSG_MORE, MSG_WAITFORONE,
-    MSG_FASTOPEN, MSG_NOSIGNAL, MSG_CMSG_CLOEXEC,
-};
+use cty::{self, c_int};
 use fmt::{Debug, Write};
 use core::ops::{BitOr, BitAnd, Not};
 
@@ -27,31 +22,31 @@ use core::ops::{BitOr, BitAnd, Not};
 ///
 /// * {msg}
 #[derive(Pod, Eq)]
-pub struct Flags(pub c_int);
+pub struct MsgFlags(pub c_int);
 
-impl BitAnd for Flags {
-    type Output = Flags;
-    fn bitand(self, rhs: Flags) -> Flags { Flags(self.0 & rhs.0) }
+impl BitAnd for MsgFlags {
+    type Output = MsgFlags;
+    fn bitand(self, rhs: MsgFlags) -> MsgFlags { MsgFlags(self.0 & rhs.0) }
 }
 
-impl BitOr for Flags {
-    type Output = Flags;
-    fn bitor(self, rhs: Flags) -> Flags { Flags(self.0 | rhs.0) }
+impl BitOr for MsgFlags {
+    type Output = MsgFlags;
+    fn bitor(self, rhs: MsgFlags) -> MsgFlags { MsgFlags(self.0 | rhs.0) }
 }
 
-impl Not for Flags {
-    type Output = Flags;
-    fn not(self) -> Flags { Flags(!self.0) }
+impl Not for MsgFlags {
+    type Output = MsgFlags;
+    fn not(self) -> MsgFlags { MsgFlags(!self.0) }
 }
 
 macro_rules! create {
     ($($(#[$meta:meta])* flag $name:ident = $val:expr;)*) => {
-        $($(#[$meta])* pub const $name: Flags = Flags($val);)*
+        $($(#[$meta])* pub const $name: MsgFlags = MsgFlags($val);)*
 
         /// = Remarks
         ///
         /// This prints the flags as a comma-separated list.
-        impl Debug for Flags {
+        impl Debug for MsgFlags {
             fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
                 let raw = self.0;
                 const KNOWN_FLAGS: c_int = 0 $(| $val)*;
@@ -84,7 +79,7 @@ create! {
     #[doc = "= Remarks"]
     #[doc = ""]
     #[doc = "This can be used whenever no special flags are required."]
-    flag None = 0;
+    flag MSG_NONE = 0;
     
     #[doc = "Informs the link-layer that we're receiving messages from the peer."]
     #[doc = ""]
@@ -96,7 +91,7 @@ create! {
     #[doc = "= See also"]
     #[doc = ""]
     #[doc = "* link:man:sendmsg(2) and MSG_CONFIRM therein"]
-    flag Confirm = MSG_CONFIRM;
+    flag MSG_CONFIRM = cty::MSG_CONFIRM;
 
     #[doc = "Tells the kernel not to route this message."]
     #[doc = ""]
@@ -108,7 +103,7 @@ create! {
     #[doc = "= See also"]
     #[doc = ""]
     #[doc = "* link:man:sendmsg(2) and MSG_DONTROUTE therein"]
-    flag DontRoute = MSG_DONTROUTE;
+    flag MSG_DONT_ROUTE = cty::MSG_DONTROUTE;
 
     #[doc = "Tells the kernel not to block on system calls."]
     #[doc = ""]
@@ -121,7 +116,7 @@ create! {
     #[doc = "= See also"]
     #[doc = ""]
     #[doc = "* link:man:sendmsg(2) and MSG_DONTWAIT therein"]
-    flag DontBlock = MSG_DONTWAIT;
+    flag MSG_DONT_BLOCK = cty::MSG_DONTWAIT;
 
     #[doc = "Marks the end of a SeqPacket record."]
     #[doc = ""]
@@ -134,7 +129,7 @@ create! {
     #[doc = ""]
     #[doc = "* link:man:sendmsg(2) and MSG_EOR therein"]
     #[doc = "* link:man:recvmsg(2) and MSG_EOR therein"]
-    flag EndOfRecord = MSG_EOR;
+    flag MSG_END_OF_RECORD = cty::MSG_EOR;
 
     #[doc = "Tells the kernel not to send this message yet."]
     #[doc = ""]
@@ -149,7 +144,7 @@ create! {
     #[doc = "* link:man:sendmsg(2) and MSG_MORE therein"]
     #[doc = "* link:lrs::socket::Socket::tcp_set_cork"]
     #[doc = "* link:lrs::socket::Socket::udp_set_cork"]
-    flag More = MSG_MORE;
+    flag MSG_MORE = cty::MSG_MORE;
 
     #[doc = "Marks out-of-band data."]
     #[doc = ""]
@@ -169,9 +164,9 @@ create! {
     #[doc = ""]
     #[doc = "* link:man:sendmsg(2) and MSG_OOB therein"]
     #[doc = "* link:man:recvmsg(2) and MSG_OOB therein"]
-    flag OutOfBand = MSG_OOB;
+    flag MSG_OUT_OF_BAND = cty::MSG_OOB;
 
-    flag ErrorQueue = MSG_ERRQUEUE;
+    flag MSG_ERROR_QUEUE = cty::MSG_ERRQUEUE;
 
     #[doc = "Receives data without removing it from the kernel queue."]
     #[doc = ""]
@@ -189,7 +184,7 @@ create! {
     #[doc = ""]
     #[doc = "* link:man:recvmsg(2) and MSG_PEEK therein"]
     #[doc = "* {peek_off}"]
-    flag Peek = MSG_PEEK;
+    flag MSG_PEEK = cty::MSG_PEEK;
 
     #[doc = "Tells the kernel to use read sizes instead of truncated sizes."]
     #[doc = ""]
@@ -222,7 +217,7 @@ create! {
     #[doc = "= See also"]
     #[doc = ""]
     #[doc = "* link:man:recvmsg(2) and MSG_TRUNC therein"]
-    flag RealSize = MSG_TRUNC;
+    flag MSG_REAL_SIZE = cty::MSG_TRUNC;
 
     #[doc = "Requests the full buffer to be filled."]
     #[doc = ""]
@@ -234,9 +229,9 @@ create! {
     #[doc = "= See also"]
     #[doc = ""]
     #[doc = "* link:man:recvmsg(2) and MSG_WAITALL therein"]
-    flag WaitAll = MSG_WAITALL;
+    flag MSG_WAIT_ALL = cty::MSG_WAITALL;
 
-    flag WaitForOne = MSG_WAITFORONE;
+    flag MSG_WAIT_FOR_ONE = cty::MSG_WAITFORONE;
 
     #[doc = "Marks truncated control messages."]
     #[doc = ""]
@@ -248,9 +243,9 @@ create! {
     #[doc = "= See also"]
     #[doc = ""]
     #[doc = "* link:man:recvmsg(2) and MSG_CTRUNC therein"]
-    flag CMsgTruncated = MSG_CTRUNC;
+    flag MSG_CMSG_TRUNCATED = cty::MSG_CTRUNC;
 
-    flag FastOpen = MSG_FASTOPEN;
-    flag NoSignal = MSG_NOSIGNAL;
-    flag CMsgCloexec = MSG_CMSG_CLOEXEC;
+    flag MSG_FAST_OPEN = cty::MSG_FASTOPEN;
+    flag MSG_NO_SIGNAL = cty::MSG_NOSIGNAL;
+    flag MSG_CMSG_CLOSE_ON_EXEC = cty::MSG_CMSG_CLOEXEC;
 }

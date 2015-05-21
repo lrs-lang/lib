@@ -6,5 +6,5 @@
 
 pub use lrs_core::mem::{
     uninit, cast, zeroed, copy_as, forget, drop, copy, unsafe_copy, swap, replace,
-    size_of, align_of, needs_drop,
+    size_of, align_of, needs_drop, as_bytes, as_mut_bytes,
 };

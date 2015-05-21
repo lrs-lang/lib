@@ -27,6 +27,7 @@ extern crate lrs_box;
 extern crate lrs_dev;
 extern crate lrs_dir;
 extern crate lrs_fd;
+extern crate lrs_netlink;
 extern crate lrs_file;
 extern crate lrs_fmt;
 extern crate lrs_fs;

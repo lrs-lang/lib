@@ -2777,96 +2777,6 @@ pub const SHUT_RD   : c_int = 0;
 pub const SHUT_WR   : c_int = 1;
 pub const SHUT_RDWR : c_int = 2;
 
-// uapi/hdlc/ioctl.h
-
-pub const GENERIC_HDLC_VERSION   : c_int = 4;
-pub const CLOCK_DEFAULT          : c_int = 0;
-pub const CLOCK_EXT              : c_int = 1;
-pub const CLOCK_INT              : c_int = 2;
-pub const CLOCK_TXINT            : c_int = 3;
-pub const CLOCK_TXFROMRX         : c_int = 4;
-pub const ENCODING_DEFAULT       : c_int = 0;
-pub const ENCODING_NRZ           : c_int = 1;
-pub const ENCODING_NRZI          : c_int = 2;
-pub const ENCODING_FM_MARK       : c_int = 3;
-pub const ENCODING_FM_SPACE      : c_int = 4;
-pub const ENCODING_MANCHESTER    : c_int = 5;
-pub const PARITY_DEFAULT         : c_int = 0;
-pub const PARITY_NONE            : c_int = 1;
-pub const PARITY_CRC16_PR0       : c_int = 2;
-pub const PARITY_CRC16_PR1       : c_int = 3;
-pub const PARITY_CRC16_PR0_CCITT : c_int = 4;
-pub const PARITY_CRC16_PR1_CCITT : c_int = 5;
-pub const PARITY_CRC32_PR0_CCITT : c_int = 6;
-pub const PARITY_CRC32_PR1_CCITT : c_int = 7;
-pub const LMI_DEFAULT            : c_int = 0;
-pub const LMI_NONE               : c_int = 1;
-pub const LMI_ANSI               : c_int = 2;
-pub const LMI_CCITT              : c_int = 3;
-pub const LMI_CISCO              : c_int = 4;
-
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct sync_serial_settings {
-    pub clock_rate: c_uint,
-    pub clock_type: c_uint,
-    pub loopback:   c_ushort,
-}
-
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct te1_settings {
-    pub clock_rate: c_uint,
-    pub clock_type: c_uint,
-    pub loopback:   c_ushort,
-    pub slot_map:   c_uint,
-}
-
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct raw_hdlc_proto {
-    pub encoding: c_ushort,
-    pub parity:   c_ushort,
-}
-
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct fr_proto {
-    pub t391: c_uint,
-    pub t392: c_uint,
-    pub n391: c_uint,
-    pub n392: c_uint,
-    pub n393: c_uint,
-    pub lmi:  c_ushort,
-    pub dce:  c_ushort,
-}
-
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct fr_proto_pvc {
-    pub dlci: c_uint,
-}
-
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct fr_proto_pvc_info {
-    pub dlci: c_uint,
-    pub master: [c_char; IFNAMSIZ],
-}
-
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct cisco_proto {
-    pub interval: c_uint,
-    pub timeout:  c_uint,
-}
-
-
-// uapi/linux/if.h
-
-pub const IFNAMSIZ : usize = 16;
-pub const IFALIASZ : usize = 256;
-
 // XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX
 // XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX
 // XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX
@@ -3560,61 +3470,61 @@ pub const RTNL_FAMILY_IPMR  : c_int = 128;
 pub const RTNL_FAMILY_IP6MR : c_int = 129;
 pub const RTNL_FAMILY_MAX   : c_int = 129;
 
-pub const RTM_BASE         : c_int = 16;
-pub const RTM_NEWLINK      : c_int = 16;
-pub const RTM_DELLINK      : c_int = 17;
-pub const RTM_GETLINK      : c_int = 18;
-pub const RTM_SETLINK      : c_int = 19;
-pub const RTM_NEWADDR      : c_int = 20;
-pub const RTM_DELADDR      : c_int = 21;
-pub const RTM_GETADDR      : c_int = 22;
-pub const RTM_NEWROUTE     : c_int = 24;
-pub const RTM_DELROUTE     : c_int = 25;
-pub const RTM_GETROUTE     : c_int = 26;
-pub const RTM_NEWNEIGH     : c_int = 28;
-pub const RTM_DELNEIGH     : c_int = 29;
-pub const RTM_GETNEIGH     : c_int = 30;
-pub const RTM_NEWRULE      : c_int = 32;
-pub const RTM_DELRULE      : c_int = 33;
-pub const RTM_GETRULE      : c_int = 34;
-pub const RTM_NEWQDISC     : c_int = 36;
-pub const RTM_DELQDISC     : c_int = 37;
-pub const RTM_GETQDISC     : c_int = 38;
-pub const RTM_NEWTCLASS    : c_int = 40;
-pub const RTM_DELTCLASS    : c_int = 41;
-pub const RTM_GETTCLASS    : c_int = 42;
-pub const RTM_NEWTFILTER   : c_int = 44;
-pub const RTM_DELTFILTER   : c_int = 45;
-pub const RTM_GETTFILTER   : c_int = 46;
-pub const RTM_NEWACTION    : c_int = 48;
-pub const RTM_DELACTION    : c_int = 49;
-pub const RTM_GETACTION    : c_int = 50;
-pub const RTM_NEWPREFIX    : c_int = 52;
-pub const RTM_GETMULTICAST : c_int = 58;
-pub const RTM_GETANYCAST   : c_int = 62;
-pub const RTM_NEWNEIGHTBL  : c_int = 64;
-pub const RTM_GETNEIGHTBL  : c_int = 66;
-pub const RTM_SETNEIGHTBL  : c_int = 67;
-pub const RTM_NEWNDUSEROPT : c_int = 68;
-pub const RTM_NEWADDRLABEL : c_int = 72;
-pub const RTM_DELADDRLABEL : c_int = 73;
-pub const RTM_GETADDRLABEL : c_int = 74;
-pub const RTM_GETDCB       : c_int = 78;
-pub const RTM_SETDCB       : c_int = 79;
-pub const RTM_NEWNETCONF   : c_int = 80;
-pub const RTM_GETNETCONF   : c_int = 82;
-pub const RTM_NEWMDB       : c_int = 84;
-pub const RTM_DELMDB       : c_int = 85;
-pub const RTM_GETMDB       : c_int = 86;
-pub const RTM_NEWNSID      : c_int = 88;
-pub const RTM_GETNSID      : c_int = 90;
-pub const __RTM_MAX        : c_int = 91;
+pub const RTM_BASE         : u16 = 16;
+pub const RTM_NEWLINK      : u16 = 16;
+pub const RTM_DELLINK      : u16 = 17;
+pub const RTM_GETLINK      : u16 = 18;
+pub const RTM_SETLINK      : u16 = 19;
+pub const RTM_NEWADDR      : u16 = 20;
+pub const RTM_DELADDR      : u16 = 21;
+pub const RTM_GETADDR      : u16 = 22;
+pub const RTM_NEWROUTE     : u16 = 24;
+pub const RTM_DELROUTE     : u16 = 25;
+pub const RTM_GETROUTE     : u16 = 26;
+pub const RTM_NEWNEIGH     : u16 = 28;
+pub const RTM_DELNEIGH     : u16 = 29;
+pub const RTM_GETNEIGH     : u16 = 30;
+pub const RTM_NEWRULE      : u16 = 32;
+pub const RTM_DELRULE      : u16 = 33;
+pub const RTM_GETRULE      : u16 = 34;
+pub const RTM_NEWQDISC     : u16 = 36;
+pub const RTM_DELQDISC     : u16 = 37;
+pub const RTM_GETQDISC     : u16 = 38;
+pub const RTM_NEWTCLASS    : u16 = 40;
+pub const RTM_DELTCLASS    : u16 = 41;
+pub const RTM_GETTCLASS    : u16 = 42;
+pub const RTM_NEWTFILTER   : u16 = 44;
+pub const RTM_DELTFILTER   : u16 = 45;
+pub const RTM_GETTFILTER   : u16 = 46;
+pub const RTM_NEWACTION    : u16 = 48;
+pub const RTM_DELACTION    : u16 = 49;
+pub const RTM_GETACTION    : u16 = 50;
+pub const RTM_NEWPREFIX    : u16 = 52;
+pub const RTM_GETMULTICAST : u16 = 58;
+pub const RTM_GETANYCAST   : u16 = 62;
+pub const RTM_NEWNEIGHTBL  : u16 = 64;
+pub const RTM_GETNEIGHTBL  : u16 = 66;
+pub const RTM_SETNEIGHTBL  : u16 = 67;
+pub const RTM_NEWNDUSEROPT : u16 = 68;
+pub const RTM_NEWADDRLABEL : u16 = 72;
+pub const RTM_DELADDRLABEL : u16 = 73;
+pub const RTM_GETADDRLABEL : u16 = 74;
+pub const RTM_GETDCB       : u16 = 78;
+pub const RTM_SETDCB       : u16 = 79;
+pub const RTM_NEWNETCONF   : u16 = 80;
+pub const RTM_GETNETCONF   : u16 = 82;
+pub const RTM_NEWMDB       : u16 = 84;
+pub const RTM_DELMDB       : u16 = 85;
+pub const RTM_GETMDB       : u16 = 86;
+pub const RTM_NEWNSID      : u16 = 88;
+pub const RTM_GETNSID      : u16 = 90;
+pub const __RTM_MAX        : u16 = 91;
 
-pub const RTM_MAX : c_int = ((__RTM_MAX + 3) & !3) - 1;
+pub const RTM_MAX : u16 = ((__RTM_MAX + 3) & !3) - 1;
 
-pub const RTM_NR_MSGTYPES : c_int = RTM_MAX + 1 - RTM_BASE;
-pub const RTM_NR_FAMILIES : c_int = RTM_NR_MSGTYPES >> 2;
-pub fn RTM_FAM(cmd: c_int) -> c_int { (((cmd) - RTM_BASE) >> 2) }
+pub const RTM_NR_MSGTYPES : u16 = RTM_MAX + 1 - RTM_BASE;
+pub const RTM_NR_FAMILIES : u16 = RTM_NR_MSGTYPES >> 2;
+pub fn RTM_FAM(cmd: u16) -> u16 { (((cmd) - RTM_BASE) >> 2) }
 
 #[repr(C)]
 #[derive(Pod, Eq)]
@@ -4146,66 +4056,66 @@ pub struct rtnl_link_ifmap {
     pub port:      __u8,
 }
 
-pub const IFLA_UNSPEC          : c_int = 0;
-pub const IFLA_ADDRESS         : c_int = 1;
-pub const IFLA_BROADCAST       : c_int = 2;
-pub const IFLA_IFNAME          : c_int = 3;
-pub const IFLA_MTU             : c_int = 4;
-pub const IFLA_LINK            : c_int = 5;
-pub const IFLA_QDISC           : c_int = 6;
-pub const IFLA_STATS           : c_int = 7;
-pub const IFLA_COST            : c_int = 8;
-pub const IFLA_PRIORITY        : c_int = 9;
-pub const IFLA_MASTER          : c_int = 10;
-pub const IFLA_WIRELESS        : c_int = 11;
-pub const IFLA_PROTINFO        : c_int = 12;
-pub const IFLA_TXQLEN          : c_int = 13;
-pub const IFLA_MAP             : c_int = 14;
-pub const IFLA_WEIGHT          : c_int = 15;
-pub const IFLA_OPERSTATE       : c_int = 16;
-pub const IFLA_LINKMODE        : c_int = 17;
-pub const IFLA_LINKINFO        : c_int = 18;
-pub const IFLA_NET_NS_PID      : c_int = 19;
-pub const IFLA_IFALIAS         : c_int = 20;
-pub const IFLA_NUM_VF          : c_int = 21;
-pub const IFLA_VFINFO_LIST     : c_int = 22;
-pub const IFLA_STATS64         : c_int = 23;
-pub const IFLA_VF_PORTS        : c_int = 24;
-pub const IFLA_PORT_SELF       : c_int = 25;
-pub const IFLA_AF_SPEC         : c_int = 26;
-pub const IFLA_GROUP           : c_int = 27;
-pub const IFLA_NET_NS_FD       : c_int = 28;
-pub const IFLA_EXT_MASK        : c_int = 29;
-pub const IFLA_PROMISCUITY     : c_int = 30;
-pub const IFLA_NUM_TX_QUEUES   : c_int = 31;
-pub const IFLA_NUM_RX_QUEUES   : c_int = 32;
-pub const IFLA_CARRIER         : c_int = 33;
-pub const IFLA_PHYS_PORT_ID    : c_int = 34;
-pub const IFLA_CARRIER_CHANGES : c_int = 35;
-pub const IFLA_PHYS_SWITCH_ID  : c_int = 36;
-pub const IFLA_LINK_NETNSID    : c_int = 37;
-pub const __IFLA_MAX           : c_int = 38;
+pub const IFLA_UNSPEC          : u16 = 0;
+pub const IFLA_ADDRESS         : u16 = 1;
+pub const IFLA_BROADCAST       : u16 = 2;
+pub const IFLA_IFNAME          : u16 = 3;
+pub const IFLA_MTU             : u16 = 4;
+pub const IFLA_LINK            : u16 = 5;
+pub const IFLA_QDISC           : u16 = 6;
+pub const IFLA_STATS           : u16 = 7;
+pub const IFLA_COST            : u16 = 8;
+pub const IFLA_PRIORITY        : u16 = 9;
+pub const IFLA_MASTER          : u16 = 10;
+pub const IFLA_WIRELESS        : u16 = 11;
+pub const IFLA_PROTINFO        : u16 = 12;
+pub const IFLA_TXQLEN          : u16 = 13;
+pub const IFLA_MAP             : u16 = 14;
+pub const IFLA_WEIGHT          : u16 = 15;
+pub const IFLA_OPERSTATE       : u16 = 16;
+pub const IFLA_LINKMODE        : u16 = 17;
+pub const IFLA_LINKINFO        : u16 = 18;
+pub const IFLA_NET_NS_PID      : u16 = 19;
+pub const IFLA_IFALIAS         : u16 = 20;
+pub const IFLA_NUM_VF          : u16 = 21;
+pub const IFLA_VFINFO_LIST     : u16 = 22;
+pub const IFLA_STATS64         : u16 = 23;
+pub const IFLA_VF_PORTS        : u16 = 24;
+pub const IFLA_PORT_SELF       : u16 = 25;
+pub const IFLA_AF_SPEC         : u16 = 26;
+pub const IFLA_GROUP           : u16 = 27;
+pub const IFLA_NET_NS_FD       : u16 = 28;
+pub const IFLA_EXT_MASK        : u16 = 29;
+pub const IFLA_PROMISCUITY     : u16 = 30;
+pub const IFLA_NUM_TX_QUEUES   : u16 = 31;
+pub const IFLA_NUM_RX_QUEUES   : u16 = 32;
+pub const IFLA_CARRIER         : u16 = 33;
+pub const IFLA_PHYS_PORT_ID    : u16 = 34;
+pub const IFLA_CARRIER_CHANGES : u16 = 35;
+pub const IFLA_PHYS_SWITCH_ID  : u16 = 36;
+pub const IFLA_LINK_NETNSID    : u16 = 37;
+pub const __IFLA_MAX           : u16 = 38;
 
-pub const IFLA_MAX : c_int = __IFLA_MAX - 1;
+pub const IFLA_MAX : u16 = __IFLA_MAX - 1;
 
-pub const IFLA_INET_UNSPEC : c_int = 0;
-pub const IFLA_INET_CONF   : c_int = 1;
-pub const __IFLA_INET_MAX  : c_int = 2;
+pub const IFLA_INET_UNSPEC : u16 = 0;
+pub const IFLA_INET_CONF   : u16 = 1;
+pub const __IFLA_INET_MAX  : u16 = 2;
 
-pub const IFLA_INET_MAX : c_int = __IFLA_INET_MAX - 1;
+pub const IFLA_INET_MAX : u16 = __IFLA_INET_MAX - 1;
 
-pub const IFLA_INET6_UNSPEC        : c_int = 0;
-pub const IFLA_INET6_FLAGS         : c_int = 1;
-pub const IFLA_INET6_CONF          : c_int = 2;
-pub const IFLA_INET6_STATS         : c_int = 3;
-pub const IFLA_INET6_MCAST         : c_int = 4;
-pub const IFLA_INET6_CACHEINFO     : c_int = 5;
-pub const IFLA_INET6_ICMP6STATS    : c_int = 6;
-pub const IFLA_INET6_TOKEN         : c_int = 7;
-pub const IFLA_INET6_ADDR_GEN_MODE : c_int = 8;
-pub const __IFLA_INET6_MAX         : c_int = 9;
+pub const IFLA_INET6_UNSPEC        : u16 = 0;
+pub const IFLA_INET6_FLAGS         : u16 = 1;
+pub const IFLA_INET6_CONF          : u16 = 2;
+pub const IFLA_INET6_STATS         : u16 = 3;
+pub const IFLA_INET6_MCAST         : u16 = 4;
+pub const IFLA_INET6_CACHEINFO     : u16 = 5;
+pub const IFLA_INET6_ICMP6STATS    : u16 = 6;
+pub const IFLA_INET6_TOKEN         : u16 = 7;
+pub const IFLA_INET6_ADDR_GEN_MODE : u16 = 8;
+pub const __IFLA_INET6_MAX         : u16 = 9;
 
-pub const IFLA_INET6_MAX : c_int = __IFLA_INET6_MAX - 1;
+pub const IFLA_INET6_MAX : u16 = __IFLA_INET6_MAX - 1;
 
 pub type in6_addr_gen_mode = c_int;
 pub const IN6_ADDR_GEN_MODE_EUI64 : in6_addr_gen_mode = 0;
@@ -4247,25 +4157,25 @@ pub struct ifla_cacheinfo {
     pub retrans_time:   __u32,
 }
 
-pub const IFLA_INFO_UNSPEC     : c_int = 0;
-pub const IFLA_INFO_KIND       : c_int = 1;
-pub const IFLA_INFO_DATA       : c_int = 2;
-pub const IFLA_INFO_XSTATS     : c_int = 3;
-pub const IFLA_INFO_SLAVE_KIND : c_int = 4;
-pub const IFLA_INFO_SLAVE_DATA : c_int = 5;
-pub const __IFLA_INFO_MAX      : c_int = 6;
+pub const IFLA_INFO_UNSPEC     : u16 = 0;
+pub const IFLA_INFO_KIND       : u16 = 1;
+pub const IFLA_INFO_DATA       : u16 = 2;
+pub const IFLA_INFO_XSTATS     : u16 = 3;
+pub const IFLA_INFO_SLAVE_KIND : u16 = 4;
+pub const IFLA_INFO_SLAVE_DATA : u16 = 5;
+pub const __IFLA_INFO_MAX      : u16 = 6;
 
-pub const IFLA_INFO_MAX : c_int = __IFLA_INFO_MAX - 1;
+pub const IFLA_INFO_MAX : u16 = __IFLA_INFO_MAX - 1;
 
-pub const IFLA_VLAN_UNSPEC      : c_int = 0;
-pub const IFLA_VLAN_ID          : c_int = 1;
-pub const IFLA_VLAN_FLAGS       : c_int = 2;
-pub const IFLA_VLAN_EGRESS_QOS  : c_int = 3;
-pub const IFLA_VLAN_INGRESS_QOS : c_int = 4;
-pub const IFLA_VLAN_PROTOCOL    : c_int = 5;
-pub const __IFLA_VLAN_MAX       : c_int = 6;
+pub const IFLA_VLAN_UNSPEC      : u16 = 0;
+pub const IFLA_VLAN_ID          : u16 = 1;
+pub const IFLA_VLAN_FLAGS       : u16 = 2;
+pub const IFLA_VLAN_EGRESS_QOS  : u16 = 3;
+pub const IFLA_VLAN_INGRESS_QOS : u16 = 4;
+pub const IFLA_VLAN_PROTOCOL    : u16 = 5;
+pub const __IFLA_VLAN_MAX       : u16 = 6;
 
-pub const IFLA_VLAN_MAX : c_int = __IFLA_VLAN_MAX - 1;
+pub const IFLA_VLAN_MAX : u16 = __IFLA_VLAN_MAX - 1;
 
 #[repr(C)]
 #[derive(Pod, Eq)]
@@ -4674,3 +4584,175 @@ pub const NDTA_GC_INTERVAL : c_int = 8;
 pub const __NDTA_MAX       : c_int = 9;
 
 pub const NDTA_MAX : c_int = __NDTA_MAX - 1;
+
+////////////////////////////
+// include/uapi/hdlc/ioctl.h
+////////////////////////////
+
+pub const GENERIC_HDLC_VERSION   : c_int = 4;
+pub const CLOCK_DEFAULT          : c_int = 0;
+pub const CLOCK_EXT              : c_int = 1;
+pub const CLOCK_INT              : c_int = 2;
+pub const CLOCK_TXINT            : c_int = 3;
+pub const CLOCK_TXFROMRX         : c_int = 4;
+pub const ENCODING_DEFAULT       : c_int = 0;
+pub const ENCODING_NRZ           : c_int = 1;
+pub const ENCODING_NRZI          : c_int = 2;
+pub const ENCODING_FM_MARK       : c_int = 3;
+pub const ENCODING_FM_SPACE      : c_int = 4;
+pub const ENCODING_MANCHESTER    : c_int = 5;
+pub const PARITY_DEFAULT         : c_int = 0;
+pub const PARITY_NONE            : c_int = 1;
+pub const PARITY_CRC16_PR0       : c_int = 2;
+pub const PARITY_CRC16_PR1       : c_int = 3;
+pub const PARITY_CRC16_PR0_CCITT : c_int = 4;
+pub const PARITY_CRC16_PR1_CCITT : c_int = 5;
+pub const PARITY_CRC32_PR0_CCITT : c_int = 6;
+pub const PARITY_CRC32_PR1_CCITT : c_int = 7;
+pub const LMI_DEFAULT            : c_int = 0;
+pub const LMI_NONE               : c_int = 1;
+pub const LMI_ANSI               : c_int = 2;
+pub const LMI_CCITT              : c_int = 3;
+pub const LMI_CISCO              : c_int = 4;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct sync_serial_settings {
+    pub clock_rate: c_uint,
+    pub clock_type: c_uint,
+    pub loopback:   c_ushort,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct te1_settings {
+    pub clock_rate: c_uint,
+    pub clock_type: c_uint,
+    pub loopback:   c_ushort,
+    pub slot_map:   c_uint,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct raw_hdlc_proto {
+    pub encoding: c_ushort,
+    pub parity:   c_ushort,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct fr_proto {
+    pub t391: c_uint,
+    pub t392: c_uint,
+    pub n391: c_uint,
+    pub n392: c_uint,
+    pub n393: c_uint,
+    pub lmi:  c_ushort,
+    pub dce:  c_ushort,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct fr_proto_pvc {
+    pub dlci: c_uint,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct fr_proto_pvc_info {
+    pub dlci: c_uint,
+    pub master: [c_char; IFNAMSIZ],
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct cisco_proto {
+    pub interval: c_uint,
+    pub timeout:  c_uint,
+}
+
+//////////////////////////
+// include/uapi/linux/if.h
+//////////////////////////
+
+pub const IFNAMSIZ : usize = 16;
+pub const IFALIASZ : usize = 256;
+
+pub type net_device_flags = c_int;
+pub const IFF_UP          : net_device_flags = 1<<0;
+pub const IFF_BROADCAST   : net_device_flags = 1<<1;
+pub const IFF_DEBUG       : net_device_flags = 1<<2;
+pub const IFF_LOOPBACK    : net_device_flags = 1<<3;
+pub const IFF_POINTOPOINT : net_device_flags = 1<<4;
+pub const IFF_NOTRAILERS  : net_device_flags = 1<<5;
+pub const IFF_RUNNING     : net_device_flags = 1<<6;
+pub const IFF_NOARP       : net_device_flags = 1<<7;
+pub const IFF_PROMISC     : net_device_flags = 1<<8;
+pub const IFF_ALLMULTI    : net_device_flags = 1<<9;
+pub const IFF_MASTER      : net_device_flags = 1<<10;
+pub const IFF_SLAVE       : net_device_flags = 1<<11;
+pub const IFF_MULTICAST   : net_device_flags = 1<<12;
+pub const IFF_PORTSEL     : net_device_flags = 1<<13;
+pub const IFF_AUTOMEDIA   : net_device_flags = 1<<14;
+pub const IFF_DYNAMIC     : net_device_flags = 1<<15;
+pub const IFF_LOWER_UP    : net_device_flags = 1<<16;
+pub const IFF_DORMANT     : net_device_flags = 1<<17;
+pub const IFF_ECHO        : net_device_flags = 1<<18;
+
+pub const IFF_VOLATILE : net_device_flags =
+        IFF_LOOPBACK | IFF_POINTOPOINT | IFF_BROADCAST | IFF_ECHO |
+		IFF_MASTER | IFF_SLAVE | IFF_RUNNING | IFF_LOWER_UP | IFF_DORMANT;
+
+pub const IF_GET_IFACE            : c_int = 0x0001;
+pub const IF_GET_PROTO            : c_int = 0x0002;
+pub const IF_IFACE_V35            : c_int = 0x1000;
+pub const IF_IFACE_V24            : c_int = 0x1001;
+pub const IF_IFACE_X21            : c_int = 0x1002;
+pub const IF_IFACE_T1             : c_int = 0x1003;
+pub const IF_IFACE_E1             : c_int = 0x1004;
+pub const IF_IFACE_SYNC_SERIAL    : c_int = 0x1005;
+pub const IF_IFACE_X21D           : c_int = 0x1006;
+pub const IF_PROTO_HDLC           : c_int = 0x2000;
+pub const IF_PROTO_PPP            : c_int = 0x2001;
+pub const IF_PROTO_CISCO          : c_int = 0x2002;
+pub const IF_PROTO_FR             : c_int = 0x2003;
+pub const IF_PROTO_FR_ADD_PVC     : c_int = 0x2004;
+pub const IF_PROTO_FR_DEL_PVC     : c_int = 0x2005;
+pub const IF_PROTO_X25            : c_int = 0x2006;
+pub const IF_PROTO_HDLC_ETH       : c_int = 0x2007;
+pub const IF_PROTO_FR_ADD_ETH_PVC : c_int = 0x2008;
+pub const IF_PROTO_FR_DEL_ETH_PVC : c_int = 0x2009;
+pub const IF_PROTO_FR_PVC         : c_int = 0x200A;
+pub const IF_PROTO_FR_ETH_PVC     : c_int = 0x200B;
+pub const IF_PROTO_RAW            : c_int = 0x200C;
+
+pub const IF_OPER_UNKNOWN        : c_int = 0;
+pub const IF_OPER_NOTPRESENT     : c_int = 1;
+pub const IF_OPER_DOWN           : c_int = 2;
+pub const IF_OPER_LOWERLAYERDOWN : c_int = 3;
+pub const IF_OPER_TESTING        : c_int = 4;
+pub const IF_OPER_DORMANT        : c_int = 5;
+pub const IF_OPER_UP             : c_int = 6;
+
+pub const IF_LINK_MODE_DEFAULT : c_int = 0;
+pub const IF_LINK_MODE_DORMANT : c_int = 1;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct ifmap {
+    pub mem_start: c_ulong,
+    pub mem_end:   c_ulong,
+    pub base_addr: c_ushort,
+    pub irq:       c_uchar,
+    pub dma:       c_uchar,
+    pub port:      c_uchar,
+}
+
+////////////////////////////
+// include/uapi/linux/veth.h
+////////////////////////////
+
+pub const VETH_INFO_UNSPEC : u16 = 0;
+pub const VETH_INFO_PEER   : u16 = 1;
+pub const __VETH_INFO_MAX  : u16 = 2;
+pub const VETH_INFO_MAX    : u16 = __VETH_INFO_MAX - 1;

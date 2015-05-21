@@ -16,12 +16,14 @@ extern crate lrs_syscall as syscall;
 extern crate lrs_libc;
 
 #[prelude_import] use base::prelude::*;
+use core::marker::{Leak};
 use core::{num, mem};
 use base::{error};
 
 pub use libc::{Libc};
 pub use no::{NoMem};
 pub use bda::{Bda};
+pub use align::{AlignAlloc};
 
 #[cfg(jemalloc)]
 pub use jemalloc::{JeMalloc};
@@ -29,6 +31,7 @@ pub use jemalloc::{JeMalloc};
 mod libc;
 mod no;
 mod bda;
+mod align;
 
 #[cfg(jemalloc)]
 mod jemalloc;
@@ -54,7 +57,7 @@ pub fn empty_ptr<T>() -> *mut T {
 /// == Bugs
 ///
 /// This needs better documentation.
-pub trait Allocator {
+pub trait Allocator: 'static + Leak {
     /// Allocates a chunk of bytes with the specified properties.
     ///
     /// [argument, size]
