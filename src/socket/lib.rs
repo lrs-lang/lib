@@ -37,5 +37,6 @@ pub mod socket;
 pub mod kind;
 pub mod flags;
 pub mod ip_proto;
+pub mod nl_proto;
 pub mod domain;
 pub mod msg;

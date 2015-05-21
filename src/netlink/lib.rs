@@ -27,14 +27,14 @@ use vec::{Vec};
 
 macro_rules! align { ($val:expr) => { ($val + 3) & !3 } }
 
-pub struct NlBuf<'a, H = alloc::Heap>
+pub struct NlBuf<H = alloc::Heap>
     where H: Allocator
 {
-    buf: Vec<'a, u8, AlignAlloc<u32, H>>,
+    buf: Vec<u8, AlignAlloc<u32, H>>,
 }
 
-impl<'a> NlBuf<'a, NoMem> {
-    pub fn buffered(buf: &'a mut [u8]) -> NlBuf<'a, NoMem> {
+impl<'a> NlBuf<NoMem<'a>> {
+    pub fn buffered(buf: &'a mut [u8]) -> NlBuf<NoMem<'a>> {
         let (ptr, cap) = {
             let mut vec: Vec<u32, _> = Vec::buffered(buf);
             (vec.as_mut_ptr() as *mut u8, vec.capacity() * 4)
@@ -45,21 +45,21 @@ impl<'a> NlBuf<'a, NoMem> {
     }
 }
 
-impl<H> NlBuf<'static, H>
+impl<H> NlBuf<H>
     where H: Allocator
 {
-    pub fn new() -> NlBuf<'static, H> {
+    pub fn new() -> NlBuf<H> {
         NlBuf {
             buf: Vec::new(),
         }
     }
 }
 
-impl<'a, H> NlBuf<'a, H>
+impl<H> NlBuf<H>
     where H: Allocator
 {
-    pub fn new_msg<'b>(&'b mut self, payload: usize, ty: u16, flags: u16, seq: u32,
-                       port: u32) -> Result<NlMsg<'b, 'a, H>> {
+    pub fn new_msg<'a>(&'a mut self, payload: usize, ty: u16, flags: u16, seq: u32,
+                       port: u32) -> Result<NlMsg<'a, H>> {
         let len = mem::size_of::<nlmsghdr>() + payload;
         let hdr_pos = self.buf.len();
         try!(self.buf.reserve(align!(len)));
@@ -79,7 +79,7 @@ impl<'a, H> NlBuf<'a, H>
     }
 }
 
-impl<'a, H> AsRef<[u8]> for NlBuf<'a, H>
+impl<H> AsRef<[u8]> for NlBuf<H>
     where H: Allocator
 {
     fn as_ref(&self) -> &[u8] {
@@ -87,14 +87,14 @@ impl<'a, H> AsRef<[u8]> for NlBuf<'a, H>
     }
 }
 
-pub struct NlMsg<'a, 'b: 'a, H = alloc::Heap>
+pub struct NlMsg<'a, H: 'a = alloc::Heap>
     where H: Allocator
 {
-    data: NlData<'a, 'b, H>,
+    data: NlData<'a, H>,
     start: usize,
 }
 
-impl<'a, 'b, H> NlMsg<'a, 'b, H>
+impl<'a, H> NlMsg<'a, H>
     where H: Allocator
 {
     pub fn cancel(mut self) {
@@ -103,24 +103,24 @@ impl<'a, 'b, H> NlMsg<'a, 'b, H>
     }
 }
 
-impl<'a, 'b, H> Deref for NlMsg<'a, 'b, H>
+impl<'a, H> Deref for NlMsg<'a, H>
     where H: Allocator
 {
-    type Target = NlData<'a, 'b, H>;
-    fn deref(&self) -> &NlData<'a, 'b, H> {
+    type Target = NlData<'a, H>;
+    fn deref(&self) -> &NlData<'a, H> {
         &self.data
     }
 }
 
-impl<'a, 'b, H> DerefMut for NlMsg<'a, 'b, H>
+impl<'a, H> DerefMut for NlMsg<'a, H>
     where H: Allocator
 {
-    fn deref_mut(&mut self) -> &mut NlData<'a, 'b, H> {
+    fn deref_mut(&mut self) -> &mut NlData<'a, H> {
         &mut self.data
     }
 }
 
-impl<'a, 'b, H> Drop for NlMsg<'a, 'b, H>
+impl<'a, H> Drop for NlMsg<'a, H>
     where H: Allocator
 {
     fn drop(&mut self) {
@@ -131,14 +131,14 @@ impl<'a, 'b, H> Drop for NlMsg<'a, 'b, H>
     }
 }
 
-pub struct NlAttr<'a, 'b: 'a, H = alloc::Heap>
+pub struct NlAttr<'a, H: 'a = alloc::Heap>
     where H: Allocator
 {
-    data: NlData<'a, 'b, H>,
+    data: NlData<'a, H>,
     start: usize,
 }
 
-impl<'a, 'b, H> NlAttr<'a, 'b, H>
+impl<'a, H> NlAttr<'a, H>
     where H: Allocator
 {
     pub fn cancel(mut self) {
@@ -147,24 +147,24 @@ impl<'a, 'b, H> NlAttr<'a, 'b, H>
     }
 }
 
-impl<'a, 'b, H> Deref for NlAttr<'a, 'b, H>
+impl<'a, H> Deref for NlAttr<'a, H>
     where H: Allocator
 {
-    type Target = NlData<'a, 'b, H>;
-    fn deref(&self) -> &NlData<'a, 'b, H> {
+    type Target = NlData<'a, H>;
+    fn deref(&self) -> &NlData<'a, H> {
         &self.data
     }
 }
 
-impl<'a, 'b, H> DerefMut for NlAttr<'a, 'b, H>
+impl<'a, H> DerefMut for NlAttr<'a, H>
     where H: Allocator
 {
-    fn deref_mut(&mut self) -> &mut NlData<'a, 'b, H> {
+    fn deref_mut(&mut self) -> &mut NlData<'a, H> {
         &mut self.data
     }
 }
 
-impl<'a, 'b, H> Drop for NlAttr<'a, 'b, H>
+impl<'a, H> Drop for NlAttr<'a, H>
     where H: Allocator
 {
     fn drop(&mut self) {
@@ -175,13 +175,13 @@ impl<'a, 'b, H> Drop for NlAttr<'a, 'b, H>
     }
 }
 
-pub struct NlData<'a, 'b: 'a, H = alloc::Heap>
+pub struct NlData<'a, H: 'a = alloc::Heap>
     where H: Allocator
 {
-    buf: &'a mut Vec<'b, u8, AlignAlloc<u32, H>>,
+    buf: &'a mut Vec<u8, AlignAlloc<u32, H>>,
 }
 
-impl<'a, 'b, H> NlData<'a, 'b, H>
+impl<'a, H> NlData<'a, H>
     where H: Allocator
 {
     unsafe fn add_attr(&mut self, payload: usize) -> Result<(&mut nlattr, &mut [u8])> {
@@ -252,8 +252,8 @@ impl<'a, 'b, H> NlData<'a, 'b, H>
         Ok(())
     }
 
-    pub fn add_nested<'c>(&'c mut self, payload: usize,
-                          ty: u16) -> Result<NlAttr<'c, 'b, H>> {
+    pub fn add_nested<'b>(&'b mut self, payload: usize,
+                          ty: u16) -> Result<NlAttr<'b, H>> {
         let len = mem::size_of::<nlattr>() + payload;
         let hdr_pos = self.buf.len();
         try!(self.buf.reserve(align!(len)));

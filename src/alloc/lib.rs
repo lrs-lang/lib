@@ -57,7 +57,7 @@ pub fn empty_ptr<T>() -> *mut T {
 /// == Bugs
 ///
 /// This needs better documentation.
-pub trait Allocator: 'static + Leak {
+pub trait Allocator: Leak {
     /// Allocates a chunk of bytes with the specified properties.
     ///
     /// [argument, size]

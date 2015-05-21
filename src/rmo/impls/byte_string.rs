@@ -12,8 +12,8 @@ use alloc::{Allocator};
 impl<H> ToOwned<H> for ByteStr
     where H: Allocator,
 {
-    type Owned = ByteString<'static, H>;
-    fn to_owned(&self) -> Result<ByteString<'static, H>> {
+    type Owned = ByteString<H>;
+    fn to_owned(&self) -> Result<ByteString<H>> {
         self.as_ref().to_owned().map(|o| ByteString::from_vec(o))
     }
 }

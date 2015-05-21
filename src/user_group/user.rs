@@ -111,13 +111,13 @@ impl<'a> Debug for Info<'a> {
 /// Struct holding allocated user info.
 #[derive(Clone, Eq)]
 pub struct Information {
-    name:     ByteString<'static>,
-    password: ByteString<'static>,
+    name:     ByteString,
+    password: ByteString,
     user_id:  UserId,
     group_id: GroupId,
-    comment:  ByteString<'static>,
-    home:     ByteString<'static>,
-    shell:    ByteString<'static>,
+    comment:  ByteString,
+    home:     ByteString,
+    shell:    ByteString,
 }
 
 impl Information {
@@ -218,7 +218,7 @@ pub fn iter<'a>(error: Option<&'a mut Result>) -> InformationIter<'a> {
 
 /// An allocating iterator over users.
 pub struct InformationIter<'a> {
-    file: BufReader<'static, File>,
+    file: BufReader<File>,
     err: Option<&'a mut Result>,
 }
 

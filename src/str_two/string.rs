@@ -9,14 +9,14 @@ use vec::{Vec};
 use alloc::{self, Allocator};
 
 /// An owned UTF-8 string.
-pub struct String<'a, Heap = alloc::Heap>
+pub struct String<Heap = alloc::Heap>
     where Heap: Allocator,
 {
-    data: Vec<'a, u8>,
+    data: Vec<u8>,
     _marker: PhantomData<Heap>,
 }
 
-impl<'a, H> Deref for String<'a, H>
+impl<H> Deref for String<H>
     where H: Allocator,
 {
     type Target = str;
@@ -25,7 +25,7 @@ impl<'a, H> Deref for String<'a, H>
     }
 }
 
-impl<'a, H> Debug for String<'a, H>
+impl<H> Debug for String<H>
     where H: Allocator,
 {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
@@ -33,7 +33,7 @@ impl<'a, H> Debug for String<'a, H>
     }
 }
 
-impl<'a, H> Display for String<'a, H>
+impl<H> Display for String<H>
     where H: Allocator,
 {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {

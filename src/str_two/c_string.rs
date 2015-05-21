@@ -11,13 +11,13 @@ use vec::{Vec};
 use alloc::{self, Allocator};
 
 /// An owned byte slice that has exactly one null byte at the very end.
-pub struct CString<'a, Heap = alloc::Heap>
+pub struct CString<Heap = alloc::Heap>
     where Heap: Allocator,
 {
-    data: Vec<'a, u8, Heap>,
+    data: Vec<u8, Heap>,
 }
 
-impl<'a, H> CString<'a, H>
+impl<H> CString<H>
     where H: Allocator,
 {
     /// Creates a `CString` by wrapping a vector without checking the vector for validity.
@@ -29,12 +29,12 @@ impl<'a, H> CString<'a, H>
     ///
     /// If the vector doesn't have exactly one null byte as its last entry, the behavior
     /// is undefined.
-    pub unsafe fn from_bytes_unchecked(bytes: Vec<'a, u8, H>) -> CString<'a, H> {
+    pub unsafe fn from_bytes_unchecked(bytes: Vec<u8, H>) -> CString<H> {
         CString { data: bytes }
     }
 }
 
-impl<'a, H> Deref for CString<'a, H>
+impl<H> Deref for CString<H>
     where H: Allocator,
 {
     type Target = CStr;
@@ -43,7 +43,7 @@ impl<'a, H> Deref for CString<'a, H>
     }
 }
 
-impl<'a, H> Debug for CString<'a, H>
+impl<H> Debug for CString<H>
     where H: Allocator,
 {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
@@ -51,7 +51,7 @@ impl<'a, H> Debug for CString<'a, H>
     }
 }
 
-impl<'a, H> AsRef<CStr> for CString<'a, H>
+impl<H> AsRef<CStr> for CString<H>
     where H: Allocator,
 {
     fn as_ref(&self) -> &CStr {
@@ -59,7 +59,7 @@ impl<'a, H> AsRef<CStr> for CString<'a, H>
     }
 }
 
-impl<'a, H> AsMut<CStr> for CString<'a, H>
+impl<H> AsMut<CStr> for CString<H>
     where H: Allocator,
 {
     fn as_mut(&mut self) -> &mut CStr {
@@ -67,7 +67,7 @@ impl<'a, H> AsMut<CStr> for CString<'a, H>
     }
 }
 
-impl<'b, H> ToCStr for CString<'b, H>
+impl<H> ToCStr for CString<H>
     where H: Allocator,
 {
     fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {

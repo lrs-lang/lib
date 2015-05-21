@@ -134,10 +134,10 @@ impl<'a> Debug for Info<'a> {
 /// Struct holding allocated group info.
 #[derive(Clone, Eq)]
 pub struct Information {
-    name:     ByteString<'static>,
-    password: ByteString<'static>,
+    name:     ByteString,
+    password: ByteString,
     id:       GroupId,
-    members:  Vec<'static, ByteString<'static>>,
+    members:  Vec<ByteString>,
 }
 
 impl Information {
@@ -239,7 +239,7 @@ impl<'a> GroupInfo<'a> for Information {
 
 /// Iterator over the members in allocated group data.
 pub struct InformationMemberIter<'a> {
-    iter: slice::Items<'a, ByteString<'static>>,
+    iter: slice::Items<'a, ByteString>,
 }
 
 impl<'a> Iterator for InformationMemberIter<'a> {
@@ -263,7 +263,7 @@ pub fn iter<'a>(error: Option<&'a mut Result>) -> InformationIter<'a> {
 }
 
 pub struct InformationIter<'a> {
-    file: BufReader<'static, File>,
+    file: BufReader<File>,
     err: Option<&'a mut Result>,
 }
 

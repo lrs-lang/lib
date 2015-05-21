@@ -14,7 +14,7 @@ use alloc::{Allocator};
 /// Objects that can be turned into a `CString` by allocating.
 pub trait ToCString {
     /// Converts the object into an allocated `CString`.
-    fn to_cstring<H>(&self) -> Result<CString<'static, H>> where H: Allocator;
+    fn to_cstring<H>(&self) -> Result<CString<H>> where H: Allocator;
 
     /// Tries to convert the object into an `Rmo<CStr>` with or without allocating.
     ///
@@ -37,7 +37,7 @@ pub trait ToCString {
 }
 
 impl<'b, T: ToCString+?Sized> ToCString for &'b T {
-    fn to_cstring<H>(&self) -> Result<CString<'static, H>>
+    fn to_cstring<H>(&self) -> Result<CString<H>>
         where H: Allocator,
     {
         (**self).to_cstring()
@@ -51,7 +51,7 @@ impl<'b, T: ToCString+?Sized> ToCString for &'b T {
 }
 
 impl<'b, T: ToCString+?Sized> ToCString for &'b mut T {
-    fn to_cstring<H>(&self) -> Result<CString<'static, H>>
+    fn to_cstring<H>(&self) -> Result<CString<H>>
         where H: Allocator,
     {
         (**self).to_cstring()
@@ -65,7 +65,7 @@ impl<'b, T: ToCString+?Sized> ToCString for &'b mut T {
 }
 
 impl ToCString for CStr {
-    fn to_cstring<H>(&self) -> Result<CString<'static, H>>
+    fn to_cstring<H>(&self) -> Result<CString<H>>
         where H: Allocator,
     {
         let bytes: &[u8] = self.bytes_with_null();
@@ -86,7 +86,7 @@ impl ToCString for CStr {
 }
 
 impl ToCString for [u8] {
-    fn to_cstring<H>(&self) -> Result<CString<'static, H>>
+    fn to_cstring<H>(&self) -> Result<CString<H>>
         where H: Allocator,
     {
         if let Some(idx) = memchr(self, 0) {
@@ -128,7 +128,7 @@ impl ToCString for [u8] {
 }
 
 impl ToCString for [i8] {
-    fn to_cstring<H>(&self) -> Result<CString<'static, H>>
+    fn to_cstring<H>(&self) -> Result<CString<H>>
         where H: Allocator,
     {
         let bytes: &[u8] = self.as_ref();
@@ -144,7 +144,7 @@ impl ToCString for [i8] {
 }
 
 impl ToCString for str {
-    fn to_cstring<H>(&self) -> Result<CString<'static, H>>
+    fn to_cstring<H>(&self) -> Result<CString<H>>
         where H: Allocator,
     {
         let bytes: &[u8] = self.as_ref();
@@ -160,7 +160,7 @@ impl ToCString for str {
 }
 
 impl ToCString for NoNullStr {
-    fn to_cstring<H>(&self) -> Result<CString<'static, H>>
+    fn to_cstring<H>(&self) -> Result<CString<H>>
         where H: Allocator,
     {
         let bytes: &[u8] = self.as_ref();
@@ -188,10 +188,10 @@ impl ToCString for NoNullStr {
     }
 }
 
-impl<'b, A> ToCString for NoNullString<'b, A>
+impl<A> ToCString for NoNullString<A>
     where A: Allocator,
 {
-    fn to_cstring<H>(&self) -> Result<CString<'static, H>>
+    fn to_cstring<H>(&self) -> Result<CString<H>>
         where H: Allocator,
     {
         self.deref().to_cstring()
@@ -205,7 +205,7 @@ impl<'b, A> ToCString for NoNullString<'b, A>
 }
 
 impl ToCString for ByteStr {
-    fn to_cstring<H>(&self) -> Result<CString<'static, H>>
+    fn to_cstring<H>(&self) -> Result<CString<H>>
         where H: Allocator,
     {
         self.as_ref().to_cstring()
@@ -218,10 +218,10 @@ impl ToCString for ByteStr {
     }
 }
 
-impl<'b, A> ToCString for ByteString<'b, A>
+impl<A> ToCString for ByteString<A>
     where A: Allocator,
 {
-    fn to_cstring<H>(&self) -> Result<CString<'static, H>>
+    fn to_cstring<H>(&self) -> Result<CString<H>>
         where H: Allocator,
     {
         self.as_byte_str().to_cstring()

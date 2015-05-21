@@ -27,8 +27,8 @@ use lrs_cty::{
 
 fn main() {
     let mut buf: NlBuf = NlBuf::new();
-    let flags = NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL;
     {
+        let flags = NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL;
         let mut msg = buf.new_msg(0, RTM_NEWLINK, flags, 1, 0).unwrap();
         let head: ifinfomsg = mem::zeroed();
         msg.add_raw(mem::as_bytes(&head));
@@ -41,7 +41,7 @@ fn main() {
                 {
                     let mut attr = attr.add_nested(0, VETH_INFO_PEER).unwrap();
                     attr.add_raw(mem::as_bytes(&head));
-                    attr.add_string(IFLA_IFNAME, "enp2s0f0");
+                    attr.add_string(IFLA_IFNAME, "veth1");
                 }
             }
         }

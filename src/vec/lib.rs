@@ -33,24 +33,24 @@ use base::rmo::{AsRef, AsMut};
 use str_one::{ByteStr, CStr, AsCStr, AsMutCStr, ToCStr, NoNullStr, AsMutNoNullStr,
               AsNoNullStr};
 
-pub type SVec<T, Heap = alloc::Heap> = Vec<'static, T, Heap>;
+pub type SVec<T, Heap = alloc::Heap> = Vec<T, Heap>;
 
 /// A vector.
-pub struct Vec<'a, T, Heap = alloc::Heap>
+pub struct Vec<T, Heap = alloc::Heap>
     where Heap: Allocator,
 {
     ptr: *mut T,
     len: usize,
     cap: usize,
-    _marker: PhantomData<(&'a (), Heap)>,
+    _marker: PhantomData<Heap>,
 }
 
-impl<'a, T> Vec<'a, T, alloc::NoMem> {
+impl<'a, T> Vec<T, alloc::NoMem<'a>> {
     /// Creates a vector which is backed by borrowed memory.
     ///
     /// [argument, buf]
     /// The buffer which will be used to store elements it.
-    pub fn buffered(buf: &'a mut [u8]) -> Vec<'a, T, alloc::NoMem> {
+    pub fn buffered(buf: &'a mut [u8]) -> Vec<T, alloc::NoMem<'a>> {
         if mem::size_of::<T>() == 0 {
             return Vec { ptr: empty_ptr(), len: 0, cap: 0, _marker: PhantomData };
         }
@@ -71,7 +71,7 @@ impl<'a, T> Vec<'a, T, alloc::NoMem> {
     }
 }
 
-impl<T, H> Vec<'static, T, H>
+impl<T, H> Vec<T, H>
     where H: Allocator,
 {
     /// Creates a new allocating vector.
@@ -89,7 +89,7 @@ impl<T, H> Vec<'static, T, H>
     }
 }
 
-impl<'a, T, H> Vec<'a, T, H>
+impl<T, H> Vec<T, H>
     where H: Allocator,
 {
     /// Creates a new vector from its raw parts.
@@ -106,7 +106,7 @@ impl<'a, T, H> Vec<'a, T, H>
     /// = Remarks
     ///
     /// The allocator must be the same allocator that was used to allocate the memory.
-    pub unsafe fn from_raw_parts(ptr: *mut T, len: usize, cap: usize) -> Vec<'a, T, H> {
+    pub unsafe fn from_raw_parts(ptr: *mut T, len: usize, cap: usize) -> Vec<T, H> {
         Vec {
             ptr: ptr,
             len: len,
@@ -267,7 +267,7 @@ impl<'a, T, H> Vec<'a, T, H>
     }
 }
 
-impl<'a, H> BufWrite for Vec<'a, u8, H>
+impl<H> BufWrite for Vec<u8, H>
     where H: Allocator,
 {
     fn read_to_eof<R>(&mut self, mut r: R) -> Result<usize>
@@ -294,10 +294,10 @@ impl<'a, H> BufWrite for Vec<'a, u8, H>
     }
 }
 
-unsafe impl<'a, T, H> Sync for Vec<'a, T, H> where T: Sync, H: Allocator, { }
-unsafe impl<'a, T, H> Send for Vec<'a, T, H> where T: Send, H: Allocator+Send { }
+unsafe impl<T, H> Sync for Vec<T, H> where T: Sync, H: Allocator, { }
+unsafe impl<T, H> Send for Vec<T, H> where T: Send, H: Allocator+Send { }
 
-impl<'a, T, H> Drop for Vec<'a, T, H>
+impl<T, H> Drop for Vec<T, H>
     where H: Allocator,
 {
     fn drop(&mut self) {
@@ -314,7 +314,7 @@ impl<'a, T, H> Drop for Vec<'a, T, H>
     }
 }
 
-impl<'a, T, H1, H2> Eq<Vec<'a, T, H1>> for Vec<'a, T, H2>
+impl<T, H1, H2> Eq<Vec<T, H1>> for Vec<T, H2>
     where T: Eq,
           H1: Allocator,
           H2: Allocator,
@@ -327,7 +327,7 @@ impl<'a, T, H1, H2> Eq<Vec<'a, T, H1>> for Vec<'a, T, H2>
     }
 }
 
-impl<'a, T, H> Eq<[T]> for Vec<'a, T, H>
+impl<T, H> Eq<[T]> for Vec<T, H>
     where T: Eq,
           H: Allocator,
 {
@@ -339,7 +339,7 @@ impl<'a, T, H> Eq<[T]> for Vec<'a, T, H>
     }
 }
 
-impl<'a, T, H> Deref for Vec<'a, T, H>
+impl<T, H> Deref for Vec<T, H>
     where H: Allocator,
 {
     type Target = [T];
@@ -348,7 +348,7 @@ impl<'a, T, H> Deref for Vec<'a, T, H>
     }
 }
 
-impl<'a, T, H> DerefMut for Vec<'a, T, H>
+impl<T, H> DerefMut for Vec<T, H>
     where H: Allocator,
 {
     fn deref_mut(&mut self) -> &mut [T] {
@@ -356,7 +356,7 @@ impl<'a, T, H> DerefMut for Vec<'a, T, H>
     }
 }
 
-impl<'a, T, H> Debug for Vec<'a, T, H>
+impl<T, H> Debug for Vec<T, H>
     where T: Debug,
           H: Allocator,
 {
@@ -378,7 +378,7 @@ impl<T, H> Clone for SVec<T, H>
     }
 }
 
-impl<'a, T, H> IntoIterator for &'a Vec<'a, T, H>
+impl<'a, T, H> IntoIterator for &'a Vec<T, H>
     where H: Allocator,
 {
     type Item = &'a T;
@@ -386,7 +386,7 @@ impl<'a, T, H> IntoIterator for &'a Vec<'a, T, H>
     fn into_iter(self) -> slice::Items<'a, T> { self.iter() }
 }
 
-impl<'a, T, H> AsRef<[T]> for Vec<'a, T, H>
+impl<T, H> AsRef<[T]> for Vec<T, H>
     where H: Allocator,
 {
     fn as_ref(&self) -> &[T] {
@@ -394,7 +394,7 @@ impl<'a, T, H> AsRef<[T]> for Vec<'a, T, H>
     }
 }
 
-impl<'a, T, H> AsMut<[T]> for Vec<'a, T, H>
+impl<T, H> AsMut<[T]> for Vec<T, H>
     where H: Allocator,
 {
     fn as_mut(&mut self) -> &mut [T] {
@@ -402,7 +402,7 @@ impl<'a, T, H> AsMut<[T]> for Vec<'a, T, H>
     }
 }
 
-impl<'a, H> AsRef<ByteStr> for Vec<'a, u8, H>
+impl<H> AsRef<ByteStr> for Vec<u8, H>
     where H: Allocator,
 {
     fn as_ref(&self) -> &ByteStr {
@@ -410,7 +410,7 @@ impl<'a, H> AsRef<ByteStr> for Vec<'a, u8, H>
     }
 }
 
-impl<'a, H> AsMut<ByteStr> for Vec<'a, u8, H>
+impl<H> AsMut<ByteStr> for Vec<u8, H>
     where H: Allocator,
 {
     fn as_mut(&mut self) -> &mut ByteStr {
@@ -418,7 +418,7 @@ impl<'a, H> AsMut<ByteStr> for Vec<'a, u8, H>
     }
 }
 
-impl<'a, H> AsCStr for Vec<'a, u8, H>
+impl<H> AsCStr for Vec<u8, H>
     where H: Allocator,
 {
     fn as_cstr(&self) -> Result<&CStr> {
@@ -426,7 +426,7 @@ impl<'a, H> AsCStr for Vec<'a, u8, H>
     }
 }
 
-impl<'a, H> AsMutCStr for Vec<'a, u8, H>
+impl<H> AsMutCStr for Vec<u8, H>
     where H: Allocator,
 {
     fn as_mut_cstr(&mut self) -> Result<&mut CStr> {
@@ -434,7 +434,7 @@ impl<'a, H> AsMutCStr for Vec<'a, u8, H>
     }
 }
 
-impl<'b, H> ToCStr for Vec<'b, u8, H>
+impl<H> ToCStr for Vec<u8, H>
     where H: Allocator,
 {
     fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
@@ -450,7 +450,7 @@ impl<'b, H> ToCStr for Vec<'b, u8, H>
     }
 }
 
-impl<'a, H> AsNoNullStr for Vec<'a, u8, H>
+impl<H> AsNoNullStr for Vec<u8, H>
     where H: Allocator,
 {
     fn as_no_null_str(&self) -> Result<&NoNullStr> {
@@ -458,7 +458,7 @@ impl<'a, H> AsNoNullStr for Vec<'a, u8, H>
     }
 }
 
-impl<'a, H> AsMutNoNullStr for Vec<'a, u8, H>
+impl<H> AsMutNoNullStr for Vec<u8, H>
     where H: Allocator,
 {
     fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
@@ -466,7 +466,7 @@ impl<'a, H> AsMutNoNullStr for Vec<'a, u8, H>
     }
 }
 
-impl<'a, H> Write for Vec<'a, u8, H>
+impl<H> Write for Vec<u8, H>
     where H: Allocator,
 {
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
@@ -487,7 +487,7 @@ impl<'a, H> Write for Vec<'a, u8, H>
     }
 }
 
-impl<'a, H> Vec<'a, u8, H>
+impl<H> Vec<u8, H>
     where H: Allocator,
 {
     pub fn unused(&mut self) -> &mut [u8] {

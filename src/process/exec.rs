@@ -78,8 +78,7 @@ pub fn exec<P>(path: P, argv: &[*const c_char]) -> Result
     exec_rel(&file, abs_file, argv)
 }
 
-fn exec_rel<'a, H>(rel: &CStr, mut buf: NoNullString<'a, H>,
-                   args: &[*const c_char]) -> Result
+fn exec_rel<H>(rel: &CStr, mut buf: NoNullString<H>, args: &[*const c_char]) -> Result
     where H: Allocator,
 {
     for path in try!(env::path()) {

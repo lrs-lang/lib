@@ -11,10 +11,26 @@ pub use lrs_socket::msg::{MsgFlags};
 pub use lrs_socket::socket::{Socket};
 pub use lrs_socket::addr::{SockAddr, AddrType};
 
+/// Netlink sockets.
 pub mod netlink {
     pub use lrs_netlink::{
         NlBuf, NlMsg, NlAttr,
     };
+
+    pub use lrs_socket::nl_proto::{Proto};
+
+    /// Netlink protocol constants.
+    ///
+    /// = Description
+    ///
+    /// This module contains protocols for use over Netlink.
+    pub mod proto {
+        pub use lrs_socket::nl_proto::{
+            Route, UserSock, Firewall, InetDiag, NetfilterLog, Xfrm, SeLinux, IScsi,
+            Audit, FibLookup, Connector, Netfilter, Ipv6Fw, Dnrtmsg, KobjectUevent,
+            Generic, ScsiTransport, EcryptFs, Rdma, Crypto,
+        };
+    }
 }
 
 /// Kernel domain constants.

@@ -146,21 +146,21 @@ impl<'a> Debug for CMsg<'a> {
 }
 
 /// A buffer for creating control messages.
-pub struct CMsgBuf<'a, Heap = alloc::Heap>
+pub struct CMsgBuf<Heap = alloc::Heap>
     where Heap: Allocator,
 {
     data: *mut u8,
     len: usize,
     cap: usize,
-    _marker: PhantomData<(&'a (), Heap)>,
+    _marker: PhantomData<Heap>,
 }
 
-impl<'a> CMsgBuf<'a, NoMem> {
+impl<'a> CMsgBuf<NoMem<'a>> {
     /// Creates a new `CMsgBuf` backed by borrowed memory.
     ///
     /// [argument, buf]
     /// The buffer in which the control messages will be created.
-    pub fn buffered(buf: &'a mut [u64]) -> CMsgBuf<'a, NoMem> {
+    pub fn buffered(buf: &'a mut [u64]) -> CMsgBuf<NoMem<'a>> {
         CMsgBuf {
             data: buf.as_mut_ptr() as *mut u8,
             len: 0,
@@ -170,7 +170,7 @@ impl<'a> CMsgBuf<'a, NoMem> {
     }
 }
 
-impl<H> CMsgBuf<'static, H>
+impl<H> CMsgBuf<H>
     where H: Allocator,
 {
     /// Creates a new `CMsgBuf` backed by allocated memory.
@@ -182,7 +182,7 @@ impl<H> CMsgBuf<'static, H>
     ///
     /// The buffer will be resized dynamically. This constructor fails if no memory can be
     /// allocated.
-    pub fn new() -> Result<CMsgBuf<'static, H>> {
+    pub fn new() -> Result<CMsgBuf<H>> {
         let ptr: *mut usize = unsafe { try!(H::allocate_array(1)) };
         Ok(CMsgBuf {
             data: ptr as *mut u8,
@@ -193,7 +193,7 @@ impl<H> CMsgBuf<'static, H>
     }
 }
 
-impl<'a, H> CMsgBuf<'a, H>
+impl<H> CMsgBuf<H>
     where H: Allocator,
 {
     /// Returns the size currently occupied by the create messages.
@@ -251,7 +251,7 @@ impl<'a, H> CMsgBuf<'a, H>
     }
 }
 
-impl<'a, H> Drop for CMsgBuf<'a, H>
+impl<H> Drop for CMsgBuf<H>
     where H: Allocator,
 {
     fn drop(&mut self) {
@@ -261,7 +261,9 @@ impl<'a, H> Drop for CMsgBuf<'a, H>
     }
 }
 
-impl<'a> AsRef<[u8]> for CMsgBuf<'a> {
+impl<H> AsRef<[u8]> for CMsgBuf<H>
+    where H: Allocator,
+{
     fn as_ref(&self) -> &[u8] {
         unsafe { slice::from_ptr(self.data, self.len) }
     }

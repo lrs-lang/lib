@@ -47,7 +47,7 @@ pub trait IteratorExt : Iterator+Sized {
     /// = Remarks
     ///
     /// If no space can be allocated for the elements, the process is aborted.
-    fn collect(self) -> Vec<'static, Self::Item> {
+    fn collect(self) -> Vec<Self::Item> {
         let mut vec = Vec::new();
         vec.extend(self);
         vec

@@ -40,6 +40,7 @@ use cmsg::{CMsgIter, Credentials};
 use time_base::{self};
 
 use ip_proto::{self};
+use nl_proto::{self};
 use domain::{self, Domain};
 use kind::{self, Kind};
 use msg::{MsgFlags};
@@ -236,6 +237,23 @@ impl Socket {
     /// * link:man:raw(7)
     pub fn ipv6_raw(proto: ip_proto::Proto, flags: SockFlags) -> Result<Socket> {
         Socket::new(domain::Ipv6, kind::Raw, proto.0 as c_int, flags)
+    }
+
+    /// Creates a new Netlink socket.
+    ///
+    /// = Remarks
+    ///
+    /// This is equivalent to
+    ///
+    /// ----
+    /// Socket::new(domain::Netlink, kind::Raw, proto.0 as c_int, flags)
+    /// ----
+    ///
+    /// = See also
+    ///
+    /// * link:man:netlink(7)
+    pub fn netlink(proto: nl_proto::Proto, flags: SockFlags) -> Result<Socket> {
+        Socket::new(domain::Netlink, kind::Raw, proto.0, flags)
     }
 
     /// Binds the socket to an address.

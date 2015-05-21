@@ -25,7 +25,7 @@ use arch_fns::{memchr};
 pub mod lrs { pub use base::lrs::*; }
 
 /// A buffered reader.
-pub struct BufReader<'a, R, Heap = alloc::Heap>
+pub struct BufReader<R, Heap = alloc::Heap>
     where R: Read,
           Heap: Allocator,
 {
@@ -34,10 +34,10 @@ pub struct BufReader<'a, R, Heap = alloc::Heap>
     start: usize,
     end: usize,
     read: R,
-    _marker: PhantomData<(&'a (), Heap)>,
+    _marker: PhantomData<Heap>,
 }
 
-impl<R, H> BufReader<'static, R, H>
+impl<R, H> BufReader<R, H>
     where R: Read,
           H: Allocator,
 {
@@ -52,7 +52,7 @@ impl<R, H> BufReader<'static, R, H>
     /// = Remarks
     ///
     /// `size` will be increased to the next power of two.
-    pub fn new(read: R, size: usize) -> Result<BufReader<'static, R, H>> {
+    pub fn new(read: R, size: usize) -> Result<BufReader<R, H>> {
         let size = match size.checked_next_power_of_two() {
             Some(n) => n,
             _ => return Err(error::NoMemory),
@@ -69,7 +69,7 @@ impl<R, H> BufReader<'static, R, H>
     }
 }
 
-impl<'a, R> BufReader<'a, R, NoMem>
+impl<'a, R> BufReader<R, NoMem<'a>>
     where R: Read,
 {
     /// Creates a new buffered reader that is backed by borrowed memory.
@@ -83,7 +83,7 @@ impl<'a, R> BufReader<'a, R, NoMem>
     /// = Remarks
     ///
     /// The length of `buf` will be decreased to the previous power of two.
-    pub fn buffered(read: R, buf: &'a mut [u8]) -> BufReader<'a, R, NoMem> {
+    pub fn buffered(read: R, buf: &'a mut [u8]) -> BufReader<R, NoMem<'a>> {
         let size = match buf.len() {
             0 => 0,
             n => 1 << (num::usize::BITS - n.leading_zeros() - 1),
@@ -99,7 +99,7 @@ impl<'a, R> BufReader<'a, R, NoMem>
     }
 }
 
-impl<'a, R, H> BufReader<'a, R, H>
+impl<R, H> BufReader<R, H>
     where R: Read,
           H: Allocator,
 {
@@ -156,7 +156,7 @@ impl<'a, R, H> BufReader<'a, R, H>
     }
 }
 
-impl<'a, R, H> Read for BufReader<'a, R, H>
+impl<R, H> Read for BufReader<R, H>
     where R: Read,
           H: Allocator,
 {
@@ -192,7 +192,7 @@ impl<'a, R, H> Read for BufReader<'a, R, H>
     }
 }
 
-impl<'a, R, H> Drop for BufReader<'a, R, H>
+impl<R, H> Drop for BufReader<R, H>
     where R: Read,
           H: Allocator,
 {
@@ -201,7 +201,7 @@ impl<'a, R, H> Drop for BufReader<'a, R, H>
     }
 }
 
-impl<'a, R, H> BufRead for BufReader<'a, R, H>
+impl<R, H> BufRead for BufReader<R, H>
     where R: Read,
           H: Allocator,
 {

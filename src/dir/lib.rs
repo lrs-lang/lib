@@ -75,7 +75,7 @@ pub fn iter<'a, S>(path: S, error: Option<&'a mut Result>) -> Iter<'a>
 /// An iterator over the entries in a directory.
 pub struct Iter<'a> {
     dir: File,
-    buf: Vec<'static, u8>,
+    buf: Vec<u8>,
     buf_pos: usize,
     err: Option<&'a mut Result>,
 }
@@ -148,7 +148,7 @@ pub struct Entry {
     /// The type of the entry.
     pub ty:    Type,
     /// The name of the entry.
-    pub name:  ByteString<'static>,
+    pub name:  ByteString,
 }
 
 impl Debug for Entry {

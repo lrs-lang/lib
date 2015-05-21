@@ -11,8 +11,8 @@ use alloc::{Allocator};
 impl<H> ToOwned<H> for CStr
     where H: Allocator,
 {
-    type Owned = CString<'static, H>;
-    fn to_owned(&self) -> Result<CString<'static, H>> {
+    type Owned = CString<H>;
+    fn to_owned(&self) -> Result<CString<H>> {
         let bytes = self.bytes_with_null();
         bytes.to_owned().map(|o| unsafe { CString::from_bytes_unchecked(o) })
     }

@@ -12,11 +12,11 @@ use alloc::{Allocator};
 
 macro_rules! owned {
     ($one:ident, $two:ident) => {
-        impl<'a, 'b, H1, H2> Eq<$two<'b, H2>> for $one<'a, H1>
+        impl<H1, H2> Eq<$two<H2>> for $one<H1>
             where H1: Allocator,
                   H2: Allocator,
         {
-            fn eq(&self, other: &$two<'b, H2>) -> bool {
+            fn eq(&self, other: &$two<H2>) -> bool {
                 self.deref() == other.deref()
             }
         }
@@ -42,7 +42,7 @@ owned!(String,       String);
 
 macro_rules! borrowed {
     ($one:ident, $two:ty) => {
-        impl<'a, H> Eq<$two> for $one<'a, H>
+        impl<H> Eq<$two> for $one<H>
             where H: Allocator,
         {
             fn eq(&self, other: &$two) -> bool {

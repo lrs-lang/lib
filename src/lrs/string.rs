@@ -10,7 +10,6 @@ pub use lrs_str_one::{
 };
 pub use lrs_str_two::{
     ByteString, NoNullString, CString, String,
-    SByteString, SNoNullString, SCString, SString,
 };
 pub use lrs_str_three::{
     ToCString,

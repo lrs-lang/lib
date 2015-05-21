@@ -20,39 +20,39 @@ use alloc::{self, Allocator};
 /// `\u{number}`.
 ///
 /// The Display implementation writes the contained bytes directly to the output.
-pub struct ByteString<'a, Heap = alloc::Heap>
+pub struct ByteString<Heap = alloc::Heap>
     where Heap: Allocator,
 {
-    data: Vec<'a, u8, Heap>,
+    data: Vec<u8, Heap>,
 }
 
-impl<H> ByteString<'static, H>
+impl<H> ByteString<H>
     where H: Allocator,
 {
     /// Creates a new allocated `ByteString`.
-    pub fn new() -> ByteString<'static, H> {
+    pub fn new() -> ByteString<H> {
         ByteString { data: Vec::new() }
     }
 }
 
-impl<'a, H> ByteString<'a, H>
+impl<H> ByteString<H>
     where H: Allocator,
 {
     /// Creates a `ByteString` by wrapping a vector.
     ///
     /// [argument, v]
     /// The vector to be wrapped.
-    pub fn from_vec(v: Vec<'a, u8, H>) -> ByteString<'a, H> {
+    pub fn from_vec(v: Vec<u8, H>) -> ByteString<H> {
         ByteString { data: v }
     }
 
     /// Unwraps the vector contained in the string.
-    pub fn unwrap(self) -> Vec<'a, u8, H> {
+    pub fn unwrap(self) -> Vec<u8, H> {
         self.data
     }
 }
 
-impl<'a, H> Deref for ByteString<'a, H>
+impl<H> Deref for ByteString<H>
     where H: Allocator,
 {
     type Target = ByteStr;
@@ -61,7 +61,7 @@ impl<'a, H> Deref for ByteString<'a, H>
     }
 }
 
-impl<'a, H> DerefMut for ByteString<'a, H>
+impl<H> DerefMut for ByteString<H>
     where H: Allocator,
 {
     fn deref_mut(&mut self) -> &mut ByteStr {
@@ -69,7 +69,7 @@ impl<'a, H> DerefMut for ByteString<'a, H>
     }
 }
 
-impl<'a, H> Debug for ByteString<'a, H>
+impl<H> Debug for ByteString<H>
     where H: Allocator,
 {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
@@ -77,7 +77,7 @@ impl<'a, H> Debug for ByteString<'a, H>
     }
 }
 
-impl<'a, H> Display for ByteString<'a, H>
+impl<H> Display for ByteString<H>
     where H: Allocator,
 {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
@@ -85,7 +85,7 @@ impl<'a, H> Display for ByteString<'a, H>
     }
 }
 
-impl<'a, H> AsRef<[u8]> for ByteString<'a, H>
+impl<H> AsRef<[u8]> for ByteString<H>
     where H: Allocator,
 {
     fn as_ref(&self) -> &[u8] {
@@ -93,7 +93,7 @@ impl<'a, H> AsRef<[u8]> for ByteString<'a, H>
     }
 }
 
-impl<'a, H> AsMut<[u8]> for ByteString<'a, H>
+impl<H> AsMut<[u8]> for ByteString<H>
     where H: Allocator,
 {
     fn as_mut(&mut self) -> &mut [u8] {
@@ -101,7 +101,7 @@ impl<'a, H> AsMut<[u8]> for ByteString<'a, H>
     }
 }
 
-impl<'a, H> AsRef<ByteStr> for ByteString<'a, H>
+impl<H> AsRef<ByteStr> for ByteString<H>
     where H: Allocator,
 {
     fn as_ref(&self) -> &ByteStr {
@@ -109,7 +109,7 @@ impl<'a, H> AsRef<ByteStr> for ByteString<'a, H>
     }
 }
 
-impl<'a, H> AsMut<ByteStr> for ByteString<'a, H>
+impl<H> AsMut<ByteStr> for ByteString<H>
     where H: Allocator,
 {
     fn as_mut(&mut self) -> &mut ByteStr {
@@ -117,15 +117,15 @@ impl<'a, H> AsMut<ByteStr> for ByteString<'a, H>
     }
 }
 
-impl<H> Clone for ByteString<'static, H>
+impl<H> Clone for ByteString<H>
     where H: Allocator,
 {
-    fn clone(&self) -> Result<ByteString<'static, H>> {
+    fn clone(&self) -> Result<ByteString<H>> {
         self.data.clone().map(|o| ByteString { data: o })
     }
 }
 
-impl<'b, H> ToCStr for ByteString<'b, H>
+impl<H> ToCStr for ByteString<H>
     where H: Allocator,
 {
     fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {

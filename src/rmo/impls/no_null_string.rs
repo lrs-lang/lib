@@ -12,8 +12,8 @@ use alloc::{Allocator};
 impl<H> ToOwned<H> for NoNullStr
     where H: Allocator,
 {
-    type Owned = NoNullString<'static, H>;
-    fn to_owned(&self) -> Result<NoNullString<'static, H>> {
+    type Owned = NoNullString<H>;
+    fn to_owned(&self) -> Result<NoNullString<H>> {
         let bytes: &[u8] = self.as_ref();
         bytes.to_owned().map(|o| unsafe { NoNullString::from_bytes_unchecked(o) })
     }

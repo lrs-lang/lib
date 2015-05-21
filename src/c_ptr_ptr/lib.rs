@@ -31,25 +31,25 @@ macro_rules! usize_align {
     ($val:expr) => { ($val + USIZE_MASK) & !USIZE_MASK }
 }
 
-pub type SCPtrPtr<Heap = alloc::Heap> = CPtrPtr<'static, Heap>;
+pub type SCPtrPtr<Heap = alloc::Heap> = CPtrPtr<Heap>;
 
 /// A helper type for creating `*const *const c_char` objects.
-pub struct CPtrPtr<'a, Heap = alloc::Heap>
+pub struct CPtrPtr<Heap = alloc::Heap>
     where Heap: Allocator,
 {
     buf: *mut usize,
     pos: usize,
     cap: usize,
     num: usize,
-    _marker: PhantomData<(&'a (), Heap)>,
+    _marker: PhantomData<Heap>,
 }
 
-impl<'a> CPtrPtr<'a, alloc::NoMem> {
+impl<'a> CPtrPtr<alloc::NoMem<'a>> {
     /// Creates a new `CPtrPtr` from borrowed memory.
     ///
     /// [argument, buf]
     /// The buffer which backs the `CPtrPtr`.
-    pub fn buffered(buf: &'a mut [u8]) -> CPtrPtr<'a, alloc::NoMem> {
+    pub fn buffered(buf: &'a mut [u8]) -> CPtrPtr<alloc::NoMem<'a>> {
         let (ptr, cap) = if buf.len() < USIZE_BYTES {
             (buf.as_mut_ptr(), 0)
         } else {
@@ -68,11 +68,11 @@ impl<'a> CPtrPtr<'a, alloc::NoMem> {
     }
 }
 
-impl<Heap> CPtrPtr<'static, Heap>
+impl<Heap> CPtrPtr<Heap>
     where Heap: Allocator,
 {
     /// Allocates a new `CPtrPtr`.
-    pub fn new() -> Result<CPtrPtr<'static, Heap>> {
+    pub fn new() -> Result<CPtrPtr<Heap>> {
         const DEFAULT_CAP: usize = 32;
         Ok(CPtrPtr {
             buf: try!(unsafe { Heap::allocate_array(DEFAULT_CAP) }),
@@ -84,7 +84,7 @@ impl<Heap> CPtrPtr<'static, Heap>
     }
 }
 
-impl<'a, Heap> CPtrPtr<'a, Heap>
+impl<Heap> CPtrPtr<Heap>
     where Heap: Allocator,
 {
     fn double(&mut self) -> Result {

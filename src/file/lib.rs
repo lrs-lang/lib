@@ -475,7 +475,7 @@ pub fn read_link_buf<P>(link: P, buf: &mut [u8]) -> Result<&mut NoNullStr>
 /// * link:man:readlinkat(2)
 /// * link:lrs::file::read_link_buf
 /// * link:lrs::file::File::rel_read_link
-pub fn read_link<P>(link: P) -> Result<NoNullString<'static>>
+pub fn read_link<P>(link: P) -> Result<NoNullString>
     where P: ToCString,
 {
     File::current_dir().rel_read_link(link)
@@ -1890,7 +1890,7 @@ impl File {
     /// = See also
     ///
     /// * link:man:readlinkat(2)
-    pub fn filename(&self) -> Result<NoNullString<'static>> {
+    pub fn filename(&self) -> Result<NoNullString> {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
         self.filename_buf(&mut buf).chain(|f| f.to_owned())
     }
@@ -2646,7 +2646,7 @@ impl File {
     /// = See also
     ///
     /// * link:man:readlinkat(2)
-    pub fn rel_read_link<P>(&self, link: P) -> Result<NoNullString<'static>>
+    pub fn rel_read_link<P>(&self, link: P) -> Result<NoNullString>
         where P: ToCString,
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
@@ -2973,9 +2973,9 @@ pub struct ListAttrIterator {
 }
 
 impl Iterator for ListAttrIterator {
-    type Item = ByteString<'static>;
+    type Item = ByteString;
 
-    fn next(&mut self) -> Option<ByteString<'static>> {
+    fn next(&mut self) -> Option<ByteString> {
         if self.pos == self.buf.len() {
             return None;
         }

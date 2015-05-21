@@ -12,9 +12,9 @@ use {Allocator};
 ///
 /// This allocator does not inspect the argumnets passed to it and always returns that no
 /// memory is available.
-pub struct NoMem;
+pub struct NoMem<'a>(PhantomData<&'a ()>);
 
-impl Allocator for NoMem {
+impl<'a> Allocator for NoMem<'a> {
     unsafe fn allocate_raw(_: usize, _: usize) -> Result<*mut u8> {
         Err(error::NoMemory)
     }

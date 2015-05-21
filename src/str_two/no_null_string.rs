@@ -11,29 +11,29 @@ use fmt::{Debug, Write};
 use alloc::{self, Allocator};
 
 /// An owned byte slice with no null bytes.
-pub struct NoNullString<'a, Heap = alloc::Heap>
+pub struct NoNullString<Heap = alloc::Heap>
     where Heap: Allocator,
 {
-    data: Vec<'a, u8, Heap>,
+    data: Vec<u8, Heap>,
 }
 
-impl<H> NoNullString<'static, H>
+impl<H> NoNullString<H>
     where H: Allocator,
 {
     /// Creates a new, allocated `NoNullString`.
-    pub fn new() -> NoNullString<'static, H> {
+    pub fn new() -> NoNullString<H> {
         NoNullString { data: Vec::new() }
     }
 }
 
-impl<'a> NoNullString<'a, alloc::NoMem> {
+impl<'a> NoNullString<alloc::NoMem<'a>> {
     /// Creates a `NoNullString` that is backed by borrowed memory.
-    pub fn buffered(buf: &'a mut [u8]) -> NoNullString<'a, alloc::NoMem> {
+    pub fn buffered(buf: &'a mut [u8]) -> NoNullString<alloc::NoMem<'a>> {
         NoNullString { data: Vec::buffered(buf) }
     }
 }
 
-impl<'a, H> NoNullString<'a, H>
+impl<H> NoNullString<H>
     where H: Allocator,
 {
     /// Creates a `NoNullString` by wrapping a vector without checking it for validity.
@@ -44,7 +44,7 @@ impl<'a, H> NoNullString<'a, H>
     /// = Remarks
     ///
     /// If the vector contains null bytes, the behavior is undefined.
-    pub unsafe fn from_bytes_unchecked(bytes: Vec<'a, u8, H>) -> NoNullString<'a, H> {
+    pub unsafe fn from_bytes_unchecked(bytes: Vec<u8, H>) -> NoNullString<H> {
         NoNullString { data: bytes }
     }
 
@@ -139,7 +139,7 @@ impl<'a, H> NoNullString<'a, H>
     }
 }
 
-impl<'a, H> Deref for NoNullString<'a, H>
+impl<H> Deref for NoNullString<H>
     where H: Allocator,
 {
     type Target = NoNullStr;
@@ -148,7 +148,7 @@ impl<'a, H> Deref for NoNullString<'a, H>
     }
 }
 
-impl<'a, H> DerefMut for NoNullString<'a, H>
+impl<H> DerefMut for NoNullString<H>
     where H: Allocator,
 {
     fn deref_mut(&mut self) -> &mut NoNullStr {
@@ -156,7 +156,7 @@ impl<'a, H> DerefMut for NoNullString<'a, H>
     }
 }
 
-impl<'a, H> AsRef<[u8]> for NoNullString<'a, H>
+impl<H> AsRef<[u8]> for NoNullString<H>
     where H: Allocator,
 {
     fn as_ref(&self) -> &[u8] {
@@ -164,7 +164,7 @@ impl<'a, H> AsRef<[u8]> for NoNullString<'a, H>
     }
 }
 
-impl<'a, H> AsRef<NoNullStr> for NoNullString<'a, H>
+impl<H> AsRef<NoNullStr> for NoNullString<H>
     where H: Allocator,
 {
     fn as_ref(&self) -> &NoNullStr {
@@ -172,7 +172,7 @@ impl<'a, H> AsRef<NoNullStr> for NoNullString<'a, H>
     }
 }
 
-impl<'a, H> AsMut<NoNullStr> for NoNullString<'a, H>
+impl<H> AsMut<NoNullStr> for NoNullString<H>
     where H: Allocator,
 {
     fn as_mut(&mut self) -> &mut NoNullStr {
@@ -180,7 +180,7 @@ impl<'a, H> AsMut<NoNullStr> for NoNullString<'a, H>
     }
 }
 
-impl<'a, H> AsNoNullStr for NoNullString<'a, H>
+impl<H> AsNoNullStr for NoNullString<H>
     where H: Allocator,
 {
     fn as_no_null_str(&self) -> Result<&NoNullStr> {
@@ -188,7 +188,7 @@ impl<'a, H> AsNoNullStr for NoNullString<'a, H>
     }
 }
 
-impl<'a, H> AsMutNoNullStr for NoNullString<'a, H>
+impl<H> AsMutNoNullStr for NoNullString<H>
     where H: Allocator,
 {
     fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
@@ -196,7 +196,7 @@ impl<'a, H> AsMutNoNullStr for NoNullString<'a, H>
     }
 }
 
-impl<'a, H> Debug for NoNullString<'a, H>
+impl<H> Debug for NoNullString<H>
     where H: Allocator,
 {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
@@ -205,7 +205,7 @@ impl<'a, H> Debug for NoNullString<'a, H>
     }
 }
 
-impl<'a, H> AsMutCStr for NoNullString<'a, H>
+impl<H> AsMutCStr for NoNullString<H>
     where H: Allocator,
 {
     fn as_mut_cstr(&mut self) -> Result<&mut CStr> {

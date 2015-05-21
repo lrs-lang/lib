@@ -11,8 +11,8 @@ impl<T, H> ToOwned<H> for [T]
     where T: Copy,
           H: Allocator,
 {
-    type Owned = Vec<'static, T, H>;
-    fn to_owned(&self) -> Result<Vec<'static, T, H>> {
+    type Owned = Vec<T, H>;
+    fn to_owned(&self) -> Result<Vec<T, H>> {
         let mut vec = try!(Vec::with_capacity(self.len()));
         vec.push_all(self);
         Ok(vec)
