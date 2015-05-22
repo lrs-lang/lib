@@ -54,19 +54,9 @@ impl<'a, T> Vec<T, alloc::NoMem<'a>> {
             return Vec { ptr: empty_ptr(), len: 0, cap: 0, pool: () };
         }
 
-        let align_mask = mem::align_of::<T>() - 1;
-        let mut ptr = buf.as_mut_ptr() as usize;
-        let mut len = buf.len();
-        if ptr & align_mask != 0 {
-            let diff = (!ptr & align_mask) + 1;
-            if diff > len {
-                return Vec { ptr: empty_ptr(), len: 0, cap: 0, pool: () };
-            }
-            ptr += diff;
-            len -= diff;
-        }
-        let cap = len / mem::size_of::<T>();
-        Vec { ptr: ptr as *mut T, len: 0, cap: cap, pool: () }
+        let buf = mem::align_for::<T>(buf);
+        let cap = buf.len() / mem::size_of::<T>();
+        Vec { ptr: buf.as_mut_ptr() as *mut T, len: 0, cap: cap, pool: () }
     }
 }
 
@@ -92,6 +82,10 @@ impl<T, H> Vec<T, H>
         Ok(Vec { ptr: ptr, len: 0, cap: cap, pool: pool })
     }
 
+    /// Creates a new allocating vector with a memory pool.
+    ///
+    /// [argument, pool]
+    /// The pool to draw memory from.
     pub fn with_pool(pool: H::Pool) -> Vec<T, H> {
         Vec { ptr: empty_ptr(), len: 0, cap: 0, pool: pool }
     }

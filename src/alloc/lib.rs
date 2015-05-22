@@ -62,9 +62,13 @@ pub fn empty_ptr<T>() -> *mut T {
 ///
 /// This needs better documentation.
 pub trait Allocator: Leak {
+    /// The memory pool used by this type.
     type Pool;
 
     /// Allocates a chunk of bytes with the specified properties.
+    ///
+    /// [argument, pool]
+    /// The pool from which to draw memory.
     ///
     /// [argument, size]
     /// The size of the allocated object.
@@ -87,6 +91,9 @@ pub trait Allocator: Leak {
 
     /// Reallocates a chunk of bytes.
     ///
+    /// [argument, pool]
+    /// The pool from which to draw memory.
+    ///
     /// [argument, ptr]
     /// The pointer that should be reallocated.
     ///
@@ -105,9 +112,9 @@ pub trait Allocator: Leak {
     /// = Remarks
     ///
     /// The pointer argument must have been returned by a previous invocation of
-    /// `allocate_raw` or `reallocate_raw` with the same allocator. The alignment argument
-    /// must be the same alignment that was previously used to allocate the object. The
-    /// oldsize argument must be the current size of the object.
+    /// `allocate_raw` or `reallocate_raw` with the same allocator and pool. The alignment
+    /// argument must be the same alignment that was previously used to allocate the
+    /// object. The oldsize argument must be the current size of the object.
     ///
     /// Otherwise the behavior is undefined.
     ///
@@ -123,6 +130,9 @@ pub trait Allocator: Leak {
 
     /// Deallocates a chunk of bytes with the specified properties.
     ///
+    /// [argument, pool]
+    /// The pool to which the memory is returned.
+    ///
     /// [argument, ptr]
     /// The pointer that should be deallocated.
     ///
@@ -135,9 +145,9 @@ pub trait Allocator: Leak {
     /// = Remarks
     ///
     /// The pointer argument must have been returned by a previous invocation of
-    /// `allocate_raw` or `reallocate_raw` with the same allocator. The alignment argument
-    /// must be the same alignment that was previously used to allocate the object. The
-    /// size argument must be the current size of the object.
+    /// `allocate_raw` or `reallocate_raw` with the same allocator and pool. The alignment
+    /// argument must be the same alignment that was previously used to allocate the
+    /// object. The size argument must be the current size of the object.
     ///
     /// Otherwise the behavior is undefined.
     ///
@@ -147,6 +157,9 @@ pub trait Allocator: Leak {
                        alignment: usize);
 
     /// Allocates an object of the specified type.
+    ///
+    /// [argument, pool]
+    /// The pool from which to draw memory.
     ///
     /// [return_value]
     /// Returns a pointer to an allocated object.
@@ -160,6 +173,9 @@ pub trait Allocator: Leak {
     }
 
     /// Allocates an array of the specified type.
+    ///
+    /// [argument, pool]
+    /// The pool from which to draw memory.
     ///
     /// [argument, num]
     /// The number of elements in the array.
@@ -180,6 +196,9 @@ pub trait Allocator: Leak {
 
     /// Reallocates an array.
     ///
+    /// [argument, pool]
+    /// The pool from which to draw memory.
+    ///
     /// [argument, ptr]
     /// The pointer that should be reallocated.
     ///
@@ -195,8 +214,8 @@ pub trait Allocator: Leak {
     /// = Remarks
     ///
     /// The pointer argument must be a pointer returned by a previous call to
-    /// `allocate_array` or `reallocate_array` with the same allocator. The oldnum
-    /// argument must be the number of elements pointed to by the pointer argument.
+    /// `allocate_array` or `reallocate_array` with the same allocator and pool. The
+    /// oldnum argument must be the number of elements pointed to by the pointer argument.
     ///
     /// Otherwise the behavior is undefined.
     ///
@@ -240,13 +259,16 @@ pub trait Allocator: Leak {
 
     /// Frees an object.
     ///
+    /// [argument, pool]
+    /// The pool to which the memory is returned.
+    ///
     /// [argument, ptr]
     /// The pointer to the object.
     ///
     /// = Remarks
     ///
     /// The pointer argument must be a pointer returned by a previous call to `allocate`
-    /// with the same allocator. Otherwise the behavior is undefined.
+    /// with the same allocator and pool. Otherwise the behavior is undefined.
     ///
     /// After this function returns the pointer argument becomes invalid and must no
     /// longer be used.

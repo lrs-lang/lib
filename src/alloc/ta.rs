@@ -8,6 +8,11 @@ use base::{error};
 use {Allocator};
 
 /// Throw-away allocator.
+///
+/// = Remarks
+///
+/// This allocator draws its memory from a provided byte slice. It will not reuse any
+/// memory and reallocations will always allocate a new object.
 pub struct TaAlloc<'a>(PhantomData<&'a ()>);
 
 impl<'a> Allocator for TaAlloc<'a> {
@@ -48,12 +53,19 @@ impl<'a> Allocator for TaAlloc<'a> {
 // pointers? Is the mutable borrowing in `new` enough to inform the compiler that all
 // `TaPool` copies can modify the `&mut`? Maybe we should write `*mut Cell<&'a mut [u8]>`
 // here.
+
+
+/// The memory pool of TaAllo.
 #[derive(Copy)]
 pub struct TaPool<'a> {
     pool: *mut &'a mut [u8],
 }
 
 impl<'a> TaPool<'a> {
+    /// Creates a new pool from a byte slice.
+    ///
+    /// [argument, pool]
+    /// A reference to the slice that will be used for allocation.
     pub fn new(pool: &'a mut &'a mut [u8]) -> TaPool<'a> {
         TaPool { pool: pool }
     }

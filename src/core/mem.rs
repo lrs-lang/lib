@@ -179,3 +179,23 @@ pub fn as_slice<T>(val: &T) -> &[T] {
 pub fn as_mut_slice<T>(val: &mut T) -> &mut [T] {
     unsafe { slice::from_ptr(val, 1) }
 }
+
+/// Left-trims a byte slice so that the first element is aligned.
+///
+/// [argument, buf]
+/// The slice to be trimmed.
+///
+/// = Remarks
+///
+/// That is, if the returned slice is not empty, the address of the first element is a
+/// multiple of the alignment of `T`.
+pub fn align_for<T>(buf: &mut [u8]) -> &mut [u8] {
+    let align_mask = align_of::<T>() - 1;
+    let addr = buf.as_ptr() as usize;
+    let diff = ((!addr & align_mask) + 1) & align_mask;
+    if diff <= buf.len() {
+        &mut buf[diff..]
+    } else {
+        &mut []
+    }
+}

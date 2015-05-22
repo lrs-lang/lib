@@ -173,6 +173,9 @@ impl<H> Information<H>
     ///
     /// [argument, id]
     /// The id of the user.
+    ///
+    /// [argument, pool]
+    /// The pool in which the information will be stored.
     pub fn from_user_id_with_pool(id: UserId, pool: H::Pool) -> Result<Information<H>> {
         let mut buf = [0; INFO_BUF_SIZE];
         Info::from_user_id(&mut buf, id).chain(|i| i.to_owned_with_pool(pool))
@@ -182,6 +185,9 @@ impl<H> Information<H>
     ///
     /// [argument, name]
     /// The name of the user.
+    ///
+    /// [argument, pool]
+    /// The pool in which the information will be stored.
     pub fn from_user_name_with_pool<S>(name: S, pool: H::Pool) -> Result<Information<H>>
         where S: AsByteStr
     {
@@ -193,6 +199,9 @@ impl<H> Information<H>
     ///
     /// [argument, pred]
     /// The predicate.
+    ///
+    /// [argument, pool]
+    /// The pool in which the information will be stored.
     pub fn find_by_with_pool<F>(pred: F, pool: H::Pool) -> Result<Information<H>>
         where F: Fn(&Info) -> bool,
     {
