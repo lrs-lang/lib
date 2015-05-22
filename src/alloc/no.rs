@@ -15,11 +15,12 @@ use {Allocator};
 pub struct NoMem<'a>(PhantomData<&'a ()>);
 
 impl<'a> Allocator for NoMem<'a> {
-    unsafe fn allocate_raw(_: usize, _: usize) -> Result<*mut u8> {
+    type Pool = ();
+    unsafe fn allocate_raw(_: &mut (), _: usize, _: usize) -> Result<*mut u8> {
         Err(error::NoMemory)
     }
-    unsafe fn free_raw(_: *mut u8, _: usize, _: usize) { }
-    unsafe fn reallocate_raw(_: *mut u8, _: usize, _: usize,
+    unsafe fn free_raw(_: &mut (), _: *mut u8, _: usize, _: usize) { }
+    unsafe fn reallocate_raw(_: &mut (), _: *mut u8, _: usize, _: usize,
                              _: usize) -> Result<*mut u8> {
         Err(error::NoMemory)
     }

@@ -5,6 +5,7 @@
 #[prelude_import] use base::prelude::*;
 use core::{mem};
 use base::clone::{Clone};
+use base::default::{Default};
 use base::rmo::{AsRef, AsMut};
 use str_one::{ByteStr, ToCStr, CStr};
 use fmt::{Debug, Display, Write};
@@ -28,6 +29,7 @@ pub struct ByteString<Heap = alloc::Heap>
 
 impl<H> ByteString<H>
     where H: Allocator,
+          H::Pool: Default,
 {
     /// Creates a new allocated `ByteString`.
     pub fn new() -> ByteString<H> {
@@ -119,6 +121,7 @@ impl<H> AsMut<ByteStr> for ByteString<H>
 
 impl<H> Clone for ByteString<H>
     where H: Allocator,
+          H::Pool: Default,
 {
     fn clone(&self) -> Result<ByteString<H>> {
         self.data.clone().map(|o| ByteString { data: o })

@@ -58,6 +58,8 @@ pub fn empty_ptr<T>() -> *mut T {
 ///
 /// This needs better documentation.
 pub trait Allocator: Leak {
+    type Pool;
+
     /// Allocates a chunk of bytes with the specified properties.
     ///
     /// [argument, size]
@@ -76,7 +78,8 @@ pub trait Allocator: Leak {
     /// by the hardware can be satisfied.
     ///
     /// If `size` is zero, the behavior is undefined.
-    unsafe fn allocate_raw(size: usize, alignment: usize) -> Result<*mut u8>;
+    unsafe fn allocate_raw(pool: &mut Self::Pool, size: usize,
+                           alignment: usize) -> Result<*mut u8>;
 
     /// Reallocates a chunk of bytes.
     ///
@@ -111,8 +114,8 @@ pub trait Allocator: Leak {
     /// are the same as the first `oldsize` bytes in the old object.
     ///
     /// If `newsize` is `0`, the behavior is undefined.
-    unsafe fn reallocate_raw(ptr: *mut u8, oldsize: usize, newsize: usize,
-                             alignment: usize) -> Result<*mut u8>;
+    unsafe fn reallocate_raw(pool: &mut Self::Pool, ptr: *mut u8, oldsize: usize,
+                             newsize: usize, alignment: usize) -> Result<*mut u8>;
 
     /// Deallocates a chunk of bytes with the specified properties.
     ///
@@ -136,7 +139,8 @@ pub trait Allocator: Leak {
     ///
     /// This function always succeeds and the pointer argument must no longer be used
     /// after this call.
-    unsafe fn free_raw(ptr: *mut u8, size: usize, alignment: usize);
+    unsafe fn free_raw(pool: &mut Self::Pool, ptr: *mut u8, size: usize,
+                       alignment: usize);
 
     /// Allocates an object of the specified type.
     ///
@@ -146,8 +150,8 @@ pub trait Allocator: Leak {
     /// = Remarks
     ///
     /// If `T` has size `0`, the behavior is undefined.
-    unsafe fn allocate<T>() -> Result<*mut T> {
-        Self::allocate_raw(mem::size_of::<T>(), mem::align_of::<T>())
+    unsafe fn allocate<T>(pool: &mut Self::Pool) -> Result<*mut T> {
+        Self::allocate_raw(pool, mem::size_of::<T>(), mem::align_of::<T>())
                     .map(|r| r as *mut T)
     }
 
@@ -162,9 +166,9 @@ pub trait Allocator: Leak {
     /// = Remarks
     ///
     /// If `num` is `0` or `T` has size `0`, the behavior is undefined.
-    unsafe fn allocate_array<T>(num: usize) -> Result<*mut T> {
+    unsafe fn allocate_array<T>(pool: &mut Self::Pool, num: usize) -> Result<*mut T> {
         match num.checked_mul(mem::size_of::<T>()) {
-            Some(size) => Self::allocate_raw(size, mem::align_of::<T>())
+            Some(size) => Self::allocate_raw(pool, size, mem::align_of::<T>())
                                     .map(|r| r as *mut T),
             _ => Err(error::InvalidArgument),
         }
@@ -196,10 +200,10 @@ pub trait Allocator: Leak {
     ///
     /// If this function returns successfully, the old pointer becomes invalid and must no
     /// longer be used. Otherwise the old pointer can continued to be used.
-    unsafe fn reallocate_array<T>(ptr: *mut T, oldnum: usize,
+    unsafe fn reallocate_array<T>(pool: &mut Self::Pool, ptr: *mut T, oldnum: usize,
                                   newnum: usize) -> Result<*mut T> {
         match newnum.checked_mul(mem::size_of::<T>()) {
-            Some(size) => Self::reallocate_raw(ptr as *mut u8,
+            Some(size) => Self::reallocate_raw(pool, ptr as *mut u8,
                                                oldnum * mem::size_of::<T>(), size,
                                                mem::align_of::<T>())
                                     .map(|r| r as *mut T),
@@ -225,8 +229,9 @@ pub trait Allocator: Leak {
     ///
     /// After this function returns the pointer argument becomes invalid and must no
     /// longer be used.
-    unsafe fn free_array<T>(ptr: *mut T, num: usize) {
-        Self::free_raw(ptr as *mut u8, num * mem::size_of::<T>(), mem::align_of::<T>());
+    unsafe fn free_array<T>(pool: &mut Self::Pool, ptr: *mut T, num: usize) {
+        Self::free_raw(pool, ptr as *mut u8, num * mem::size_of::<T>(),
+                       mem::align_of::<T>());
     }
 
     /// Frees an object.
@@ -241,7 +246,7 @@ pub trait Allocator: Leak {
     ///
     /// After this function returns the pointer argument becomes invalid and must no
     /// longer be used.
-    unsafe fn free<T>(ptr: *mut T) {
-        Self::free_raw(ptr as *mut u8, mem::size_of::<T>(), mem::align_of::<T>());
+    unsafe fn free<T>(pool: &mut Self::Pool, ptr: *mut T) {
+        Self::free_raw(pool, ptr as *mut u8, mem::size_of::<T>(), mem::align_of::<T>());
     }
 }

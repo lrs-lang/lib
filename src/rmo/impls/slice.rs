@@ -3,6 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
+use base::default::{Default};
 use vec::{Vec};
 use {ToOwned};
 use alloc::{Allocator};
@@ -10,6 +11,7 @@ use alloc::{Allocator};
 impl<T, H> ToOwned<H> for [T]
     where T: Copy,
           H: Allocator,
+          H::Pool: Default,
 {
     type Owned = Vec<T, H>;
     fn to_owned(&self) -> Result<Vec<T, H>> {

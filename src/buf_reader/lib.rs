@@ -18,6 +18,7 @@ extern crate lrs_alloc as alloc;
 #[prelude_import] use base::prelude::*;
 use core::{num, slice, cmp};
 use base::{error};
+use base::default::{Default};
 use alloc::{NoMem, Allocator};
 use io::{Read, BufRead, Write};
 use arch_fns::{memchr};
@@ -34,12 +35,13 @@ pub struct BufReader<R, Heap = alloc::Heap>
     start: usize,
     end: usize,
     read: R,
-    _marker: PhantomData<Heap>,
+    pool: Heap::Pool,
 }
 
 impl<R, H> BufReader<R, H>
     where R: Read,
           H: Allocator,
+          H::Pool: Default,
 {
     /// Allocates a new buffered reader.
     ///
@@ -57,14 +59,15 @@ impl<R, H> BufReader<R, H>
             Some(n) => n,
             _ => return Err(error::NoMemory),
         };
-        let ptr = unsafe { try!(H::allocate_array(size)) };
+        let mut pool = H::Pool::default();
+        let ptr = unsafe { try!(H::allocate_array(&mut pool, size)) };
         Ok(BufReader {
             data: ptr,
             cap: size,
             start: 0,
             end: 0,
             read: read,
-            _marker: PhantomData,
+            pool: pool,
         })
     }
 }
@@ -94,7 +97,7 @@ impl<'a, R> BufReader<R, NoMem<'a>>
             start: 0,
             end: 0,
             read: read,
-            _marker: PhantomData,
+            pool: (),
         }
     }
 }
@@ -197,7 +200,7 @@ impl<R, H> Drop for BufReader<R, H>
           H: Allocator,
 {
     fn drop(&mut self) {
-        unsafe { H::free_array(self.data, self.cap); }
+        unsafe { H::free_array(&mut self.pool, self.data, self.cap); }
     }
 }
 

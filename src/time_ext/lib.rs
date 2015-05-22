@@ -25,7 +25,7 @@ pub use time_base::{Time};
 
 use base::rmo::{AsRef};
 use fmt::{Debug, Write};
-use vec::{SVec, Vec};
+use vec::{Vec};
 use str_one::{AsNoNullStr};
 use file::{File};
 use io::{BufWrite};
@@ -92,11 +92,11 @@ impl Debug for DateTime {
 #[derive(Clone, Eq)]
 pub struct Zone {
     /// (UTC offset, summer time) (at least one exists in every zone)
-    states: SVec<(i64, bool)>,
+    states: Vec<(i64, bool)>,
     /// (transition time, index into states)
-    transitions: SVec<(i64, usize)>,
+    transitions: Vec<(i64, usize)>,
     /// (leap second time, number of leap seconds)
-    leap_seconds: SVec<(i64, i64)>,
+    leap_seconds: Vec<(i64, i64)>,
 }
 
 impl Zone {

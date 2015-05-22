@@ -4,4 +4,4 @@
 
 //! Vector handling.
 
-pub use lrs_vec::{SVec, Vec};
+pub use lrs_vec::{Vec};

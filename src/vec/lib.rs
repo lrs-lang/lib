@@ -24,6 +24,7 @@ pub mod lrs {
 #[prelude_import] use base::prelude::*;
 use core::{mem, ptr, cmp, slice};
 use base::clone::{Clone};
+use base::default::{Default};
 use core::ops::{Eq, Deref, DerefMut};
 use core::iter::{IntoIterator};
 use io::{Read, Write, BufWrite};
@@ -33,8 +34,6 @@ use base::rmo::{AsRef, AsMut};
 use str_one::{ByteStr, CStr, AsCStr, AsMutCStr, ToCStr, NoNullStr, AsMutNoNullStr,
               AsNoNullStr};
 
-pub type SVec<T, Heap = alloc::Heap> = Vec<T, Heap>;
-
 /// A vector.
 pub struct Vec<T, Heap = alloc::Heap>
     where Heap: Allocator,
@@ -42,7 +41,7 @@ pub struct Vec<T, Heap = alloc::Heap>
     ptr: *mut T,
     len: usize,
     cap: usize,
-    _marker: PhantomData<Heap>,
+    pool: Heap::Pool,
 }
 
 impl<'a, T> Vec<T, alloc::NoMem<'a>> {
@@ -52,7 +51,7 @@ impl<'a, T> Vec<T, alloc::NoMem<'a>> {
     /// The buffer which will be used to store elements it.
     pub fn buffered(buf: &'a mut [u8]) -> Vec<T, alloc::NoMem<'a>> {
         if mem::size_of::<T>() == 0 {
-            return Vec { ptr: empty_ptr(), len: 0, cap: 0, _marker: PhantomData };
+            return Vec { ptr: empty_ptr(), len: 0, cap: 0, pool: () };
         }
 
         let align_mask = mem::align_of::<T>() - 1;
@@ -61,31 +60,33 @@ impl<'a, T> Vec<T, alloc::NoMem<'a>> {
         if ptr & align_mask != 0 {
             let diff = (!ptr & align_mask) + 1;
             if diff > len {
-                return Vec { ptr: empty_ptr(), len: 0, cap: 0, _marker: PhantomData };
+                return Vec { ptr: empty_ptr(), len: 0, cap: 0, pool: () };
             }
             ptr += diff;
             len -= diff;
         }
         let cap = len / mem::size_of::<T>();
-        Vec { ptr: ptr as *mut T, len: 0, cap: cap, _marker: PhantomData }
+        Vec { ptr: ptr as *mut T, len: 0, cap: cap, pool: () }
     }
 }
 
 impl<T, H> Vec<T, H>
     where H: Allocator,
+          H::Pool: Default,
 {
     /// Creates a new allocating vector.
-    pub fn new() -> SVec<T, H> {
-        Vec { ptr: empty_ptr(), len: 0, cap: 0, _marker: PhantomData, }
+    pub fn new() -> Vec<T, H> {
+        Vec { ptr: empty_ptr(), len: 0, cap: 0, pool: H::Pool::default(), }
     }
 
     /// Creates a new allocating vector and reserves a certain amount of space for it.
-    pub fn with_capacity(cap: usize) -> Result<SVec<T, H>> {
+    pub fn with_capacity(cap: usize) -> Result<Vec<T, H>> {
+        let mut pool = H::Pool::default();
         if cap == 0 || mem::size_of::<T>() == 0 {
-            return Ok(Vec { ptr: empty_ptr(), len: 0, cap: cap, _marker: PhantomData });
+            return Ok(Vec { ptr: empty_ptr(), len: 0, cap: cap, pool: pool });
         }
-        let ptr = unsafe { try!(H::allocate_array(cap)) };
-        Ok(Vec { ptr: ptr, len: 0, cap: cap, _marker: PhantomData })
+        let ptr = unsafe { try!(H::allocate_array(&mut pool, cap)) };
+        Ok(Vec { ptr: ptr, len: 0, cap: cap, pool: pool })
     }
 }
 
@@ -106,12 +107,13 @@ impl<T, H> Vec<T, H>
     /// = Remarks
     ///
     /// The allocator must be the same allocator that was used to allocate the memory.
-    pub unsafe fn from_raw_parts(ptr: *mut T, len: usize, cap: usize) -> Vec<T, H> {
+    pub unsafe fn from_raw_parts(ptr: *mut T, len: usize, cap: usize,
+                                 pool: H::Pool) -> Vec<T, H> {
         Vec {
             ptr: ptr,
             len: len,
             cap: cap,
-            _marker: PhantomData,
+            pool: pool,
         }
     }
 
@@ -140,9 +142,9 @@ impl<T, H> Vec<T, H>
 
         let new_cap = self.len + cmp::max(n, self.cap / 2 + 1);
         let ptr = if self.ptr == empty_ptr() {
-            unsafe { H::allocate_array(new_cap) }
+            unsafe { H::allocate_array(&mut self.pool, new_cap) }
         } else {
-            unsafe { H::reallocate_array(self.ptr, self.cap, new_cap) }
+            unsafe { H::reallocate_array(&mut self.pool, self.ptr, self.cap, new_cap) }
         };
         self.ptr = try!(ptr);
         self.cap = new_cap;
@@ -308,7 +310,7 @@ impl<T, H> Drop for Vec<T, H>
                 }
             }
             if self.ptr != empty_ptr() {
-                H::free_array(self.ptr, self.cap);
+                H::free_array(&mut self.pool, self.ptr, self.cap);
             }
         }
     }
@@ -365,11 +367,12 @@ impl<T, H> Debug for Vec<T, H>
     }
 }
 
-impl<T, H> Clone for SVec<T, H>
+impl<T, H> Clone for Vec<T, H>
     where T: Clone,
           H: Allocator,
+          H::Pool: Default,
 {
-    fn clone(&self) -> Result<SVec<T, H>> {
+    fn clone(&self) -> Result<Vec<T, H>> {
         let mut vec = try!(Vec::with_capacity(self.len()));
         for i in 0..self.len() {
             vec.push(try!(self[i].clone()));

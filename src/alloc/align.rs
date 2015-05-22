@@ -25,16 +25,20 @@ impl<T, H> Allocator for AlignAlloc<T, H>
     where T: 'static + Leak,
           H: Allocator
 {
-    unsafe fn allocate_raw(size: usize, alignment: usize) -> Result<*mut u8> {
-        H::allocate_raw(size, max(mem::align_of::<T>(), alignment))
+    type Pool = H::Pool;
+
+    unsafe fn allocate_raw(pool: &mut H::Pool, size: usize,
+                           alignment: usize) -> Result<*mut u8> {
+        H::allocate_raw(pool, size, max(mem::align_of::<T>(), alignment))
     }
 
-    unsafe fn free_raw(ptr: *mut u8, size: usize, alignment: usize) {
-        H::free_raw(ptr, size, max(mem::align_of::<T>(), alignment))
+    unsafe fn free_raw(pool: &mut H::Pool, ptr: *mut u8, size: usize, alignment: usize) {
+        H::free_raw(pool, ptr, size, max(mem::align_of::<T>(), alignment))
     }
 
-    unsafe fn reallocate_raw(old_ptr: *mut u8, oldsize: usize, newsize: usize,
-                             alignment: usize) -> Result<*mut u8> {
-        H::reallocate_raw(old_ptr, oldsize, newsize, max(mem::align_of::<T>(), alignment))
+    unsafe fn reallocate_raw(pool: &mut H::Pool, old_ptr: *mut u8, oldsize: usize,
+                             newsize: usize, alignment: usize) -> Result<*mut u8> {
+        H::reallocate_raw(pool, old_ptr, oldsize, newsize, max(mem::align_of::<T>(),
+                          alignment))
     }
 }

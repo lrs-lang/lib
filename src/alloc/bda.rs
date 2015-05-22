@@ -25,7 +25,10 @@ use {Allocator, MAX_SIZE};
 pub struct Bda;
 
 impl Allocator for Bda {
-    unsafe fn allocate_raw(size: usize, alignment: usize) -> Result<*mut u8> {
+    type Pool = ();
+
+    unsafe fn allocate_raw(_: &mut (), size: usize,
+                           alignment: usize) -> Result<*mut u8> {
         let _ = alignment;
         if size > MAX_SIZE {
             return Err(error::InvalidArgument);
@@ -39,12 +42,12 @@ impl Allocator for Bda {
         }
     }
 
-    unsafe fn free_raw(ptr: *mut u8, size: usize, alignment: usize) {
+    unsafe fn free_raw(_: &mut (), ptr: *mut u8, size: usize, alignment: usize) {
         let _ = alignment;
         munmap(ptr as usize, size);
     }
 
-    unsafe fn reallocate_raw(old_ptr: *mut u8, oldsize: usize, newsize: usize,
+    unsafe fn reallocate_raw(_: &mut (), old_ptr: *mut u8, oldsize: usize, newsize: usize,
                              alignment: usize) -> Result<*mut u8> {
         let _ = alignment;
         if newsize > MAX_SIZE {

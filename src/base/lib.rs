@@ -21,6 +21,7 @@ pub mod clone;
 pub mod result;
 pub mod error;
 pub mod rmo;
+pub mod default;
 
 pub mod prelude {
     pub use core::prelude::*;

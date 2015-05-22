@@ -4,6 +4,7 @@
 
 #[prelude_import] use base::prelude::*;
 use base::rmo::{AsRef};
+use base::default::{Default};
 use str_one::byte_str::{ByteStr};
 use str_two::byte_string::{ByteString};
 use {ToOwned};
@@ -11,6 +12,7 @@ use alloc::{Allocator};
 
 impl<H> ToOwned<H> for ByteStr
     where H: Allocator,
+          H::Pool: Default,
 {
     type Owned = ByteString<H>;
     fn to_owned(&self) -> Result<ByteString<H>> {

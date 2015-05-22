@@ -7,12 +7,16 @@ use core::ops::{Deref};
 use core::marker::{Leak};
 use core::{mem, ptr, intrinsics};
 use base::clone::{Clone};
+use base::default::{Default};
 use cell::copy_cell::{CopyCell};
 use fmt::{Debug, Write};
 use alloc::{self, Allocator};
 
-struct Inner<T> {
+struct Inner<T, H>
+    where H: Allocator,
+{
     count: CopyCell<usize>,
+    pool: H::Pool,
     val: T,
 }
 
@@ -21,8 +25,7 @@ pub struct RcBuf<T, Heap = alloc::Heap>
     where Heap: Allocator,
           T: Leak,
 {
-    data: *mut Inner<T>,
-    _marker: PhantomData<Heap>,
+    data: *mut Inner<T, Heap>,
 }
 
 impl<T, H> RcBuf<T, H>
@@ -38,7 +41,7 @@ impl<T, H> RcBuf<T, H>
             let data = self.data;
             intrinsics::forget(self);
             ptr::write(&mut (*data).val, val);
-            Rc { data: data, _marker: PhantomData }
+            Rc { data: data }
         }
     }
 }
@@ -51,7 +54,10 @@ impl<T, H> Drop for RcBuf<T, H>
           T: Leak,
 {
     fn drop(&mut self) {
-        unsafe { H::free(self.data); }
+        unsafe {
+            let mut pool = ptr::read(&(*self.data).pool);
+            H::free(&mut pool, self.data);
+        }
     }
 }
 
@@ -60,12 +66,12 @@ pub struct Rc<T, Heap = alloc::Heap>
     where Heap: Allocator,
           T: Leak,
 {
-    data: *mut Inner<T>,
-    _marker: PhantomData<Heap>,
+    data: *mut Inner<T, Heap>,
 }
 
 impl<T, H> Rc<T, H>
     where H: Allocator,
+          H::Pool: Default,
           T: Leak,
 {
     /// Creates a new Rc.
@@ -83,12 +89,19 @@ impl<T, H> Rc<T, H>
     /// ----
     pub fn new() -> Result<RcBuf<T, H>> {
         unsafe {
-            let data_ptr = try!(H::allocate::<Inner<T>>());
+            let mut pool = H::Pool::default();
+            let data_ptr = try!(H::allocate::<Inner<T, H>>(&mut pool));
+            ptr::write(&mut (*data_ptr).pool, pool);
             (*data_ptr).count.set(1);
-            Ok(RcBuf { data: data_ptr, _marker: PhantomData, })
+            Ok(RcBuf { data: data_ptr })
         }
     }
+}
 
+impl<T, H> Rc<T, H>
+    where H: Allocator,
+          T: Leak,
+{
     /// Returns a mutable reference to the contained data if this is the only reference.
     pub fn as_mut(&mut self) -> Option<&mut T> {
         let data = unsafe { &mut *self.data };
@@ -103,7 +116,7 @@ impl<T, H> Rc<T, H>
         unsafe {
             let data = &mut *self.data;
             data.count.set(data.count.get() + 1);
-            Rc { data: self.data, _marker: PhantomData }
+            Rc { data: self.data }
         }
     }
 }
@@ -123,7 +136,8 @@ impl<T, H> Drop for Rc<T, H>
                 if mem::needs_drop::<T>() {
                     ptr::read(&data.val);
                 }
-                H::free(self.data);
+                let mut pool = ptr::read(&data.pool);
+                H::free(&mut pool, self.data);
             }
         }
     }

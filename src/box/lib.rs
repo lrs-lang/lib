@@ -16,6 +16,7 @@ extern crate lrs_alloc as alloc;
 extern crate lrs_fmt   as fmt;
 
 #[prelude_import] use base::prelude::*;
+use base::default::{Default};
 use core::{ptr, mem, intrinsics};
 use core::ops::{Deref, DerefMut};
 use fmt::{Debug, Write};
@@ -27,7 +28,7 @@ pub struct BoxBuf<T, Heap = alloc::Heap>
     where Heap: alloc::Allocator,
 {
     data: *mut T,
-    _marker: PhantomData<Heap>,
+    pool: Heap::Pool,
 }
 
 impl<T, H> BoxBuf<T, H>
@@ -40,9 +41,10 @@ impl<T, H> BoxBuf<T, H>
     pub fn set(self, val: T) -> Box<T, H> {
         unsafe {
             let data = self.data;
+            let pool = ptr::read(&self.pool);
             intrinsics::forget(self);
             ptr::write(data, val);
-            Box { data: data, _marker: PhantomData }
+            Box { data: data, pool: pool }
         }
     }
 }
@@ -51,7 +53,7 @@ impl<T, H> Drop for BoxBuf<T, H>
     where H: alloc::Allocator,
 {
     fn drop(&mut self) {
-        unsafe { H::free(self.data); }
+        unsafe { H::free(&mut self.pool, self.data); }
     }
 }
 
@@ -60,11 +62,12 @@ pub struct Box<T, Heap = alloc::Heap>
     where Heap: alloc::Allocator,
 {
     data: *mut T,
-    _marker: PhantomData<Heap>,
+    pool: Heap::Pool,
 }
 
 impl<T, H> Box<T, H>
     where H: alloc::Allocator,
+          H::Pool: Default,
 {
     /// Creates a new box.
     ///
@@ -81,8 +84,9 @@ impl<T, H> Box<T, H>
     /// ----
     pub fn new() -> Result<BoxBuf<T, H>> {
         unsafe {
-            let ptr = try!(H::allocate());
-            Ok(BoxBuf { data: ptr, _marker: PhantomData })
+            let mut pool = H::Pool::default();
+            let ptr = try!(H::allocate(&mut pool));
+            Ok(BoxBuf { data: ptr, pool: pool })
         }
     }
 }
@@ -112,7 +116,7 @@ impl<T, H> Drop for Box<T, H>
             if mem::needs_drop::<T>() {
                 ptr::read(self.data);
             }
-            H::free(self.data);
+            H::free(&mut self.pool, self.data);
         }
     }
 }

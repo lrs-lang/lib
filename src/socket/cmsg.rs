@@ -4,6 +4,7 @@
 
 #[prelude_import] use base::prelude::*;
 use core::{num, mem, slice, ptr};
+use base::default::{Default};
 use cty::{
     cmsghdr, c_int, SCM_RIGHTS, SCM_CREDENTIALS, SOL_SOCKET, user_size_t,
     SO_TIMESTAMPNS, timespec, IPPROTO_IP, IP_OPTIONS,
@@ -152,7 +153,7 @@ pub struct CMsgBuf<Heap = alloc::Heap>
     data: *mut u8,
     len: usize,
     cap: usize,
-    _marker: PhantomData<Heap>,
+    pool: Heap::Pool,
 }
 
 impl<'a> CMsgBuf<NoMem<'a>> {
@@ -165,13 +166,14 @@ impl<'a> CMsgBuf<NoMem<'a>> {
             data: buf.as_mut_ptr() as *mut u8,
             len: 0,
             cap: buf.len() * 8,
-            _marker: PhantomData,
+            pool: (),
         }
     }
 }
 
 impl<H> CMsgBuf<H>
     where H: Allocator,
+          H::Pool: Default,
 {
     /// Creates a new `CMsgBuf` backed by allocated memory.
     ///
@@ -183,12 +185,13 @@ impl<H> CMsgBuf<H>
     /// The buffer will be resized dynamically. This constructor fails if no memory can be
     /// allocated.
     pub fn new() -> Result<CMsgBuf<H>> {
-        let ptr: *mut usize = unsafe { try!(H::allocate_array(1)) };
+        let mut pool = H::Pool::default();
+        let ptr: *mut usize = unsafe { try!(H::allocate_array(&mut pool, 1)) };
         Ok(CMsgBuf {
             data: ptr as *mut u8,
             len: 0,
             cap: num::usize::BYTES,
-            _marker: PhantomData,
+            pool: pool,
         })
     }
 }
@@ -206,7 +209,8 @@ impl<H> CMsgBuf<H>
             let cap = self.cap / num::usize::BYTES;
             let new_cap = pad_ptr!(self.cap * 2 + n) / num::usize::BYTES;
             let ptr = unsafe {
-                try!(H::reallocate_array(self.data as *mut usize, cap, new_cap))
+                try!(H::reallocate_array(&mut self.pool, self.data as *mut usize, cap,
+                                        new_cap))
             };
             self.data = ptr as *mut u8;
             self.cap = new_cap * num::usize::BYTES;
@@ -256,7 +260,8 @@ impl<H> Drop for CMsgBuf<H>
 {
     fn drop(&mut self) {
         unsafe {
-            H::free_array(self.data as *mut usize, self.cap / num::usize::BYTES);
+            H::free_array(&mut self.pool, self.data as *mut usize,
+                          self.cap / num::usize::BYTES);
         }
     }
 }

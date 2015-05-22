@@ -16,15 +16,18 @@ use lrs_libc as libc;
 pub struct Libc;
 
 impl Allocator for Libc {
-    unsafe fn allocate_raw(size: usize, alignment: usize) -> Result<*mut u8> {
-        Libc::reallocate_raw(0 as *mut u8, 0, size, alignment)
+    type Pool = ();
+
+    unsafe fn allocate_raw(pool: &mut (), size: usize,
+                           alignment: usize) -> Result<*mut u8> {
+        Libc::reallocate_raw(pool, 0 as *mut u8, 0, size, alignment)
     }
 
-    unsafe fn free_raw(ptr: *mut u8, size: usize, alignment: usize) {
-        Libc::reallocate_raw(ptr, size, 0, alignment);
+    unsafe fn free_raw(pool: &mut (), ptr: *mut u8, size: usize, alignment: usize) {
+        Libc::reallocate_raw(pool, ptr, size, 0, alignment);
     }
 
-    unsafe fn reallocate_raw(old_ptr: *mut u8, oldsize: usize, newsize: usize,
+    unsafe fn reallocate_raw(_: &mut (), old_ptr: *mut u8, oldsize: usize, newsize: usize,
                              alignment: usize) -> Result<*mut u8> {
         let _ = oldsize;
         let _ = alignment;

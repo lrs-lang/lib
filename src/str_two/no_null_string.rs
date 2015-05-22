@@ -4,6 +4,7 @@
 
 #[prelude_import] use base::prelude::*;
 use base::rmo::{AsRef, AsMut};
+use base::default::{Default};
 use core::{mem};
 use str_one::{NoNullStr, AsNoNullStr, AsMutNoNullStr, AsMutCStr, CStr};
 use vec::{Vec};
@@ -19,6 +20,7 @@ pub struct NoNullString<Heap = alloc::Heap>
 
 impl<H> NoNullString<H>
     where H: Allocator,
+          H::Pool: Default,
 {
     /// Creates a new, allocated `NoNullString`.
     pub fn new() -> NoNullString<H> {

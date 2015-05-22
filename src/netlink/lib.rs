@@ -21,6 +21,7 @@ mod lrs { pub use base::lrs::*; pub use cty; }
 
 #[allow(unused_imports)] #[prelude_import] use base::prelude::*;
 use core::{mem};
+use base::default::{Default};
 use cty::{nlmsghdr, nlattr};
 use alloc::{NoMem, Allocator, AlignAlloc};
 use vec::{Vec};
@@ -40,13 +41,14 @@ impl<'a> NlBuf<NoMem<'a>> {
             (vec.as_mut_ptr() as *mut u8, vec.capacity() * 4)
         };
         NlBuf {
-            buf: unsafe { Vec::from_raw_parts(ptr, 0, cap) },
+            buf: unsafe { Vec::from_raw_parts(ptr, 0, cap, ()) },
         }
     }
 }
 
 impl<H> NlBuf<H>
-    where H: Allocator
+    where H: Allocator,
+          H::Pool: Default,
 {
     pub fn new() -> NlBuf<H> {
         NlBuf {
@@ -88,14 +90,16 @@ impl<H> AsRef<[u8]> for NlBuf<H>
 }
 
 pub struct NlMsg<'a, H: 'a = alloc::Heap>
-    where H: Allocator
+    where H: Allocator,
+          H::Pool: 'a,
 {
     data: NlData<'a, H>,
     start: usize,
 }
 
 impl<'a, H> NlMsg<'a, H>
-    where H: Allocator
+    where H: Allocator + 'a,
+          H::Pool: 'a,
 {
     pub fn cancel(mut self) {
         self.data.buf.truncate(self.start);
@@ -104,7 +108,8 @@ impl<'a, H> NlMsg<'a, H>
 }
 
 impl<'a, H> Deref for NlMsg<'a, H>
-    where H: Allocator
+    where H: Allocator + 'a,
+          H::Pool: 'a,
 {
     type Target = NlData<'a, H>;
     fn deref(&self) -> &NlData<'a, H> {
@@ -113,7 +118,8 @@ impl<'a, H> Deref for NlMsg<'a, H>
 }
 
 impl<'a, H> DerefMut for NlMsg<'a, H>
-    where H: Allocator
+    where H: Allocator + 'a,
+          H::Pool: 'a,
 {
     fn deref_mut(&mut self) -> &mut NlData<'a, H> {
         &mut self.data
@@ -121,7 +127,8 @@ impl<'a, H> DerefMut for NlMsg<'a, H>
 }
 
 impl<'a, H> Drop for NlMsg<'a, H>
-    where H: Allocator
+    where H: Allocator + 'a,
+          H::Pool: 'a,
 {
     fn drop(&mut self) {
         unsafe {
@@ -131,15 +138,17 @@ impl<'a, H> Drop for NlMsg<'a, H>
     }
 }
 
-pub struct NlAttr<'a, H: 'a = alloc::Heap>
-    where H: Allocator
+pub struct NlAttr<'a, H = alloc::Heap>
+    where H: Allocator + 'a,
+          H::Pool: 'a,
 {
     data: NlData<'a, H>,
     start: usize,
 }
 
 impl<'a, H> NlAttr<'a, H>
-    where H: Allocator
+    where H: Allocator + 'a,
+          H::Pool: 'a,
 {
     pub fn cancel(mut self) {
         self.data.buf.truncate(self.start);
@@ -148,7 +157,8 @@ impl<'a, H> NlAttr<'a, H>
 }
 
 impl<'a, H> Deref for NlAttr<'a, H>
-    where H: Allocator
+    where H: Allocator + 'a,
+          H::Pool: 'a,
 {
     type Target = NlData<'a, H>;
     fn deref(&self) -> &NlData<'a, H> {
@@ -157,7 +167,8 @@ impl<'a, H> Deref for NlAttr<'a, H>
 }
 
 impl<'a, H> DerefMut for NlAttr<'a, H>
-    where H: Allocator
+    where H: Allocator + 'a,
+          H::Pool: 'a,
 {
     fn deref_mut(&mut self) -> &mut NlData<'a, H> {
         &mut self.data
@@ -165,7 +176,8 @@ impl<'a, H> DerefMut for NlAttr<'a, H>
 }
 
 impl<'a, H> Drop for NlAttr<'a, H>
-    where H: Allocator
+    where H: Allocator + 'a,
+          H::Pool: 'a,
 {
     fn drop(&mut self) {
         unsafe {
@@ -175,14 +187,16 @@ impl<'a, H> Drop for NlAttr<'a, H>
     }
 }
 
-pub struct NlData<'a, H: 'a = alloc::Heap>
-    where H: Allocator
+pub struct NlData<'a, H = alloc::Heap>
+    where H: Allocator + 'a,
+          H::Pool: 'a,
 {
     buf: &'a mut Vec<u8, AlignAlloc<u32, H>>,
 }
 
 impl<'a, H> NlData<'a, H>
-    where H: Allocator
+    where H: Allocator + 'a,
+          H::Pool: 'a,
 {
     unsafe fn add_attr(&mut self, payload: usize) -> Result<(&mut nlattr, &mut [u8])> {
         let size = mem::size_of::<nlattr>() + align!(payload);

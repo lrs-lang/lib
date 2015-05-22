@@ -19,6 +19,7 @@ extern crate lrs_alloc as alloc;
 
 #[prelude_import] use base::prelude::*;
 use base::{error};
+use base::default::{Default};
 use alloc::{Allocator, empty_ptr};
 use arch_fns::{spin};
 use atomic::{AtomicUsize};
@@ -33,7 +34,7 @@ pub mod lrs { pub use base::lrs::*; }
 /// = Remarks
 ///
 /// This queue can be used for sending messages between threads.
-pub struct Queue<'a, T, Heap = alloc::Heap>
+pub struct Queue<T, Heap = alloc::Heap>
     where Heap: Allocator,
 {
     // The buffer we store the massages in.
@@ -65,11 +66,12 @@ pub struct Queue<'a, T, Heap = alloc::Heap>
     // Mutex that protects the two atomic variables above.
     sleep_lock: Lock,
 
-    _marker: PhantomData<(&'a (), Heap)>,
+    pool: Heap::Pool,
 }
 
-impl<T, H> Queue<'static, T, H>
+impl<T, H> Queue<T, H>
     where H: Allocator,
+          H::Pool: Default,
 {
     /// Creates a new queue with allocated memory.
     ///
@@ -79,14 +81,15 @@ impl<T, H> Queue<'static, T, H>
     /// = Remarks
     ///
     /// The capacity will be increased to the next power of two.
-    pub fn new(cap: usize) -> Result<Queue<'static, T, H>> {
+    pub fn new(cap: usize) -> Result<Queue<T, H>> {
         let cap = match cap.checked_next_power_of_two() {
             Some(c) => c,
             _ => return Err(error::NoMemory),
         };
+        let mut pool = H::Pool::default();
         let buf = match mem::size_of::<T>() {
             0 => empty_ptr(),
-            _ => unsafe { try!(H::allocate_array(cap)) },
+            _ => unsafe { try!(H::allocate_array(&mut pool, cap)) },
         };
         Ok(Queue {
             buf: buf,
@@ -106,12 +109,12 @@ impl<T, H> Queue<'static, T, H>
 
             sleep_lock: LOCK_INIT,
 
-            _marker: PhantomData,
+            pool: pool,
         })
     }
 }
 
-impl<'a, T, H> Queue<'a, T, H>
+impl<T, H> Queue<T, H>
     where H: Allocator,
 {
     /// Get a position to write to if the queue isn't full
@@ -295,10 +298,10 @@ impl<'a, T, H> Queue<'a, T, H>
     }
 }
 
-unsafe impl<'a, T, H> Send for Queue<'a, T, H> where T: Send, H: Allocator+Send { }
-unsafe impl<'a, T, H> Sync for Queue<'a, T, H> where T: Send, H: Allocator { }
+unsafe impl<T, H> Send for Queue<T, H> where T: Send, H: Allocator+Send { }
+unsafe impl<T, H> Sync for Queue<T, H> where T: Send, H: Allocator { }
 
-impl<'a, T, H> Drop for Queue<'a, T, H>
+impl<T, H> Drop for Queue<T, H>
     where H: Allocator,
 {
     fn drop(&mut self) {
@@ -312,7 +315,7 @@ impl<'a, T, H> Drop for Queue<'a, T, H>
             }
 
             if mem::size_of::<T>() > 0 {
-                H::free_array(self.buf, self.cap_mask + 1);
+                H::free_array(&mut self.pool, self.buf, self.cap_mask + 1);
             }
         }
     }

@@ -206,6 +206,9 @@ pub unsafe trait Leak { }
 
 unsafe impl Leak for .. { }
 
+unsafe impl<'a, T> Leak for &'a T { }
+unsafe impl<'a, T> Leak for &'a mut T { }
+
 /// A dummy type for unused type parameters.
 ///
 /// = Remarks

@@ -17,6 +17,7 @@ extern crate lrs_str_one as str_one;
 
 #[prelude_import] use base::prelude::*;
 use base::{error};
+use base::default::{Default};
 use cty_base::types::{c_char};
 use core::{slice};
 use str_one::{ToCStr};
@@ -41,7 +42,7 @@ pub struct CPtrPtr<Heap = alloc::Heap>
     pos: usize,
     cap: usize,
     num: usize,
-    _marker: PhantomData<Heap>,
+    pool: Heap::Pool,
 }
 
 impl<'a> CPtrPtr<alloc::NoMem<'a>> {
@@ -63,23 +64,25 @@ impl<'a> CPtrPtr<alloc::NoMem<'a>> {
             pos: 0,
             cap: cap,
             num: 0,
-            _marker: PhantomData,
+            pool: (),
         }
     }
 }
 
 impl<Heap> CPtrPtr<Heap>
     where Heap: Allocator,
+          Heap::Pool: Default,
 {
     /// Allocates a new `CPtrPtr`.
     pub fn new() -> Result<CPtrPtr<Heap>> {
         const DEFAULT_CAP: usize = 32;
+        let mut pool = Heap::Pool::default();
         Ok(CPtrPtr {
-            buf: try!(unsafe { Heap::allocate_array(DEFAULT_CAP) }),
+            buf: try!(unsafe { Heap::allocate_array(&mut pool, DEFAULT_CAP) }),
             pos: 0,
             cap: DEFAULT_CAP,
             num: 0,
-            _marker: PhantomData,
+            pool: pool,
         })
     }
 }
@@ -89,7 +92,9 @@ impl<Heap> CPtrPtr<Heap>
 {
     fn double(&mut self) -> Result {
         let new_cap = self.cap + self.cap / 2 + 1;
-        self.buf = try!(unsafe { Heap::reallocate_array(self.buf, self.cap, new_cap) });
+        self.buf = try!(unsafe {
+            Heap::reallocate_array(&mut self.pool, self.buf, self.cap, new_cap)
+        });
         self.cap = new_cap;
         Ok(())
     }
@@ -174,5 +179,15 @@ impl<Heap> CPtrPtr<Heap>
     pub fn clear(&mut self) {
         self.pos = 0;
         self.num = 0;
+    }
+}
+
+impl<Heap> Drop for CPtrPtr<Heap>
+    where Heap: Allocator,
+{
+    fn drop(&mut self) {
+        unsafe {
+            Heap::free_array(&mut self.pool, self.buf, self.cap)
+        }
     }
 }

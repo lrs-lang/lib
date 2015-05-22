@@ -4,6 +4,7 @@
 
 #[prelude_import] use base::prelude::*;
 use base::rmo::{AsRef};
+use base::default::{Default};
 use str_one::no_null_str::{NoNullStr};
 use str_two::no_null_string::{NoNullString};
 use {ToOwned};
@@ -11,6 +12,7 @@ use alloc::{Allocator};
 
 impl<H> ToOwned<H> for NoNullStr
     where H: Allocator,
+          H::Pool: Default,
 {
     type Owned = NoNullString<H>;
     fn to_owned(&self) -> Result<NoNullString<H>> {

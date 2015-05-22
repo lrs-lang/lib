@@ -33,7 +33,7 @@ extern crate lrs_time_base as time_base;
 #[prelude_import] use base::prelude::*;
 mod lrs { pub use vec::lrs::*; pub use {cty}; }
 
-use vec::{SVec};
+use vec::{Vec};
 use core::{mem};
 use io::{Read};
 use base::rmo::{AsRef};
@@ -767,7 +767,7 @@ pub fn get_attr_no_follow_buf<P, S, V>(path: P, name: S, buf: &mut [u8]) -> Resu
     rv!(lgetxattr(&path, &name, buf), -> usize)
 }
 
-fn get_attr_common<F>(mut f: F) -> Result<SVec<u8>>
+fn get_attr_common<F>(mut f: F) -> Result<Vec<u8>>
     where F: FnMut(&mut [u8]) -> ssize_t,
 {
     let mut vec = vec!();
@@ -814,7 +814,7 @@ fn get_attr_common<F>(mut f: F) -> Result<SVec<u8>>
 /// * link:lrs::file::get_attr_no_follow
 /// * link:lrs::file::get_attr_buf
 /// * link:lrs::file::File::get_attr
-pub fn get_attr<P, S>(path: P, name: S) -> Result<SVec<u8>>
+pub fn get_attr<P, S>(path: P, name: S) -> Result<Vec<u8>>
     where P: ToCString, S: ToCString,
 {
     let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
@@ -848,7 +848,7 @@ pub fn get_attr<P, S>(path: P, name: S) -> Result<SVec<u8>>
 /// * link:lrs::file::get_attr_no_follow_buf
 /// * link:lrs::file::get_attr
 /// * link:lrs::file::File::get_attr
-pub fn get_attr_no_follow<P, S>(path: P, name: S) -> Result<SVec<u8>>
+pub fn get_attr_no_follow<P, S>(path: P, name: S) -> Result<Vec<u8>>
     where P: ToCString, S: ToCString,
 {
     let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
@@ -2068,7 +2068,7 @@ impl File {
     /// = See also
     ///
     /// * link:man:fgetxattr(2)
-    pub fn get_attr<S>(&self, name: S) -> Result<SVec<u8>>
+    pub fn get_attr<S>(&self, name: S) -> Result<Vec<u8>>
         where S: ToCString,
     {
         let mut buf: [u8; 128] = unsafe { mem::uninit() };
@@ -2968,7 +2968,7 @@ impl<'a> Iterator for ListAttrIter<'a> {
 
 /// An iterator over file attributes.
 pub struct ListAttrIterator {
-    buf: SVec<u8>,
+    buf: Vec<u8>,
     pos: usize,
 }
 
