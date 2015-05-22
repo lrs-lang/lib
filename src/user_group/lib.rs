@@ -21,6 +21,7 @@ extern crate lrs_cty        as cty;
 extern crate lrs_parse      as parse;
 extern crate lrs_file       as file;
 extern crate lrs_vec        as vec;
+extern crate lrs_alloc      as alloc;
 extern crate lrs_rmo        as rmo;
 extern crate lrs_iter       as iter;
 

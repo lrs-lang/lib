@@ -62,4 +62,4 @@ obj process    core base syscall cty fmt str_one str_two str_three c_ptr_ptr all
 obj time_ext   core base fmt str_one file time_base io vec
 
 obj dir        core base cty str_one str_two str_three syscall fd fmt file vec rmo alloc
-obj user_group core base arch_fns io buf_reader fmt str_one str_two cty parse file vec rmo iter
+obj user_group core base arch_fns io buf_reader fmt str_one str_two cty parse file vec rmo iter alloc

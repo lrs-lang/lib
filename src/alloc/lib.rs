@@ -22,16 +22,20 @@ use base::{error};
 
 pub use libc::{Libc};
 pub use no::{NoMem};
+pub use ta::{TaAlloc, TaPool};
 pub use bda::{Bda};
 pub use align::{AlignAlloc};
 
 #[cfg(jemalloc)]
 pub use jemalloc::{JeMalloc};
 
+mod lrs { pub use base::lrs::*; }
+
 mod libc;
 mod no;
 mod bda;
 mod align;
+mod ta;
 
 #[cfg(jemalloc)]
 mod jemalloc;

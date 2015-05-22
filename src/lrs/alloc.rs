@@ -51,7 +51,7 @@
 //! ----
 
 pub use lrs_alloc::{
-    MAX_SIZE, empty_ptr, Allocator, Heap, FbHeap, Libc, NoMem, Bda,
+    MAX_SIZE, empty_ptr, Allocator, Heap, FbHeap, Libc, NoMem, Bda, TaAlloc, TaPool,
 };
 
 #[cfg(jemalloc)]

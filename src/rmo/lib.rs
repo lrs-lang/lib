@@ -18,6 +18,7 @@ extern crate lrs_str_two as str_two;
 extern crate lrs_alloc   as alloc;
 
 #[prelude_import] use base::prelude::*;
+use base::default::{Default};
 use base::rmo::{AsRef, AsMut};
 use core::ops::{Deref};
 use alloc::{Allocator};
@@ -42,13 +43,21 @@ pub trait ToOwned<H = alloc::Heap>
     type Owned;
 
     /// Converts the object into its owned version.
-    fn to_owned(&self) -> Result<Self::Owned>;
+    fn to_owned(&self) -> Result<Self::Owned>
+        where H::Pool: Default
+    {
+        self.to_owned_with_pool(H::Pool::default())
+    }
+
+    /// Converts the object into its owned version.
+    fn to_owned_with_pool(&self, pool: H::Pool) -> Result<Self::Owned>;
 }
 
 /// A container that contains either a borrowed, a mutably borrowed, or an owned version
 /// of a type.
 pub enum Rmo<'a, Ref: ?Sized+'a, H = alloc::Heap>
     where H: Allocator,
+          H::Pool: Default,
           Ref: ToOwned<H>,
           Ref::Owned: AsRef<Ref>,
 {
@@ -73,6 +82,7 @@ pub enum Rmo<'a, Ref: ?Sized+'a, H = alloc::Heap>
 
 impl<'a, Ref: ?Sized+'a, H> Rmo<'a, Ref, H>
     where H: Allocator,
+          H::Pool: Default,
           Ref: ToOwned<H>,
           Ref::Owned: AsRef<Ref>,
 {
@@ -135,6 +145,7 @@ impl<'a, Ref: ?Sized+'a, H> Rmo<'a, Ref, H>
 
 impl<'a, Ref: ?Sized+'a, H> Deref for Rmo<'a, Ref, H>
     where H: Allocator,
+          H::Pool: Default,
           Ref: ToOwned<H>,
           Ref::Owned: AsRef<Ref>,
 {

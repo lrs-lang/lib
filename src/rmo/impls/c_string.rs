@@ -3,7 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use base::default::{Default};
 use str_one::c_str::{CStr};
 use str_two::c_string::{CString};
 use {ToOwned};
@@ -11,11 +10,10 @@ use alloc::{Allocator};
 
 impl<H> ToOwned<H> for CStr
     where H: Allocator,
-          H::Pool: Default,
 {
     type Owned = CString<H>;
-    fn to_owned(&self) -> Result<CString<H>> {
+    fn to_owned_with_pool(&self, pool: H::Pool) -> Result<CString<H>> {
         let bytes = self.bytes_with_null();
-        bytes.to_owned().map(|o| unsafe { CString::from_bytes_unchecked(o) })
+        bytes.to_owned_with_pool(pool).map(|o| unsafe { CString::from_bytes_unchecked(o) })
     }
 }

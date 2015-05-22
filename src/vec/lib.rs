@@ -72,15 +72,18 @@ impl<'a, T> Vec<T, alloc::NoMem<'a>> {
 
 impl<T, H> Vec<T, H>
     where H: Allocator,
-          H::Pool: Default,
 {
     /// Creates a new allocating vector.
-    pub fn new() -> Vec<T, H> {
+    pub fn new() -> Vec<T, H>
+        where H::Pool: Default,
+    {
         Vec { ptr: empty_ptr(), len: 0, cap: 0, pool: H::Pool::default(), }
     }
 
     /// Creates a new allocating vector and reserves a certain amount of space for it.
-    pub fn with_capacity(cap: usize) -> Result<Vec<T, H>> {
+    pub fn with_capacity(cap: usize) -> Result<Vec<T, H>>
+        where H::Pool: Default,
+    {
         let mut pool = H::Pool::default();
         if cap == 0 || mem::size_of::<T>() == 0 {
             return Ok(Vec { ptr: empty_ptr(), len: 0, cap: cap, pool: pool });
@@ -88,11 +91,11 @@ impl<T, H> Vec<T, H>
         let ptr = unsafe { try!(H::allocate_array(&mut pool, cap)) };
         Ok(Vec { ptr: ptr, len: 0, cap: cap, pool: pool })
     }
-}
 
-impl<T, H> Vec<T, H>
-    where H: Allocator,
-{
+    pub fn with_pool(pool: H::Pool) -> Vec<T, H> {
+        Vec { ptr: empty_ptr(), len: 0, cap: 0, pool: pool }
+    }
+
     /// Creates a new vector from its raw parts.
     ///
     /// [argument, ptr]

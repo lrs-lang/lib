@@ -4,7 +4,6 @@
 
 #[prelude_import] use base::prelude::*;
 use base::rmo::{AsRef};
-use base::default::{Default};
 use str_one::no_null_str::{NoNullStr};
 use str_two::no_null_string::{NoNullString};
 use {ToOwned};
@@ -12,11 +11,12 @@ use alloc::{Allocator};
 
 impl<H> ToOwned<H> for NoNullStr
     where H: Allocator,
-          H::Pool: Default,
 {
     type Owned = NoNullString<H>;
-    fn to_owned(&self) -> Result<NoNullString<H>> {
+    fn to_owned_with_pool(&self, pool: H::Pool) -> Result<NoNullString<H>> {
         let bytes: &[u8] = self.as_ref();
-        bytes.to_owned().map(|o| unsafe { NoNullString::from_bytes_unchecked(o) })
+        bytes.to_owned_with_pool(pool).map(|o| unsafe {
+            NoNullString::from_bytes_unchecked(o)
+        })
     }
 }

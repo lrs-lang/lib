@@ -4,7 +4,9 @@
 
 #[prelude_import] use base::prelude::*;
 use core::{mem};
+use base::default::{Default};
 use io::{BufRead};
+use alloc::{self, Allocator};
 use buf_reader::{BufReader};
 use fmt::{Debug, Write};
 use base::error::{self};
@@ -84,17 +86,22 @@ impl<'a> Info<'a> {
         try!(err);
         Err(error::DoesNotExist)
     }
+}
 
-    /// Copies the contained data and returns owned information.
-    pub fn to_owned(&self) -> Result<Information> {
+impl<'a, H> ToOwned<H> for Info<'a>
+    where H: Allocator,
+          H::Pool: Copy,
+{
+    type Owned = Information<H>;
+    fn to_owned_with_pool(&self, pool: H::Pool) -> Result<Self::Owned> {
         Ok(Information {
-            name:     try!(self.name.to_owned()),
-            password: try!(self.password.to_owned()),
+            name:     try!(self.name.to_owned_with_pool(pool)),
+            password: try!(self.password.to_owned_with_pool(pool)),
             user_id:  self.user_id,
             group_id: self.group_id,
-            comment:  try!(self.comment.to_owned()),
-            home:     try!(self.home.to_owned()),
-            shell:    try!(self.shell.to_owned()),
+            comment:  try!(self.comment.to_owned_with_pool(pool)),
+            home:     try!(self.home.to_owned_with_pool(pool)),
+            shell:    try!(self.shell.to_owned_with_pool(pool)),
         })
     }
 }
@@ -109,23 +116,28 @@ impl<'a> Debug for Info<'a> {
 }
 
 /// Struct holding allocated user info.
-#[derive(Clone, Eq)]
-pub struct Information {
-    name:     ByteString,
-    password: ByteString,
+#[derive(Eq)]
+pub struct Information<H = alloc::Heap>
+    where H: Allocator,
+{
+    name:     ByteString<H>,
+    password: ByteString<H>,
     user_id:  UserId,
     group_id: GroupId,
-    comment:  ByteString,
-    home:     ByteString,
-    shell:    ByteString,
+    comment:  ByteString<H>,
+    home:     ByteString<H>,
+    shell:    ByteString<H>,
 }
 
-impl Information {
+impl<H> Information<H>
+    where H: Allocator,
+          H::Pool: Default + Copy,
+{
     /// Retrieves user info of the user with a certain id.
     ///
     /// [argument, id]
     /// The id of the user.
-    pub fn from_user_id(id: UserId) -> Result<Information> {
+    pub fn from_user_id(id: UserId) -> Result<Information<H>> {
         let mut buf = [0; INFO_BUF_SIZE];
         Info::from_user_id(&mut buf, id).chain(|i| i.to_owned())
     }
@@ -134,7 +146,7 @@ impl Information {
     ///
     /// [argument, name]
     /// The name of the user.
-    pub fn from_user_name<S>(name: S) -> Result<Information>
+    pub fn from_user_name<S>(name: S) -> Result<Information<H>>
         where S: AsByteStr
     {
         let mut buf = [0; INFO_BUF_SIZE];
@@ -145,13 +157,53 @@ impl Information {
     ///
     /// [argument, pred]
     /// The predicate.
-    pub fn find_by<F>(pred: F) -> Result<Information>
+    pub fn find_by<F>(pred: F) -> Result<Information<H>>
         where F: Fn(&Info) -> bool,
     {
         let mut buf = [0; INFO_BUF_SIZE];
         Info::find_by(&mut buf, pred).chain(|i| i.to_owned())
     }
+}
 
+impl<H> Information<H>
+    where H: Allocator,
+          H::Pool: Copy,
+{
+    /// Retrieves user info of the user with a certain id.
+    ///
+    /// [argument, id]
+    /// The id of the user.
+    pub fn from_user_id_with_pool(id: UserId, pool: H::Pool) -> Result<Information<H>> {
+        let mut buf = [0; INFO_BUF_SIZE];
+        Info::from_user_id(&mut buf, id).chain(|i| i.to_owned_with_pool(pool))
+    }
+
+    /// Retrieves user info of the user with a certain name.
+    ///
+    /// [argument, name]
+    /// The name of the user.
+    pub fn from_user_name_with_pool<S>(name: S, pool: H::Pool) -> Result<Information<H>>
+        where S: AsByteStr
+    {
+        let mut buf = [0; INFO_BUF_SIZE];
+        Info::from_user_name(&mut buf, name).chain(|i| i.to_owned_with_pool(pool))
+    }
+
+    /// Finds the first user that satisfies the predicate.
+    ///
+    /// [argument, pred]
+    /// The predicate.
+    pub fn find_by_with_pool<F>(pred: F, pool: H::Pool) -> Result<Information<H>>
+        where F: Fn(&Info) -> bool,
+    {
+        let mut buf = [0; INFO_BUF_SIZE];
+        Info::find_by(&mut buf, pred).chain(|i| i.to_owned_with_pool(pool))
+    }
+}
+
+impl<H> Information<H>
+    where H: Allocator,
+{
     /// Borrows the information.
     pub fn to_info<'a>(&'a self) -> Info<'a> {
         Info {
@@ -163,6 +215,17 @@ impl Information {
             home:     &self.home,
             shell:    &self.shell,
         }
+    }
+}
+
+impl<H> Debug for Information<H>
+    where H: Allocator,
+{
+    fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
+        write!(w, "Information {{ name: {:?}, password: {:?}, user_id: {:?}, \
+                    group_id: {:?}, comment: {:?}, home: {:?}, shell: {:?} }}",
+                    self.name, self.password, self.user_id, self.group_id, self.comment,
+                    self.home, self.shell)
     }
 }
 
