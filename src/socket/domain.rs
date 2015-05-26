@@ -38,10 +38,10 @@ macro_rules! create {
         $($(#[$meta])* pub const $name: Domain = Domain($val);)*
 
         impl Debug for Domain {
-            fn fmt<W: Write>(&self, w: &mut W) -> Result {
+            fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
                 let s = match *self {
                     $($name => stringify!($name),)*
-                    _ => "Unknown domain",
+                    _ => return write!(w, "Unknown({})", self.0),
                 };
                 w.write_all(s.as_bytes()).ignore_ok()
             }

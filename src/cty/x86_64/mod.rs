@@ -24,10 +24,6 @@ pub use ::gen::{
 };
 
 pub use ::gen::{
-    __sighandler_t, __sigrestore_t,
-};
-
-pub use ::gen::{
     O_ACCMODE, O_RDONLY, O_WRONLY, O_RDWR, O_CREAT, O_EXCL, O_NOCTTY, O_TRUNC, O_APPEND,
     O_NONBLOCK, O_DSYNC, FASYNC, O_DIRECT, O_LARGEFILE, O_DIRECTORY, O_NOFOLLOW,
     O_NOATIME, O_CLOEXEC, __O_SYNC, O_SYNC, O_PATH, __O_TMPFILE, O_TMPFILE,
@@ -108,6 +104,11 @@ pub use ::gen::{
     TIOCSERSETMULTI, TIOCMIWAIT, TIOCGICOUNT, FIOQSIZE, TIOCPKT_DATA, TIOCPKT_FLUSHREAD,
     TIOCPKT_FLUSHWRITE, TIOCPKT_STOP, TIOCPKT_START, TIOCPKT_NOSTOP, TIOCPKT_DOSTOP,
     TIOCPKT_IOCTL, TIOCSER_TEMT,
+};
+
+pub use ::gen::{
+    SIG_BLOCK, SIG_UNBLOCK, SIG_SETMASK, __sighandler_t, __sigrestore_t, SIG_DFL, SIG_IGN,
+    SIG_ERR,
 };
 
 pub use ::gen::{
@@ -367,10 +368,12 @@ pub struct epoll_event {
 
 pub const NSIG : usize = 64;
 
+pub type SigsetVal = c_ulong;
+
 #[repr(C, packed)]
 #[derive(Pod, Eq)]
 pub struct sigset_t {
-    pub sig: [c_ulong; _NSIG / BITS_PER_C_ULONG],
+    pub sig: [SigsetVal; _NSIG / BITS_PER_C_ULONG],
 }
 
 pub const SIGHUP    : c_int = 1;

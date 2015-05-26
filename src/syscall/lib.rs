@@ -2471,3 +2471,53 @@ pub fn ioctl_siocoutq(fd: c_int, unread: &mut usize) -> c_int {
     *unread = u as usize;
     rv
 }
+
+/// Modifies or inspects the process signal mask.
+///
+/// [argument, how]
+/// How the mask will be modified.
+///
+/// [argument, set]
+/// The argument for modification.
+///
+/// [argument, old]
+/// Optional place in which the old set will be stored.
+///
+/// = See also
+///
+/// * link:man:rt_sigprocmask(2)
+pub fn rt_sigprocmask(how: c_int, set: Option<&sigset_t>,
+                      old: Option<&mut sigset_t>) -> c_int {
+    let set = set.map(|v| v as *const _ as *mut _).unwrap_or(0 as *mut _);
+    let old = old.map(|v| v as *mut _).unwrap_or(0 as *mut _);
+    unsafe { r::rt_sigprocmask(how, set, old, mem::size_of::<sigset_t>() as size_t) }
+}
+
+/// Examines the pending signals.
+///
+/// [argument, set]
+/// The place in which the pending signals will be set.
+///
+/// = See also
+///
+/// * link:man:rt_sigpending(2)
+pub fn rt_sigpending(set: &mut sigset_t) -> c_int {
+    unsafe { r::rt_sigpending(set, mem::size_of::<sigset_t>() as size_t) }
+}
+
+/// Temporarily replace the signal mask and waits for a signal to arrive.
+///
+/// [argument, set]
+/// The temporary signal mask.
+///
+/// = See also
+///
+/// * link:man:rt_sigsuspend(2)
+pub fn rt_sigsuspend(set: &sigset_t) -> c_int {
+    let set = set as *const _ as *mut _;
+    unsafe { r::rt_sigsuspend(set, mem::size_of::<sigset_t>() as size_t) }
+}
+
+pub fn signalfd4(fd: c_int, set: &sigset_t, flags: c_int) -> c_int {
+    unsafe { r::signalfd4(fd, set, mem::size_of::<sigset_t>() as size_t, flags) }
+}

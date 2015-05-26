@@ -4756,3 +4756,71 @@ pub const VETH_INFO_UNSPEC : u16 = 0;
 pub const VETH_INFO_PEER   : u16 = 1;
 pub const __VETH_INFO_MAX  : u16 = 2;
 pub const VETH_INFO_MAX    : u16 = __VETH_INFO_MAX - 1;
+
+/////////////////////////////
+// include/uapi/linux/sched.h
+/////////////////////////////
+
+pub const CSIGNAL              : c_int = 0x000000ff;
+pub const CLONE_VM             : c_int = 0x00000100;
+pub const CLONE_FS             : c_int = 0x00000200;
+pub const CLONE_FILES          : c_int = 0x00000400;
+pub const CLONE_SIGHAND        : c_int = 0x00000800;
+pub const CLONE_PTRACE         : c_int = 0x00002000;
+pub const CLONE_VFORK          : c_int = 0x00004000;
+pub const CLONE_PARENT         : c_int = 0x00008000;
+pub const CLONE_THREAD         : c_int = 0x00010000;
+pub const CLONE_NEWNS          : c_int = 0x00020000;
+pub const CLONE_SYSVSEM        : c_int = 0x00040000;
+pub const CLONE_SETTLS         : c_int = 0x00080000;
+pub const CLONE_PARENT_SETTID  : c_int = 0x00100000;
+pub const CLONE_CHILD_CLEARTID : c_int = 0x00200000;
+pub const CLONE_DETACHED       : c_int = 0x00400000;
+pub const CLONE_UNTRACED       : c_int = 0x00800000;
+pub const CLONE_CHILD_SETTID   : c_int = 0x01000000;
+pub const CLONE_NEWUTS         : c_int = 0x04000000;
+pub const CLONE_NEWIPC         : c_int = 0x08000000;
+pub const CLONE_NEWUSER        : c_int = 0x10000000;
+pub const CLONE_NEWPID         : c_int = 0x20000000;
+pub const CLONE_NEWNET         : c_int = 0x40000000;
+pub const CLONE_IO             : c_int = 0x80000000;
+
+pub const SCHED_NORMAL   : c_int = 0;
+pub const SCHED_FIFO     : c_int = 1;
+pub const SCHED_RR       : c_int = 2;
+pub const SCHED_BATCH    : c_int = 3;
+pub const SCHED_IDLE     : c_int = 5;
+pub const SCHED_DEADLINE : c_int = 6;
+
+pub const SCHED_RESET_ON_FORK      : c_int = 0x40000000;
+pub const SCHED_FLAG_RESET_ON_FORK : c_int = 0x01;
+
+////////////////////////////////
+// include/uapi/linux/signalfd.h
+////////////////////////////////
+
+pub const SFD_CLOEXEC  : c_int = O_CLOEXEC;
+pub const SFD_NONBLOCK : c_int = O_NONBLOCK;
+
+#[repr(C)]
+#[derive(Pod)]
+pub struct signalfd_siginfo {
+    pub ssi_signo    : __u32,
+    pub ssi_errno    : __s32,
+    pub ssi_code     : __s32,
+    pub ssi_pid      : __u32,
+    pub ssi_uid      : __u32,
+    pub ssi_fd       : __s32,
+    pub ssi_tid      : __u32,
+    pub ssi_band     : __u32,
+    pub ssi_overrun  : __u32,
+    pub ssi_trapno   : __u32,
+    pub ssi_status   : __s32,
+    pub ssi_int      : __s32,
+    pub ssi_ptr      : __u64,
+    pub ssi_utime    : __u64,
+    pub ssi_stime    : __u64,
+    pub ssi_addr     : __u64,
+    pub ssi_addr_lsb : __u16,
+    pub __pad : [__u8; 46],
+}

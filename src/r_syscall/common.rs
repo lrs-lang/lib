@@ -65,8 +65,8 @@ use cty::{
     __NR_readlinkat, __NR_readlink, __NR_readv, __NR_reboot, __NR_recv, __NR_recvfrom,
     __NR_recvmmsg, __NR_recvmsg, __NR_remap_file_pages, __NR_removexattr, __NR_renameat2,
     __NR_renameat, __NR_rename, __NR_request_key, __NR_restart_syscall, __NR_rmdir,
-    __NR_rt_sigaction, __NR_rt_sigpending, __NR_rt_sigprocmask,
-    __NR_rt_sigsuspend, __NR_waitid,
+    __NR_rt_sigaction, __NR_rt_sigpending, __NR_rt_sigprocmask, __NR_rt_sigqueueinfo,
+    __NR_rt_sigsuspend, __NR_waitid, __NR_rt_sigtimedwait, __NR_rt_tgsigqueueinfo,
     __NR_sched_getaffinity, __NR_sched_getattr, __NR_sched_getparam,
     __NR_sched_get_priority_max, __NR_sched_get_priority_min, __NR_sched_getscheduler,
     __NR_sched_rr_get_interval, __NR_sched_setaffinity, __NR_sched_setattr,
@@ -1124,23 +1124,23 @@ pub unsafe fn rt_sigprocmask(how: k_int, nset: *mut sigset_t, oset: *mut sigset_
     call!(__NR_rt_sigprocmask, how, nset, oset, sigsetsize) as k_int
 }
 
-//pub unsafe fn rt_sigqueueinfo(pid: pid_t, sig: k_int, uinfo: *mut siginfo_t) -> k_int {
-//    call!(__NR_rt_sigqueueinfo, pid, sig, uinfo) as k_int
-//}
+pub unsafe fn rt_sigqueueinfo(pid: pid_t, sig: k_int, uinfo: *mut siginfo_t) -> k_int {
+    call!(__NR_rt_sigqueueinfo, pid, sig, uinfo) as k_int
+}
 
 pub unsafe fn rt_sigsuspend(unewset: *mut sigset_t, sigsetsize: size_t) -> k_int {
     call!(__NR_rt_sigsuspend, unewset, sigsetsize) as k_int
 }
 
-//pub unsafe fn rt_sigtimedwait(uthese: *const sigset_t, uinfo: *mut siginfo_t,
-//                              uts: *const timespec, sigsetsize: size_t) -> k_int {
-//    call!(__NR_rt_sigtimedwait, uthese, uinfo, uts, sigsetsize) as k_int
-//}
+pub unsafe fn rt_sigtimedwait(uthese: *const sigset_t, uinfo: *mut siginfo_t,
+                              uts: *const timespec, sigsetsize: size_t) -> k_int {
+    call!(__NR_rt_sigtimedwait, uthese, uinfo, uts, sigsetsize) as k_int
+}
 
-//pub unsafe fn rt_tgsigqueueinfo(tgid: pid_t, pid: pid_t, sig: k_int,
-//                                uinfo: *mut siginfo_t) -> k_int {
-//    call!(__NR_rt_tgsigqueueinfo, tgid, pid, sig, uinfo) as k_int
-//}
+pub unsafe fn rt_tgsigqueueinfo(tgid: pid_t, pid: pid_t, sig: k_int,
+                                uinfo: *mut siginfo_t) -> k_int {
+    call!(__NR_rt_tgsigqueueinfo, tgid, pid, sig, uinfo) as k_int
+}
 
 pub unsafe fn sched_getaffinity(pid: pid_t, len: k_uint,
                                 user_mask_ptr: *mut k_ulong) -> k_int {

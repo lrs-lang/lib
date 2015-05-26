@@ -17,3 +17,13 @@ pub use lrs_process::ids::{
     set_supplementary_groups
 };
 pub use lrs_clone::{fork};
+pub use lrs_clone::flags::{CloneFlags};
+
+pub mod clone {
+    pub use lrs_clone::flags::{
+        CLONE_VM, CLONE_FS, CLONE_FILES, CLONE_SIGHAND, CLONE_PTRACE, CLONE_VFORK,
+        CLONE_PARENT, CLONE_THREAD, CLONE_NEWMOUNT, CLONE_SYSVSEM, CLONE_SETTLS,
+        CLONE_UNTRACED, CLONE_NEWUTS, CLONE_NEWIPC, CLONE_NEWUSER, CLONE_NEWPID,
+        CLONE_NEWNET, CLONE_IO,
+    };
+}

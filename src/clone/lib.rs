@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_clone"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std)]
+#![feature(plugin, no_std, custom_derive)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
@@ -13,6 +13,7 @@ extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_cty as cty;
 extern crate lrs_syscall as syscall;
+extern crate lrs_fmt as fmt;
 extern crate lrs_libc as libc;
 
 #[prelude_import] use base::prelude::*;
@@ -21,7 +22,9 @@ use core::ops::{FnOnce};
 use cty::alias::{ProcessId};
 use syscall::{exit_group};
 
-mod lrs { pub use base::lrs::*; }
+mod lrs { pub use fmt::lrs::*; }
+
+pub mod flags;
 
 // TODO: Libc-free version. There are some interesting posibilities with clone(2) that are
 // not available via libc but we can only use clone(2) directly if we don't use libc.
