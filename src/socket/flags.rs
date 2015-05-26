@@ -9,7 +9,7 @@ use cty::{
 use fmt::{Debug, Write};
 use core::ops::{BitOr, BitAnd, Not};
 
-/// Flags that can be used when opering a socket.
+/// Flags that can be used when opening a socket.
 ///
 /// [field, 1]
 /// The integer constant associated with the flags.

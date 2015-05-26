@@ -54,7 +54,7 @@ impl<'a, T> Vec<T, alloc::NoMem<'a>> {
             return Vec { ptr: empty_ptr(), len: 0, cap: 0, pool: () };
         }
 
-        let buf = mem::align_for::<T>(buf);
+        let buf = mem::align_for_mut::<T>(buf);
         let cap = buf.len() / mem::size_of::<T>();
         Vec { ptr: buf.as_mut_ptr() as *mut T, len: 0, cap: cap, pool: () }
     }

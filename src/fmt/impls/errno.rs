@@ -7,7 +7,10 @@ use base::error::{Errno};
 use {Write, Debug};
 
 impl Debug for Errno {
-    fn fmt<W: Write>(&self, w: &mut W) -> Result {
-        w.write_str(self.name()).ignore_ok()
+    fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
+        match self.name() {
+            Some(n) => w.write_str(n).ignore_ok(),
+            _ => write!(w, "Unknown({})", self.0),
+        }
     }
 }

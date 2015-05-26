@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use core::{ptr, cmp, mem};
+use core::{ptr, cmp, mem, slice};
 use base::{error};
 use {Allocator};
 
@@ -40,6 +40,21 @@ impl<'a> Allocator for TaAlloc<'a> {
 
     unsafe fn reallocate_raw(pool: &mut TaPool<'a>, ptr: *mut u8, oldsize: usize,
                              newsize: usize, alignment: usize) -> Result<*mut u8> {
+        {
+            let pool = pool.get();
+            if ptr.add(oldsize) == pool.as_mut_ptr() {
+                if oldsize > newsize {
+                    let len = oldsize - newsize + pool.len();
+                    *pool = slice::from_ptr(ptr.add(newsize), len); 
+                } else if newsize - oldsize <= pool.len() {
+                    *pool = &mut mem::replace(pool, &mut [])[newsize - oldsize..];
+                } else {
+                    return Err(error::NoMemory);
+                }
+                return Ok(ptr);
+            }
+        }
+
         let new = try!(TaAlloc::allocate_raw(pool, newsize, alignment));
         let min = cmp::min(oldsize, newsize);
         ptr::memcpy(new, ptr, min);

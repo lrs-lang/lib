@@ -7,6 +7,8 @@ use ptr::{self};
 use marker::{Pod, Copy, Leak};
 use cmp::{self};
 use slice::{self};
+use option::{Option};
+use option::Option::{Some, None};
 
 pub use intrinsics::{
     uninit,
@@ -43,6 +45,60 @@ pub fn as_mut_bytes<T>(val: &mut T) -> &mut [u8]
     where T: Pod,
 {
     unsafe { slice::from_ptr(val as *mut _ as *const u8, size_of::<T>()) }
+}
+
+/// Returns whether a buffer is suitable to hold an object of a certain type.
+///
+/// [argument, buf]
+/// The buffer to be checked.
+///
+/// = Remarks
+///
+/// The buffer is suitable if it is large enough to hold the type and properly aligned.
+pub fn is_suitable_for<T>(buf: &[u8]) -> bool {
+    (buf.len() >= size_of::<T>()) && (buf.as_ptr() as usize & (align_of::<T>() - 1) == 0)
+}
+
+/// Turns a slice into a reference to a Pod type if it's suitable.
+///
+/// [argument, buf]
+/// The buffer to be turned into a reference.
+///
+/// [return_value]
+/// Returns the created reference.
+///
+/// = Remarks
+///
+/// The buffer is suitable under the conditions described in
+/// link:lrs::mem::is_suitable_for[is_suitable_for].
+pub fn from_bytes<T>(buf: &[u8]) -> Option<&T>
+    where T: Pod,
+{
+    match is_suitable_for::<T>(buf) {
+        true => Some(unsafe { &*(buf.as_ptr() as *const T) }),
+        _ => None,
+    }
+}
+
+/// Turns a mutable slice into a mutable reference to a Pod type if it's suitable.
+///
+/// [argument, buf]
+/// The buffer to be turned into a reference.
+///
+/// [return_value]
+/// Returns the created reference.
+///
+/// = Remarks
+///
+/// The buffer is suitable under the conditions described in
+/// link:lrs::mem::is_suitable_for[is_suitable_for].
+pub fn from_mut_bytes<T>(buf: &mut [u8]) -> Option<&mut T>
+    where T: Pod,
+{
+    match is_suitable_for::<T>(buf) {
+        true => Some(unsafe { &mut *(buf.as_mut_ptr() as *mut T) }),
+        _ => None,
+    }
 }
 
 /// Creates an object that has all bytes set to zero.
@@ -189,7 +245,27 @@ pub fn as_mut_slice<T>(val: &mut T) -> &mut [T] {
 ///
 /// That is, if the returned slice is not empty, the address of the first element is a
 /// multiple of the alignment of `T`.
-pub fn align_for<T>(buf: &mut [u8]) -> &mut [u8] {
+pub fn align_for<T>(buf: &[u8]) -> &[u8] {
+    let align_mask = align_of::<T>() - 1;
+    let addr = buf.as_ptr() as usize;
+    let diff = ((!addr & align_mask) + 1) & align_mask;
+    if diff <= buf.len() {
+        &buf[diff..]
+    } else {
+        &[]
+    }
+}
+
+/// Left-trims a mutable byte slice so that the first element is aligned.
+///
+/// [argument, buf]
+/// The slice to be trimmed.
+///
+/// = Remarks
+///
+/// That is, if the returned slice is not empty, the address of the first element is a
+/// multiple of the alignment of `T`.
+pub fn align_for_mut<T>(buf: &mut [u8]) -> &mut [u8] {
     let align_mask = align_of::<T>() - 1;
     let addr = buf.as_ptr() as usize;
     let diff = ((!addr & align_mask) + 1) & align_mask;

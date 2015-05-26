@@ -75,6 +75,7 @@ pub mod iter;
 pub mod mem;
 pub mod num;
 pub mod getopt;
+pub mod netlink;
 pub mod ops;
 pub mod option;
 pub mod io;

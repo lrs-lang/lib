@@ -4,6 +4,9 @@
 
 #![allow(non_upper_case_globals, non_camel_case_types)]
 
+use core::option::{Option};
+use core::option::Option::{Some, None};
+
 pub use cty_base::errno:: {
     EPERM, ENOENT, ESRCH, EINTR, EIO, ENXIO, E2BIG, ENOEXEC, EBADF, ECHILD,
     EAGAIN, ENOMEM, EACCES, EFAULT, ENOTBLK, EBUSY, EEXIST, EXDEV, ENODEV, ENOTDIR,
@@ -49,10 +52,10 @@ macro_rules! create {
 
         impl Errno {
             /// Returns the name of the error in string form.
-            pub fn name(self) -> &'static str {
+            pub fn name(self) -> Option<&'static str> {
                 match self {
-                    $($name => stringify!($name),)*
-                    _ => "Unknown error",
+                    $($name => Some(stringify!($name)),)*
+                    _ => None,
                 }
             }
 
@@ -68,6 +71,7 @@ macro_rules! create {
 }
 
 create! {
+    NoError                 = 0               , "No error",
     NotPermitted            = EPERM           , "Operation not permitted",
     DoesNotExist            = ENOENT          , "No such file or directory",
     NoSuchProcess           = ESRCH           , "No process matches the specified process ID",

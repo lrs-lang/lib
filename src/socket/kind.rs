@@ -12,11 +12,11 @@ use fmt::{Debug, Write};
 /// A socket type.
 ///
 /// [field, 1]
-/// The integer contsant associated with the socket type.
+/// The integer constant associated with the socket type.
 ///
 /// = Remarks
 ///
-/// :kinds: link:lrs:socket:kind
+/// :kinds: link:lrs::socket::kind
 ///
 /// See {kinds} for pre-defined constants.
 ///
@@ -31,10 +31,10 @@ macro_rules! create {
         $($(#[$meta])*  pub const $name: Kind = Kind($val);)*
 
         impl Debug for Kind {
-            fn fmt<W: Write>(&self, w: &mut W) -> Result {
+            fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
                 let s = match *self {
                     $($name => stringify!($name),)*
-                    _ => "Unknown kind",
+                    _ => return write!(w, "Unknown({})", self.0),
                 };
                 w.write_all(s.as_bytes()).ignore_ok()
             }
