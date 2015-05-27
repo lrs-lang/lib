@@ -227,3 +227,6 @@ pub struct PhantomData<T: ?Sized>;
 
 impl<T> Copy for PhantomData<T> { }
 impl<T> Eq for PhantomData<T> { fn eq(&self, _: &PhantomData<T>) -> bool { true } }
+
+#[lang="unsize"]
+pub trait Unsize<T> { }

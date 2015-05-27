@@ -53,13 +53,13 @@ pub mod syntax {
 pub mod parse {
     pub use _syntax::parse::{
         PResult, parser, lexer, token, attr, common, classify, obsolete, ParseSess,
-        new_parse_sess, new_parse_sess_special_handler, parse_crate_from_file,
+        parse_crate_from_file,
         parse_crate_attrs_from_file, parse_crate_from_source_str,
         parse_crate_attrs_from_source_str, parse_expr_from_source_str,
         parse_item_from_source_str, parse_meta_from_source_str,
         parse_stmt_from_source_str, parse_tts_from_source_str, new_parser_from_source_str,
         new_parser_from_file, new_sub_parser_from_file, filemap_to_parser,
-        new_parser_from_tts, file_to_filemap, string_to_filemap, filemap_to_tts,
+        new_parser_from_tts, filemap_to_tts,
         tts_to_parser, maybe_aborted, char_lit, str_lit, raw_str_lit,
         float_lit, byte_lit, binary_lit, integer_lit,
     };
@@ -80,7 +80,7 @@ pub mod ext {
 
 //////////////////////////////////////////////
 
-use ext::base::{Decorator};
+use ext::base::{MultiDecorator};
 use parse::{token};
 use rustc::plugin::{Registry};
 
@@ -90,23 +90,23 @@ mod lrs_ext;
 pub fn plugin_registrar(reg: &mut Registry) {
     reg.register_syntax_extension(
         token::intern("derive_onlyCopy"),
-        Decorator(Box::new(lrs_ext::derive_copy)));
+        MultiDecorator(Box::new(lrs_ext::derive_copy)));
 
     reg.register_syntax_extension(
         token::intern("derive_Clone"),
-        Decorator(Box::new(lrs_ext::derive_clone)));
+        MultiDecorator(Box::new(lrs_ext::derive_clone)));
 
     reg.register_syntax_extension(
         token::intern("derive_Copy"),
-        Decorator(Box::new(lrs_ext::derive_copy_and_clone)));
+        MultiDecorator(Box::new(lrs_ext::derive_copy_and_clone)));
 
     reg.register_syntax_extension(
         token::intern("derive_Pod"),
-        Decorator(Box::new(lrs_ext::derive_pod_copy_and_clone)));
+        MultiDecorator(Box::new(lrs_ext::derive_pod_copy_and_clone)));
 
     reg.register_syntax_extension(
         token::intern("derive_Eq"),
-        Decorator(Box::new(lrs_ext::derive_eq)));
+        MultiDecorator(Box::new(lrs_ext::derive_eq)));
 
     reg.register_macro(
         "write",

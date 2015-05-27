@@ -287,7 +287,11 @@ impl<T> Index<Range<usize>> for [T] {
 
 impl<T> IndexMut<Range<usize>> for [T] {
     fn index_mut(&mut self, index: Range<usize>) -> &mut [T] {
-        unsafe { mem::cast(self.index(index)) }
+        assert!(index.start <= index.end);
+        assert!(index.end <= self.len());
+        let len = index.end - index.start;
+        let start = unsafe { self.as_ptr().add(index.start) };
+        unsafe { from_ptr(start, len) }
     }
 }
 

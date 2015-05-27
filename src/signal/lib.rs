@@ -23,7 +23,6 @@ pub mod lrs { pub use fmt::lrs::*; pub use cty; }
 // rt_sigtimedwait
 // rt_sigqueueinfo
 // rt_tgsigqueueinfo
-// signalfd4
 
 #[prelude_import] use base::prelude::*;
 use core::{mem};
@@ -166,6 +165,9 @@ pub fn pending_signals() -> Result<Sigset> {
     Ok(set)
 }
 
-pub fn wait(mask: Sigset) {
+pub fn suspend(mask: Sigset) {
     rt_sigsuspend(&mask.data);
 }
+
+// pub fn wait(set: Sigset) -> SigInfo {
+// }

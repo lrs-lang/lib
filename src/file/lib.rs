@@ -2627,7 +2627,7 @@ impl File {
         let mut pbuf: [u8; PATH_MAX] = unsafe { mem::uninit() };
         let link: Rmo<_, FbHeap> = try!(link.rmo_cstr(&mut pbuf));
         let len = try!(rv!(readlinkat(self.fd, &link, buf), -> usize));
-        Ok(unsafe { NoNullStr::from_bytes_unchecked_mut(&mut buf[..len]) })
+        Ok(unsafe { NoNullStr::from_mut_bytes_unchecked(&mut buf[..len]) })
     }
 
     /// Reads the target of a symbolic link relative to this file.

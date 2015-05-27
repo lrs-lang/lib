@@ -70,7 +70,7 @@ macro_rules! impl_atomic {
             }
 
             pub unsafe fn unwrap(&self) -> &mut $raw {
-                mem::cast(self)
+                &mut *self.val.ptr()
             }
 
             /// Loads the value of the atomic integer without ordering guarantees.

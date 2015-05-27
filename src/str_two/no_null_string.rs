@@ -178,7 +178,7 @@ impl<H> AsMut<NoNullStr> for NoNullString<H>
     where H: Allocator,
 {
     fn as_mut(&mut self) -> &mut NoNullStr {
-        unsafe { NoNullStr::from_bytes_unchecked_mut(&mut self.data) }
+        unsafe { NoNullStr::from_mut_bytes_unchecked(&mut self.data) }
     }
 }
 
@@ -194,7 +194,7 @@ impl<H> AsMutNoNullStr for NoNullString<H>
     where H: Allocator,
 {
     fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
-        unsafe { Ok(NoNullStr::from_bytes_unchecked_mut(&mut self.data)) }
+        unsafe { Ok(NoNullStr::from_mut_bytes_unchecked(&mut self.data)) }
     }
 }
 
@@ -217,7 +217,7 @@ impl<H> AsMutCStr for NoNullString<H>
         try!(self.data.reserve(1));
         self.data.push(0);
         let cstr: &'static mut CStr = unsafe {
-            mem::cast(CStr::from_bytes_unchecked_mut(&mut self.data[..]))
+            mem::cast(CStr::from_mut_bytes_unchecked(&mut self.data[..]))
         };
         unsafe { self.data.set_len(cstr.len()); }
         Ok(cstr)

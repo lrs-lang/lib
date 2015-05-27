@@ -4,7 +4,7 @@
 
 pub use lrs_signal::{
     Sigset, blocked_signals, block_signal, unblock_signal, block_signals, unblock_signals,
-    set_blocked_signals, pending_signals, wait,
+    set_blocked_signals, pending_signals, suspend,
 };
 pub use lrs_signal::signals::{Signal};
 

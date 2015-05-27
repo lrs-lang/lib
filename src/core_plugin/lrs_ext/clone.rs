@@ -4,7 +4,7 @@ use codemap::{Span};
 
 use util::small_vector::{SmallVector};
 
-use ext::base::{ExtCtxt, MacEager, MacResult, DummyResult};
+use ext::base::{ExtCtxt, MacEager, MacResult, DummyResult, Annotatable};
 use ext::deriving::generic::{
     TraitDef, MethodDef, Substructure, combine_substructure, FieldInfo, Struct,
     EnumMatching, EnumNonMatchingCollapsed, StaticEnum, StaticStruct,
@@ -139,8 +139,8 @@ fn cs_clone(name: &str, cx: &mut ExtCtxt, trait_span: Span,
     }
 }
 
-pub fn derive_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Item,
-                        push: &mut FnMut(P<Item>)) {
+pub fn derive_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem,
+                    item: &Annotatable, push: &mut FnMut(Annotatable)) {
     let inline = cx.meta_word(span, InternedString::new("inline"));
     let attrs = vec!(cx.attribute(span, inline));
     let ret_ty = Ty::Literal(Path {
@@ -163,6 +163,7 @@ pub fn derive_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Item,
                 args: Vec::new(),
                 ret_ty: ret_ty,
                 attributes: attrs,
+                is_unsafe: false,
                 combine_substructure: combine_substructure(Box::new(|c, s, sub| {
                     cs_clone("Clone", c, s, sub)
                 })),
@@ -175,11 +176,16 @@ pub fn derive_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Item,
 }
 
 pub fn derive_clone_for_copy(cx: &mut ExtCtxt, span: Span, _mitem: &MetaItem,
-                                 item: &Item, push: &mut FnMut(P<Item>)) {
+                             item: &Annotatable, push: &mut FnMut(Annotatable)) {
+    let item = match *item {
+        Annotatable::Item(ref i) => i,
+        _ => cx.bug("expected ItemStruct or ItemEnum in #[derive(Copy)]"),
+    };
+
     let generics = match item.node {
         ::ast::ItemStruct(_, ref generics) => generics,
         ::ast::ItemEnum(_, ref generics) => generics,
-        _ => cx.bug("expected ItemStruct or ItemEnum in #[derive(Copy)]")
+        _ => cx.bug("expected ItemStruct or ItemEnum in #[derive(Copy)]"),
     };
 
     // generics doesn't implement ToTokens anymore so we'll just use this ugly thing:
@@ -218,7 +224,7 @@ pub fn derive_clone_for_copy(cx: &mut ExtCtxt, span: Span, _mitem: &MetaItem,
             }
         ).unwrap();
 
-        push(impl_item)
+        push(Annotatable::Item(impl_item))
     }
 }
 

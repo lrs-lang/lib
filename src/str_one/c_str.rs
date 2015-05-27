@@ -143,7 +143,7 @@ impl CStr {
     ///
     /// If the slice doesn't have exactly one null byte as its last entry, the behavior is
     /// undefined.
-    pub unsafe fn from_bytes_unchecked_mut(bytes: &mut [u8]) -> &mut CStr {
+    pub unsafe fn from_mut_bytes_unchecked(bytes: &mut [u8]) -> &mut CStr {
         mem::cast(bytes)
     }
 
@@ -203,7 +203,7 @@ impl Index<RangeFrom<usize>> for CStr {
 
 impl IndexMut<RangeFrom<usize>> for CStr {
     fn index_mut(&mut self, idx: RangeFrom<usize>) -> &mut CStr {
-        unsafe { CStr::from_bytes_unchecked_mut(&mut self.data[idx]) }
+        unsafe { CStr::from_mut_bytes_unchecked(&mut self.data[idx]) }
     }
 }
 
@@ -216,7 +216,7 @@ impl Index<RangeTo<usize>> for CStr {
 
 impl IndexMut<RangeTo<usize>> for CStr {
     fn index_mut(&mut self, idx: RangeTo<usize>) -> &mut NoNullStr {
-        unsafe { NoNullStr::from_bytes_unchecked_mut(&mut self.data[idx]) }
+        unsafe { NoNullStr::from_mut_bytes_unchecked(&mut self.data[idx]) }
     }
 }
 
@@ -229,7 +229,7 @@ impl Index<Range<usize>> for CStr {
 
 impl IndexMut<Range<usize>> for CStr {
     fn index_mut(&mut self, idx: Range<usize>) -> &mut NoNullStr {
-        unsafe { NoNullStr::from_bytes_unchecked_mut(&mut self.data[idx]) }
+        unsafe { NoNullStr::from_mut_bytes_unchecked(&mut self.data[idx]) }
     }
 }
 
@@ -254,7 +254,7 @@ impl AsRef<NoNullStr> for CStr {
 impl AsMut<NoNullStr> for CStr {
     fn as_mut(&mut self) -> &mut NoNullStr {
         let len = self.data.len() - 1;
-        unsafe { NoNullStr::from_bytes_unchecked_mut(&mut self.data[..len]) }
+        unsafe { NoNullStr::from_mut_bytes_unchecked(&mut self.data[..len]) }
     }
 }
 
@@ -270,18 +270,23 @@ impl Parse for CStr {
     }
 }
 
+fn bytes_are_valid(b: &[u8]) -> Result<usize> {
+    match memchr(b, 0) {
+        Some(idx) => {
+            if idx == b.len() - 1 || all_bytes(&b[idx+1..], 0) {
+                Ok(idx)
+            } else {
+                Err(error::InvalidArgument)
+            }
+        },
+        _ => Err(error::InvalidArgument),
+    }
+}
+
 impl AsCStr for [u8] {
     fn as_cstr(&self) -> Result<&CStr> {
-        match memchr(self, 0) {
-            Some(idx) => {
-                if idx == self.len() - 1 || all_bytes(&self[idx+1..], 0) {
-                    Ok(unsafe { CStr::from_bytes_unchecked(&self[..idx+1]) })
-                } else {
-                    Err(error::InvalidArgument)
-                }
-            },
-            _ => Err(error::InvalidArgument),
-        }
+        let idx = try!(bytes_are_valid(self));
+        Ok(unsafe { CStr::from_bytes_unchecked(&self[..idx+1]) })
     }
 }
 
@@ -307,10 +312,8 @@ impl AsCStr for str {
 
 impl AsMutCStr for [u8] {
     fn as_mut_cstr(&mut self) -> Result<&mut CStr> {
-        match self.as_cstr() {
-            Ok(c) => Ok(unsafe { mem::cast(c) }),
-            Err(e) => Err(e),
-        }
+        let idx = try!(bytes_are_valid(self));
+        Ok(unsafe { CStr::from_mut_bytes_unchecked(&mut self[..idx+1]) })
     }
 }
 
@@ -332,7 +335,7 @@ impl ToCStr for CStr {
         let bytes = &self.data;
         if bytes.len() <= buf.len() {
             mem::copy(buf, bytes);
-            Ok(unsafe { CStr::from_bytes_unchecked_mut(&mut buf[..bytes.len()]) })
+            Ok(unsafe { CStr::from_mut_bytes_unchecked(&mut buf[..bytes.len()]) })
         } else {
             Err(error::NoMemory)
         }
@@ -344,6 +347,22 @@ impl ToCStr for CStr {
 
     fn to_or_as_mut_cstr<'a>(&'a mut self, _: &'a mut [u8]) -> Result<&'a mut CStr> {
         Ok(self)
+    }
+}
+
+fn bytes_to_or_as_cstr(b: &[u8], buf: &mut [u8]) -> Result<(*const u8, usize)> {
+    if let Some(idx) = memchr(b, 0) {
+        if idx == b.len() - 1 || all_bytes(&b[idx+1..], 0) {
+            Ok((b.as_ptr(), idx+1))
+        } else {
+            Err(error::InvalidArgument)
+        }
+    } else if b.len() >= buf.len() {
+        Err(error::NoMemory)
+    } else {
+        mem::copy(buf, b);
+        buf[b.len()] = 0;
+        Ok((buf.as_ptr(), b.len() + 1))
     }
 }
 
@@ -364,30 +383,17 @@ impl ToCStr for [u8] {
         }
         mem::copy(buf, &self[..len]);
         buf[len] = 0;
-        Ok(unsafe { CStr::from_bytes_unchecked_mut(&mut buf[..len+1]) })
+        Ok(unsafe { CStr::from_mut_bytes_unchecked(&mut buf[..len+1]) })
     }
 
     fn to_or_as_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<&'a CStr> {
-        if let Some(idx) = memchr(self, 0) {
-            if idx == self.len() - 1 || all_bytes(&self[idx+1..], 0) {
-                Ok(unsafe { CStr::from_bytes_unchecked(&self[..idx+1]) })
-            } else {
-                Err(error::InvalidArgument)
-            }
-        } else if self.len() >= buf.len() {
-            Err(error::NoMemory)
-        } else {
-            mem::copy(buf, self);
-            buf[self.len()] = 0;
-            Ok(unsafe { CStr::from_bytes_unchecked(&buf[..self.len()+1]) })
-        }
+        let (ptr, len) = try!(bytes_to_or_as_cstr(self, buf));
+        Ok(unsafe { CStr::from_bytes_unchecked(slice::from_ptr(ptr, len)) })
     }
 
     fn to_or_as_mut_cstr<'a>(&'a mut self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
-        match self.to_or_as_cstr(buf) {
-            Ok(b) => Ok(unsafe { mem::cast(b) }),
-            Err(e) => Err(e),
-        }
+        let (ptr, len) = try!(bytes_to_or_as_cstr(self, buf));
+        Ok(unsafe { CStr::from_mut_bytes_unchecked(slice::from_ptr(ptr, len)) })
     }
 }
 

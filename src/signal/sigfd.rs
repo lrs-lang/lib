@@ -44,7 +44,7 @@ impl Sigfd {
         Ok(Sigfd { fd: fd, owned: true })
     }
 
-    pub fn read(
+    // pub fn read(
 }
 
 impl Drop for Sigfd {

@@ -172,7 +172,7 @@ impl UnixSockAddr {
     pub fn as_mut_path(&mut self) -> Result<&mut CStr> {
         match self.addr_type() {
             UnixAddrType::Path => Ok(unsafe {
-                CStr::from_bytes_unchecked_mut(&mut self.data[BYTES_PER_SHORT..])
+                CStr::from_mut_bytes_unchecked(&mut self.data[BYTES_PER_SHORT..])
             }),
             _ => Err(error::InvalidArgument),
         }

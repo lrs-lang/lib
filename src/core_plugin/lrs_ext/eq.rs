@@ -2,7 +2,7 @@ use ast::{self, MetaItem, Item, Expr};
 
 use codemap::{Span};
 
-use ext::base::{ExtCtxt};
+use ext::base::{ExtCtxt, Annotatable};
 use ext::deriving::generic::{
     TraitDef, MethodDef, Substructure, cs_fold, combine_substructure,
 };
@@ -15,8 +15,8 @@ use ptr::{P};
 
 use parse::token::{InternedString};
 
-pub fn derive_eq(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Item,
-                     push: &mut FnMut(P<Item>)) {
+pub fn derive_eq(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Annotatable,
+                 push: &mut FnMut(Annotatable)) {
     // structures are equal if all fields are equal, and non equal, if
     // any fields are not equal or if the enum variants are different
     fn cs_eq(cx: &mut ExtCtxt, span: Span, substr: &Substructure) -> P<Expr> {
@@ -65,6 +65,7 @@ pub fn derive_eq(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Item,
                 args: vec!(borrowed_self()),
                 ret_ty: Literal(path_local!(bool)),
                 attributes: attrs,
+                is_unsafe: false,
                 combine_substructure: combine_substructure(Box::new(|a, b, c| {
                     $f(a, b, c)
                 }))

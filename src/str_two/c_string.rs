@@ -63,7 +63,7 @@ impl<H> AsMut<CStr> for CString<H>
     where H: Allocator,
 {
     fn as_mut(&mut self) -> &mut CStr {
-        unsafe { CStr::from_bytes_unchecked_mut(&mut self.data[..]) }
+        unsafe { CStr::from_mut_bytes_unchecked(&mut self.data[..]) }
     }
 }
 

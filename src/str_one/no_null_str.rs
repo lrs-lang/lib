@@ -111,7 +111,7 @@ impl NoNullStr {
     /// = Remarks
     ///
     /// If the slice contains null bytes, the behavior is undefined.
-    pub unsafe fn from_bytes_unchecked_mut(bytes: &mut [u8]) -> &mut NoNullStr {
+    pub unsafe fn from_mut_bytes_unchecked(bytes: &mut [u8]) -> &mut NoNullStr {
         mem::cast(bytes)
     }
 }
@@ -138,7 +138,7 @@ impl Index<RangeTo<usize>> for NoNullStr {
 
 impl IndexMut<RangeTo<usize>> for NoNullStr {
     fn index_mut(&mut self, idx: RangeTo<usize>) -> &mut NoNullStr {
-        unsafe { NoNullStr::from_bytes_unchecked_mut(&mut self.data[idx]) }
+        unsafe { NoNullStr::from_mut_bytes_unchecked(&mut self.data[idx]) }
     }
 }
 
@@ -151,7 +151,7 @@ impl Index<RangeFrom<usize>> for NoNullStr {
 
 impl IndexMut<RangeFrom<usize>> for NoNullStr {
     fn index_mut(&mut self, idx: RangeFrom<usize>) -> &mut NoNullStr {
-        unsafe { NoNullStr::from_bytes_unchecked_mut(&mut self.data[idx]) }
+        unsafe { NoNullStr::from_mut_bytes_unchecked(&mut self.data[idx]) }
     }
 }
 
@@ -164,7 +164,7 @@ impl Index<Range<usize>> for NoNullStr {
 
 impl IndexMut<Range<usize>> for NoNullStr {
     fn index_mut(&mut self, idx: Range<usize>) -> &mut NoNullStr {
-        unsafe { NoNullStr::from_bytes_unchecked_mut(&mut self.data[idx]) }
+        unsafe { NoNullStr::from_mut_bytes_unchecked(&mut self.data[idx]) }
     }
 }
 
@@ -174,7 +174,7 @@ impl ToCStr for NoNullStr {
         if bytes.len() < buf.len() {
             mem::copy(buf, bytes);
             buf[bytes.len()] = 0;
-            unsafe { Ok(CStr::from_bytes_unchecked_mut(&mut buf[..bytes.len()+1])) }
+            unsafe { Ok(CStr::from_mut_bytes_unchecked(&mut buf[..bytes.len()+1])) }
         } else {
             Err(error::NoMemory)
         }
@@ -226,7 +226,7 @@ impl AsMutNoNullStr for [u8] {
     fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
         match memchr(self, 0) {
             Some(_) => Err(error::InvalidArgument),
-            _ => Ok(unsafe { NoNullStr::from_bytes_unchecked_mut(self) })
+            _ => Ok(unsafe { NoNullStr::from_mut_bytes_unchecked(self) })
         }
     }
 }
