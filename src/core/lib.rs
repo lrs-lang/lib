@@ -5,7 +5,7 @@
 #![crate_name = "lrs_core"]
 #![crate_type = "lib"]
 #![feature(no_std, lang_items, intrinsics, asm, plugin, unboxed_closures,
-           optin_builtin_traits)]
+           optin_builtin_traits, const_fn)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 

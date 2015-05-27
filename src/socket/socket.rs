@@ -22,7 +22,7 @@ use cty::{
     IPPROTO_TCP, TCP_CORK, IPPROTO_UDP, UDP_CORK,
 };
 use time_base::{Time};
-use core::{num, slice, mem};
+use core::{slice, mem};
 use syscall::{
     socket, bind, getsockname, getpeername, connect, close, shutdown, listen, sendto,
     sendmsg, recvfrom, recvmsg, getsockopt, setsockopt, ioctl_siocgstampns, ioctl_siocinq,
@@ -721,7 +721,7 @@ impl Socket {
             0 => (0 as *mut u8, 0),
             n => (ctrl.as_mut_ptr(), n),
         };
-        const PTR_MASK: usize = num::usize::BYTES - 1;
+        const PTR_MASK: usize = usize::bytes() - 1;
         let pad_ctrl_ptr = (ctrl_ptr as usize + PTR_MASK) & !PTR_MASK;
         if ctrl_len >= pad_ctrl_ptr - ctrl_ptr as usize {
             ctrl_ptr = pad_ctrl_ptr as *mut u8;

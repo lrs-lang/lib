@@ -5,7 +5,6 @@
 #[prelude_import] use base::prelude::*;
 use core::ops::{Ordering};
 use core::cmp::{Ord};
-use core::{num};
 
 use super::{Zone, DateTime, Weekday, Time};
 
@@ -152,7 +151,7 @@ pub fn compact(zone: &Zone, mut date: DateTime) -> (DateTime, Time) {
             if n + 1 < zone.transitions.len() {
                 (zone.states[idx], time, zone.transitions[n + 1].0)
             } else {
-                (zone.states[idx], time, num::i64::MAX)
+                (zone.states[idx], time, i64::max())
             }
         },
         None => {
@@ -161,9 +160,9 @@ pub fn compact(zone: &Zone, mut date: DateTime) -> (DateTime, Time) {
                 _ => zone.states[0],
             };
             if zone.transitions.len() > 0 {
-                (state, num::i64::MIN, zone.transitions[0].0)
+                (state, i64::min(), zone.transitions[0].0)
             } else {
-                (state, num::i64::MIN, num::i64::MAX)
+                (state, i64::min(), i64::max())
             }
         },
     };

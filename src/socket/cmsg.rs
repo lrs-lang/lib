@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use core::{num, mem, slice, ptr};
+use core::{mem, slice, ptr};
 use base::default::{Default};
 use cty::{
     cmsghdr, c_int, SCM_RIGHTS, SCM_CREDENTIALS, SOL_SOCKET, user_size_t,
@@ -15,7 +15,7 @@ use fmt::{Debug, Write};
 use time_base::{self, Time};
 use alloc::{self, NoMem, Allocator};
 
-const PTR_MASK: usize = num::usize::BYTES - 1;
+const PTR_MASK: usize = usize::bytes() - 1;
 
 // pads an integer to a multiple of the pointer alignment
 macro_rules! pad_ptr { ($val:expr) => { ($val + PTR_MASK) & !PTR_MASK } }
@@ -190,7 +190,7 @@ impl<H> CMsgBuf<H>
         Ok(CMsgBuf {
             data: ptr as *mut u8,
             len: 0,
-            cap: num::usize::BYTES,
+            cap: usize::bytes(),
             pool: pool,
         })
     }
@@ -206,14 +206,14 @@ impl<H> CMsgBuf<H>
 
     fn reserve(&mut self, n: usize) -> Result {
         if self.cap - self.len < n {
-            let cap = self.cap / num::usize::BYTES;
-            let new_cap = pad_ptr!(self.cap * 2 + n) / num::usize::BYTES;
+            let cap = self.cap / usize::bytes();
+            let new_cap = pad_ptr!(self.cap * 2 + n) / usize::bytes();
             let ptr = unsafe {
                 try!(H::reallocate_array(&mut self.pool, self.data as *mut usize, cap,
                                         new_cap))
             };
             self.data = ptr as *mut u8;
-            self.cap = new_cap * num::usize::BYTES;
+            self.cap = new_cap * usize::bytes();
         }
         Ok(())
     }
@@ -261,7 +261,7 @@ impl<H> Drop for CMsgBuf<H>
     fn drop(&mut self) {
         unsafe {
             H::free_array(&mut self.pool, self.data as *mut usize,
-                          self.cap / num::usize::BYTES);
+                          self.cap / usize::bytes());
         }
     }
 }

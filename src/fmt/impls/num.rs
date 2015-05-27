@@ -4,7 +4,7 @@
 
 #[prelude_import] use base::prelude::*;
 use io::{Write};
-use core::{num, cmp};
+use core::{cmp};
 use {Debug, Display, UpperHex, LowerHex};
 
 impl Debug for i8    { fn fmt<W: Write>(&self, w: &mut W) -> Result { Debug::fmt(&(*self as i64), w) } }
@@ -22,7 +22,7 @@ const MAX_WIDTH_64: usize = 20; // -9223372036854775808 // 18446744073709551615
 impl Debug for i64 {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
         let val = *self;
-        if val == num::i64::MIN {
+        if val == i64::min() {
             return w.write_all(b"-9223372036854775808").ignore_ok();
         }
         let mut buf = [0; MAX_WIDTH_64];

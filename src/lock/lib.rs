@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_lock"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, optin_builtin_traits)]
+#![feature(plugin, no_std, optin_builtin_traits, const_fn)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 

@@ -16,7 +16,7 @@ extern crate lrs_io as io;
 extern crate lrs_alloc as alloc;
 
 #[prelude_import] use base::prelude::*;
-use core::{num, slice, cmp};
+use core::{slice, cmp};
 use base::{error};
 use base::default::{Default};
 use alloc::{NoMem, Allocator};
@@ -89,7 +89,7 @@ impl<'a, R> BufReader<R, NoMem<'a>>
     pub fn buffered(read: R, buf: &'a mut [u8]) -> BufReader<R, NoMem<'a>> {
         let size = match buf.len() {
             0 => 0,
-            n => 1 << (num::usize::BITS - n.leading_zeros() - 1),
+            n => 1 << (usize::bits() - n.leading_zeros() - 1),
         };
         BufReader {
             data: buf.as_mut_ptr(),

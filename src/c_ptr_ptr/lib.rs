@@ -25,8 +25,8 @@ use alloc::{Allocator};
 
 mod lrs { pub use base::lrs::*; }
 
-const USIZE_MASK: usize = core::num::usize::BYTES - 1;
-const USIZE_BYTES: usize = core::num::usize::BYTES;
+const USIZE_MASK: usize = usize::bytes() - 1;
+const USIZE_BYTES: usize = usize::bytes();
 
 macro_rules! usize_align {
     ($val:expr) => { ($val + USIZE_MASK) & !USIZE_MASK }

@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_atomic"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std)]
+#![feature(plugin, no_std, const_fn)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
@@ -61,7 +61,7 @@ macro_rules! impl_atomic {
             ///
             /// [argument, val]
             /// The value which is initially stored in the atomic integer.
-            pub fn new(val: $raw) -> $name {
+            pub const fn new(val: $raw) -> $name {
                 $name { val: Cell { data: val } }
             }
 

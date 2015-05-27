@@ -3,7 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use core::{num};
 use base::{error};
 use {Parsable};
 
@@ -57,7 +56,7 @@ macro_rules! unsigned {
     ($name:ident) => {
         impl Parsable for $name {
             fn parse_bytes_init(bytes: &[u8]) -> Result<(Self, usize)> {
-                unsigned(bytes, num::$name::MAX as u64)
+                unsigned(bytes, $name::max() as u64)
                         .map(|(val, len)| (val as $name, len))
             }
         }
@@ -74,7 +73,7 @@ macro_rules! signed {
     ($name:ident) => {
         impl Parsable for $name {
             fn parse_bytes_init(bytes: &[u8]) -> Result<(Self, usize)> {
-                signed(bytes, num::$name::MIN as i64, num::$name::MAX as i64)
+                signed(bytes, $name::min() as i64, $name::max() as i64)
                     .map(|(val, len)| (val as $name, len))
             }
         }

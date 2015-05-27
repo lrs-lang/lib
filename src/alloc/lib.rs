@@ -17,7 +17,7 @@ extern crate lrs_libc;
 
 #[prelude_import] use base::prelude::*;
 use core::marker::{Leak};
-use core::{num, mem};
+use core::{mem};
 use base::{error};
 
 pub use libc::{Libc};
@@ -46,7 +46,7 @@ pub type Heap = Libc;
 pub type FbHeap = Heap;
 
 /// The maximum size of an allocation
-pub const MAX_SIZE: usize = num::isize::MAX as usize;
+pub const MAX_SIZE: usize = isize::max() as usize;
 
 /// Returns a non-null pointer that points to a valid address and has pointer alignment.
 pub fn empty_ptr<T>() -> *mut T {

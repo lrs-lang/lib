@@ -133,9 +133,9 @@ macro_rules! int_impls {
                 match self.checked_add(other) {
                     Some(val) => val,
                     _ => if other > 0 {
-                        self::$t::MAX
+                        $t::max()
                     } else {
-                        self::$t::MIN
+                        $t::min()
                     },
                 }
             }
@@ -146,9 +146,9 @@ macro_rules! int_impls {
                 match self.checked_sub(other) {
                     Some(val) => val,
                     _ => if other > 0 {
-                        self::$t::MIN
+                        $t::min()
                     } else {
-                        self::$t::MAX
+                        $t::max()
                     },
                 }
             }
@@ -359,6 +359,26 @@ macro_rules! int_impls {
             pub fn div_rem(self, other: $t) -> ($t, $t) {
                 (self / other, self % other)
             }
+
+            /// Returns the minimum value of this type.
+            pub const fn min() -> $t {
+                 ($signed as $t) << ($width - 1)
+            }
+
+            /// Returns the maximum value of this type.
+            pub const fn max() -> $t {
+                !$t::min()
+            }
+
+            /// Returns the bit-width of this type.
+            pub const fn bits() -> usize {
+                $width
+            }
+
+            /// Returns the byte-width of this type.
+            pub const fn bytes() -> usize {
+                $width / 8
+            }
         }
 
         impl Eq for $t {
@@ -528,7 +548,7 @@ macro_rules! int_impls {
         impl Iterator for RangeFrom<$t> {
             type Item = $t;
             fn next(&mut self) -> Option<$t> {
-                if self.start < $t::MAX {
+                if self.start < $t::max() {
                     self.start += 1;
                     Some(self.start - 1)
                 } else {
@@ -540,7 +560,7 @@ macro_rules! int_impls {
         impl IntoIterator for RangeTo<$t> {
             type Item = $t;
             type IntoIter = Range<$t>;
-            fn into_iter(self) -> Range<$t> { Range { start: $t::MIN, end: self.end } }
+            fn into_iter(self) -> Range<$t> { Range { start: $t::min(), end: self.end } }
         }
 
         impl Pod for $t { }
@@ -563,64 +583,3 @@ int_impls!(usize ; as_i=isize ; as_u=usize ; 64 ; "usize" ; signed=false ; ctpop
 int_impls!(isize ; as_i=isize ; as_u=usize ; 32 ; "isize" ; signed=true  ; ctpop32 ; pop_ty=u32 ; ctlz32 ; cttz32 ; bswap32 ; size_t=i32 ; i32_add_with_overflow ; i32_sub_with_overflow  ; i32_mul_with_overflow; );
 #[cfg(target_pointer_width = "32")]
 int_impls!(usize ; as_i=isize ; as_u=usize ; 32 ; "usize" ; signed=false ; ctpop32 ; pop_ty=u32 ; ctlz32 ; cttz32 ; bswap32 ; size_t=u32 ; u32_add_with_overflow ; u32_sub_with_overflow  ; u32_mul_with_overflow; );
-
-macro_rules! signed_int_modules {
-    ($($t:ident $width:expr)+) => {
-        $(
-            pub mod $t {
-                /// The minimum value of this type.
-                pub const MIN: $t = 1 << ($width - 1);
-                /// The maximum value of this type.
-                pub const MAX: $t = !MIN;
-            }
-        )+
-    }
-}
-
-signed_int_modules!(i8 8 i16 16 i32 32 i64 64);
-
-macro_rules! unsigned_int_modules {
-    ($($t:ident)+) => {
-        $(
-            pub mod $t {
-                /// The minimum value of this type.
-                pub const MIN: $t = 0;
-                /// The maximum value of this type.
-                pub const MAX: $t = !0;
-            }
-        )+
-    }
-}
-
-unsigned_int_modules!(u8 u16 u32 u64);
-
-pub mod isize {
-    /// The width of `isize` objects in bits.
-    #[cfg(target_pointer_width = "32")]
-    pub const BITS: usize = 32;
-    /// The width of `isize` objects in bits.
-    #[cfg(target_pointer_width = "64")]
-    pub const BITS: usize = 64;
-    /// The width of `isize` objects in bytes.
-    #[cfg(target_pointer_width = "64")]
-    pub const BYTES: usize = BITS / 8;
-    /// The minimum value of `isize` objects.
-    pub const MIN: isize = 1 << (BITS - 1);
-    /// The maximum value of `isize` objects.
-    pub const MAX: isize = !MIN;
-}
-
-pub mod usize {
-    /// The width of `usize` objects in bits.
-    #[cfg(target_pointer_width = "32")]
-    pub const BITS: usize = 32;
-    /// The width of `usize` objects in bits.
-    #[cfg(target_pointer_width = "64")]
-    pub const BITS: usize = 64;
-    /// The width of `usize` objects in bytes.
-    pub const BYTES: usize = BITS / 8;
-    /// The minimum value of `usize` objects.
-    pub const MIN: usize = 0;
-    /// The maximum value of `usize` objects.
-    pub const MAX: usize = !0;
-}

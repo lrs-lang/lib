@@ -46,6 +46,11 @@ impl Eq for Lock {
 }
 
 impl<'a> Lock {
+    /// Creates a new, unlocked, lock.
+    pub const fn new() -> Lock {
+        Lock { val: ATOMIC_CINT_INIT }
+    }
+
     fn guard(&'a self) -> LockGuard<'a> {
         LockGuard { lock: self }
     }

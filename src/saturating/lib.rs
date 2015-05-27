@@ -11,8 +11,6 @@
 #[macro_use]
 extern crate lrs_core as core;
 
-use core::{num};
-
 /// Objects that can be cast to another object in a saturating way.
 ///
 /// = Remarks
@@ -82,10 +80,10 @@ macro_rules! trnc_s_down {
     ($src:ty as $($dst:ident),+) => {
         $(impl SaturatingCast<$dst> for $src {
             fn saturating_cast(self) -> $dst {
-                if self > num::$dst::MAX as $src  {
-                    num::$dst::MAX
-                } else if self < num::$dst::MIN as $src {
-                    num::$dst::MIN
+                if self > $dst::max() as $src  {
+                    $dst::max()
+                } else if self < $dst::min() as $src {
+                    $dst::min()
                 } else {
                     self as $dst
                 }
@@ -108,8 +106,8 @@ macro_rules! trnc_u_down {
     ($src:ty as $($dst:ident),+) => {
         $(impl SaturatingCast<$dst> for $src {
             fn saturating_cast(self) -> $dst {
-                if self > num::$dst::MAX as $src  {
-                    num::$dst::MAX
+                if self > $dst::max() as $src  {
+                    $dst::max()
                 } else {
                     self as $dst
                 }
