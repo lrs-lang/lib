@@ -10,13 +10,40 @@
 mod core { pub use lrs::core::*; }
 #[prelude_import] use lrs::prelude::*;
 
-use lrs::{mem, time};
-use lrs::signal::{Sigset, Signal, signals, blocked_signals, block_signal, pending_signals,
-           block_signals, wait};
+use lrs::{mem, time, error, process};
+use lrs::signal::{
+    Sigset, Signal, signals, blocked_signals, block_signal, pending_signals,
+    block_signals, Sigfd, SigfdInfo, wait, wait_timeout, set_handler, SigHandler,
+    SigInfo,
+};
+use lrs::signal::flags::{SIGFD_NONE, SA_NONE, SA_RESTART};
 
 fn main() {
+    // let mut sigset = Sigset::new();
+    // sigset.set(signals::Interrupted);
+    // sigset.set(signals::Window);
+    // block_signals(sigset);
+
+    // let fd = Sigfd::new(sigset, SIGFD_NONE).unwrap();
+    // let mut buf = [SigfdInfo::new()];
+    // loop {
+    //     for el in fd.read(&mut buf).unwrap() {
+    //         println!("{:?}", el.signal());
+    //     }
+    // }
+
+    // let info = wait_timeout(sigset, time::Time::seconds(2)).unwrap();;
+    // println!("{:?}", info.signal());
+
+    // set_handler(signals::InvalidAddress, Sigset::new(), SigHandler::Func(f), SA_NONE);
+    set_handler(signals::Window, Sigset::new(), SigHandler::Func(f), SA_NONE);
+
     let mut sigset = Sigset::new();
     sigset.set(signals::Interrupted);
-    sigset.set(signals::Window);
-    wait(sigset);
+    block_signals(sigset);
+    while let Err(error::Interrupted) = wait(sigset) { }
+}
+
+extern fn f(sig: Signal, info: &SigInfo, context: usize) {
+    println!("yo");
 }

@@ -11,6 +11,7 @@ use option::{Option};
 use option::Option::{None, Some};
 use iter::{Iterator};
 use sort::{sort};
+use marker::{Pod};
 
 /// Creates a slice from a pointer and a length.
 ///
@@ -45,6 +46,20 @@ impl<T> [T] {
     /// Returns the starting address of the data.
     pub fn as_mut_ptr(&mut self) -> *mut T {
         self.repr().ptr as *mut T
+    }
+
+    /// Returns a byte slice covering the same range as the slice.
+    pub fn as_bytes(&self) -> &[u8] {
+        let len = self.len() * mem::size_of::<T>();
+        unsafe { from_ptr(self.as_ptr() as *const _, len) }
+    }
+
+    /// Returns a mutable byte slice covering the same range as the slice.
+    pub fn as_mut_bytes(&mut self) -> &mut [u8]
+        where T: Pod,
+    {
+        let len = self.len() * mem::size_of::<T>();
+        unsafe { from_ptr(self.as_ptr() as *const _, len) }
     }
 
     /// Creates an iterator over the elements of the slice.

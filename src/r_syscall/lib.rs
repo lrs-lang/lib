@@ -37,7 +37,7 @@ pub use ::arch::{
     process_vm_writev, pselect6, ptrace, pwrite, pwritev, quotactl, read, readahead,
     readlink, readlinkat, readv, reboot, recvfrom, recvmmsg, recvmsg, remap_file_pages,
     removexattr, rename, renameat, renameat2, request_key, restart_syscall, rmdir,
-    rt_sigaction, rt_sigpending, rt_sigprocmask, rt_sigqueueinfo,
+    rt_sigaction, rt_sigpending, rt_sigprocmask, rt_sigqueueinfo, rt_sigreturn,
     rt_sigsuspend, rt_sigtimedwait, rt_tgsigqueueinfo, sched_getaffinity, sched_getattr,
     sched_getparam, sched_get_priority_max, sched_get_priority_min, sched_getscheduler,
     sched_rr_get_interval, sched_setaffinity, sched_setattr, sched_setparam,

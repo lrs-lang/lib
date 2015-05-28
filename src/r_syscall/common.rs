@@ -67,6 +67,7 @@ use cty::{
     __NR_renameat, __NR_rename, __NR_request_key, __NR_restart_syscall, __NR_rmdir,
     __NR_rt_sigaction, __NR_rt_sigpending, __NR_rt_sigprocmask, __NR_rt_sigqueueinfo,
     __NR_rt_sigsuspend, __NR_waitid, __NR_rt_sigtimedwait, __NR_rt_tgsigqueueinfo,
+    __NR_rt_sigreturn,
     __NR_sched_getaffinity, __NR_sched_getattr, __NR_sched_getparam,
     __NR_sched_get_priority_max, __NR_sched_get_priority_min, __NR_sched_getscheduler,
     __NR_sched_rr_get_interval, __NR_sched_setaffinity, __NR_sched_setattr,
@@ -1140,6 +1141,10 @@ pub unsafe fn rt_sigtimedwait(uthese: *const sigset_t, uinfo: *mut siginfo_t,
 pub unsafe fn rt_tgsigqueueinfo(tgid: pid_t, pid: pid_t, sig: k_int,
                                 uinfo: *mut siginfo_t) -> k_int {
     call!(__NR_rt_tgsigqueueinfo, tgid, pid, sig, uinfo) as k_int
+}
+
+pub unsafe fn rt_sigreturn() {
+    call!(__NR_rt_sigreturn);
 }
 
 pub unsafe fn sched_getaffinity(pid: pid_t, len: k_uint,

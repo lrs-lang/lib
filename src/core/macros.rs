@@ -97,18 +97,20 @@ macro_rules! vec {
 
 #[macro_export]
 macro_rules! rv {
-    ($x:expr) => {
-        if $x < 0 {
-            ::lrs::result::Result::Err(::lrs::error::Errno(-$x as ::lrs::cty::c_int))
+    ($x:expr) => {{
+        let val = $x;
+        if val < 0 {
+            ::lrs::result::Result::Err(::lrs::error::Errno(-val as ::lrs::cty::c_int))
         } else {
             ::lrs::result::Result::Ok(())
         }
-    };
-    ($x:expr, -> $t:ty) => {
-        if $x < 0 {
-            ::lrs::result::Result::Err(::lrs::error::Errno(-$x as ::lrs::cty::c_int))
+    }};
+    ($x:expr, -> $t:ty) => {{
+        let val = $x;
+        if val < 0 {
+            ::lrs::result::Result::Err(::lrs::error::Errno(-val as ::lrs::cty::c_int))
         } else {
-            ::lrs::result::Result::Ok($x as $t)
+            ::lrs::result::Result::Ok(val as $t)
         }
-    };
+    }};
 }

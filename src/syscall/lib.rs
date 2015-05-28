@@ -26,7 +26,7 @@ use cty::{
     sysinfo, c_uint, c_ulong, umode_t, k_uint, loff_t, k_ulong, F_DUPFD_CLOEXEC, F_GETFL,
     F_SETFL, F_GETFD, F_SETFD, sockaddr, msghdr, mmsghdr, FUTEX_WAIT, FUTEX_WAKE,
     siginfo_t, rusage, SIOCGSTAMPNS, SIOCINQ, SIOCOUTQ, EPOLL_CLOEXEC, O_CLOEXEC,
-    O_LARGEFILE, SOCK_CLOEXEC, MSG_CMSG_CLOEXEC, TFD_CLOEXEC,
+    O_LARGEFILE, SOCK_CLOEXEC, MSG_CMSG_CLOEXEC, TFD_CLOEXEC, SFD_CLOEXEC, sigaction,
 };
 
 // XXX: iovec _MUST_ be the same as &mut [u8]
@@ -2518,6 +2518,47 @@ pub fn rt_sigsuspend(set: &sigset_t) -> c_int {
     unsafe { r::rt_sigsuspend(set, mem::size_of::<sigset_t>() as size_t) }
 }
 
-pub fn signalfd4(fd: c_int, set: &sigset_t, flags: c_int) -> c_int {
+/// Creates or modified a signalfd.
+///
+/// [argument, fd]
+/// The file descriptor to modify.
+///
+/// [argument, set]
+/// The set of signals to monitor.
+///
+/// [argument, flags]
+/// The flags used to create the fd.
+///
+/// = Remarks
+///
+/// Unless lrs was compiled with the `no-auto-cloexec` flag, this function automatically
+/// adds the `SFD_CLOEXEC` flag.
+///
+/// = See also
+///
+/// * link:man:signalfd4(2)
+pub fn signalfd4(fd: c_int, set: &sigset_t, mut flags: c_int) -> c_int {
+    if cfg!(not(no_auto_cloexec)) {
+        flags |= SFD_CLOEXEC;
+    }
     unsafe { r::signalfd4(fd, set, mem::size_of::<sigset_t>() as size_t, flags) }
+}
+
+pub fn rt_sigtimedwait(set: &sigset_t, info: &mut siginfo_t,
+                       timeout: Option<&timespec>) -> c_int {
+    let timeout = timeout.map(|t| t as *const _).unwrap_or(0 as *const _);
+    unsafe {
+        r::rt_sigtimedwait(set, info, timeout, mem::size_of::<sigset_t>() as size_t)
+    }
+}
+
+pub fn rt_sigaction(signum: c_int, act: Option<&sigaction>,
+                    old: Option<&mut sigaction>) -> c_int {
+    let act = act.map(|a| a as *const _).unwrap_or(0 as *const _);
+    let old = old.map(|a| a as *mut _).unwrap_or(0 as *mut _);
+    unsafe { r::rt_sigaction(signum, act, old, mem::size_of::<sigset_t>() as size_t) }
+}
+
+pub fn rt_sigreturn() {
+    unsafe { r::rt_sigreturn() }
 }

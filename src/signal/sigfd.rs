@@ -4,15 +4,16 @@
 
 #[prelude_import] use base::prelude::*;
 use core::{mem};
-use cty::{c_int, signalfd_siginfo};
+use cty::{c_int};
 use syscall::{close, read, signalfd4};
 use fd::{FDContainer};
 use rv::{retry};
 use {Sigset};
+use signals::{Signal};
 
 #[repr(C)]
 #[derive(Pod)]
-pub struct SigfdData {
+pub struct SigfdInfo {
     pub signo    : u32,
     pub errno    : i32,
     pub code     : i32,
@@ -33,6 +34,16 @@ pub struct SigfdData {
     pub padding : [u8; 46],
 }
 
+impl SigfdInfo {
+    pub fn signal(&self) -> Signal {
+        Signal(self.signo as u8)
+    }
+
+    pub fn new() -> SigfdInfo {
+        mem::zeroed()
+    }
+}
+
 pub struct Sigfd {
     fd: c_int,
     owned: bool,
@@ -44,7 +55,15 @@ impl Sigfd {
         Ok(Sigfd { fd: fd, owned: true })
     }
 
-    // pub fn read(
+    pub fn set_mask(&self, set: Sigset) -> Result {
+        rv!(signalfd4(self.fd, &set.data, 0))
+    }
+
+    pub fn read<'a>(&self, buf: &'a mut [SigfdInfo]) -> Result<&'a mut [SigfdInfo]> {
+        let len = try!(retry(|| read(self.fd, buf.as_mut_bytes())));
+        let num = len as usize / mem::size_of::<SigfdInfo>();
+        Ok(&mut buf[..num])
+    }
 }
 
 impl Drop for Sigfd {

@@ -426,9 +426,9 @@ pub const SA_RESTORER  : c_int = 0x04000000;
 #[repr(C)]
 #[derive(Pod)]
 pub struct sigaction {
-    pub sa_handler: __sighandler_t,
+    pub sa_handler: usize,
     pub sa_flags: c_ulong, // this must be c_ulong because on x32 we usa a compat syscall
-    pub sa_restorer: __sigrestore_t,
+    pub sa_restorer: usize,
     pub sa_mask: sigset_t,
 }
 

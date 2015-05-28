@@ -4,9 +4,22 @@
 
 pub use lrs_signal::{
     Sigset, blocked_signals, block_signal, unblock_signal, block_signals, unblock_signals,
-    set_blocked_signals, pending_signals, suspend,
+    set_blocked_signals, pending_signals, suspend, SigInfo, wait, wait_timeout,
+    SigHandler, set_handler,
 };
 pub use lrs_signal::signals::{Signal};
+pub use lrs_signal::sigfd::{Sigfd, SigfdInfo};
+pub use lrs_signal::sigfd::flags::{SigfdFlags};
+
+pub mod flags {
+    pub use lrs_signal::sigfd::flags::{
+        SIGFD_DONT_BLOCK, SIGFD_CLOSE_ON_EXEC, SIGFD_NONE,
+    };
+    pub use lrs_signal::flags::{
+        SA_NONE, SA_NOCLDSTOP, SA_NOCLDWAIT, SA_SIGINFO, SA_ONSTACK, SA_RESTART,
+        SA_NODEFER, SA_RESETHAND,
+    };
+}
 
 pub mod signals {
     pub use lrs_signal::signals::{

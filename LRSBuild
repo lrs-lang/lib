@@ -26,10 +26,11 @@ obj kernel     core base atomic cty syscall parse arch_fns
 
 obj clone      core libc base cty syscall fmt
 obj fd         core base rv io cty syscall
-obj signal     core base cty fmt syscall fd rv
 
 obj lock       core base cell io fmt atomic syscall cty
 obj time_base  core base cty syscall fmt fd rv
+
+obj signal     core base cty fmt syscall fd rv time_base
 
 obj alloc      core base cty syscall libc
 obj queue      core base cell arch_fns atomic lock alloc

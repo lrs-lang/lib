@@ -16,24 +16,32 @@ extern crate lrs_syscall as syscall;
 extern crate lrs_fmt as fmt;
 extern crate lrs_fd as fd;
 extern crate lrs_rv as rv;
+extern crate lrs_time_base as time_base;
 
 pub mod lrs { pub use fmt::lrs::*; pub use cty; }
 
 // rt_sigaction
-// rt_sigtimedwait
 // rt_sigqueueinfo
 // rt_tgsigqueueinfo
 
 #[prelude_import] use base::prelude::*;
 use core::{mem};
 use base::{error};
-use cty::{sigset_t, SigsetVal, _NSIG, SIG_BLOCK, SIG_UNBLOCK, SIG_SETMASK, c_int};
+use cty::{
+    sigset_t, SigsetVal, _NSIG, SIG_BLOCK, SIG_UNBLOCK, SIG_SETMASK, c_int, siginfo_t,
+    sigaction, SIG_DFL, SIG_IGN, c_ulong, SA_SIGINFO, SA_RESTORER,
+};
 use signals::{Signal};
 use fmt::{Debug, Write};
-use syscall::{rt_sigprocmask, rt_sigpending, rt_sigsuspend};
+use time_base::{Time, time_to_timespec};
+use syscall::{
+    rt_sigprocmask, rt_sigpending, rt_sigsuspend, rt_sigtimedwait, rt_sigaction,
+};
+use flags::{SigFlags};
 
 pub mod sigfd;
 pub mod signals;
+pub mod flags;
 
 #[derive(Pod, Eq)]
 pub struct Sigset {
@@ -43,6 +51,16 @@ pub struct Sigset {
 impl Sigset {
     pub fn new() -> Sigset {
         mem::zeroed()
+    }
+
+    pub fn clear(&mut self) {
+        *self = Sigset::new();
+    }
+
+    pub fn fill(&mut self) {
+        for b in &mut self.data.sig[..] {
+            *b = !0;
+        }
     }
 
     pub fn set(&mut self, val: Signal) -> Result {
@@ -169,5 +187,56 @@ pub fn suspend(mask: Sigset) {
     rt_sigsuspend(&mask.data);
 }
 
-// pub fn wait(set: Sigset) -> SigInfo {
-// }
+#[derive(Pod)]
+pub struct SigInfo {
+    data: siginfo_t,
+}
+
+impl SigInfo {
+    pub fn new() -> SigInfo {
+        mem::zeroed()
+    }
+
+    pub fn signal(&self) -> Signal {
+        Signal(self.data.si_signo() as u8)
+    }
+}
+
+pub fn wait(set: Sigset) -> Result<SigInfo> {
+    let mut info = SigInfo::new();
+    try!(rv!(rt_sigtimedwait(&set.data, &mut info.data, None)));
+    Ok(info)
+}
+
+pub fn wait_timeout(set: Sigset, timeout: Time) -> Result<SigInfo> {
+    let mut info = SigInfo::new();
+    let timeout = time_to_timespec(timeout);
+    try!(rv!(rt_sigtimedwait(&set.data, &mut info.data, Some(&timeout))));
+    Ok(info)
+}
+
+pub enum SigHandler {
+    Func(extern fn(signal: Signal, info: &SigInfo, context: usize)),
+    Default,
+    Ignore,
+}
+
+pub fn set_handler(sig: Signal, mask: Sigset, handler: SigHandler,
+                   flags: SigFlags) -> Result {
+    let action = sigaction {
+        sa_handler: match handler {
+            SigHandler::Func(f) => unsafe { mem::cast(f) },
+            SigHandler::Default => SIG_DFL,
+            SigHandler::Ignore => SIG_IGN,
+        },
+        sa_flags: (flags.0 | SA_SIGINFO | SA_RESTORER) as c_ulong,
+        sa_restorer: unsafe { mem::cast(lrs_restore) },
+        sa_mask: mask.data,
+    };
+    rv!(rt_sigaction(sig.0 as c_int, Some(&action), None))
+}
+
+#[link(name = "lrs_asm")]
+extern {
+    fn lrs_restore();
+}

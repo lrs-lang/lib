@@ -12,6 +12,7 @@ use fmt::{Debug, Write};
 ///
 /// [field, 1]
 /// The signal number.
+#[repr(C)]
 #[derive(Pod, Eq)]
 pub struct Signal(pub u8);
 
@@ -61,4 +62,5 @@ create! {
     Window          = SIGWINCH,  "Window size changed",
     Io              = SIGIO,     "I/O now possible",
     Power           = SIGPWR,    "Power failure",
+    Syscall         = SIGSYS,    "Bad system call",
 }
