@@ -1,5 +1,5 @@
-arch := $(shell gcc -dumpmachine)
-cc := gcc
+arch ?= $(shell uname -m)
+cc ?= gcc
 
 files := restore.o
 paths := $(patsubst %, $(arch)/obj/%, $(files))
