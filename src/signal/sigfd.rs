@@ -11,54 +11,96 @@ use rv::{retry};
 use {Sigset};
 use signals::{Signal};
 
+/// Information about a signal received via a `Sigfd`.
 #[repr(C)]
 #[derive(Pod)]
 pub struct SigfdInfo {
+    /// The signal number.
     pub signo    : u32,
+    /// Unused.
     pub errno    : i32,
+    /// Signal code.
     pub code     : i32,
+    /// Sending process id.
     pub pid      : u32,
+    /// Real user id of the sending process.
     pub uid      : u32,
+    /// Ready file descriptor.
     pub fd       : i32,
+    /// Timer id.
     pub tid      : u32,
+    /// Band event.
     pub band     : u32,
+    /// Timer overrruns.
     pub overrun  : u32,
+    /// Trap number.
     pub trapno   : u32,
+    /// Exit status.
     pub status   : i32,
+    /// Integer.
     pub int      : i32,
+    /// Pointer.
     pub ptr      : u64,
+    /// User CPU time consumed.
     pub utime    : u64,
+    /// System CPU time consumed.
     pub stime    : u64,
+    /// Address that generated the signal.
     pub addr     : u64,
+    /// Least significant bit of address.
     pub addr_lsb : u16,
     pub padding : [u8; 46],
 }
 
 impl SigfdInfo {
+    /// Returns the signal that generated the information.
     pub fn signal(&self) -> Signal {
         Signal(self.signo as u8)
     }
 
+    /// Creates a new, empty SigfdInfo.
     pub fn new() -> SigfdInfo {
         mem::zeroed()
     }
 }
 
+/// A signalfd.
 pub struct Sigfd {
     fd: c_int,
     owned: bool,
 }
 
 impl Sigfd {
+    /// Creates a new signalfd.
+    ///
+    /// [argument, set]
+    /// The set of signals to watch.
+    ///
+    /// [agument, flags]
+    /// Flags used when creating the file descriptor.
+    ///
+    /// [return_value]
+    /// Returns a new signalfd.
     pub fn new(set: Sigset, flags: flags::SigfdFlags) -> Result<Sigfd> {
         let fd = try!(rv!(signalfd4(-1, &set.data, flags.0), -> c_int));
         Ok(Sigfd { fd: fd, owned: true })
     }
 
+    /// Sets the mask of monitored signals.
+    ///
+    /// [argument, set]
+    /// The new set of monitored signals.
     pub fn set_mask(&self, set: Sigset) -> Result {
         rv!(signalfd4(self.fd, &set.data, 0))
     }
 
+    /// Reads a number of signals from the signalfd.
+    ///
+    /// [argument, buf]
+    /// The buffer in which the signals will be stored.
+    ///
+    /// [return_value]
+    /// Returns a slice of received signals.
     pub fn read<'a>(&self, buf: &'a mut [SigfdInfo]) -> Result<&'a mut [SigfdInfo]> {
         let len = try!(retry(|| read(self.fd, buf.as_mut_bytes())));
         let num = len as usize / mem::size_of::<SigfdInfo>();

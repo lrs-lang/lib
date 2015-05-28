@@ -10,6 +10,7 @@ use cty::{ self,
 use fmt::{Debug, Write};
 use core::ops::{BitOr, BitAnd, Not};
 
+/// Flags for changing a signal handler.
 #[derive(Pod, Eq)]
 pub struct SigFlags(pub c_int);
 
@@ -61,11 +62,38 @@ macro_rules! create {
 }
 
 create! {
+    #[doc = "Don't send notifications when a child process stops or resumes.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:sigaction(2) and SA_NOCLDSTOP therein"]
     flag SA_NOCLDSTOP = SA_NOCLDSTOP;
+
+    #[doc = "Don't turn dead children into zombies.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:sigaction(2) and SA_NOCLDWAIT therein"]
     flag SA_NOCLDWAIT = SA_NOCLDWAIT;
-    flag SA_SIGINFO   = SA_SIGINFO;
-    flag SA_ONSTACK   = SA_ONSTACK;
+
+    // #[doc = "Don't send notifications when a child process stops or resumes.\n"]
+    // #[doc = "= See also"]
+    // #[doc = "* link:man:sigaction(2) and SA_SIGINFO therein"]
+    // flag SA_SIGINFO   = SA_SIGINFO;
+
+    #[doc = "Use the alternative stack for this signal handler.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:sigaction(2) and SA_ONSTACK therein"]
+    flag SA_ALT_STACK   = SA_ONSTACK;
+
+    #[doc = "Restart syscalls after handling this signal.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:sigaction(2) and SA_RESTART therein"]
     flag SA_RESTART   = SA_RESTART;
+
+    #[doc = "Don't block the signal while it's being handled.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:sigaction(2) and SA_NODEFER therein"]
     flag SA_NODEFER   = SA_NODEFER;
+
+    #[doc = "Reset the handler to the default upon entry to the signal handler.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:sigaction(2) and SA_RESETHAND therein"]
     flag SA_RESETHAND = SA_RESETHAND;
 }

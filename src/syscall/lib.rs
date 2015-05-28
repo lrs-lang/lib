@@ -2544,6 +2544,20 @@ pub fn signalfd4(fd: c_int, set: &sigset_t, mut flags: c_int) -> c_int {
     unsafe { r::signalfd4(fd, set, mem::size_of::<sigset_t>() as size_t, flags) }
 }
 
+/// Suspends the thread until a certain signal occurs.
+///
+/// [argument, set]
+/// The set of signals to wait for.
+///
+/// [argument, info]
+/// Place where information about the signal will be stored.
+///
+/// [argument, timeout]
+/// Optional timeout.
+///
+/// = See also
+///
+/// * link:man:rt_sigtimedwait(2)
 pub fn rt_sigtimedwait(set: &sigset_t, info: &mut siginfo_t,
                        timeout: Option<&timespec>) -> c_int {
     let timeout = timeout.map(|t| t as *const _).unwrap_or(0 as *const _);
@@ -2552,6 +2566,20 @@ pub fn rt_sigtimedwait(set: &sigset_t, info: &mut siginfo_t,
     }
 }
 
+/// Changes or inspects the handler of a signal.
+///
+/// [argument, signum]
+/// The signal to modify.
+///
+/// [argument, act]
+/// The new handler.
+///
+/// [argument, old]
+/// The old handler.
+///
+/// = See also
+///
+/// * link:man:rt_sigaction(2)
 pub fn rt_sigaction(signum: c_int, act: Option<&sigaction>,
                     old: Option<&mut sigaction>) -> c_int {
     let act = act.map(|a| a as *const _).unwrap_or(0 as *const _);
@@ -2559,6 +2587,6 @@ pub fn rt_sigaction(signum: c_int, act: Option<&sigaction>,
     unsafe { r::rt_sigaction(signum, act, old, mem::size_of::<sigset_t>() as size_t) }
 }
 
-pub fn rt_sigreturn() {
-    unsafe { r::rt_sigreturn() }
-}
+// pub fn rt_sigreturn() {
+//     unsafe { r::rt_sigreturn() }
+// }

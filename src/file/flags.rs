@@ -40,21 +40,34 @@ impl Not for FileFlags {
     }
 }
 
+/// Dummy flag with all flags unset.
+pub const FILE_NONE: FileFlags = FileFlags(0);
+
+/// Mask containing the access flags.
+///
+/// = Remarks
+///
+/// That is, FD_READ_ONLY, FD_WRITE_ONLY, and FD_READ_WRITE.
+pub const FILE_ACCESS_MASK: FileFlags = FileFlags(3);
+
 macro_rules! create_flags {
     ($($(#[$meta:meta])* flag $name:ident = $val:expr;)*) => {
         $($(#[$meta])* pub const $name: FileFlags = FileFlags($val);)*
 
         impl Debug for FileFlags {
             fn fmt<W: Write>(&self, w: &mut W) -> Result {
-                let mut first = true;
+                let rm = match self.0 & 3 {
+                    O_RDONLY => "FILE_READ_ONLY",
+                    O_WRONLY => "FILE_WRITE_ONLY",
+                    _ => "FILE_READ_WRITE",
+                };
+                let flags = self.0 & !3;
                 $(
-                    if self.0 & $val != 0 {
-                        if !first { try!(w.write(b"|")); }
-                        first = false;
+                    if flags & $val != 0 {
+                        try!(w.write(b"|"));
                         try!(w.write_all(stringify!($name).as_bytes()));
                     }
                 )*
-                let _ = first;
                 Ok(())
             }
         }

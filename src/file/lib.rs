@@ -48,7 +48,7 @@ use int::{BoundedRange};
 use syscall::{
     openat, read, write, close, pread, lseek, pwrite, readv, writev, preadv, pwritev,
     ftruncate, fsync, fdatasync, syncfs, fadvise, fstatfs, fcntl_dupfd_cloexec,
-    fcntl_getfl, fcntl_setfl, fcntl_getfd, fcntl_setfd, fstatat, faccessat, truncate,
+    fcntl_getfl, fstatat, faccessat, truncate,
     linkat, utimensat, renameat2, mkdirat, unlinkat, symlinkat, readlinkat, fchownat,
     fchmodat, fchmod, mknodat, readahead, fallocate, setxattr, lsetxattr, fsetxattr,
     getxattr, lgetxattr, fgetxattr, removexattr, lremovexattr, fremovexattr, listxattr,
@@ -1449,66 +1449,6 @@ impl File {
         } else {
             Ok(FileFlags(ret))
         }
-    }
-
-    /// Sets the file status flags.
-    ///
-    /// [argument, flags]
-    /// The modified flags.
-    ///
-    /// = Remarks
-    ///
-    /// Only the following flags can be changed
-    ///
-    /// * `append`
-    /// * `signal io`
-    /// * `bypass buffer`
-    /// * `access time update`
-    /// * `non blocking`
-    ///
-    /// = See also
-    ///
-    /// * link:man:fcntl(2) and the description of `F_SETFL` therein.
-    /// * link:lrs::file::File::get_status_flags
-    pub fn set_status_flags(&self, flags: FileFlags) -> Result {
-        let ret = fcntl_setfl(self.fd, flags.0);
-        rv!(ret)
-    }
-
-    /// Retrieves the status of the `close on exec` flag.
-    ///
-    /// [return_value]
-    /// Returns whether the `close on exec` flag is set.
-    ///
-    /// = See also
-    ///
-    /// * link:man:fcntl(2) and the description of `F_GETFD` therein.
-    /// * link:lrs::file::File::set_close_on_exec
-    pub fn is_close_on_exec(&self) -> Result<bool> {
-        let ret = fcntl_getfd(self.fd);
-        if ret < 0 {
-            Err(Errno(-ret as c_int))
-        } else {
-            Ok(ret & cty::O_CLOEXEC != 0)
-        }
-    }
-
-    /// Enables or disables the `close on exec` flag.
-    ///
-    /// [argument, val]
-    /// Whether the flag is set.
-    ///
-    /// = See also
-    ///
-    /// * link:man:fcntl(2) and the description of `F_SETFD` therein.
-    /// * link:lrs::file::File::io_close_on_exec
-    pub fn set_close_on_exec(&self, val: bool) -> Result {
-        let mut ret = fcntl_getfd(self.fd);
-        if ret >= 0 {
-            ret = (ret & !cty::O_CLOEXEC) | (cty::O_CLOEXEC * val as c_int);
-            ret = fcntl_setfd(self.fd, ret);
-        }
-        rv!(ret)
     }
 
     /// Reads from a position in the file.

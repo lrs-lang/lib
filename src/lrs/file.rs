@@ -20,6 +20,7 @@ pub use lrs_dev::{Device, DeviceType};
 /// File flag constants.
 pub mod flags {
     pub use lrs_file::flags::{
+        FILE_NONE, FILE_ACCESS_MASK,
         FILE_CREATE, FILE_READ_ONLY, FILE_WRITE_ONLY, FILE_READ_WRITE, FILE_CLOSE_ON_EXEC,
         FILE_BYPASS_BUFFER, FILE_ONLY_DIRECTORY, FILE_EXCLUSIVE,
         FILE_NO_ACCESS_TIME_UPDATE, FILE_NO_CONTROLLING_TERM, FILE_DONT_FOLLOW_LINKS,

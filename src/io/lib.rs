@@ -50,6 +50,9 @@ pub trait Read {
     ///
     /// :scatter: link:lrs::io::Read::scatter_read[scatter_read]
     ///
+    /// If the length of the buffer is `0`, the meaning of a `0` return value is
+    /// unspecified. Otherwise a return value of `0` signals End-Of-File.
+    ///
     /// The default implementation calls {scatter} with a single buffer element.
     ///
     /// = See also

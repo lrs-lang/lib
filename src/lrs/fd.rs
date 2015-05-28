@@ -5,3 +5,14 @@
 //! Raw file descriptor handling.
 
 pub use lrs_fd::{STDIN, STDOUT, STDERR, FdIo, FDContainer};
+pub use lrs_fd::flags::{DescriptionFlags};
+
+/// File description flags.
+pub mod flags {
+    pub use lrs_fd::flags::{
+        FD_ACCESS_MASK,
+        FD_NONE, FD_READ_ONLY, FD_WRITE_ONLY, FD_READ_WRITE, FD_BYPASS_BUFFER,
+        FD_NO_ACCESS_TIME_UPDATE, FD_APPEND, FD_SIGNAL_IO, FD_SYNC, FD_DATA_SYNC,
+        FD_DONT_BLOCK, FD_PATH,
+    };
+}

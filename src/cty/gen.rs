@@ -127,7 +127,7 @@ pub struct f_owner_ex {
 }
 
 pub const F_LINUX_SPECIFIC_BASE : ::c_uint = 1024;
-pub const FD_CLOEXEC            : ::c_uint = 1;
+pub const FD_CLOEXEC            : ::c_int = 1;
 pub const F_RDLCK               : ::c_uint = 0;
 pub const F_WRLCK               : ::c_uint = 1;
 pub const F_UNLCK               : ::c_uint = 2;
