@@ -39,6 +39,7 @@ extern crate lrs_lock;
 extern crate lrs_parse;
 extern crate lrs_poll;
 extern crate lrs_process;
+extern crate lrs_pipe;
 extern crate lrs_signal;
 extern crate lrs_queue;
 extern crate lrs_rc;

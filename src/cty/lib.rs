@@ -4824,3 +4824,12 @@ pub struct signalfd_siginfo {
     pub ssi_addr_lsb : __u16,
     pub __pad : [__u8; 46],
 }
+
+/////////////////////////
+// include/linux/splice.h
+/////////////////////////
+
+pub const SPLICE_F_MOVE     : c_uint = 0x01;
+pub const SPLICE_F_NONBLOCK : c_uint = 0x02;
+pub const SPLICE_F_MORE     : c_uint = 0x04;
+pub const SPLICE_F_GIFT     : c_uint = 0x08;

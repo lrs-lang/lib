@@ -27,6 +27,7 @@ use cty::{
     F_SETFL, F_GETFD, F_SETFD, sockaddr, msghdr, mmsghdr, FUTEX_WAIT, FUTEX_WAKE,
     siginfo_t, rusage, SIOCGSTAMPNS, SIOCINQ, SIOCOUTQ, EPOLL_CLOEXEC, O_CLOEXEC,
     O_LARGEFILE, SOCK_CLOEXEC, MSG_CMSG_CLOEXEC, TFD_CLOEXEC, SFD_CLOEXEC, sigaction,
+    F_SETPIPE_SZ, F_GETPIPE_SZ,
 };
 
 // XXX: iovec _MUST_ be the same as &mut [u8]
@@ -2590,3 +2591,78 @@ pub fn rt_sigaction(signum: c_int, act: Option<&sigaction>,
 // pub fn rt_sigreturn() {
 //     unsafe { r::rt_sigreturn() }
 // }
+
+/// Creates a new pipe.
+///
+/// [argument, fds]
+/// The buffer in which the ends of the pipe will be placed.
+///
+/// [argument, flags]
+/// Flags for creating the pipe.
+///
+/// = Remarks
+///
+/// Unless lrs was compiled with the `no-auto-cloexec` flag, this function automatically
+/// adds the `O_CLOEXEC` flag.
+///
+/// = See also
+///
+/// * link:man:pipe2(2)
+pub fn pipe2(fds: &mut [c_int; 2], mut flags: c_int) -> c_int {
+    if cfg!(not(no_auto_cloexec)) {
+        flags |= O_CLOEXEC;
+    }
+    unsafe { r::pipe2(fds.as_mut_ptr(), flags) }
+}
+
+/// Sets the capacity of a pipe.
+///
+/// [argument, fd]
+/// A pipe file descriptor.
+///
+/// [argument, size]
+/// The new capacity of the pipe.
+///
+/// = See also
+///
+/// * link:man:fcntl(2) and F_SETPIPE_SZ therein
+pub fn fcntl_setpipe_sz(fd: c_int, size: c_int) -> c_int {
+    unsafe { r::fcntl(fd as c_uint, F_SETPIPE_SZ, size as k_ulong) }
+}
+
+/// Gets the capacity of a pipe.
+///
+/// [argument, fd]
+/// A pipe file descriptor.
+///
+/// [return_value]
+/// Returns the capacity of the pipe.
+///
+/// = See also
+///
+/// * link:man:fcntl(2) and F_GETPIPE_SZ therein
+pub fn fcntl_getpipe_sz(fd: c_int) -> c_int {
+    unsafe { r::fcntl(fd as c_uint, F_GETPIPE_SZ, 0) }
+}
+
+/// Executes ioctl with the FIONREAD option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, unread]
+/// A place into which number of unread bytes will be placed.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:ioctl(2)
+pub fn ioctl_fionread(fd: c_int, unread: &mut usize) -> c_int {
+    ioctl_siocinq(fd, unread)
+}
+
+pub fn tee(fd_in: c_int, fd_out: c_int, len: usize, flags: c_uint) -> ssize_t {
+    unsafe { r::tee(fd_in, fd_out, len as size_t, flags) }
+}

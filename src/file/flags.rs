@@ -59,8 +59,10 @@ macro_rules! create_flags {
                 let rm = match self.0 & 3 {
                     O_RDONLY => "FILE_READ_ONLY",
                     O_WRONLY => "FILE_WRITE_ONLY",
-                    _ => "FILE_READ_WRITE",
+                    O_RDWR => "FILE_READ_WRITE",
+                    _ => "{invalid}",
                 };
+                try!(w.write_all(rm.as_bytes()));
                 let flags = self.0 & !3;
                 $(
                     if flags & $val != 0 {

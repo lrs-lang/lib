@@ -1533,7 +1533,6 @@ impl File {
     /// * link:lrs::file::File::read_at
     /// * link:lrs::file::File::scatter_read_at
     pub fn scatter_read(&self, bufs: &mut [&mut [u8]]) -> Result<usize> {
-        assert!(bufs.len() < (!0 as c_uint / 2) as usize);
         retry(|| readv(self.fd, bufs)).map(|r| r as usize)
     }
 
@@ -1560,7 +1559,6 @@ impl File {
     /// * link:lrs::file::File::write_at
     /// * link:lrs::file::File::gather_write_at
     pub fn gather_write(&self, bufs: &[&[u8]]) -> Result<usize> {
-        assert!(bufs.len() < (!0 as c_uint / 2) as usize);
         retry(|| writev(self.fd, bufs)).map(|r| r as usize)
     }
 
@@ -1595,7 +1593,6 @@ impl File {
     /// * link:lrs::file::File::read_at
     /// * link:lrs::file::File::scatter_read
     pub fn scatter_read_at(&self, bufs: &mut [&mut [u8]], off: i64) -> Result<usize> {
-        assert!(bufs.len() < (!0 as c_uint / 2) as usize);
         retry(|| preadv(self.fd, bufs, off as loff_t)).map(|r| r as usize)
     }
 
@@ -1627,7 +1624,6 @@ impl File {
     /// * link:lrs::file::File::write_at
     /// * link:lrs::file::File::gather_write
     pub fn gather_write_at(&self, bufs: &[&[u8]], off: i64) -> Result<usize> {
-        assert!(bufs.len() < (!0 as c_uint / 2) as usize);
         retry(|| pwritev(self.fd, bufs, off as loff_t)).map(|r| r as usize)
     }
 

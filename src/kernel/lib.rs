@@ -223,4 +223,12 @@ kver! {
     #[doc = "= See also"]
     #[doc = "* link:man:epoll_ctl(2)"]
     fn has_epollwakeup >= 3,5;
+
+    #[doc = "Returns whether this kernel version supports the `O_DIRECT` flag for pipes.\
+             \n"]
+    #[doc = "= Remarks"]
+    #[doc = "This flag was introduced in 3.4.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:pipe2(2)"]
+    fn has_pipe_o_direct >= 3,4;
 }
