@@ -2663,6 +2663,76 @@ pub fn ioctl_fionread(fd: c_int, unread: &mut usize) -> c_int {
     ioctl_siocinq(fd, unread)
 }
 
+/// Copies data from one pipe to another.
+///
+/// [argument, fd_in]
+/// The pipe to copy from.
+///
+/// [argument, fd_out]
+/// The pipe to copy to.
+///
+/// [argument, len]
+/// The number of bytes to copy.
+///
+/// [argument, flags]
+/// Flags to use while copying.
+///
+/// [return_value]
+/// Returns the number of bytes copied.
+///
+/// = See also
+///
+/// * link:man:tee(2)
 pub fn tee(fd_in: c_int, fd_out: c_int, len: usize, flags: c_uint) -> ssize_t {
     unsafe { r::tee(fd_in, fd_out, len as size_t, flags) }
+}
+
+/// Copies data between two file descriptors.
+///
+/// [argument, fd_in]
+/// The file to copy from.
+///
+/// [argument, off_in]
+/// The position to copy from.
+///
+/// [argument, fd_out]
+/// The file to copy to.
+///
+/// [argument, off_out]
+/// The position to copy to.
+///
+/// [argument, len]
+/// The number of bytes to copy.
+///
+/// [argument, flags]
+/// Flags to use while copying.
+///
+/// [return_value]
+/// Returns the number of bytes copied.
+///
+/// = See also
+///
+/// * link:man:splice(2)
+pub fn splice(fd_in: c_int, mut off_in: Option<&mut u64>, fd_out: c_int,
+              mut off_out: Option<&mut u64>, len: usize, flags: c_uint) -> ssize_t {
+    let mut loff_in = 0;
+    let mut loff_out = 0;
+    let mut poff_in = 0 as *mut loff_t;
+    let mut poff_out = 0 as *mut loff_t;
+    if let Some(ref mut p) = off_in {
+        loff_in = **p as loff_t;
+        poff_in = &mut loff_in;
+    }
+    if let Some(ref mut p) = off_out {
+        loff_out = **p as loff_t;
+        poff_out = &mut loff_out;
+    }
+    let rv = unsafe { r::splice(fd_in, poff_in, fd_out, poff_out, len as size_t, flags) };
+    if let Some(p) = off_in {
+        *p = loff_in as u64;
+    }
+    if let Some(p) = off_out {
+        *p = loff_out as u64;
+    }
+    rv
 }

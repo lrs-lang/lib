@@ -22,12 +22,12 @@ extern crate lrs_saturating as saturating;
 #[prelude_import] use base::prelude::*;
 use syscall::{
     close, pipe2, read, write, readv, writev, fcntl_setpipe_sz, fcntl_getpipe_sz,
-    ioctl_fionread, tee,
+    ioctl_fionread, tee, splice,
 };
 use core::{mem};
 use cty::{c_int, c_uint};
 use fd::{FDContainer};
-use flags::{PipeFlags, TeeFlags};
+use flags::{PipeFlags, TeeFlags, SpliceFlags};
 use io::{Read, Write};
 use rv::{retry};
 use saturating::{SaturatingCast};
@@ -203,7 +203,7 @@ impl Pipe {
     /// Copies bytes from this pipe to another.
     ///
     /// [argument, dst]
-    /// The write end of the destination pipe.
+    /// The write-end of the destination pipe.
     ///
     /// [argument, n]
     /// The number of bytes to copy.
@@ -214,11 +214,156 @@ impl Pipe {
     /// [return_value]
     /// Returns the number of bytes copied.
     ///
+    /// = Remarks
+    ///
+    /// `self` must be the read-end of a pipe.
+    ///
+    /// If lrs was compiled with the `retry` option, this call will automatically retry
+    /// the operation if the call was interrupted by a signal.
+    ///
     /// = See also
     ///
     /// * link:man:tee(2)
     pub fn copy_to(&self, dst: &Pipe, n: usize, flags: TeeFlags) -> Result<usize> {
-        rv!(tee(self.fd, dst.fd, n, flags.0), -> usize)
+        retry(|| tee(self.fd, dst.fd, n, flags.0)).map(|v| v as usize)
+    }
+
+    /// Reads data from a file descriptor into the pipe.
+    ///
+    /// [argument, src]
+    /// The source from which to read.
+    ///
+    /// [argument, n]
+    /// The number of bytes to read.
+    ///
+    /// [argument, flags]
+    /// Flags to use while reading.
+    ///
+    /// [return_value]
+    /// Returns the number of bytes read.
+    ///
+    /// = Remarks
+    ///
+    /// `self` must be the write-end of a pipe.
+    ///
+    /// If lrs was compiled with the `retry` option, this call will automatically retry
+    /// the operation if the call was interrupted by a signal.
+    ///
+    /// = See also
+    ///
+    /// * link:man:splice(2)
+    pub fn read_from<T>(&self, src: &T, n: usize, flags: SpliceFlags) -> Result<usize>
+        where T: FDContainer,
+    {
+        retry(|| {
+            splice(src.borrow(), None, self.fd, None, n, flags.0)
+        }).map(|v| v as usize)
+    }
+
+    /// Reads data from a position in a file descriptor into the pipe.
+    ///
+    /// [argument, src]
+    /// The source from which to read.
+    ///
+    /// [argument, at]
+    /// The position at which to read.
+    ///
+    /// [argument, n]
+    /// The number of bytes to read.
+    ///
+    /// [argument, flags]
+    /// Flags to use while reading.
+    ///
+    /// [return_value]
+    /// Returns the number of bytes read.
+    ///
+    /// = Remarks
+    ///
+    /// `self` must be the write-end of a pipe. The read-position in the file will not be
+    /// changed.
+    ///
+    /// If lrs was compiled with the `retry` option, this call will automatically retry
+    /// the operation if the call was interrupted by a signal.
+    ///
+    /// = See also
+    ///
+    /// * link:man:splice(2)
+    pub fn read_from_at<T>(&self, src: &T, at: &mut u64, n: usize,
+                           flags: SpliceFlags) -> Result<usize>
+        where T: FDContainer,
+    {
+        retry(|| {
+            splice(src.borrow(), Some(at), self.fd, None, n, flags.0)
+        }).map(|v| v as usize)
+    }
+
+    /// Writes data from this pipe to a file descriptor.
+    ///
+    /// [argument, dst]
+    /// The file descriptor to write to.
+    ///
+    /// [argument, n]
+    /// The number of bytes to write.
+    ///
+    /// [argument, flags]
+    /// Flags to use while writing.
+    ///
+    /// [return_value]
+    /// Returns the number of bytes written.
+    ///
+    /// = Remarks
+    ///
+    /// `self` must be the read-end of a pipe.
+    ///
+    /// If lrs was compiled with the `retry` option, this call will automatically retry
+    /// the operation if the call was interrupted by a signal.
+    ///
+    /// = See also
+    ///
+    /// * link:man:splice(2)
+    pub fn write_to<T>(&self, dst: &T, n: usize, flags: SpliceFlags) -> Result<usize>
+        where T: FDContainer,
+    {
+        retry(|| {
+            splice(self.fd, None, dst.borrow(), None, n, flags.0)
+        }).map(|v| v as usize)
+    }
+
+    /// Writes data from this pipe to a position in a file descriptor.
+    ///
+    /// [argument, dst]
+    /// The file descriptor to write to.
+    ///
+    /// [argument, at]
+    /// The position at which to write.
+    ///
+    /// [argument, n]
+    /// The number of bytes to write.
+    ///
+    /// [argument, flags]
+    /// Flags to use while writing.
+    ///
+    /// [return_value]
+    /// Returns the number of bytes written.
+    ///
+    /// = Remarks
+    ///
+    /// `self` must be the read-end of a pipe. The read-position in the file will not be
+    /// changed.
+    ///
+    /// If lrs was compiled with the `retry` option, this call will automatically retry
+    /// the operation if the call was interrupted by a signal.
+    ///
+    /// = See also
+    ///
+    /// * link:man:splice(2)
+    pub fn write_to_at<T>(&self, dst: &T, at: &mut u64, n: usize,
+                          flags: SpliceFlags) -> Result<usize>
+        where T: FDContainer,
+    {
+        retry(|| {
+            splice(self.fd, None, dst.borrow(), Some(at), n, flags.0)
+        }).map(|v| v as usize)
     }
 }
 

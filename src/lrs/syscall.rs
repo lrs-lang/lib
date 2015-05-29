@@ -21,5 +21,5 @@ pub use lrs_syscall::{
     exit_group, execveat, mmap, munmap, mremap, waitid, getcwd, chdir, ioctl_siocgstampns,
     ioctl_siocinq, ioctl_siocoutq, rt_sigprocmask, rt_sigpending, rt_sigsuspend,
     signalfd4, rt_sigtimedwait, rt_sigaction, pipe2, fcntl_setpipe_sz, fcntl_getpipe_sz,
-    ioctl_fionread,
+    ioctl_fionread, tee, splice,
 };

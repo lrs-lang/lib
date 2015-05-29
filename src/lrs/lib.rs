@@ -102,6 +102,7 @@ pub mod thread;
 pub mod rc;
 pub mod clone;
 pub mod sync;
+pub mod pipe;
 pub mod cmp;
 pub mod socket;
 pub mod bx;

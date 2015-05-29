@@ -7,7 +7,7 @@ use core::ops::{BitOr, Not, BitAnd};
 use fmt::{Debug, Write};
 use cty::{
     c_int, c_uint,
-    O_CLOEXEC, O_DIRECT, O_NONBLOCK, SPLICE_F_NONBLOCK,
+    O_CLOEXEC, O_DIRECT, O_NONBLOCK, SPLICE_F_NONBLOCK, SPLICE_F_MORE,
 };
 
 /// Pipe flags.
@@ -183,6 +183,94 @@ impl TeeFlags {
     /// [argument, flag]
     /// The flag to be checked.
     pub fn is_set(&self, flag: TeeFlags) -> bool {
+        self.0 & flag.0 != 0
+    }
+}
+
+/// Splice flags.
+#[derive(Pod, Eq)]
+pub struct SpliceFlags(pub c_uint);
+
+impl BitOr for SpliceFlags {
+    type Output = SpliceFlags;
+    fn bitor(self, other: SpliceFlags) -> SpliceFlags {
+        SpliceFlags(self.0 | other.0)
+    }
+}
+
+impl BitAnd for SpliceFlags {
+    type Output = SpliceFlags;
+    fn bitand(self, other: SpliceFlags) -> SpliceFlags {
+        SpliceFlags(self.0 & other.0)
+    }
+}
+
+impl Not for SpliceFlags {
+    type Output = SpliceFlags;
+    fn not(self) -> SpliceFlags {
+        SpliceFlags(!self.0)
+    }
+}
+
+/// Dummy flag with all flags unset.
+pub const SPLICE_NONE: SpliceFlags = SpliceFlags(0);
+
+macro_rules! create_flags {
+    ($($(#[$meta:meta])* flag $name:ident = $val:expr;)*) => {
+        $($(#[$meta])* pub const $name: SpliceFlags = SpliceFlags($val);)*
+
+        impl Debug for SpliceFlags {
+            fn fmt<W: Write>(&self, w: &mut W) -> Result {
+                let mut first = true;
+                $(
+                    if self.0 & $val != 0 {
+                        if !first { try!(w.write(b"|")); }
+                        first = false;
+                        try!(w.write_all(stringify!($name).as_bytes()));
+                    }
+                )*
+                if first { try!(w.write_all("SPLICE_NONE".as_bytes())); }
+                Ok(())
+            }
+        }
+    }
+}
+
+create_flags! {
+    #[doc = "Return an error instead of blocking.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:splice(2) and SPLICE_F_NONBLOCK therein"]
+    flag SPLICE_DONT_BLOCK = SPLICE_F_NONBLOCK;
+
+    #[doc = "When splicing to a socket, apply MSG_MORE semantics.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:splice(2) and SPLICE_F_MORE therein"]
+    #[doc = "* link:man:send(2) and MSG_MORE therein"]
+    flag SPLICE_MORE = SPLICE_F_MORE;
+}
+
+impl SpliceFlags {
+    /// Sets a flag.
+    ///
+    /// [argument, flag]
+    /// The flag to be set.
+    pub fn set(&mut self, flag: SpliceFlags) {
+        self.0 |= flag.0
+    }
+
+    /// Clears a flag.
+    ///
+    /// [argument, flag]
+    /// The flag to be cleared.
+    pub fn unset(&mut self, flag: SpliceFlags) {
+        self.0 &= !flag.0
+    }
+
+    /// Returns whether a flag is set.
+    ///
+    /// [argument, flag]
+    /// The flag to be checked.
+    pub fn is_set(&self, flag: SpliceFlags) -> bool {
         self.0 & flag.0 != 0
     }
 }
