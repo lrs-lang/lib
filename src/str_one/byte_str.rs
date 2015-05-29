@@ -265,7 +265,7 @@ impl AsRef<ByteStr> for NoNullStr {
 impl AsRef<ByteStr> for CStr {
     fn as_ref(&self) -> &ByteStr {
         let bytes: &[u8] = self.as_ref();
-        bytes[..bytes.len()-1].as_ref()
+        bytes.as_ref()
     }
 }
 

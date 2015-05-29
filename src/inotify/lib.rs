@@ -17,19 +17,25 @@ extern crate lrs_syscall as syscall;
 extern crate lrs_fd as fd;
 extern crate lrs_rv as rv;
 extern crate lrs_str_one as str_one;
+extern crate lrs_str_three as str_three;
 extern crate lrs_io as io;
+extern crate lrs_alloc as alloc;
+extern crate lrs_rmo as rmo;
 
 #[prelude_import] use base::prelude::*;
 use syscall::{
-    close, inotify_init1,
+    close, inotify_init1, inotify_add_watch, inotify_rm_watch
 };
 use io::{Read};
-use cty::{c_int, c_char};
+use cty::{c_int, c_char, PATH_MAX};
 use core::{mem};
+use alloc::{FbHeap};
+use rmo::{Rmo};
 use fd::{FDContainer};
 use event::{InodeEvents};
-use flags::{InotifyFlags};
+use flags::{InotifyFlags, WatchFlags};
 use str_one::{CStr};
+use str_three::{ToCString};
 
 mod lrs { pub use fmt::lrs::*; pub use cty; }
 
@@ -69,6 +75,21 @@ impl Inotify {
     pub fn new(flags: InotifyFlags) -> Result<Inotify> {
         let fd = try!(rv!(inotify_init1(flags.0), -> c_int));
         Ok(Inotify::from_owned(fd))
+    }
+
+    pub fn set_watch<P>(&self, path: P, events: InodeEvents,
+                        flags: WatchFlags) -> Result<InodeWatch>
+        where P: ToCString,
+    {
+        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let link: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
+        let watch = try!(rv!(inotify_add_watch(self.fd, &link,
+                                               events.0 | flags.0), -> c_int));
+        Ok(InodeWatch(watch))
+    }
+
+    pub fn remove_watch(&self, watch: InodeWatch) -> Result {
+        rv!(inotify_rm_watch(self.fd, watch.0))
     }
 
     pub fn events<'a>(&self, buf: &'a mut [u8]) -> Result<InodeDataIter<'a>> {
