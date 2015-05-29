@@ -11,6 +11,20 @@ use cty::{
 use fmt::{Debug, Write};
 use core::ops::{BitOr, BitAnd, Not};
 
+/// Flags used when creating a watch.
+///
+/// [field, 1]
+/// The integer constant associated with the flags.
+///
+/// = Remarks
+///
+/// :flags: link:lrs::inotify::flags
+///
+/// See {flags} for pre-defined constants.
+///
+/// = See also
+///
+/// * {flags}
 #[derive(Pod, Eq)]
 pub struct WatchFlags(pub u32);
 
@@ -87,7 +101,20 @@ create! {
     flag WATCH_ONLY_DIRECTORY = IN_ONLYDIR;
 }
 
-
+/// Flags used when creating an inotify object.
+///
+/// [field, 1]
+/// The integer constant associated with the flags.
+///
+/// = Remarks
+///
+/// :flags: link:lrs::inotify::flags
+///
+/// See {flags} for pre-defined constants.
+///
+/// = See also
+///
+/// * {flags}
 #[derive(Pod, Eq)]
 pub struct InotifyFlags(pub c_int);
 

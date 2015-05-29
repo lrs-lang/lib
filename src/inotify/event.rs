@@ -11,6 +11,20 @@ use cty::{
 use fmt::{Debug, Write};
 use core::ops::{BitOr, BitAnd, Not};
 
+/// The type of an inotify event.
+///
+/// [field, 1]
+/// The integer constant associated with the event type.
+///
+/// = Remarks
+///
+/// :events: link:lrs::inotify::events
+///
+/// See {events} for pre-defined constants.
+///
+/// = See also
+///
+/// * {events}
 #[repr(C)]
 #[derive(Pod, Eq)]
 pub struct InodeEvents(pub u32);

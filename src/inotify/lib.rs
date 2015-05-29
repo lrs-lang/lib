@@ -24,7 +24,7 @@ extern crate lrs_rmo as rmo;
 
 #[prelude_import] use base::prelude::*;
 use syscall::{
-    close, inotify_init1, inotify_add_watch, inotify_rm_watch
+    close, inotify_init1, inotify_add_watch, inotify_rm_watch, ioctl_fionread,
 };
 use io::{Read};
 use cty::{c_int, c_char, PATH_MAX};
@@ -42,21 +42,30 @@ mod lrs { pub use fmt::lrs::*; pub use cty; }
 pub mod flags;
 pub mod event;
 
+/// An inotify watch.
+///
+/// [field, 1]
+/// The integer representing the watch.
 #[repr(C)]
 #[derive(Pod)]
 pub struct InodeWatch(pub c_int);
 
+/// An inotify event.
 #[repr(C)]
 #[derive(Pod)]
 pub struct InodeData {
+    /// The watch that generated the event.
     pub watch: InodeWatch,
+    /// The events that occured.
     pub events: InodeEvents,
+    /// The cookie of the event.
     pub cookie: u32,
     len: u32,
     name: [c_char; 0],
 }
 
 impl InodeData {
+    /// Returns the name of the file that triggered the event.
     pub fn name(&self) -> &CStr {
         if self.len == 0 {
             CStr::empty()
@@ -66,17 +75,43 @@ impl InodeData {
     }
 }
 
+/// An inotify object.
 pub struct Inotify {
     fd: c_int,
     owned: bool,
 }
 
 impl Inotify {
+    /// Creates a new inotify object.
+    ///
+    /// [argument, flags]
+    /// Flags to be used when creating the object.
+    ///
+    /// = See also
+    ///
+    /// * link:man:inotify_init1(2)
     pub fn new(flags: InotifyFlags) -> Result<Inotify> {
         let fd = try!(rv!(inotify_init1(flags.0), -> c_int));
         Ok(Inotify::from_owned(fd))
     }
 
+    /// Adds a watch or changes the watch of a path.
+    ///
+    /// [argument, path]
+    /// The path of the watch to add or modify.
+    ///
+    /// [argument, events]
+    /// The events to watch for.
+    ///
+    /// [argument, flags]
+    /// Flags to use when creating or modifying the watch.
+    ///
+    /// [return_value]
+    /// Returns the added or modified watch.
+    ///
+    /// = See also
+    ///
+    /// * link:man:inotify_add_watch(2)
     pub fn set_watch<P>(&self, path: P, events: InodeEvents,
                         flags: WatchFlags) -> Result<InodeWatch>
         where P: ToCString,
@@ -88,14 +123,38 @@ impl Inotify {
         Ok(InodeWatch(watch))
     }
 
+    /// Removes a watch.
+    ///
+    /// [argument, watch]
+    /// The watch to remove.
+    ///
+    /// = See also
+    ///
+    /// * link:man:inotify_rm_watch(2)
     pub fn remove_watch(&self, watch: InodeWatch) -> Result {
         rv!(inotify_rm_watch(self.fd, watch.0))
     }
 
+    /// Reads events and creates an iterator over those events.
+    ///
+    /// [argument, buf]
+    /// The buffer in which the events will be stored.
+    ///
+    /// = Remarks
+    ///
+    /// The buffer will be aligned for `u32` data, meaning that up to 3 bytes of buffer
+    /// space are lost.
     pub fn events<'a>(&self, buf: &'a mut [u8]) -> Result<InodeDataIter<'a>> {
         let buf = mem::align_for_mut::<InodeData>(buf);
         let len = try!(self.as_fdio().read(buf));
         Ok(InodeDataIter { buf: &mut buf[..len] })
+    }
+
+    /// Returns the number of bytes available for reading.
+    pub fn available(&self) -> Result<usize> {
+        let mut unread = 0;
+        try!(rv!(ioctl_fionread(self.fd, &mut unread)));
+        Ok(unread)
     }
 }
 
@@ -129,6 +188,7 @@ impl FDContainer for Inotify {
     }
 }
 
+/// An iterator over inotify events.
 pub struct InodeDataIter<'a> {
     buf: &'a mut [u8],
 }
