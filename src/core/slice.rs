@@ -157,6 +157,22 @@ impl<T> [T] {
         (left, right)
     }
 
+    /// Splits the mutable slice at an index.
+    ///
+    /// [argument, at]
+    /// The index at which the slice is split.
+    ///
+    /// = Remarks
+    ///
+    /// The element at the index is the first element of the second slice.
+    pub fn split_at_mut<'a>(&'a mut self, at: usize) -> (&'a mut [T], &'a mut [T]) {
+        let repr = self.repr();
+        assert!(at <= repr.len);
+        let left = unsafe { from_ptr(repr.ptr, at) };
+        let right = unsafe { from_ptr(repr.ptr.add(at), repr.len - at) };
+        (left, right)
+    }
+
     /// Checks whether the slice starts with another slice.
     ///
     /// [argument, other]

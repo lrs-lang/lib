@@ -36,8 +36,9 @@
 //!
 //! New threads inherit the set of signals blocked by the creating thread. A forked
 //! process inherits all settings from the parent process. Upon execve, all signal
-//! handlers are set to the default but the set of blocked signals is preserved. In most
-//! cases, a thread that calls execve should unblock all signals after forking.
+//! handlers are set to the default but the set of blocked and ignored signals is
+//! preserved. In most cases, a thread that calls execve should unblock all signals after
+//! forking and set the handler to the default.
 //!
 //! = Real-time and reserved signals
 //!

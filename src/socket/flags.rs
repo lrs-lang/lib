@@ -49,9 +49,6 @@ macro_rules! create {
     ($($(#[$meta:meta])* flag $name:ident = $val:expr;)*) => {
         $($(#[$meta])*  pub const $name: SockFlags = SockFlags($val);)*
 
-        /// = Remarks
-        ///
-        /// This prints the flags as a comma-separated list.
         impl Debug for SockFlags {
             fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
                 let raw = self.0;
@@ -62,7 +59,7 @@ macro_rules! create {
                 let mut first = true;
                 $(
                     if raw & $val != 0 {
-                        if !first { try!(w.write(b",")); }
+                        if !first { try!(w.write(b"|")); }
                         first = false;
                         try!(w.write_all(stringify!($name).as_bytes()));
                     }
@@ -75,21 +72,13 @@ macro_rules! create {
 }
 
 create! {
-    #[doc = "Sets the file descriptor to non-blocking"]
-    #[doc = ""]
+    #[doc = "Sets the file descriptor to non-blocking.\n"]
     #[doc = "= See also"]
-    #[doc = ""]
     #[doc = "* link:man:socket(2) and SOCK_NONBLOCK therein"]
     flag SOCK_DONT_BLOCK = SOCK_NONBLOCK;
 
-    #[doc = "Sets the close-on-exec flag on the file descriptor"]
-    #[doc = ""]
-    #[doc = "= Remarks"]
-    #[doc = ""]
-    #[doc = "This flag will always be set."]
-    #[doc = ""]
+    #[doc = "Sets the close-on-exec flag on the file descriptor.\n"]
     #[doc = "= See also"]
-    #[doc = ""]
     #[doc = "* link:man:socket(2) and SOCK_CLOEXEC therein"]
     flag SOCK_CLOSE_ON_EXEC = SOCK_CLOEXEC;
 }

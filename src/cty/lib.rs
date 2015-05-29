@@ -4833,3 +4833,50 @@ pub const SPLICE_F_MOVE     : c_uint = 0x01;
 pub const SPLICE_F_NONBLOCK : c_uint = 0x02;
 pub const SPLICE_F_MORE     : c_uint = 0x04;
 pub const SPLICE_F_GIFT     : c_uint = 0x08;
+
+///////////////////////////////
+// include/uapi/linux/inotify.h
+///////////////////////////////
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct inotify_event {
+    pub wd:      __s32,
+    pub mask:    __u32,
+    pub cookie:  __u32,
+    pub len:     __u32,
+    pub name: [c_char; 0],
+}
+
+
+pub const IN_ACCESS        : u32 = 0x00000001;
+pub const IN_MODIFY        : u32 = 0x00000002;
+pub const IN_ATTRIB        : u32 = 0x00000004;
+pub const IN_CLOSE_WRITE   : u32 = 0x00000008;
+pub const IN_CLOSE_NOWRITE : u32 = 0x00000010;
+pub const IN_OPEN          : u32 = 0x00000020;
+pub const IN_MOVED_FROM    : u32 = 0x00000040;
+pub const IN_MOVED_TO      : u32 = 0x00000080;
+pub const IN_CREATE        : u32 = 0x00000100;
+pub const IN_DELETE        : u32 = 0x00000200;
+pub const IN_DELETE_SELF   : u32 = 0x00000400;
+pub const IN_MOVE_SELF     : u32 = 0x00000800;
+pub const IN_UNMOUNT       : u32 = 0x00002000;
+pub const IN_Q_OVERFLOW    : u32 = 0x00004000;
+pub const IN_IGNORED       : u32 = 0x00008000;
+pub const IN_CLOSE         : u32 = IN_CLOSE_WRITE | IN_CLOSE_NOWRITE;
+pub const IN_MOVE          : u32 = IN_MOVED_FROM | IN_MOVED_TO;
+pub const IN_ONLYDIR       : u32 = 0x01000000;
+pub const IN_DONT_FOLLOW   : u32 = 0x02000000;
+pub const IN_EXCL_UNLINK   : u32 = 0x04000000;
+pub const IN_MASK_ADD      : u32 = 0x20000000;
+pub const IN_ISDIR         : u32 = 0x40000000;
+pub const IN_ONESHOT       : u32 = 0x80000000;
+
+pub const IN_ALL_EVENTS : u32 = IN_ACCESS | IN_MODIFY | IN_ATTRIB | IN_CLOSE_WRITE |
+                                IN_CLOSE_NOWRITE | IN_OPEN | IN_MOVED_FROM |
+                                IN_MOVED_TO | IN_DELETE | IN_CREATE | IN_DELETE_SELF |
+                                IN_MOVE_SELF;
+
+pub const IN_CLOEXEC  : c_int = O_CLOEXEC;
+pub const IN_NONBLOCK : c_int = O_NONBLOCK;

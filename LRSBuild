@@ -32,6 +32,7 @@ obj time_base  core base cty syscall fmt fd rv
 
 obj signal     core base cty fmt syscall fd rv time_base
 obj pipe       core base cty fmt syscall fd rv io saturating
+obj inotify    core base cty fmt syscall fd rv io
 
 obj alloc      core base cty syscall libc
 obj queue      core base cell arch_fns atomic lock alloc

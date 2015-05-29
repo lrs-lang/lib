@@ -27,7 +27,7 @@ use cty::{
     F_SETFL, F_GETFD, F_SETFD, sockaddr, msghdr, mmsghdr, FUTEX_WAIT, FUTEX_WAKE,
     siginfo_t, rusage, SIOCGSTAMPNS, SIOCINQ, SIOCOUTQ, EPOLL_CLOEXEC, O_CLOEXEC,
     O_LARGEFILE, SOCK_CLOEXEC, MSG_CMSG_CLOEXEC, TFD_CLOEXEC, SFD_CLOEXEC, sigaction,
-    F_SETPIPE_SZ, F_GETPIPE_SZ,
+    F_SETPIPE_SZ, F_GETPIPE_SZ, IN_CLOEXEC,
 };
 
 // XXX: iovec _MUST_ be the same as &mut [u8]
@@ -2735,4 +2735,57 @@ pub fn splice(fd_in: c_int, mut off_in: Option<&mut u64>, fd_out: c_int,
         *p = loff_out as u64;
     }
     rv
+}
+
+/// Creates a new inotify object.
+///
+/// [argument, flags]
+/// Flags to use when creating the object.
+///
+/// = Remarks
+///
+/// Unless lrs was compiled with the `no-auto-cloexec` flag, this function automatically
+/// adds the `IN_CLOEXEC` flag.
+///
+/// = See also
+///
+/// * link:man:inotify_init1(2)
+pub fn inotify_init1(mut flags: c_int) -> c_int {
+    if cfg!(not(no_auto_cloexec)) {
+        flags |= IN_CLOEXEC;
+    }
+    unsafe { r::inotify_init1(flags) }
+}
+
+/// Adds or modifies an inotify watch.
+///
+/// [argument, fd]
+/// The fd of the inotify object.
+///
+/// [argument, path]
+/// The path to watch.
+///
+/// [argument, mask]
+/// The events to watch.
+///
+/// = See also
+///
+/// * link:man:inotify_add_watch(2)
+pub fn inotify_add_watch(fd: c_int, path: &CStr, mask: u32) -> c_int {
+    unsafe { r::inotify_add_watch(fd, path.as_ptr(), mask) }
+}
+
+/// Removes an inotify watch.
+///
+/// [argument, fd]
+/// The fd of the inotify object.
+///
+/// [argument, wd]
+/// The watch descriptor to remove.
+///
+/// = See also
+///
+/// * link:man:inotify_rm_watch(2)
+pub fn inotify_rm_watch(fd: c_int, wd: c_int) -> c_int {
+    unsafe { r::inotify_rm_watch(fd, wd) }
 }
