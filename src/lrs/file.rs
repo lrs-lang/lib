@@ -13,7 +13,7 @@ pub use lrs_file::{File, Seek, Advice, info_no_follow, exists, can_access, set_l
                      list_attr_size, list_attr_size_no_follow, list_attr_buf,
                      list_attr_buf_no_follow, list_attr, list_attr_no_follow};
 pub use lrs_file::_info as info;
-pub use lrs_file::flags::{FileFlags, Mode, AccessMode};
+pub use lrs_file::flags::{FileFlags, Mode, AccessMode, MemfdFlags};
 pub use lrs_file::info::{Info, Type};
 pub use lrs_dev::{Device, DeviceType};
 
@@ -26,6 +26,10 @@ pub mod flags {
         FILE_NO_ACCESS_TIME_UPDATE, FILE_NO_CONTROLLING_TERM, FILE_DONT_FOLLOW_LINKS,
         FILE_TRUNCATE, FILE_APPEND, FILE_SIGNAL_IO, FILE_SYNC, FILE_DATA_SYNC,
         FILE_DONT_BLOCK, FILE_PATH, FILE_TEMP, FILE_LARGE,
+    };
+
+    pub use lrs_file::flags::{
+        MFD_NONE, MFD_CLOSE_ON_EXEC, MFD_ALLOW_SEALING,
     };
 }
 
