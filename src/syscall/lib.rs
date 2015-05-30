@@ -2789,3 +2789,59 @@ pub fn inotify_add_watch(fd: c_int, path: &CStr, mask: u32) -> c_int {
 pub fn inotify_rm_watch(fd: c_int, wd: c_int) -> c_int {
     unsafe { r::inotify_rm_watch(fd, wd) }
 }
+
+/// Duplicates a file descriptor by replacing another one.
+///
+/// [argument, oldfd]
+/// The file descriptor to duplicate.
+///
+/// [argument, newfd]
+/// The file descriptor to replace.
+///
+/// [argument, flags]
+/// Flags to use when creating the new file descriptor.
+///
+/// = Remarks
+///
+/// Unless lrs was compiled with the `no-auto-cloexec` flag, this function automatically
+/// adds the `O_CLOEXEC` flag.
+///
+/// = See also
+///
+/// * link:man:dup3(2)
+pub fn dup3(oldfd: c_int, newfd: c_int, mut flags: c_int) -> c_int {
+    if cfg!(not(no_auto_cloexec)) {
+        flags |= O_CLOEXEC;
+    }
+    unsafe { r::dup3(oldfd as c_uint, newfd as c_uint, flags) }
+}
+
+/// Sets the file mode creating mask of the process.
+///
+/// [argument, mode]
+/// The mode to be masked.
+///
+/// [return_value]
+/// Returns the previous mask.
+///
+/// = See also
+///
+/// * link:man:umask(2)
+pub fn umask(mode: umode_t) -> umode_t {
+    unsafe { r::umask(mode as c_int) }
+}
+
+/// Creates a new eventfd.
+///
+/// [argument, init]
+/// The initial value of the eventfd.
+///
+/// [argument, flags]
+/// Flags to use when creating the new file descriptor.
+///
+/// = See also
+///
+/// * link:man:eventfd2(2)
+pub fn eventfd2(init: c_uint, flags: c_int) -> c_int {
+    unsafe { r::eventfd2(init, flags) }
+}

@@ -30,6 +30,7 @@ obj fd         core base rv io cty syscall fmt
 obj lock       core base cell io fmt atomic syscall cty
 obj time_base  core base cty syscall fmt fd rv
 
+obj event      core base cty fmt syscall fd io
 obj signal     core base cty fmt syscall fd rv time_base
 obj pipe       core base cty fmt syscall fd rv io saturating
 

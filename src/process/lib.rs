@@ -32,9 +32,10 @@ mod lrs {
 }
 
 #[allow(unused_imports)] #[prelude_import] use base::prelude::*;
-use syscall::{getpid, getppid, exit_group};
+use syscall::{getpid, getppid, exit_group, umask};
 use cty::alias::{ProcessId};
 use cty::{c_int};
+use file::flags::{Mode};
 
 pub mod ids;
 pub mod exec;
@@ -60,4 +61,24 @@ pub fn parent_process_id() -> ProcessId {
 /// * link:man:exit_group(2)
 pub fn exit(code: u8) -> ! {
     exit_group(code as c_int);
+}
+
+/// Sets the file mode creation mask of the process.
+///
+/// [argument, mode]
+/// The mode to be masked.
+///
+/// [return_value]
+/// Returns the previous mask.
+///
+/// = Remarks
+///
+/// The mask will be *subtracted* from the mask used in `open` etc. That is, if a bit is
+/// set in the mask, it will be unset in calls to `open` etc.
+///
+/// = See also
+///
+/// * link:man:umask(2)
+pub fn set_file_mask(mode: Mode) -> Mode {
+    Mode(umask(mode.0))
 }

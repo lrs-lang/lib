@@ -4880,3 +4880,13 @@ pub const IN_ALL_EVENTS : u32 = IN_ACCESS | IN_MODIFY | IN_ATTRIB | IN_CLOSE_WRI
 
 pub const IN_CLOEXEC  : c_int = O_CLOEXEC;
 pub const IN_NONBLOCK : c_int = O_NONBLOCK;
+
+//////////////////////////
+// include/linux/eventfd.h
+//////////////////////////
+
+pub const EFD_SEMAPHORE          : c_int = 1 << 0;
+pub const EFD_CLOEXEC            : c_int = O_CLOEXEC;
+pub const EFD_NONBLOCK           : c_int = O_NONBLOCK;
+pub const EFD_SHARED_FCNTL_FLAGS : c_int = O_CLOEXEC | O_NONBLOCK;
+pub const EFD_FLAGS_SET          : c_int = EFD_SHARED_FCNTL_FLAGS | EFD_SEMAPHORE;

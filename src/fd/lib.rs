@@ -20,9 +20,10 @@ extern crate lrs_fmt as fmt;
 #[prelude_import] use base::prelude::*;
 use base::error::{Errno};
 use io::{Write, Read};
-use cty::{c_int, FD_CLOEXEC};
+use cty::{c_int, FD_CLOEXEC, O_CLOEXEC};
 use syscall::{
-    writev, readv, read, write, fcntl_getfd, fcntl_setfd, fcntl_getfl, fcntl_setfl
+    writev, readv, read, write, fcntl_getfd, fcntl_setfd, fcntl_getfl, fcntl_setfl,
+    fcntl_dupfd_cloexec, dup3,
 };
 use rv::{retry};
 use flags::{DescriptionFlags};
@@ -167,6 +168,62 @@ pub trait FDContainer {
     fn set_description_flags(&self, flags: DescriptionFlags) -> Result {
         let ret = fcntl_setfl(self.borrow(), flags.0);
         rv!(ret)
+    }
+
+    /// Duplicates the file descriptor.
+    ///
+    /// = Remarks
+    ///
+    /// The `close on exec` flag will automatically be set on the new file descriptor.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::fd::FDContainer::duplicate_min
+    fn duplicate(&self) -> Result<Self>
+        where Self: Sized
+    {
+        self.duplicate_min(0)
+    }
+
+    /// Duplicates the file descriptor so that the duplicated one has a minimum value.
+    ///
+    /// [argument, min]
+    /// The minimum value of the new file descriptor.
+    ///
+    /// = Remarks
+    ///
+    /// The `close on exec` flag will automatically be set on the new file descriptor.
+    ///
+    /// = See also
+    ///
+    /// * link:lrs::fd::FDContainer::duplicate
+    /// * link:man:fcntl(2) and F_DUPFD_CLOEXEC therein
+    fn duplicate_min(&self, min: c_int) -> Result<Self>
+        where Self: Sized
+    {
+        let new = try!(rv!(fcntl_dupfd_cloexec(self.borrow(), min), -> c_int));
+        Ok(Self::from_owned(new))
+    }
+
+    /// Duplicates the file descriptor, replacing an existing one.
+    ///
+    /// [argument, new]
+    /// The file descriptor to replace.
+    ///
+    /// = Remarks
+    ///
+    /// The `new` argument can refer to an open file descriptor but does not have to. In
+    /// this case, `new` will be atomically closed and replaced by a duplicate of this
+    /// file descriptor.
+    ///
+    /// = See also
+    ///
+    /// * link:man:dup3(2)
+    fn duplicate_as(&self, new: c_int) -> Result<Self>
+        where Self: Sized
+    {
+        let new = try!(rv!(dup3(self.borrow(), new, O_CLOEXEC), -> c_int));
+        Ok(Self::from_owned(new))
     }
 }
 
