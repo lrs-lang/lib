@@ -5,7 +5,9 @@
 //! Process handling.
 
 pub use lrs_cty::alias::{ProcessId};
-pub use lrs_process::{process_id, parent_process_id, exit};
+pub use lrs_process::{
+    process_id, parent_process_id, exit, set_file_mask, Times, used_time,
+};
 pub use lrs_process::exec::{exec};
 pub use lrs_process::wait::{
     ChildStatus, WaitFlags, WAIT_EXITED, WAIT_STOPPED, WAIT_CONTINUED, WAIT_DONT_BLOCK,

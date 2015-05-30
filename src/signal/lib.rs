@@ -31,7 +31,7 @@ use signals::{Signal};
 use fmt::{Debug, Write};
 use time_base::{Time, time_to_timespec};
 use syscall::{
-    rt_sigprocmask, rt_sigpending, rt_sigsuspend, rt_sigtimedwait, rt_sigaction,
+    rt_sigprocmask, rt_sigpending, rt_sigsuspend, rt_sigtimedwait, rt_sigaction, pause,
 };
 use flags::{SigFlags};
 use rv::{retry};
@@ -283,13 +283,23 @@ pub fn pending_signals() -> Result<Sigset> {
 
 /// Suspends the calling thread until a signal handler is invoked.
 ///
+/// = See also
+///
+/// * link:man:pause(2)
+pub fn suspend() {
+    pause();
+}
+
+/// Replaces the set of blocked signals and suspends the calling thread until a signal
+/// handler is invoked.
+///
 /// [argument, mask]
 /// The signal mask that is temporarily set during this call.
 ///
 /// = See also
 ///
 /// * link:man:sigsuspend(2)
-pub fn suspend(mask: Sigset) {
+pub fn suspend_with(mask: Sigset) {
     rt_sigsuspend(&mask.data);
 }
 

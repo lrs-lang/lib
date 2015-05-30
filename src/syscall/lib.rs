@@ -27,7 +27,7 @@ use cty::{
     F_SETFL, F_GETFD, F_SETFD, sockaddr, msghdr, mmsghdr, FUTEX_WAIT, FUTEX_WAKE,
     siginfo_t, rusage, SIOCGSTAMPNS, SIOCINQ, SIOCOUTQ, EPOLL_CLOEXEC, O_CLOEXEC,
     O_LARGEFILE, SOCK_CLOEXEC, MSG_CMSG_CLOEXEC, TFD_CLOEXEC, SFD_CLOEXEC, sigaction,
-    F_SETPIPE_SZ, F_GETPIPE_SZ, IN_CLOEXEC,
+    F_SETPIPE_SZ, F_GETPIPE_SZ, IN_CLOEXEC, tms, clock_t,
 };
 
 // XXX: iovec _MUST_ be the same as &mut [u8]
@@ -2844,4 +2844,53 @@ pub fn umask(mode: umode_t) -> umode_t {
 /// * link:man:eventfd2(2)
 pub fn eventfd2(init: c_uint, flags: c_int) -> c_int {
     unsafe { r::eventfd2(init, flags) }
+}
+
+/// Retrieves the CPU times used by this process and its children.
+///
+/// [argument, buf]
+/// Place where the times will be stored.
+///
+/// = See also
+///
+/// * link:man:times(2)
+pub fn times(buf: *mut tms) -> clock_t {
+    unsafe { r::times(buf) }
+}
+
+/// Suspends the thread until a signal handler is invoked.
+///
+/// = See also
+///
+/// * link:man:pause(2)
+pub fn pause() -> c_int {
+    unsafe { r::pause() }
+}
+
+/// Performs reboot-related operations.
+///
+/// [argument, cmd]
+/// The command to be executed.
+///
+/// [argument, arg]
+/// An optional argument.
+///
+/// = Remarks
+///
+/// The argument is actually a void* but currently only used as a string in one case.
+///
+/// = See also
+///
+/// * link:man:reboot(2)
+pub fn reboot(cmd: c_uint, arg: &CStr) -> c_int {
+    #![allow(overflowing_literals)]
+    // Trivia: The following magic numbers can be used in the second field:
+    //
+    //  0x28121969
+    //  0x05121996
+    //  0x16041998
+    //  0x20112000
+    //
+    // The are the birthdays of Linus Torvalds and his children.
+    unsafe { r::reboot(0xfee1dead, 0x28121969, cmd, arg.as_ptr() as *mut c_void) }
 }

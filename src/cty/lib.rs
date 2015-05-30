@@ -4890,3 +4890,21 @@ pub const EFD_CLOEXEC            : c_int = O_CLOEXEC;
 pub const EFD_NONBLOCK           : c_int = O_NONBLOCK;
 pub const EFD_SHARED_FCNTL_FLAGS : c_int = O_CLOEXEC | O_NONBLOCK;
 pub const EFD_FLAGS_SET          : c_int = EFD_SHARED_FCNTL_FLAGS | EFD_SEMAPHORE;
+
+//////////////////////////////
+// include/uapi/linux/reboot.h
+//////////////////////////////
+
+pub const LINUX_REBOOT_MAGIC1         : c_int = 0xfee1dead;
+pub const LINUX_REBOOT_MAGIC2         : c_int = 672274793;
+pub const LINUX_REBOOT_MAGIC2A        : c_int = 85072278;
+pub const LINUX_REBOOT_MAGIC2B        : c_int = 369367448;
+pub const LINUX_REBOOT_MAGIC2C        : c_int = 537993216;
+pub const LINUX_REBOOT_CMD_RESTART    : c_uint = 0x01234567;
+pub const LINUX_REBOOT_CMD_HALT       : c_uint = 0xCDEF0123;
+pub const LINUX_REBOOT_CMD_CAD_ON     : c_uint = 0x89ABCDEF;
+pub const LINUX_REBOOT_CMD_CAD_OFF    : c_uint = 0x00000000;
+pub const LINUX_REBOOT_CMD_POWER_OFF  : c_uint = 0x4321FEDC;
+pub const LINUX_REBOOT_CMD_RESTART2   : c_uint = 0xA1B2C3D4;
+pub const LINUX_REBOOT_CMD_SW_SUSPEND : c_uint = 0xD000FCE2;
+pub const LINUX_REBOOT_CMD_KEXEC      : c_uint = 0x45584543;

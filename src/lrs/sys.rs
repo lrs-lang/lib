@@ -2,10 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//! System information.
+//! System management.
 
-pub use lrs_sys::{cpu_count, StrInfo, NumInfo, get_random, get_random_non_blocking,
-                    enable_accounting, set_host_name, set_domain_name};
+pub use lrs_sys::{
+    cpu_count, StrInfo, NumInfo, get_random, get_random_non_blocking, enable_accounting,
+    set_host_name, set_domain_name, enable_ctrl_alt_delete, halt, exec_new_kernel,
+    power_off, restart, hibernate,
+};
 
 pub use lrs_kernel::{
     version,

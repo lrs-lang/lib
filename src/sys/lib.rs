@@ -31,10 +31,17 @@ mod lrs {
 use core::{mem};
 use core::ops::{Eq};
 use fmt::{Debug, Write};
-use cty::{new_utsname, sysinfo, GRND_NONBLOCK, PATH_MAX};
-use syscall::{sched_getaffinity, uname, sysinfo, getrandom, acct, sethostname,
-                    setdomainname};
-use str_one::{AsCStr, ByteStr};
+use cty::{
+    new_utsname, sysinfo, GRND_NONBLOCK, PATH_MAX, LINUX_REBOOT_CMD_CAD_OFF,
+    LINUX_REBOOT_CMD_CAD_ON, LINUX_REBOOT_CMD_HALT, LINUX_REBOOT_CMD_KEXEC,
+    LINUX_REBOOT_CMD_POWER_OFF, LINUX_REBOOT_CMD_RESTART, LINUX_REBOOT_CMD_RESTART2,
+    LINUX_REBOOT_CMD_SW_SUSPEND,
+};
+use syscall::{
+    sched_getaffinity, uname, sysinfo, getrandom, acct, sethostname, setdomainname,
+    reboot,
+};
+use str_one::{AsCStr, ByteStr, CStr, ToCStr};
 use str_three::{ToCString};
 use base::rmo::{AsRef};
 use rv::{retry};
@@ -313,4 +320,78 @@ pub fn set_domain_name<P>(name: P) -> Result
     where P: AsRef<[u8]>,
 {
     rv!(setdomainname(name.as_ref()))
+}
+
+/// Enable or disable immediate restarting with `ctrl-alt-delete`.
+///
+/// = Remarks
+///
+/// If enabled, pressing `ctrl-alt-delete` immediately restarts the system. This can cause
+/// data-loss.
+///
+/// If disabled, pressing `ctrl-alt-delete` sends SIGINT to init which then decides how to
+/// proceed.
+///
+/// = See also
+///
+/// * link:man:reboot(2) and LINUX_REBOOT_CMD_CAD_OFF and LINUX_REBOOT_CMD_CAD_ON therein
+pub fn enable_ctrl_alt_delete(enabled: bool) -> Result {
+    let cmd = match enabled {
+        true => LINUX_REBOOT_CMD_CAD_ON,
+        _ => LINUX_REBOOT_CMD_CAD_OFF,
+    };
+    rv!(reboot(cmd, CStr::empty()))
+}
+
+/// Halts the system.
+///
+/// = See also
+///
+/// * link:man:reboot(2) and LINUX_REBOOT_CMD_HALT therein
+pub fn halt() -> Result {
+    rv!(reboot(LINUX_REBOOT_CMD_HALT, CStr::empty()))
+}
+
+/// Executes a new kernel.
+///
+/// = See also
+///
+/// * link:man:reboot(2) and LINUX_REBOOT_CMD_KEXEC therein
+pub fn exec_new_kernel() -> Result {
+    rv!(reboot(LINUX_REBOOT_CMD_KEXEC, CStr::empty()))
+}
+
+/// Shuts the system down and powers it off.
+///
+/// = See also
+///
+/// * link:man:reboot(2) and LINUX_REBOOT_CMD_POWER_OFF therein
+pub fn power_off() -> Result {
+    rv!(reboot(LINUX_REBOOT_CMD_POWER_OFF, CStr::empty()))
+}
+
+/// Shuts the system down and powers it off.
+///
+/// = See also
+///
+/// * link:man:reboot(2) and LINUX_REBOOT_CMD_RESTART and LINUX_REBOOT_CMD_RESTART2
+///   therein
+pub fn restart<T>(msg: Option<T>) -> Result
+    where T: ToCStr,
+{
+    let mut buf = [0; 256];
+    let (cmd, arg): (_, &_) = match msg {
+        Some(msg) => (LINUX_REBOOT_CMD_RESTART2, try!(msg.to_cstr(&mut buf))),
+        _ => (LINUX_REBOOT_CMD_RESTART, CStr::empty()),
+    };
+    rv!(reboot(cmd, arg))
+}
+
+/// Performs a software suspend (suspend-to-disk.)
+///
+/// = See also
+///
+/// * link:man:reboot(2) and LINUX_REBOOT_CMD_SW_SUSPEND therein
+pub fn hibernate() -> Result {
+    rv!(reboot(LINUX_REBOOT_CMD_SW_SUSPEND, CStr::empty()))
 }

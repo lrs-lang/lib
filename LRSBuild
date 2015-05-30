@@ -63,7 +63,7 @@ obj dev        core base fmt cty
 obj file       core base io cty fmt int syscall str_one str_two str_three arch_fns rv parse fd dev fs time_base vec rmo
 
 obj thread     core base syscall cty libc lock
-obj process    core base syscall cty fmt str_one str_two str_three c_ptr_ptr alloc rt env file rmo rv
+obj process    core base syscall cty fmt str_one str_two str_three c_ptr_ptr alloc rt env file rmo rv time_base
 obj time_ext   core base fmt str_one file time_base io vec
 
 obj dir        core base cty str_one str_two str_three syscall fd fmt file vec rmo alloc
