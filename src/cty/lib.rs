@@ -4908,3 +4908,10 @@ pub const LINUX_REBOOT_CMD_POWER_OFF  : c_uint = 0x4321FEDC;
 pub const LINUX_REBOOT_CMD_RESTART2   : c_uint = 0xA1B2C3D4;
 pub const LINUX_REBOOT_CMD_SW_SUSPEND : c_uint = 0xD000FCE2;
 pub const LINUX_REBOOT_CMD_KEXEC      : c_uint = 0x45584543;
+
+/////////////////////////////
+// include/uapi/linux/memfd.h
+/////////////////////////////
+
+pub const MFD_CLOEXEC       : c_uint = 0x0001;
+pub const MFD_ALLOW_SEALING : c_uint = 0x0002;

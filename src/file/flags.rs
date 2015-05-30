@@ -8,6 +8,7 @@ use fmt::{Debug, Display, Write};
 use base::{error};
 use parse::{Parsable};
 use cty::{
+    self, c_uint,
     c_int, umode_t, S_IROTH, S_IWOTH, S_IXOTH, O_CLOEXEC, O_DIRECT, O_DIRECTORY,
     O_EXCL, O_NOATIME, O_NOCTTY, O_NOFOLLOW, O_TRUNC, O_APPEND, O_ASYNC, O_DSYNC,
     O_NONBLOCK, O_SYNC, O_PATH, O_TMPFILE, O_RDWR, O_RDONLY, O_WRONLY, O_LARGEFILE,
@@ -577,4 +578,65 @@ impl Parsable for AccessMode {
         }
         Ok((mode, s.len()))
     }
+}
+
+/// Flags for opening a memory file.
+#[derive(Pod, Eq)]
+pub struct MemfdFlags(pub c_uint);
+
+impl BitOr for MemfdFlags {
+    type Output = MemfdFlags;
+    fn bitor(self, other: MemfdFlags) -> MemfdFlags {
+        MemfdFlags(self.0 | other.0)
+    }
+}
+
+impl BitAnd for MemfdFlags {
+    type Output = MemfdFlags;
+    fn bitand(self, other: MemfdFlags) -> MemfdFlags {
+        MemfdFlags(self.0 & other.0)
+    }
+}
+
+impl Not for MemfdFlags {
+    type Output = MemfdFlags;
+    fn not(self) -> MemfdFlags {
+        MemfdFlags(!self.0)
+    }
+}
+
+/// Dummy flag with all flags unset.
+pub const MFD_NONE: MemfdFlags = MemfdFlags(0);
+
+macro_rules! create_flags {
+    ($($(#[$meta:meta])* flag $name:ident = $val:ident;)*) => {
+        $($(#[$meta])* pub const $name: MemfdFlags = MemfdFlags(cty::$val);)*
+
+        impl Debug for MemfdFlags {
+            fn fmt<W: Write>(&self, w: &mut W) -> Result {
+                let mut first = true;
+                $(
+                    if self.0 & cty::$val != 0 {
+                        if !first { try!(w.write(b"|")); }
+                        first = false;
+                        try!(w.write_all(stringify!($name).as_bytes()));
+                    }
+                )*
+                if first { try!(w.write_all("MFD_NONE".as_bytes())); }
+                Ok(())
+            }
+        }
+    }
+}
+
+create_flags! {
+    #[doc = "Close the file when `exec` is called.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:memfd_create(2) and MFD_CLOEXEC therein"]
+    flag MFD_CLOSE_ON_EXEC = MFD_CLOEXEC;
+
+    #[doc = "Allow sealing operations on this file.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:memfd_create(2) and MFD_ALLOW_SEALING therein"]
+    flag MFD_ALLOW_SEALING = MFD_ALLOW_SEALING;
 }

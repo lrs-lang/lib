@@ -27,7 +27,7 @@ use cty::{
     F_SETFL, F_GETFD, F_SETFD, sockaddr, msghdr, mmsghdr, FUTEX_WAIT, FUTEX_WAKE,
     siginfo_t, rusage, SIOCGSTAMPNS, SIOCINQ, SIOCOUTQ, EPOLL_CLOEXEC, O_CLOEXEC,
     O_LARGEFILE, SOCK_CLOEXEC, MSG_CMSG_CLOEXEC, TFD_CLOEXEC, SFD_CLOEXEC, sigaction,
-    F_SETPIPE_SZ, F_GETPIPE_SZ, IN_CLOEXEC, tms, clock_t,
+    F_SETPIPE_SZ, F_GETPIPE_SZ, IN_CLOEXEC, tms, clock_t, MFD_CLOEXEC,
 };
 
 // XXX: iovec _MUST_ be the same as &mut [u8]
@@ -2893,4 +2893,27 @@ pub fn reboot(cmd: c_uint, arg: &CStr) -> c_int {
     //
     // The are the birthdays of Linus Torvalds and his children.
     unsafe { r::reboot(0xfee1dead, 0x28121969, cmd, arg.as_ptr() as *mut c_void) }
+}
+
+/// Creates a memfd.
+///
+/// [argument, name]
+/// The name of the pseudo-file.
+///
+/// [argument, flags]
+/// Flags to use for the new file.
+///
+/// = Remarks
+///
+/// Unless lrs was compiled with the `no-auto-cloexec` flag, this function automatically
+/// adds the `MFD_CLOEXEC` flag.
+///
+/// = See also
+///
+/// * link:man:memfd_create(2)
+pub fn memfd_create(name: &CStr, mut flags: c_uint) -> c_int {
+    if cfg!(not(no_auto_cloexec)) {
+        flags |= MFD_CLOEXEC;
+    }
+    unsafe { r::memfd_create(name.as_ptr(), flags) }
 }

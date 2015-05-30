@@ -42,7 +42,7 @@ use cty::{
     c_int, loff_t, c_uint, AT_FDCWD, AT_EMPTY_PATH, AT_SYMLINK_NOFOLLOW, UTIME_NOW,
     UTIME_OMIT, timespec, RENAME_EXCHANGE, RENAME_NOREPLACE, AT_REMOVEDIR, PATH_MAX,
     size_t, FALLOC_FL_KEEP_SIZE, FALLOC_FL_PUNCH_HOLE, FALLOC_FL_COLLAPSE_RANGE,
-    FALLOC_FL_ZERO_RANGE, ssize_t, LOCK_SH, LOCK_EX, LOCK_NB, LOCK_UN
+    FALLOC_FL_ZERO_RANGE, ssize_t, LOCK_SH, LOCK_EX, LOCK_NB, LOCK_UN, NAME_MAX,
 };
 use int::{BoundedRange};
 use syscall::{
@@ -52,9 +52,9 @@ use syscall::{
     linkat, utimensat, renameat2, mkdirat, unlinkat, symlinkat, readlinkat, fchownat,
     fchmodat, fchmod, mknodat, readahead, fallocate, setxattr, lsetxattr, fsetxattr,
     getxattr, lgetxattr, fgetxattr, removexattr, lremovexattr, fremovexattr, listxattr,
-    llistxattr, flistxattr, flock
+    llistxattr, flistxattr, flock, memfd_create,
 };
-use str_one::{AsCStr, CStr, ByteStr, AsByteStr, NoNullStr, AsMutNoNullStr};
+use str_one::{AsCStr, CStr, ByteStr, AsByteStr, NoNullStr, AsMutNoNullStr, ToCStr};
 use str_two::{ByteString, NoNullString};
 use str_three::{ToCString};
 use arch_fns::{memchr};
@@ -71,7 +71,7 @@ use fs::info::{FileSystemInfo, from_statfs};
 
 use dev::{Device, DeviceType};
 
-use flags::{FileFlags, Mode, AccessMode, FILE_READ_ONLY};
+use flags::{FileFlags, Mode, AccessMode, FILE_READ_ONLY, MemfdFlags};
 use info::{Info, info_from_stat, Type, file_type_to_mode};
 
 pub mod flags;
@@ -1282,6 +1282,35 @@ impl File {
         where P: ToCString,
     {
         File::current_dir().rel_open(path, flags, mode)
+    }
+
+    /// Creates a memory-backed file.
+    ///
+    /// [argument, name]
+    /// The name of the file.
+    ///
+    /// [argument, flags]
+    /// Flags used to create the file.
+    ///
+    /// = Remarks
+    ///
+    /// This separate from `FILE_TEMP` in that the created file is located in memory and
+    /// that it can be sealed.
+    ///
+    /// == Kernel versions
+    ///
+    /// The minimum required kernel version is 3.17.
+    ///
+    /// = See also
+    ///
+    /// * link:man:memfd_create(2)
+    pub fn memory<N>(name: N, flags: MemfdFlags) -> Result<File>
+        where N: ToCStr,
+    {
+        let mut buf: [u8; NAME_MAX] = unsafe { mem::uninit() };
+        let name = try!(name.to_cstr(&mut buf));
+        let fd = try!(rv!(memfd_create(&name, flags.0), -> c_int));
+        Ok(File::from_owned(fd))
     }
 
     /// Reads from the file.
