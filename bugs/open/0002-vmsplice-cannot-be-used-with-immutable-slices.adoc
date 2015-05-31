@@ -1,8 +1,8 @@
 = vmsplice cannot be used with immutable slices
 
 `vmsplice(2)` is under-documented: The docs don't mention that `vmsplice` will
-actually fill the provided pointers if the fd refers to the read-end of a slice.
+actually fill the provided pointers if the fd refers to the read-end of a pipe.
 Since there is no race-free way to detect whether a fd refers to a write-end or
-a read-end of a slice, we cannot implement it with `&[u8]` arguments.
+a read-end of a pipe, we cannot implement it with `&[u8]` arguments.
 
 Currently `vmsplice` is not provided at all.
