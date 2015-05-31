@@ -13,7 +13,7 @@ use cty::{
     O_EXCL, O_NOATIME, O_NOCTTY, O_NOFOLLOW, O_TRUNC, O_APPEND, O_ASYNC, O_DSYNC,
     O_NONBLOCK, O_SYNC, O_PATH, O_TMPFILE, O_RDWR, O_RDONLY, O_WRONLY, O_LARGEFILE,
     O_CREAT, S_ISUID, S_ISGID, S_ISVTX, S_IRUSR, S_IWUSR, S_IXUSR, S_IRGRP, S_IWGRP,
-    S_IXGRP,
+    S_IXGRP, F_SEAL_SEAL, F_SEAL_GROW, F_SEAL_SHRINK, F_SEAL_WRITE,
 };
 
 /// Flags for opening and modifying a file.
@@ -639,4 +639,81 @@ create_flags! {
     #[doc = "= See also"]
     #[doc = "* link:man:memfd_create(2) and MFD_ALLOW_SEALING therein"]
     flag MFD_ALLOW_SEALING = MFD_ALLOW_SEALING;
+}
+
+/// Flags for file sealing.
+#[derive(Pod, Eq)]
+pub struct FileSeals(pub c_uint);
+
+impl BitOr for FileSeals {
+    type Output = FileSeals;
+    fn bitor(self, other: FileSeals) -> FileSeals {
+        FileSeals(self.0 | other.0)
+    }
+}
+
+impl BitAnd for FileSeals {
+    type Output = FileSeals;
+    fn bitand(self, other: FileSeals) -> FileSeals {
+        FileSeals(self.0 & other.0)
+    }
+}
+
+impl Not for FileSeals {
+    type Output = FileSeals;
+    fn not(self) -> FileSeals {
+        FileSeals(!self.0)
+    }
+}
+
+/// Dummy seal with all seals unset.
+pub const SEAL_NONE: FileSeals = FileSeals(0);
+
+/// Shortcut for `SEAL_GROW | SEAL_SHRINK`.
+pub const SEAL_SIZE: FileSeals = FileSeals(F_SEAL_GROW | F_SEAL_SHRINK);
+
+/// Shortcut for all seals except `SEAL_SEAL`.
+pub const SEAL_ALL: FileSeals = FileSeals(F_SEAL_GROW | F_SEAL_SHRINK | F_SEAL_WRITE);
+
+macro_rules! create_flags {
+    ($($(#[$meta:meta])* flag $name:ident = $val:ident;)*) => {
+        $($(#[$meta])* pub const $name: FileSeals = FileSeals(cty::$val);)*
+
+        impl Debug for FileSeals {
+            fn fmt<W: Write>(&self, w: &mut W) -> Result {
+                let mut first = true;
+                $(
+                    if self.0 & cty::$val != 0 {
+                        if !first { try!(w.write(b"|")); }
+                        first = false;
+                        try!(w.write_all(stringify!($name).as_bytes()));
+                    }
+                )*
+                if first { try!(w.write_all("SEAL_NONE".as_bytes())); }
+                Ok(())
+            }
+        }
+    }
+}
+
+create_flags! {
+    #[doc = "Disallow adding new seals.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:fcntl(2) and F_SEAL_SEAL therein"]
+    flag SEAL_SEALS = F_SEAL_SEAL;
+
+    #[doc = "Disallow reducing the size of the file.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:fcntl(2) and F_SEAL_SHRINK therein"]
+    flag SEAL_SHRINK = F_SEAL_SHRINK;
+
+    #[doc = "Disallow increasing the size of the file.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:fcntl(2) and F_SEAL_GROW therein"]
+    flag SEAL_GROW = F_SEAL_GROW;
+
+    #[doc = "Disallow changing the contents of the file.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:fcntl(2) and F_SEAL_WRITE therein"]
+    flag SEAL_WRITE = F_SEAL_WRITE;
 }

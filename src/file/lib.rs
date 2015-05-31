@@ -52,7 +52,7 @@ use syscall::{
     linkat, utimensat, renameat2, mkdirat, unlinkat, symlinkat, readlinkat, fchownat,
     fchmodat, fchmod, mknodat, readahead, fallocate, setxattr, lsetxattr, fsetxattr,
     getxattr, lgetxattr, fgetxattr, removexattr, lremovexattr, fremovexattr, listxattr,
-    llistxattr, flistxattr, flock, memfd_create,
+    llistxattr, flistxattr, flock, memfd_create, fcntl_get_seals, fcntl_add_seals,
 };
 use str_one::{AsCStr, CStr, ByteStr, AsByteStr, NoNullStr, AsMutNoNullStr, ToCStr};
 use str_two::{ByteString, NoNullString};
@@ -71,7 +71,7 @@ use fs::info::{FileSystemInfo, from_statfs};
 
 use dev::{Device, DeviceType};
 
-use flags::{FileFlags, Mode, AccessMode, FILE_READ_ONLY, MemfdFlags};
+use flags::{FileFlags, Mode, AccessMode, FILE_READ_ONLY, MemfdFlags, FileSeals};
 use info::{Info, info_from_stat, Type, file_type_to_mode};
 
 pub mod flags;
@@ -1311,6 +1311,40 @@ impl File {
         let name = try!(name.to_cstr(&mut buf));
         let fd = try!(rv!(memfd_create(&name, flags.0), -> c_int));
         Ok(File::from_owned(fd))
+    }
+
+    /// Returns the seals of this file.
+    ///
+    /// = Remarks
+    ///
+    /// == Kernel versions
+    ///
+    /// The required kernel version is 3.17.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fcntl(2) and F_GET_SEALS therein
+    pub fn seals(&self) -> Result<FileSeals> {
+        let seals = try!(rv!(fcntl_get_seals(self.fd), -> c_uint));
+        Ok(FileSeals(seals))
+    }
+
+    /// Adds seals to this file.
+    ///
+    /// [argument, seals]
+    /// The seals to add.
+    ///
+    /// = Remarks
+    ///
+    /// == Kernel versions
+    ///
+    /// The required kernel version is 3.17.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fcntl(2) and F_ADD_SEALS therein
+    pub fn add_seals(&self, seals: FileSeals) -> Result {
+        rv!(fcntl_add_seals(self.fd, seals.0))
     }
 
     /// Reads from the file.

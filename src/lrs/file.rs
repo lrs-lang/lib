@@ -13,7 +13,7 @@ pub use lrs_file::{File, Seek, Advice, info_no_follow, exists, can_access, set_l
                      list_attr_size, list_attr_size_no_follow, list_attr_buf,
                      list_attr_buf_no_follow, list_attr, list_attr_no_follow};
 pub use lrs_file::_info as info;
-pub use lrs_file::flags::{FileFlags, Mode, AccessMode, MemfdFlags};
+pub use lrs_file::flags::{FileFlags, Mode, AccessMode, MemfdFlags, FileSeals};
 pub use lrs_file::info::{Info, Type};
 pub use lrs_dev::{Device, DeviceType};
 
@@ -30,6 +30,10 @@ pub mod flags {
 
     pub use lrs_file::flags::{
         MFD_NONE, MFD_CLOSE_ON_EXEC, MFD_ALLOW_SEALING,
+    };
+
+    pub use lrs_file::flags::{
+        SEAL_SEALS, SEAL_SHRINK, SEAL_GROW, SEAL_WRITE,
     };
 }
 

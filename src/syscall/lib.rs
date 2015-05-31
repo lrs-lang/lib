@@ -27,7 +27,8 @@ use cty::{
     F_SETFL, F_GETFD, F_SETFD, sockaddr, msghdr, mmsghdr, FUTEX_WAIT, FUTEX_WAKE,
     siginfo_t, rusage, SIOCGSTAMPNS, SIOCINQ, SIOCOUTQ, EPOLL_CLOEXEC, O_CLOEXEC,
     O_LARGEFILE, SOCK_CLOEXEC, MSG_CMSG_CLOEXEC, TFD_CLOEXEC, SFD_CLOEXEC, sigaction,
-    F_SETPIPE_SZ, F_GETPIPE_SZ, IN_CLOEXEC, tms, clock_t, MFD_CLOEXEC,
+    F_SETPIPE_SZ, F_GETPIPE_SZ, IN_CLOEXEC, tms, clock_t, MFD_CLOEXEC, F_ADD_SEALS,
+    F_GET_SEALS,
 };
 
 // XXX: iovec _MUST_ be the same as &mut [u8]
@@ -2916,4 +2917,43 @@ pub fn memfd_create(name: &CStr, mut flags: c_uint) -> c_int {
         flags |= MFD_CLOEXEC;
     }
     unsafe { r::memfd_create(name.as_ptr(), flags) }
+}
+
+/// Adds file seals to an inode.
+///
+/// [argument, fd]
+/// A file descriptor refering to the inode.
+///
+/// [argument, seals]
+/// The seals to add.
+///
+/// = Remarks
+///
+/// == Kernel versions
+///
+/// The required kernel version is 3.17.
+///
+/// = See also
+///
+/// * link:man:fcntl(2) and F_ADD_SEALS therein
+pub fn fcntl_add_seals(fd: c_int, seals: c_uint) -> c_int {
+    unsafe { r::fcntl(fd as c_uint, F_ADD_SEALS, seals as k_ulong) }
+}
+
+/// Returns the seals of an inode.
+///
+/// [argument, fd]
+/// A file descriptor refering to the inode.
+///
+/// = Remarks
+///
+/// == Kernel versions
+///
+/// The required kernel version is 3.17.
+///
+/// = See also
+///
+/// * link:man:fcntl(2) and F_GET_SEALS therein
+pub fn fcntl_get_seals(fd: c_int) -> c_int {
+    unsafe { r::fcntl(fd as c_uint, F_GET_SEALS, 0) }
 }
