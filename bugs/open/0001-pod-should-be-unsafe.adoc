@@ -1,0 +1,17 @@
+= pod should be unsafe
+
+The `Pod` trait is currently used with `#[derive(Pod)]` and thus it doesn't make
+much sense to mark it unsafe. However, simply deriving `Pod` on arbitrary types
+is unsafe since it allows objects of that type to be filled with arbitrary
+bytes.
+
+`#[derive(Pod)]` should probably be replaced by `#[derive(unsafe_Pod)]` or the
+derive should be removed completely so that people have to manually implement
+it:
+
+----
+#[derive(Copy)]
+struct T;
+
+unsafe impl Pod for T { }
+----
