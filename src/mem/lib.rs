@@ -22,9 +22,14 @@ use core::ops::{Range};
 use base::{error};
 use base::into::{Into};
 use cty::{MAP_SHARED, MAP_PRIVATE, c_int, PAGE_SIZE, MAP_FIXED, MREMAP_FIXED};
-use flags::{MemMapFlags, MemProtFlags, MemReMapFlags, MMAP_ANON, MemSyncFlags};
-use syscall::{mmap, munmap, mremap, msync};
+use flags::{
+    MemMapFlags, MemProtFlags, MemReMapFlags, MMAP_ANON, MemSyncFlags, MemLockFlags,
+};
+use syscall::{
+    mmap, munmap, mremap, msync, mprotect, madvise, mlock, munlock, mlockall, munlockall,
+};
 use fd::{FDContainer};
+use adv::{MemAdvice};
 
 mod lrs { pub use fmt::lrs::*; pub use cty; }
 
@@ -149,6 +154,15 @@ impl MemMap {
         }
     }
 
+    fn to_range(&self, range: Range<Option<usize>>) -> Range<usize> {
+        match range {
+            Range { start: None, end: None } => Range { start: 0, end: self.len },
+            Range { start: None, end: Some(e) } => Range { start: 0, end: e },
+            Range { start: Some(s), end: None } => Range { start: s, end: 0 },
+            Range { start: Some(s), end: Some(e) } => Range { start: s, end: e },
+        }
+    }
+
     /// Flushes changes to a mapped file to the filesystem.
     ///
     /// [argument, range]
@@ -163,16 +177,62 @@ impl MemMap {
     pub fn sync<R>(&self, range: R, flags: MemSyncFlags) -> Result
         where R: Into<Range<Option<usize>>>,
     {
-        let range = match range.into() {
-            Range { start: None, end: None } => Range { start: 0, end: self.len },
-            Range { start: None, end: Some(e) } => Range { start: 0, end: e },
-            Range { start: Some(s), end: None } => Range { start: s, end: 0 },
-            Range { start: Some(s), end: Some(e) } => Range { start: s, end: e },
-        };
+        let range = self.to_range(range.into());
         if range.start > range.end || range.end > self.len {
             return Err(error::InvalidArgument);
         }
         rv!(msync(self.ptr as usize + range.start, range.end - range.start, flags.0))
+    }
+
+    /// Advise the kernel of a certain memory usage pattern.
+    ///
+    /// [argument, range]
+    /// The range for which the advice holds. Must be page-aligned.
+    ///
+    /// [argument, advice]
+    /// The advice given.
+    ///
+    /// = Remarks
+    ///
+    /// The `DontFork` and `HwPoison` advices cannot be used safely.
+    /// Trying to use them with this interface causes a process abort.
+    ///
+    /// = See also
+    ///
+    /// * link:man:madvise(2)
+    pub fn advise<R>(&mut self, range: R, advice: MemAdvice) -> Result
+        where R: Into<Range<Option<usize>>>,
+    {
+        let range = self.to_range(range.into());
+        if range.start > range.end || range.end > self.len {
+            return Err(error::InvalidArgument);
+        }
+        match advice {
+            adv::DontFork | adv::HwPoison => abort!(),
+            _ => { },
+        }
+        rv!(msync(self.ptr as usize + range.start, range.end - range.start, advice.0))
+    }
+
+    /// Change the memory protection of a region.
+    ///
+    /// [argument, range]
+    /// The range for which the protection holds. Must be page-aligned.
+    ///
+    /// [argument, protection]
+    /// The new protection.
+    ///
+    /// = See also
+    ///
+    /// * link:man:mprotect(2)
+    pub fn protect<R>(&self, range: R, protection: MemProtFlags) -> Result
+        where R: Into<Range<Option<usize>>>,
+    {
+        let range = self.to_range(range.into());
+        if range.start > range.end {
+            return Err(error::InvalidArgument);
+        }
+        rv!(mprotect(range.start, range.end - range.start, protection.0))
     }
 }
 
@@ -193,4 +253,100 @@ impl Drop for MemMap {
     fn drop(&mut self) {
         unsafe { rv!(munmap(self.ptr as usize, self.len)).unwrap(); }
     }
+}
+
+/// Change the memory protection of a region.
+///
+/// [argument, range]
+/// The range for which the protection holds. Must be page-aligned.
+///
+/// [argument, protection]
+/// The new protection.
+///
+/// = See also
+///
+/// * link:man:mprotect(2)
+pub fn protect(range: Range<usize>, protection: MemProtFlags) -> Result {
+    if range.start > range.end {
+        return Err(error::InvalidArgument);
+    }
+    rv!(mprotect(range.start, range.end - range.start, protection.0))
+}
+
+/// Advise the kernel of a certain memory usage pattern.
+///
+/// [argument, range]
+/// The range for which the advice holds. Must be page-aligned.
+///
+/// [argument, advice]
+/// The advice given.
+///
+/// = Remarks
+///
+/// The `DontNeed`, `Remove`, `DontFork`, and `HwPoison` advices cannot be used safely.
+/// Trying to use them with this interface causes a process abort.
+///
+/// = See also
+///
+/// * link:man:madvise(2)
+pub fn advise(range: Range<usize>, advice: MemAdvice) -> Result {
+    if range.start > range.end {
+        return Err(error::InvalidArgument);
+    }
+    match advice {
+        adv::DontNeed | adv::Remove | adv::DontFork | adv::HwPoison => abort!(),
+        _ => { },
+    }
+    unsafe { rv!(madvise(range.start, range.end - range.start, advice.0)) }
+}
+
+/// Lock a memory range in memory.
+///
+/// [argument, range]
+/// The range to lock.
+///
+/// = See also
+///
+/// * link:man:mlock(2)
+pub fn lock(range: Range<usize>) -> Result {
+    if range.start > range.end {
+        return Err(error::InvalidArgument);
+    }
+    rv!(mlock(range.start, range.end - range.start))
+}
+
+/// Unlock a memory range.
+///
+/// [argument, range]
+/// The range to unlock.
+///
+/// = See also
+///
+/// * link:man:munlock(2)
+pub fn unlock(range: Range<usize>) -> Result {
+    if range.start > range.end {
+        return Err(error::InvalidArgument);
+    }
+    rv!(munlock(range.start, range.end - range.start))
+}
+
+/// Lock all pages in memory.
+///
+/// [argument, flags]
+/// Flags to used for locking.
+///
+/// = See also
+///
+/// * link:man:mlockall(2)
+pub fn lock_all(flags: MemLockFlags) -> Result {
+    rv!(mlockall(flags.0))
+}
+
+/// Unlock all pages in memory.
+///
+/// = See also
+///
+/// * link:man:munlockall(2)
+pub fn unlock_all() -> Result {
+    rv!(munlockall())
 }

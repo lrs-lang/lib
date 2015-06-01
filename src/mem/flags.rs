@@ -420,3 +420,87 @@ impl MemSyncFlags {
         self.0 & flag.0 != 0
     }
 }
+
+/// Flags for locking pages in memory.
+#[derive(Pod, Eq)]
+pub struct MemLockFlags(pub c_int);
+
+impl BitOr for MemLockFlags {
+    type Output = MemLockFlags;
+    fn bitor(self, other: MemLockFlags) -> MemLockFlags {
+        MemLockFlags(self.0 | other.0)
+    }
+}
+
+impl BitAnd for MemLockFlags {
+    type Output = MemLockFlags;
+    fn bitand(self, other: MemLockFlags) -> MemLockFlags {
+        MemLockFlags(self.0 & other.0)
+    }
+}
+
+impl Not for MemLockFlags {
+    type Output = MemLockFlags;
+    fn not(self) -> MemLockFlags {
+        MemLockFlags(!self.0)
+    }
+}
+
+macro_rules! create_flags {
+    ($($(#[$meta:meta])* flag $name:ident = $val:ident;)*) => {
+        $($(#[$meta])* pub const $name: MemLockFlags = MemLockFlags(cty::$val);)*
+
+        impl Debug for MemLockFlags {
+            fn fmt<W: Write>(&self, w: &mut W) -> Result {
+                let mut first = true;
+                $(
+                    if self.0 & cty::$val != 0 {
+                        if !first { try!(w.write(b"|")); }
+                        first = false;
+                        try!(w.write_all(stringify!($name).as_bytes()));
+                    }
+                )*
+                if first { try!(w.write_all("invalid".as_bytes())); }
+                Ok(())
+            }
+        }
+    }
+}
+
+create_flags! {
+    #[doc = "Lock all currently mapped pages.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:mlockall(2) and MCL_CURRENT therein"]
+    flag MLOCK_CURRENT = MCL_CURRENT;
+
+    #[doc = "Lock all pages that will become mapped in the future.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:mlockall(2) and MCL_FUTURE therein"]
+    flag MLOCK_FUTURE = MCL_FUTURE;
+}
+
+impl MemLockFlags {
+    /// Sets a flag.
+    ///
+    /// [argument, flag]
+    /// The flag to be set.
+    pub fn set(&mut self, flag: MemLockFlags) {
+        self.0 |= flag.0
+    }
+
+    /// Clears a flag.
+    ///
+    /// [argument, flag]
+    /// The flag to be cleared.
+    pub fn unset(&mut self, flag: MemLockFlags) {
+        self.0 &= !flag.0
+    }
+
+    /// Returns whether a flag is set.
+    ///
+    /// [argument, flag]
+    /// The flag to be checked.
+    pub fn is_set(&self, flag: MemLockFlags) -> bool {
+        self.0 & flag.0 != 0
+    }
+}

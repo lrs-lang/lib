@@ -10,12 +10,19 @@ pub use lrs_core::mem::{
     from_bytes, from_mut_bytes, align_for_mut, addr,
 };
 
-pub use lrs_mem::adv::{advise};
+pub use lrs_mem::{advise, protect, lock, unlock, lock_all, unlock_all};
+pub use lrs_mem::flags::{MemLockFlags};
 
 pub mod advice {
     pub use lrs_mem::adv::{
         Normal, Random, Sequential, WillNeed, DontNeed, Remove, DontFork, DoFork,
         HwPoison, SoftOffline, Mergeable, Unmergeable, HugePage, NoHugePage, DontDump,
         DoDump,
+    };
+}
+
+pub mod flags {
+    pub use lrs_mem::flags::{
+        MLOCK_CURRENT, MLOCK_FUTURE,
     };
 }

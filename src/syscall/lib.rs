@@ -2991,3 +2991,72 @@ pub fn msync(addr: usize, len: usize, flags: c_int) -> c_int {
 pub unsafe fn madvise(addr: usize, len: usize, advice: c_int) -> c_int {
     r::madvise(addr as k_ulong, len as k_ulong, advice)
 }
+
+/// Change the memory protection of a region.
+///
+/// [argument, addr]
+/// The start of the region.
+///
+/// [argument, len]
+/// The length of the region.
+///
+/// [argument, protection]
+/// The new protection.
+///
+/// = See also
+///
+/// * link:man:mprotect(2)
+pub fn mprotect(addr: usize, len: usize, protection: c_int) -> c_int {
+    unsafe { r::mprotect(addr as k_ulong, len as k_ulong, protection as k_ulong) }
+}
+
+/// Lock a memory range in memory.
+///
+/// [argument, addr]
+/// The base address of the range.
+///
+/// [argument, len]
+/// The length of the range.
+///
+/// = See also
+///
+/// * link:man:mlock(2)
+pub fn mlock(addr: usize, len: usize) -> c_int {
+    unsafe { r::mlock(addr as k_ulong, len as k_ulong) }
+}
+
+/// Unlock a memory range.
+///
+/// [argument, addr]
+/// The base address of the range.
+///
+/// [argument, len]
+/// The length of the range.
+///
+/// = See also
+///
+/// * link:man:munlock(2)
+pub fn munlock(addr: usize, len: usize) -> c_int {
+    unsafe { r::munlock(addr as k_ulong, len as k_ulong) }
+}
+
+/// Lock all pages in memory.
+///
+/// [argument, flags]
+/// Flags to used for locking.
+///
+/// = See also
+///
+/// * link:man:mlockall(2)
+pub fn mlockall(flags: c_int) -> c_int {
+    unsafe { r::mlockall(flags) }
+}
+
+/// Unlock all pages in memory.
+///
+/// = See also
+///
+/// * link:man:munlockall(2)
+pub fn munlockall() -> c_int {
+    unsafe { r::munlockall() }
+}

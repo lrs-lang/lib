@@ -5,13 +5,10 @@
 #![allow(non_upper_case_globals, non_camel_case_types)]
 
 #[prelude_import] use base::prelude::*;
-use core::ops::{Range};
-use base::{error};
 use fmt::{Debug, Write};
 use cty::{
     self, c_int,
 };
-use syscall::{madvise};
 
 #[derive(Pod, Eq)]
 pub struct MemAdvice(pub c_int);
@@ -116,31 +113,4 @@ create! {
     #[doc = "= See also"]
     #[doc = "* link:man:madvise(2) and MADV_DODUMP therein"]
     adv DoDump = MADV_DODUMP;
-}
-
-/// Advise the kernel of a certain memory usage pattern.
-///
-/// [argument, range]
-/// The range for which the advice holds. Must be page-aligned.
-///
-/// [argument, advice]
-/// The advice given.
-///
-/// = Remarks
-///
-/// The `DontNeed`, `Remove`, `DontFork` and `HwPoison` advices cannot be used safely.
-/// Trying to use them with this interface causes a process abort.
-///
-/// = See also
-///
-/// * link:man:madvise(2)
-pub fn advise(range: Range<usize>, advice: MemAdvice) -> Result {
-    if range.start > range.end {
-        return Err(error::InvalidArgument);
-    }
-    match advice {
-        DontNeed | Remove | DontFork | HwPoison => abort!(),
-        _ => { },
-    }
-    unsafe { rv!(madvise(range.start, range.end - range.start, advice.0)) }
 }
