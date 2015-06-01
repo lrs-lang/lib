@@ -18,6 +18,7 @@ extern crate lrs_r_syscall  as r;
 
 #[prelude_import] use base::prelude::*;
 use core::{mem};
+use base::{error};
 use str_one::c_str::{CStr};
 use saturating::{SaturatingCast};
 use cty::{
@@ -28,7 +29,7 @@ use cty::{
     siginfo_t, rusage, SIOCGSTAMPNS, SIOCINQ, SIOCOUTQ, EPOLL_CLOEXEC, O_CLOEXEC,
     O_LARGEFILE, SOCK_CLOEXEC, MSG_CMSG_CLOEXEC, TFD_CLOEXEC, SFD_CLOEXEC, sigaction,
     F_SETPIPE_SZ, F_GETPIPE_SZ, IN_CLOEXEC, tms, clock_t, MFD_CLOEXEC, F_ADD_SEALS,
-    F_GET_SEALS,
+    F_GET_SEALS, PAGE_SIZE,
 };
 
 mod lrs { pub use base::lrs::*; pub use cty; }
@@ -3059,4 +3060,26 @@ pub fn mlockall(flags: c_int) -> c_int {
 /// * link:man:munlockall(2)
 pub fn munlockall() -> c_int {
     unsafe { r::munlockall() }
+}
+
+/// Checks whether pages are in memory or swapped out.
+///
+/// [argument, addr]
+/// The base address of the range to check.
+///
+/// [argument, length]
+/// The length of the range to check.
+///
+/// [argument, buf]
+/// The buffer in which the result will be stored.
+///
+/// = See also
+///
+/// * link:man:mincore(2)
+pub fn mincore(addr: usize, length: usize, buf: &mut [u8]) -> c_int {
+    let pages = (buf.len() + PAGE_SIZE - 1) / PAGE_SIZE;
+    if pages > buf.len() {
+        return -error::InvalidArgument.0;
+    }
+    unsafe { r::mincore(addr as k_ulong, length as size_t, buf.as_mut_ptr()) }
 }

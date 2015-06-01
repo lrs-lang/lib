@@ -17,7 +17,7 @@ extern crate lrs_fd as fd;
 extern crate lrs_syscall as syscall;
 
 #[prelude_import] use base::prelude::*;
-use core::{slice};
+use core::{slice, mem};
 use core::ops::{Range};
 use base::{error};
 use base::into::{Into};
@@ -27,6 +27,7 @@ use flags::{
 };
 use syscall::{
     mmap, munmap, mremap, msync, mprotect, madvise, mlock, munlock, mlockall, munlockall,
+    mincore,
 };
 use fd::{FDContainer};
 use adv::{MemAdvice};
@@ -349,4 +350,40 @@ pub fn lock_all(flags: MemLockFlags) -> Result {
 /// * link:man:munlockall(2)
 pub fn unlock_all() -> Result {
     rv!(munlockall())
+}
+
+/// Availability of pages in memory.
+#[derive(Pod)]
+pub struct Availability(pub u8);
+
+impl Availability {
+    /// Returns whether a page is in memory.
+    pub fn available(self) -> bool {
+        self.0 & 1 != 0
+    }
+}
+
+/// Checks whether pages are in memory or swapped out.
+///
+/// [argument, range]
+/// The range to check. Must be page aligned.
+///
+/// [argument, buf]
+/// The buffer in which the result will be stored.
+///
+/// = Remarks
+///
+/// The buffer must have at least on entry per page.
+///
+/// = See also
+///
+/// * link:man:mincore(2)
+pub fn availability(range: Range<usize>, buf: &mut [u8]) -> Result<&mut [Availability]> {
+    if range.start > range.end {
+        return Err(error::InvalidArgument);
+    }
+    let len = range.end - range.start;
+    let pages = (buf.len() + PAGE_SIZE - 1) / PAGE_SIZE;
+    try!(rv!(mincore(range.start, len, buf)));
+    Ok(unsafe { mem::cast(&mut buf[..pages]) })
 }

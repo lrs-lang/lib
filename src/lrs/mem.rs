@@ -10,7 +10,9 @@ pub use lrs_core::mem::{
     from_bytes, from_mut_bytes, align_for_mut, addr,
 };
 
-pub use lrs_mem::{advise, protect, lock, unlock, lock_all, unlock_all};
+pub use lrs_mem::{
+    advise, protect, lock, unlock, lock_all, unlock_all, Availability, availability,
+};
 pub use lrs_mem::flags::{MemLockFlags};
 
 pub mod advice {
