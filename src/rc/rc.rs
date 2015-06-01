@@ -134,7 +134,7 @@ impl<T, H> Drop for Rc<T, H>
             data.count.set(count - 1);
             if count == 1 {
                 if mem::needs_drop::<T>() {
-                    ptr::read(&data.val);
+                    ptr::drop(&mut data.val);
                 }
                 let mut pool = ptr::read(&data.pool);
                 H::free(&mut pool, self.data);

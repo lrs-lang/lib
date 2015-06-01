@@ -133,7 +133,7 @@ impl<T, H> Drop for Arc<T, H>
             let data = &mut *self.data;
             if data.count.sub(1) == 1 {
                 if mem::needs_drop::<T>() {
-                    ptr::read(&data.val);
+                    ptr::drop(&mut data.val);
                 }
                 let mut pool = ptr::read(&data.pool);
                 H::free(&mut pool, self.data);

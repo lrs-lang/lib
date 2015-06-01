@@ -114,7 +114,7 @@ impl<T, H> Drop for Box<T, H>
     fn drop(&mut self) {
         unsafe {
             if mem::needs_drop::<T>() {
-                ptr::read(self.data);
+                ptr::drop(self.data);
             }
             H::free(&mut self.pool, self.data);
         }

@@ -28,8 +28,10 @@ use cty::{
     siginfo_t, rusage, SIOCGSTAMPNS, SIOCINQ, SIOCOUTQ, EPOLL_CLOEXEC, O_CLOEXEC,
     O_LARGEFILE, SOCK_CLOEXEC, MSG_CMSG_CLOEXEC, TFD_CLOEXEC, SFD_CLOEXEC, sigaction,
     F_SETPIPE_SZ, F_GETPIPE_SZ, IN_CLOEXEC, tms, clock_t, MFD_CLOEXEC, F_ADD_SEALS,
-    F_GET_SEALS,
+    F_GET_SEALS, MAP_FIXED, MREMAP_FIXED,
 };
+
+mod lrs { pub use base::lrs::*; pub use cty; }
 
 // XXX: iovec _MUST_ be the same as &mut [u8]
 
@@ -2288,11 +2290,18 @@ pub fn execveat(fd: c_int, filename: &CStr, argv: *const *const c_char,
 /// [return_value]
 /// Returns a pointer to the map or an error value.
 ///
+/// = Remarks
+///
+/// The `MAP_FIXED` flag must not be used with this interface.
+///
 /// = See also
 ///
 /// * link:man:mmap(2)
 pub fn mmap(addr: usize, len: usize, prot: c_int, flags: c_int, fd: c_int,
             off: u64) -> isize {
+    if flags & MAP_FIXED != 0 {
+        abort!();
+    }
     unsafe {
         r::mmap(addr as k_ulong, len as k_ulong, prot as k_ulong, flags as k_ulong,
                fd as k_ulong, off as k_ulong) as isize
@@ -2337,11 +2346,18 @@ pub fn munmap(addr: usize, len: usize) -> c_int {
 /// [return_value]
 /// Returns a pointer to the new map or an error value.
 ///
+/// = Remarks
+///
+/// The `MREMAP_FIXED` flag must not be used with this interface.
+///
 /// = See also
 ///
 /// * link:man:mremap(2)
 pub fn mremap(addr: usize, old_len: usize, new_len: usize, flags: c_int,
               new_addr: usize) -> isize {
+    if flags & MREMAP_FIXED != 0 {
+        abort!();
+    }
     unsafe {
         r::mremap(addr as k_ulong, old_len as k_ulong, new_len as k_ulong,
                   flags as k_ulong, new_addr as k_ulong) as isize
@@ -2956,4 +2972,22 @@ pub fn fcntl_add_seals(fd: c_int, seals: c_uint) -> c_int {
 /// * link:man:fcntl(2) and F_GET_SEALS therein
 pub fn fcntl_get_seals(fd: c_int) -> c_int {
     unsafe { r::fcntl(fd as c_uint, F_GET_SEALS, 0) }
+}
+
+/// Synchronizes a memory mapping with the filesystem.
+///
+/// [argument, addr]
+/// The start of the range to be synchronized.
+///
+/// [argument, len]
+/// The length of the range to be synchronized.
+///
+/// [argument, flags]
+/// Flags to used for synchronization.
+///
+/// = See also
+///
+/// * link:man:msync(2)
+pub fn msync(addr: usize, len: usize, flags: c_int) -> c_int {
+    unsafe { r::msync(addr as k_ulong, len as size_t, flags) }
 }

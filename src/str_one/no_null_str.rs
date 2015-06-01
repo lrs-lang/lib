@@ -10,7 +10,7 @@ use base::{error};
 use arch_fns::{memrchr, memchr};
 use fmt::{Debug, Write};
 
-use byte_str::{AsByteStr};
+use byte_str::{AsByteStr, ByteStr};
 use c_str::{CStr, ToCStr};
 
 /// A byte slice with no null bytes.
@@ -75,22 +75,6 @@ impl NoNullStr {
         unsafe { &mut *(self.dir() as *const _ as *mut _) }
     }
 
-    /// Returns the length of the string.
-    pub fn len(&self) -> usize {
-        self.data.len()
-    }
-
-    /// Returns whether the tring starts with a byte slice.
-    ///
-    /// [argument, arg]
-    /// The byte slice to be checked.
-    pub fn starts_with<A>(&self, arg: A) -> bool
-        where A: AsRef<[u8]>,
-    {
-        let bytes: &[u8] = self.as_ref();
-        bytes.starts_with(arg.as_ref())
-    }
-
     /// Casts a byte slice to a `NoNullStr` without checking it for validity.
     ///
     /// [argument, bytes]
@@ -113,6 +97,13 @@ impl NoNullStr {
     /// If the slice contains null bytes, the behavior is undefined.
     pub unsafe fn from_mut_bytes_unchecked(bytes: &mut [u8]) -> &mut NoNullStr {
         mem::cast(bytes)
+    }
+}
+
+impl Deref for NoNullStr {
+    type Target = ByteStr;
+    fn deref(&self) -> &ByteStr {
+        self.as_ref()
     }
 }
 

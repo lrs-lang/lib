@@ -581,7 +581,7 @@ pub struct shminfo64 {
 // include/uapi/asm-generic/shmparam.h
 //////////////////////////////////////
 
-// pub const SHMLBA : usize = ::PAGE_SIZE;
+pub const SHMLBA : usize = ::PAGE_SIZE;
 
 /////////////////////////////////////
 // include/uapi/asm-generic/siginfo.h

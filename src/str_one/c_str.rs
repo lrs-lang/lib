@@ -147,24 +147,22 @@ impl CStr {
         mem::cast(bytes)
     }
 
-    /// Returns the length of the `CStr`, excluding the terminating null byte.
-    pub fn len(&self) -> usize {
-        self.data.len() - 1
-    }
-
-    /// Returns whether the `CStr` starts with a byte slice.
-    ///
-    /// [argument, arg]
-    /// The byte slice to be checked.
-    pub fn starts_with<A>(&self, arg: A) -> bool
-        where A: AsRef<[u8]>,
-    {
-        self.data.starts_with(arg.as_ref())
-    }
-
     /// Returns the contained bytes including the null byte.
     pub fn bytes_with_null(&self) -> &[u8] {
         &self.data
+    }
+}
+
+impl Deref for CStr {
+    type Target = NoNullStr;
+    fn deref(&self) -> &NoNullStr {
+        self.as_ref()
+    }
+}
+
+impl DerefMut for CStr {
+    fn deref_mut(&mut self) -> &mut NoNullStr {
+        self.as_mut()
     }
 }
 

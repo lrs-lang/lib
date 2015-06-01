@@ -246,7 +246,7 @@ impl<T, H> Vec<T, H>
         assert!(len <= self.len);
         if mem::needs_drop::<T>() {
             for i in len..self.len {
-                unsafe { ptr::read(self.ptr.add(i)); }
+                unsafe { ptr::drop(self.ptr.add(i)); }
             }
         }
         self.len = len;
@@ -303,7 +303,7 @@ impl<T, H> Drop for Vec<T, H>
         unsafe {
             if mem::needs_drop::<T>() {
                 for i in 0..self.len {
-                    ptr::read(self.ptr.add(i));
+                    ptr::drop(self.ptr.add(i));
                 }
             }
             if self.ptr != empty_ptr() {

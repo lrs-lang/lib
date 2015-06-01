@@ -47,11 +47,6 @@ pub trait AsMutByteStr {
 }
 
 impl ByteStr {
-    /// Returns the length of the string in bytes.
-    pub fn len(&self) -> usize {
-        self.data.len()
-    }
-
     /// Returns a byte string created by removing spaces and tabs from the start and end
     /// of the string.
     pub fn trim(&self) -> &ByteStr {
@@ -82,6 +77,19 @@ impl ByteStr {
         where A: AsRef<[u8]>,
     {
         self.data.starts_with(arg.as_ref())
+    }
+}
+
+impl Deref for ByteStr {
+    type Target = [u8];
+    fn deref(&self) -> &[u8] {
+        &self.data
+    }
+}
+
+impl DerefMut for ByteStr {
+    fn deref_mut(&mut self) -> &mut [u8] {
+        &mut self.data
     }
 }
 

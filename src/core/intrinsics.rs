@@ -2,6 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use marker::{Sized};
+
 extern "rust-intrinsic" {
     /// Calculates the discriminant of an enum variant.
     ///
@@ -95,6 +97,12 @@ extern "rust-intrinsic" {
     ///
     /// * {uninit}
     pub fn move_val_init<T>(dst: &mut T, src: T);
+
+    /// Runs the destructor of an object.
+    ///
+    /// [argument, obj]
+    /// A pointer to the object whose destructor will be run.
+    pub fn drop_in_place<T: ?Sized>(obj: *mut T);
 
     /// Calculates the alignment of a type.
     ///

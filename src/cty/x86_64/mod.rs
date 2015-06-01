@@ -252,6 +252,10 @@ pub type c_ulonglong  = u64;
 pub type c_float      = f32;
 pub type c_double     = f64;
 
+// XXX: This is actually configurable and must not be correct. But musl just uses a
+// constant too. The real page size is given to programs via the auxiliary vector.
+pub const PAGE_SIZE: usize = 4096;
+
 pub const INT_MAX: c_int = i32::max();
 
 // Bits per k_long, not c_long.

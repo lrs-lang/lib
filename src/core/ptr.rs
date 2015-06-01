@@ -7,6 +7,7 @@ use mem::{self};
 use ops::{Eq, PartialOrd, Ordering};
 use cmp::{Ord};
 use option::{Option};
+use marker::{Sized};
 
 /// Reads a value from a pointer.
 ///
@@ -29,8 +30,15 @@ pub unsafe fn read<T>(src: *const T) -> T {
 /// [argument, data]
 /// The object that will be written.
 pub unsafe fn write<T>(dst: *mut T, data: T) {
-    memcpy(dst, &data, 1);
-    intrinsics::forget(data);
+    intrinsics::move_val_init(&mut *dst, data);
+}
+
+/// Runs the destructor of an object.
+///
+/// [argument, dst]
+/// A pointer to the object.
+pub unsafe fn drop<T: ?Sized>(dst: *mut T) {
+    intrinsics::drop_in_place(dst);
 }
 
 /// Copies a number of elements between two non-overlapping pointers.

@@ -26,6 +26,7 @@ obj kernel     core base atomic cty syscall parse arch_fns
 
 obj clone      core libc base cty syscall fmt
 obj fd         core base rv io cty syscall fmt
+obj mmap       core base cty fmt syscall fd
 
 obj lock       core base cell io fmt atomic syscall cty
 obj time_base  core base cty syscall fmt fd rv
