@@ -28,7 +28,7 @@ use cty::{
     siginfo_t, rusage, SIOCGSTAMPNS, SIOCINQ, SIOCOUTQ, EPOLL_CLOEXEC, O_CLOEXEC,
     O_LARGEFILE, SOCK_CLOEXEC, MSG_CMSG_CLOEXEC, TFD_CLOEXEC, SFD_CLOEXEC, sigaction,
     F_SETPIPE_SZ, F_GETPIPE_SZ, IN_CLOEXEC, tms, clock_t, MFD_CLOEXEC, F_ADD_SEALS,
-    F_GET_SEALS, MAP_FIXED, MREMAP_FIXED,
+    F_GET_SEALS,
 };
 
 mod lrs { pub use base::lrs::*; pub use cty; }
@@ -2290,22 +2290,13 @@ pub fn execveat(fd: c_int, filename: &CStr, argv: *const *const c_char,
 /// [return_value]
 /// Returns a pointer to the map or an error value.
 ///
-/// = Remarks
-///
-/// The `MAP_FIXED` flag must not be used with this interface.
-///
 /// = See also
 ///
 /// * link:man:mmap(2)
-pub fn mmap(addr: usize, len: usize, prot: c_int, flags: c_int, fd: c_int,
-            off: u64) -> isize {
-    if flags & MAP_FIXED != 0 {
-        abort!();
-    }
-    unsafe {
-        r::mmap(addr as k_ulong, len as k_ulong, prot as k_ulong, flags as k_ulong,
-               fd as k_ulong, off as k_ulong) as isize
-    }
+pub unsafe fn mmap(addr: usize, len: usize, prot: c_int, flags: c_int, fd: c_int,
+                   off: u64) -> isize {
+    r::mmap(addr as k_ulong, len as k_ulong, prot as k_ulong, flags as k_ulong,
+            fd as k_ulong, off as k_ulong) as isize
 }
 
 /// Unmaps a file.
@@ -2322,8 +2313,8 @@ pub fn mmap(addr: usize, len: usize, prot: c_int, flags: c_int, fd: c_int,
 /// = See also
 ///
 /// * link:man:munmap(2)
-pub fn munmap(addr: usize, len: usize) -> c_int {
-    unsafe { r::munmap(addr as k_ulong, len as size_t) }
+pub unsafe fn munmap(addr: usize, len: usize) -> c_int {
+    r::munmap(addr as k_ulong, len as size_t)
 }
 
 /// Remaps a file in memory.
@@ -2346,22 +2337,13 @@ pub fn munmap(addr: usize, len: usize) -> c_int {
 /// [return_value]
 /// Returns a pointer to the new map or an error value.
 ///
-/// = Remarks
-///
-/// The `MREMAP_FIXED` flag must not be used with this interface.
-///
 /// = See also
 ///
 /// * link:man:mremap(2)
-pub fn mremap(addr: usize, old_len: usize, new_len: usize, flags: c_int,
+pub unsafe fn mremap(addr: usize, old_len: usize, new_len: usize, flags: c_int,
               new_addr: usize) -> isize {
-    if flags & MREMAP_FIXED != 0 {
-        abort!();
-    }
-    unsafe {
-        r::mremap(addr as k_ulong, old_len as k_ulong, new_len as k_ulong,
-                  flags as k_ulong, new_addr as k_ulong) as isize
-    }
+    r::mremap(addr as k_ulong, old_len as k_ulong, new_len as k_ulong,
+              flags as k_ulong, new_addr as k_ulong) as isize
 }
 
 /// Waits for a child process.
@@ -2990,4 +2972,22 @@ pub fn fcntl_get_seals(fd: c_int) -> c_int {
 /// * link:man:msync(2)
 pub fn msync(addr: usize, len: usize, flags: c_int) -> c_int {
     unsafe { r::msync(addr as k_ulong, len as size_t, flags) }
+}
+
+/// Advise the kernel of a certain memory usage pattern.
+///
+/// [argument, addr]
+/// The start of the range to be advised.
+///
+/// [argument, len]
+/// The length of the range to be advised.
+///
+/// [argument, advice]
+/// The advice given.
+///
+/// = See also
+///
+/// * link:man:madvise(2)
+pub unsafe fn madvise(addr: usize, len: usize, advice: c_int) -> c_int {
+    r::madvise(addr as k_ulong, len as k_ulong, advice)
 }

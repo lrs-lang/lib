@@ -83,11 +83,17 @@ create_flags! {
     flag MMAP_HUGE_PAGES = MAP_HUGETLB;
 
     #[doc = "Use 2MB pages for this mapping.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "== Kernel versions"]
+    #[doc = "The minimum required kernel version is 3.8."]
     #[doc = "= See also"]
     #[doc = "* link:man:mmap(2) and MAP_HUGE_2MB therein"]
     flag MMAP_HUGE_2MB = MAP_HUGE_2MB;
 
     #[doc = "Use 1GB pages for this mapping.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "== Kernel versions"]
+    #[doc = "The minimum required kernel version is 3.8."]
     #[doc = "= See also"]
     #[doc = "* link:man:mmap(2) and MAP_HUGE_1GB therein"]
     flag MMAP_HUGE_1GB = MAP_HUGE_1GB;

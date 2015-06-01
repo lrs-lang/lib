@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![crate_name = "lrs_mmap"]
+#![crate_name = "lrs_mem"]
 #![crate_type = "lib"]
 #![feature(plugin, no_std, custom_derive)]
 #![plugin(lrs_core_plugin)]
@@ -21,14 +21,15 @@ use core::{slice};
 use core::ops::{Range};
 use base::{error};
 use base::into::{Into};
-use cty::{MAP_SHARED, MAP_PRIVATE, c_int, PAGE_SIZE};
+use cty::{MAP_SHARED, MAP_PRIVATE, c_int, PAGE_SIZE, MAP_FIXED, MREMAP_FIXED};
 use flags::{MemMapFlags, MemProtFlags, MemReMapFlags, MMAP_ANON, MemSyncFlags};
 use syscall::{mmap, munmap, mremap, msync};
 use fd::{FDContainer};
 
-mod lrs { pub use base::lrs::*; pub use cty; }
+mod lrs { pub use fmt::lrs::*; pub use cty; }
 
 pub mod flags;
+pub mod adv;
 
 const PAGE_SIZE_MASK: usize = PAGE_SIZE - 1;
 
@@ -44,8 +45,11 @@ impl MemMap {
             true => MAP_SHARED,
             _ => MAP_PRIVATE,
         };
+        if flags & MAP_FIXED != 0 {
+            abort!();
+        }
         len = (len + PAGE_SIZE_MASK) & !PAGE_SIZE_MASK;
-        let rv = mmap(0, len, protection.0, flags, fd, at);
+        let rv = unsafe { mmap(0, len, protection.0, flags, fd, at) };
         if rv < 0 && rv > -4096 {
             Err(error::Errno(-rv as c_int))
         } else {
@@ -70,6 +74,8 @@ impl MemMap {
     /// = Remarks
     ///
     /// The real size of the mapping can be larger than the `len` argument.
+    ///
+    /// The `MAP_FIXED` flag must not be used with this interface.
     ///
     /// = See also
     ///
@@ -121,12 +127,19 @@ impl MemMap {
     /// [argument, flags]
     /// Flags to use when remapping this mapping.
     ///
+    /// = Remarks
+    ///
+    /// The `MREMAP_FIXED` flag must not be used with this interface.
+    ///
     /// = See also
     ///
     /// * link:man:mremap(2)
     pub fn resize(&mut self, mut new_size: usize, flags: MemReMapFlags) -> Result {
+        if flags.0 & MREMAP_FIXED != 0 {
+            abort!();
+        }
         new_size = (new_size + PAGE_SIZE_MASK) & !PAGE_SIZE_MASK;
-        let rv = mremap(self.ptr as usize, self.len, new_size, flags.0, 0);
+        let rv = unsafe { mremap(self.ptr as usize, self.len, new_size, flags.0, 0) };
         if rv < 0 && rv > -4096 {
             Err(error::Errno(-rv as c_int))
         } else {
@@ -178,6 +191,6 @@ impl DerefMut for MemMap {
 
 impl Drop for MemMap {
     fn drop(&mut self) {
-        rv!(munmap(self.ptr as usize, self.len)).unwrap();
+        unsafe { rv!(munmap(self.ptr as usize, self.len)).unwrap(); }
     }
 }

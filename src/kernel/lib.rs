@@ -231,4 +231,32 @@ kver! {
     #[doc = "= See also"]
     #[doc = "* link:man:pipe2(2)"]
     fn has_pipe_o_direct >= 3,4;
+
+    #[doc = "Returns whether this kernel version has the `MAP_HUGE_2MB` flag.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This flag was introduced in 3.8.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:mmap(2)"]
+    fn has_map_huge_2mb >= 3,8;
+
+    #[doc = "Returns whether this kernel version has the `MAP_HUGE_1GB` flag.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This flag was introduced in 3.8.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:mmap(2)"]
+    fn has_map_huge_1gb >= 3,8;
+
+    #[doc = "Returns whether this kernel version has the `MADV_DONTDUMP` flag.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This flag was introduced in 3.4.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:madvise(2)"]
+    fn has_madv_dontdump >= 3,4;
+
+    #[doc = "Returns whether this kernel version has the `MADV_DODUMP` flag.\n"]
+    #[doc = "= Remarks"]
+    #[doc = "This flag was introduced in 3.4.\n"]
+    #[doc = "= See also"]
+    #[doc = "* link:man:madvise(2)"]
+    fn has_madv_dodump >= 3,4;
 }

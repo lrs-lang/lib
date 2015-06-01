@@ -39,7 +39,7 @@ extern crate lrs_io;
 extern crate lrs_iter;
 extern crate lrs_lock;
 extern crate lrs_parse;
-extern crate lrs_mmap;
+extern crate lrs_mem;
 extern crate lrs_poll;
 extern crate lrs_process;
 extern crate lrs_pipe;

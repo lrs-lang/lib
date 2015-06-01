@@ -275,3 +275,11 @@ pub fn align_for_mut<T>(buf: &mut [u8]) -> &mut [u8] {
         &mut []
     }
 }
+
+/// Returns the address of an object.
+///
+/// [argument, obj]
+/// The object whose address will be returned.
+pub fn addr<T>(obj: &T) -> usize {
+    obj as *const T as usize
+}

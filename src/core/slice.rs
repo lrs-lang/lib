@@ -43,6 +43,11 @@ impl<T> [T] {
         self.repr().ptr
     }
 
+    /// Returns the address of the first element in the slice.
+    pub fn addr(&self) -> usize {
+        self.as_ptr() as usize
+    }
+
     /// Returns the starting address of the data.
     pub fn as_mut_ptr(&mut self) -> *mut T {
         self.repr().ptr as *mut T

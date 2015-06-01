@@ -16,5 +16,6 @@ pub use lrs_kernel::{
     has_memfd_create, has_process_vm_readv, has_process_vm_writev, has_renameat2,
     has_sched_getattr, has_sched_setattr, has_seccomp, has_o_tmpfile, has_seek_data,
     has_seek_hole, has_falloc_fl_collapse_range, has_falloc_fl_zero_range,
-    has_tfd_ioc_set_ticks, has_epollwakeup, has_pipe_o_direct,
+    has_tfd_ioc_set_ticks, has_epollwakeup, has_pipe_o_direct, has_map_huge_2mb,
+    has_map_huge_1gb, has_madv_dodump, has_madv_dontdump,
 };
