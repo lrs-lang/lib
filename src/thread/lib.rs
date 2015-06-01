@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_thread"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, optin_builtin_traits, custom_derive)]
+#![feature(plugin, no_std, optin_builtin_traits, custom_derive, negate_unsigned)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
@@ -15,6 +15,7 @@ extern crate lrs_libc as libc;
 extern crate lrs_syscall as syscall;
 extern crate lrs_cty as cty;
 extern crate lrs_lock as lock;
+extern crate lrs_fmt as fmt;
 
 #[prelude_import] use base::prelude::*;
 use core::marker::{Leak};
@@ -24,7 +25,9 @@ use cty::{c_int};
 use libc::{pthread_t, pthread_attr_t, PTHREAD_CREATE_DETACHED};
 use lock::{LockGuard, LOCK_INIT};
 
-mod lrs { pub use base::lrs::*; pub use cty; }
+mod lrs { pub use fmt::lrs::*; pub use cty; }
+
+pub mod ids;
 
 /// Terminates the current thread.
 ///

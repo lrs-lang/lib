@@ -13,11 +13,6 @@ pub use lrs_process::wait::{
     ChildStatus, WaitFlags, WAIT_EXITED, WAIT_STOPPED, WAIT_CONTINUED, WAIT_DONT_BLOCK,
     WAIT_DONT_REAP, wait_all, wait_id,
 };
-pub use lrs_process::ids::{
-    UserIds, GroupIds, drop_user_privileges, drop_group_privileges, set_effective_user_id,
-    set_effective_group_id, num_supplementary_groups, supplementary_groups,
-    set_supplementary_groups
-};
 pub use lrs_clone::{fork};
 pub use lrs_clone::flags::{CloneFlags};
 

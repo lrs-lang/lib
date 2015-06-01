@@ -26,3 +26,8 @@
 //! ----
 
 pub use lrs_thread::{Builder, spawn, scoped, JoinGuard};
+pub use lrs_thread::ids::{
+    UserIds, GroupIds, drop_user_privileges, drop_group_privileges, set_effective_user_id,
+    set_effective_group_id, num_supplementary_groups, supplementary_groups,
+    set_supplementary_groups
+};

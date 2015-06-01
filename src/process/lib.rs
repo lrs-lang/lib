@@ -40,7 +40,6 @@ use cty::{c_int, tms};
 use file::flags::{Mode};
 use time_base::{Time};
 
-pub mod ids;
 pub mod exec;
 pub mod wait;
 
