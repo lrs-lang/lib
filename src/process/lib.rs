@@ -34,7 +34,9 @@ mod lrs {
 
 #[allow(unused_imports)] #[prelude_import] use base::prelude::*;
 use core::{mem};
-use syscall::{getpid, getppid, exit_group, umask, times};
+use syscall::{
+    getpid, getppid, exit_group, umask, times, setsid, getsid, setpgid, getpgid,
+};
 use cty::alias::{ProcessId};
 use cty::{c_int, tms};
 use file::flags::{Mode};
@@ -105,7 +107,7 @@ impl Times {
     ///
     /// = Remarks
     ///
-    /// Only the time used by children that have been reaped are counted.
+    /// Only the time used by children that have been reaped is counted.
     pub fn children_user_time(&self) -> Time {
         Time::milliseconds(self.data.tms_cutime as i64 * 10)
     }
@@ -114,7 +116,7 @@ impl Times {
     ///
     /// = Remarks
     ///
-    /// Only the time used by children that have been reaped are counted.
+    /// Only the time used by children that have been reaped is counted.
     pub fn children_kernel_time(&self) -> Time {
         Time::milliseconds(self.data.tms_cstime as i64 * 10)
     }
@@ -129,4 +131,61 @@ pub fn used_time() -> Result<Times> {
     let mut data = mem::zeroed();
     try!(rv!(times(&mut data)));
     Ok(Times { data: data })
+}
+
+/// Creates a new session.
+///
+/// [return_value]
+/// Returns the session id of the new session.
+///
+/// = Remarks
+///
+/// This fails if the current process is already a group leader.
+///
+/// = See also
+///
+/// * link:man:setsid(2)
+pub fn new_session() -> Result<ProcessId> {
+    rv!(setsid(), -> ProcessId)
+}
+
+/// Get the session id of this or another process.
+///
+/// [argument, pid]
+/// The process whose session id to return or `None` to get the session id of this
+/// process.
+///
+/// = See also
+///
+/// * link:man:getsid(2)
+pub fn session(pid: Option<ProcessId>) -> Result<ProcessId> {
+    rv!(getsid(pid.unwrap_or(0)), -> ProcessId)
+}
+
+/// Sets the process group of this or another process.
+///
+/// [argument, process]
+/// The process to move to the process group or `None` to move this process.
+///
+/// [argument, group]
+/// The new group of the process.
+///
+/// = See also
+///
+/// * link:man:setpgid(2)
+pub fn set_process_group(process: Option<ProcessId>, group: ProcessId) -> Result {
+    rv!(setpgid(process.unwrap_or(0), group))
+}
+
+/// Get the process group of this or another process.
+///
+/// [argument, pid]
+/// The process whose process group to return or `None` to get the process group of this
+/// process.
+///
+/// = See also
+///
+/// * link:man:getpgid(2)
+pub fn process_group(pid: Option<ProcessId>) -> Result<ProcessId> {
+    rv!(getpgid(pid.unwrap_or(0)), -> ProcessId)
 }

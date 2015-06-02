@@ -3083,3 +3083,63 @@ pub fn mincore(addr: usize, length: usize, buf: &mut [u8]) -> c_int {
     }
     unsafe { r::mincore(addr as k_ulong, length as size_t, buf.as_mut_ptr()) }
 }
+
+/// Create a new session.
+///
+/// = See also
+///
+/// * link:man:setsid(2)
+pub fn setsid() -> pid_t {
+    unsafe { r::setsid() }
+}
+
+/// Get the session id of a process.
+///
+/// [argument, pid]
+/// The process whose session id to return.
+///
+/// = See also
+///
+/// * link:man:getsid(2)
+pub fn getsid(pid: pid_t) -> pid_t {
+    unsafe { r::getsid(pid) }
+}
+
+/// Set the current working directory to the directory referenced by a file descriptor.
+///
+/// [argument, fd]
+/// The file descriptor pointing to the new working directory.
+///
+/// = See also
+///
+/// * link:man:fchdir(2)
+pub fn fchdir(fd: c_int) -> c_int {
+    unsafe { r::fchdir(fd as c_uint) }
+}
+
+/// Sets the process group of a process.
+///
+/// [argument, process]
+/// The process to move to the process group.
+///
+/// [argument, group]
+/// The new group of the process.
+///
+/// = See also
+///
+/// * link:man:setpgid(2)
+pub fn setpgid(pid: pid_t, pgid: pid_t) -> c_int {
+    unsafe { r::setpgid(pid, pgid) }
+}
+
+/// Get the process group of a process.
+///
+/// [argument, pid]
+/// The process whose process group to return.
+///
+/// = See also
+///
+/// * link:man:getpgid(2)
+pub fn getpgid(pid: pid_t) -> pid_t {
+    unsafe { r::getpgid(pid) }
+}

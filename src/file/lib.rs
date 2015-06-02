@@ -53,6 +53,7 @@ use syscall::{
     fchmodat, fchmod, mknodat, readahead, fallocate, setxattr, lsetxattr, fsetxattr,
     getxattr, lgetxattr, fgetxattr, removexattr, lremovexattr, fremovexattr, listxattr,
     llistxattr, flistxattr, flock, memfd_create, fcntl_get_seals, fcntl_add_seals,
+    fchdir,
 };
 use str_one::{AsCStr, CStr, ByteStr, AsByteStr, NoNullStr, AsMutNoNullStr, ToCStr};
 use str_two::{ByteString, NoNullString};
@@ -1857,6 +1858,15 @@ impl File {
         let times = [time_change_to_timespec(access),
                      time_change_to_timespec(modification)];
         rv!(utimensat(self.fd, None, &times, 0))
+    }
+
+    /// Set the current working directory to the directory represented by this file.
+    ///
+    /// = See also
+    ///
+    /// * link:man:fchdir(2)
+    pub fn set_cwd(&self) -> Result {
+        rv!(fchdir(self.fd))
     }
 
     /// Returns the path of the file that was used to open this file.

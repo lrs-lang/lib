@@ -6,7 +6,8 @@
 
 pub use lrs_cty::alias::{ProcessId};
 pub use lrs_process::{
-    process_id, parent_process_id, exit, set_file_mask, Times, used_time,
+    process_id, parent_process_id, exit, set_file_mask, Times, used_time, new_session,
+    session, set_process_group, process_group,
 };
 pub use lrs_process::exec::{exec};
 pub use lrs_process::wait::{
