@@ -29,12 +29,15 @@ use cty::{
     siginfo_t, rusage, SIOCGSTAMPNS, SIOCINQ, SIOCOUTQ, EPOLL_CLOEXEC, O_CLOEXEC,
     O_LARGEFILE, SOCK_CLOEXEC, MSG_CMSG_CLOEXEC, TFD_CLOEXEC, SFD_CLOEXEC, sigaction,
     F_SETPIPE_SZ, F_GETPIPE_SZ, IN_CLOEXEC, tms, clock_t, MFD_CLOEXEC, F_ADD_SEALS,
-    F_GET_SEALS, PAGE_SIZE,
+    F_GET_SEALS, PAGE_SIZE, TIOCGPTN, TIOCSPTLCK, TIOCGPTLCK, TIOCSIG, TIOCPKT, TIOCGPKT,
+    TIOCSTI, winsize, TIOCGWINSZ, TIOCSWINSZ,
 };
 
 mod lrs { pub use base::lrs::*; pub use cty; }
 
 // XXX: iovec _MUST_ be the same as &mut [u8]
+//
+// TODO: Audit ioctl
 
 /// Opens a file relative to a file descriptor.
 ///
@@ -3199,4 +3202,157 @@ pub fn gettid() -> pid_t {
 /// * link:man:getrusage(2)
 pub fn getrusage(who: c_int, usage: &mut rusage) -> c_int {
     unsafe { r::getrusage(who, usage) }
+}
+
+/// Executes ioctl with the TIOCGPTN option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, id]
+/// A place into which the slave id will be stored.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2)
+pub fn ioctl_tiocgptn(fd: c_int, id: &mut u32) -> c_int {
+    let mut u: c_int = 0;
+    let rv = unsafe {
+        r::ioctl(fd as k_uint, TIOCGPTN(), &mut u as *mut _ as k_ulong)
+    };
+    *id = u as u32;
+    rv
+}
+
+/// Executes ioctl with the TIOCSPTLCK option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, locked]
+/// Whether the slave is locked.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2)
+pub fn ioctl_tiocsptlck(fd: c_int, locked: bool) -> c_int {
+    let mut locked = locked as c_int;
+    unsafe {
+        r::ioctl(fd as k_uint, TIOCSPTLCK(), &mut locked as *mut _ as k_ulong)
+    }
+}
+
+/// Executes ioctl with the TIOCGPTLCK option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, locked]
+/// Place where the lock status will be stored.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2)
+pub fn ioctl_tiocgptlck(fd: c_int, locked: &mut bool) -> c_int {
+    let mut t: c_int = 0;
+    let rv = unsafe { r::ioctl(fd as k_uint, TIOCGPTLCK(), &mut t as *mut _ as k_ulong) };
+    *locked = t != 0;
+    rv
+}
+
+/// Executes ioctl with the TIOCSIG option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, sig]
+/// The signal to send.
+///
+/// = Remarks
+///
+/// This ioctl is undocumented but see drivers/tty/pty.c.
+pub fn ioctl_tiocsig(fd: c_int, mut sig: c_int) -> c_int {
+    unsafe { r::ioctl(fd as k_uint, TIOCSIG(), &mut sig as *mut _ as k_ulong) }
+}
+
+///////////
+
+
+/// Executes ioctl with the TIOCPKT option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, packet]
+/// Whether packet mode is enabled.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2)
+pub fn ioctl_tiocpkt(fd: c_int, packet: bool) -> c_int {
+    let mut packet = packet as c_int;
+    unsafe { r::ioctl(fd as k_uint, TIOCPKT, &mut packet as *mut _ as k_ulong) }
+}
+
+/// Executes ioctl with the TIOCGPKT option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, packet]
+/// Place where the status of packet mode will be stored.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2)
+pub fn ioctl_tiocgpkt(fd: c_int, packet: &mut bool) -> c_int {
+    let mut p: c_int = 0;
+    let rv = unsafe { r::ioctl(fd as k_uint, TIOCGPKT(), &mut p as *mut _ as k_ulong) };
+    *packet = p != 0;
+    rv
+}
+
+/// Executes ioctl with the TIOCSTI option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, byte]
+/// The byte to insert into the input queue.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2)
+pub fn ioctl_tiocsti(fd: c_int, mut byte: u8) -> c_int {
+    unsafe { r::ioctl(fd as k_uint, TIOCSTI, &mut byte as *mut _ as k_ulong) }
+}
+
+/// Executes ioctl with the TIOCGWINSZ option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, size]
+/// Place where the window size will be stored.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2)
+pub fn ioctl_tiocgwinsz(fd: c_int, size: &mut winsize) -> c_int {
+    unsafe { r::ioctl(fd as k_uint, TIOCGWINSZ, size as *mut _ as k_ulong) }
+}
+
+/// Executes ioctl with the TIOCSWINSZ option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, size]
+/// The new window size.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2)
+pub fn ioctl_tiocswinsz(fd: c_int, size: &winsize) -> c_int {
+    unsafe { r::ioctl(fd as k_uint, TIOCSWINSZ, size as *const _ as k_ulong) }
 }

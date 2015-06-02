@@ -24,5 +24,6 @@ pub use lrs_syscall::{
     ioctl_fionread, tee, splice, inotify_init1, inotify_add_watch, inotify_rm_watch, dup3,
     umask, eventfd2, times, pause, reboot, memfd_create, fcntl_add_seals, fcntl_get_seals,
     madvise, mprotect, mlock, munlock, mlockall, munlockall, mincore, setsid, getsid,
-    fchdir, setpgid, getpgid, kill, tgkill, gettid, getrusage,
+    fchdir, setpgid, getpgid, kill, tgkill, gettid, getrusage, ioctl_tiocgptn,
+    ioctl_tiocsptlck, ioctl_tiocgptlck, ioctl_tiocsig,
 };

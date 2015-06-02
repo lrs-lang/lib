@@ -403,6 +403,7 @@ impl FDContainer for Pipe {
     fn from_owned(fd: c_int) -> Pipe {
         Pipe { fd: fd, owned: true }
     }
+
     fn from_borrowed(fd: c_int) -> Pipe {
         Pipe { fd: fd, owned: false }
     }

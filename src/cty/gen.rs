@@ -302,6 +302,7 @@ pub const TIOCPKT_DOSTOP     : ::c_uint = 32;
 pub const TIOCPKT_IOCTL      : ::c_uint = 64;
 pub const TIOCSER_TEMT       : ::c_uint = 0x01;
 
+// XXX: Maybe replace these by their values?
 pub fn TCGETS2()    -> ::c_uint { _IOR::<::termios2>(b'T' as ::c_uint, 0x2A) }
 pub fn TCSETS2()    -> ::c_uint { _IOW::<::termios2>(b'T' as ::c_uint, 0x2B) }
 pub fn TCSETSW2()   -> ::c_uint { _IOW::<::termios2>(b'T' as ::c_uint, 0x2C) }
