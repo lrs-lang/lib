@@ -22,12 +22,22 @@ use core::marker::{Leak};
 use core::ops::{Drop};
 use core::{mem, ptr, intrinsics};
 use cty::{c_int};
+use cty::alias::{ProcessId};
 use libc::{pthread_t, pthread_attr_t, PTHREAD_CREATE_DETACHED};
 use lock::{LockGuard, LOCK_INIT};
 
 mod lrs { pub use fmt::lrs::*; pub use cty; }
 
 pub mod ids;
+
+/// Returns the thread id of the calling thread.
+///
+/// = See also
+///
+/// * link:man:gettid(2)
+pub fn thread_id() -> ProcessId {
+    syscall::gettid()
+}
 
 /// Terminates the current thread.
 ///

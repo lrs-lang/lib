@@ -3143,3 +3143,45 @@ pub fn setpgid(pid: pid_t, pgid: pid_t) -> c_int {
 pub fn getpgid(pid: pid_t) -> pid_t {
     unsafe { r::getpgid(pid) }
 }
+
+/// Sends a signal to a process.
+///
+/// [argument, pid]
+/// The process to send the signal to.
+///
+/// [argument, sig]
+/// The signal to send.
+///
+/// = See also
+///
+/// * link:man:kill(2)
+pub fn kill(pid: pid_t, sig: c_int) -> c_int {
+    unsafe { r::kill(pid, sig) }
+}
+
+/// Sends a signal to a thread.
+///
+/// [argument, tgid]
+/// The thread group of the thread.
+///
+/// [argument, tid]
+/// The thread id.
+///
+/// [argument, sig]
+/// The signal to send.
+///
+/// = See also
+///
+/// * link:man:tgkill(2)
+pub fn tgkill(tgid: c_int, tid: c_int, sig: c_int) -> c_int {
+    unsafe { r::tgkill(tgid, tid, sig) }
+}
+
+/// Returns the thread id of the calling thread.
+///
+/// = See also
+///
+/// * link:man:gettid(2)
+pub fn gettid() -> pid_t {
+    unsafe { r::gettid() }
+}

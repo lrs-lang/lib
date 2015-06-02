@@ -27,11 +27,13 @@ use cty::{
     sigset_t, SigsetVal, _NSIG, SIG_BLOCK, SIG_UNBLOCK, SIG_SETMASK, c_int, siginfo_t,
     sigaction, SIG_DFL, SIG_IGN, c_ulong, SA_SIGINFO, SA_RESTORER,
 };
+use cty::alias::{ProcessId};
 use signals::{Signal};
 use fmt::{Debug, Write};
 use time_base::{Time, time_to_timespec};
 use syscall::{
     rt_sigprocmask, rt_sigpending, rt_sigsuspend, rt_sigtimedwait, rt_sigaction, pause,
+    kill, tgkill,
 };
 use flags::{SigFlags};
 use rv::{retry};
@@ -415,4 +417,52 @@ pub fn set_handler(sig: Signal, mask: Sigset, handler: SigHandler,
         sa_mask: mask.data,
     };
     rv!(rt_sigaction(sig.0 as c_int, Some(&action), None))
+}
+
+/// Sends a signal to a process.
+///
+/// [argument, process]
+/// The process to send the signal to.
+///
+/// [argument, signal]
+/// The signal to send.
+///
+/// = Remarks
+///
+/// If `pid` is not positive, the behavior is as follows:
+///
+/// |===
+/// | *`pid`* | *Behavior*
+///
+/// | `0` | The signal is sent to every process in this process's process group.
+///
+/// | `-1` | The signal is sent to every process possible except init.
+///
+/// | `-n` | The signal is sent to every process in the process group `n`.
+///
+/// |===
+///
+/// = See also
+///
+/// * link:man:kill(2)
+pub fn send(process: ProcessId, signal: Signal) -> Result {
+    rv!(kill(process, signal.0 as c_int))
+}
+
+/// Sends a signal to a thread.
+///
+/// [argument, process]
+/// The process of the thread.
+///
+/// [argument, thread]
+/// The thread id of the thread.
+///
+/// [argument, signal]
+/// The signal to send.
+///
+/// = See also
+///
+/// * link:man:tgkill(2)
+pub fn send_to_thread(process: ProcessId, thread: ProcessId, signal: Signal) -> Result {
+    rv!(tgkill(process, thread, signal.0 as c_int))
 }
