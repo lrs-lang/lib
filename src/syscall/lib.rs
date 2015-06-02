@@ -3185,3 +3185,18 @@ pub fn tgkill(tgid: c_int, tid: c_int, sig: c_int) -> c_int {
 pub fn gettid() -> pid_t {
     unsafe { r::gettid() }
 }
+
+/// Returns the resource usage of this thread, this process, or its children.
+///
+/// [argument, who]
+/// Whose resource usage to get.
+///
+/// [argument, usage]
+/// Place where the usage will be stored.
+///
+/// = See also
+///
+/// * link:man:getrusage(2)
+pub fn getrusage(who: c_int, usage: &mut rusage) -> c_int {
+    unsafe { r::getrusage(who, usage) }
+}

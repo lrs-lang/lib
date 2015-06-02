@@ -36,14 +36,18 @@ mod lrs {
 use core::{mem};
 use syscall::{
     getpid, getppid, exit_group, umask, times, setsid, getsid, setpgid, getpgid,
+    getrusage,
 };
 use cty::alias::{ProcessId};
-use cty::{c_int, tms};
+use cty::{c_int, tms, rusage};
 use file::flags::{Mode};
 use time_base::{Time};
+use res_user::{ResourceUser};
+use fmt::{Debug, Write};
 
 pub mod exec;
 pub mod wait;
+pub mod res_user;
 
 /// Returns the process id of this process.
 pub fn process_id() -> ProcessId {
@@ -188,4 +192,90 @@ pub fn set_process_group(process: Option<ProcessId>, group: ProcessId) -> Result
 /// * link:man:getpgid(2)
 pub fn process_group(pid: Option<ProcessId>) -> Result<ProcessId> {
     rv!(getpgid(pid.unwrap_or(0)), -> ProcessId)
+}
+
+/// Resource usage.
+#[derive(Pod, Eq)]
+pub struct ResourceUsage {
+    data: rusage,
+}
+
+impl ResourceUsage {
+    /// Returns the CPU time used in user space.
+    pub fn user_time(&self) -> Time {
+        Time {
+            seconds: self.data.ru_utime.tv_sec as i64,
+            nanoseconds: self.data.ru_utime.tv_usec as i64 * 1000,
+        }
+    }
+
+    /// Returns the CPU time used in kernel space.
+    pub fn kernel_time(&self) -> Time {
+        Time {
+            seconds: self.data.ru_stime.tv_sec as i64,
+            nanoseconds: self.data.ru_stime.tv_usec as i64 * 1000,
+        }
+    }
+
+    /// Returns the maximum amount of used memory in RAM.
+    ///
+    /// = Remarks
+    ///
+    /// More precisely, this function returns the maximum resident set size used in bytes.
+    pub fn max_mem(&self) -> u64 {
+        self.data.ru_maxrss as u64 * 1024
+    }
+
+    /// Returns the number of page faults that did not require I/O activity.
+    pub fn no_io_page_faults(&self) -> u64 {
+        self.data.ru_minflt as u64
+    }
+
+    /// Returns the number of page faults that required I/O activity.
+    pub fn io_page_faults(&self) -> u64 {
+        self.data.ru_majflt as u64
+    }
+
+    /// Returns the number of filesystem input events.
+    pub fn fs_input(&self) -> u64 {
+        self.data.ru_inblock as u64
+    }
+
+    /// Returns the number of filesystem output events.
+    pub fn fs_output(&self) -> u64 {
+        self.data.ru_oublock as u64
+    }
+
+    /// Returns the number of voluntary context switches.
+    pub fn voluntary_context_switches(&self) -> u64 {
+        self.data.ru_nvcsw as u64
+    }
+
+    /// Returns the number of involuntary context switches.
+    pub fn involuntary_context_switches(&self) -> u64 {
+        self.data.ru_nivcsw as u64
+    }
+}
+
+impl Debug for ResourceUsage {
+    fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
+        write!(w, "ResourceUsage {{ user_time: {:?}, kernel_time: {:?}, max_mem: {}, \
+                   no_io_page_faults: {}, io_page_faults: {}, fs_input: {}, \
+                   fs_output: {}, voluntary_context_switches: {}, \
+                   involuntary_context_switches: {} }}",
+                   self.user_time(), self.kernel_time(), self.max_mem(),
+                   self.no_io_page_faults(), self.io_page_faults(), self.fs_input(),
+                   self.fs_output(), self.voluntary_context_switches(),
+                   self.involuntary_context_switches())
+    }
+}
+
+/// Returns the resource usage of this thread, this process, or its children.
+///
+/// [argument, who]
+/// Whose resource usage to return.
+pub fn resource_usage(who: ResourceUser) -> Result<ResourceUsage> {
+    let mut usage: ResourceUsage = mem::zeroed();
+    try!(rv!(getrusage(who.0, &mut usage.data)));
+    Ok(usage)
 }

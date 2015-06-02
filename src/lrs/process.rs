@@ -7,8 +7,9 @@
 pub use lrs_cty::alias::{ProcessId};
 pub use lrs_process::{
     process_id, parent_process_id, exit, set_file_mask, Times, used_time, new_session,
-    session, set_process_group, process_group,
+    session, set_process_group, process_group, resource_usage, ResourceUsage,
 };
+pub use lrs_process::res_user::{ResourceUser};
 pub use lrs_process::exec::{exec};
 pub use lrs_process::wait::{
     ChildStatus, WaitFlags, WAIT_EXITED, WAIT_STOPPED, WAIT_CONTINUED, WAIT_DONT_BLOCK,
@@ -23,5 +24,11 @@ pub mod clone {
         CLONE_PARENT, CLONE_THREAD, CLONE_NEWMOUNT, CLONE_SYSVSEM, CLONE_SETTLS,
         CLONE_UNTRACED, CLONE_NEWUTS, CLONE_NEWIPC, CLONE_NEWUSER, CLONE_NEWPID,
         CLONE_NEWNET, CLONE_IO,
+    };
+}
+
+pub mod res_user {
+    pub use lrs_process::res_user::{
+        Process, Children, Thread,
     };
 }
