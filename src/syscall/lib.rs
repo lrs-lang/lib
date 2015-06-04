@@ -3622,3 +3622,12 @@ pub fn ioctl_tcgets2(fd: c_int, attrs: &mut termios2) -> c_int {
 pub fn ioctl_tcsets2(fd: c_int, attrs: &termios2) -> c_int {
     unsafe { r::ioctl(fd as k_uint, TCSETS2(), attrs as *const _ as k_ulong) }
 }
+
+/// Simuales a hangup on the current terminal.
+///
+/// = See also
+///
+/// * link:man:vhangup(2)
+pub fn vhangup() -> c_int {
+    unsafe { r::vhangup() }
+}

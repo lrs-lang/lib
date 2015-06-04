@@ -321,14 +321,14 @@ macro_rules! create_flags {
 }
 
 create_flags! {
-    flag TTYLOC_CSTOPB = CSTOPB;
-    flag TTYLOC_CREAD = CREAD;
-    flag TTYLOC_PARENB = PARENB;
-    flag TTYLOC_PARODD = PARODD;
-    flag TTYLOC_HUPCL = HUPCL;
-    flag TTYLOC_CLOCAL = CLOCAL;
-    flag TTYLOC_CMSPAR = CMSPAR;
-    flag TTYLOC_CRTSCTS = CRTSCTS;
+    flag TTYCTRL_CSTOPB = CSTOPB;
+    flag TTYCTRL_CREAD = CREAD;
+    flag TTYCTRL_PARENB = PARENB;
+    flag TTYCTRL_PARODD = PARODD;
+    flag TTYCTRL_HUPCL = HUPCL;
+    flag TTYCTRL_CLOCAL = CLOCAL;
+    flag TTYCTRL_CMSPAR = CMSPAR;
+    flag TTYCTRL_CRTSCTS = CRTSCTS;
 }
 
 /// Flags for terminal input.

@@ -30,5 +30,5 @@ pub use lrs_syscall::{
     ioctl_tiocnxcl, ioctl_tiocgexcl, ioctl_tiocnotty, ioctl_tiocsctty, ioctl_tiocgpgrp,
     ioctl_tiocspgrp, ioctl_tiocgsid, ioctl_tiocgetd, ioctl_tiocsetd, ioctl_tiocvhangup,
     ioctl_tiocgdev, ioctl_tcflsh, ioctl_tiocoutq, ioctl_tcxonc, ioctl_tcgets2,
-    ioctl_tcsets2,
+    ioctl_tcsets2, vhangup,
 };

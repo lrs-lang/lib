@@ -35,7 +35,7 @@ use syscall::{
     ioctl_tiocexcl, ioctl_tiocgpgrp, ioctl_tiocnxcl, ioctl_tiocgexcl, ioctl_tiocnotty,
     ioctl_tiocsctty, ioctl_tiocspgrp, ioctl_tiocgsid, ioctl_tiocgetd, ioctl_tiocsetd,
     ioctl_tiocvhangup, ioctl_tiocgdev, ioctl_tcflsh, ioctl_tiocoutq, ioctl_fionread,
-    ioctl_tcxonc, ioctl_tcgets2, ioctl_tcsets2,
+    ioctl_tcxonc, ioctl_tcgets2, ioctl_tcsets2, vhangup,
 };
 use signal::signals::{Signal};
 use disc::{LineDiscipline};
@@ -512,4 +512,14 @@ impl FDContainer for Tty {
     fn from_borrowed(fd: c_int) -> Tty {
         Tty { fd: fd, owned: false }
     }
+}
+
+pub fn is_a_tty<F>(fd: &F) -> bool
+    where F: FDContainer
+{
+    Tty::from_borrowed(fd.borrow()).line_discipline().is_ok()
+}
+
+pub fn hang_up() -> Result {
+    rv!(vhangup())
 }

@@ -10,16 +10,12 @@
 mod core { pub use lrs::core::*; }
 #[prelude_import] use lrs::prelude::*;
 
-use lrs::time::{self, Time};
-use lrs::tty::{Tty, is_a_tty, hang_up};
-use lrs::{process};
-use lrs::fd::{STDIN};
-use lrs::file::flags::{FILE_READ_WRITE};
+use lrs::alloc::{TaAlloc, TaPool};
 
 fn main() {
-    println!("{}", process::process_id());
-    let tty = Tty::from_borrowed(0);
-    println!("{:?}", tty.attributes());
-    println!("{}", is_a_tty(&STDIN));
-    println!("{:?}", hang_up());
+    let mut libc_vec: Vec<u8> = Vec::new();
+    let mut jemalloc_vec: Vec<u8, Jemalloc> = Vec::new();
+
+    let mut buf = &mut [0; 4096][..];
+    let mut stack_vec: Vec<usize, TaAlloc> = Vec::with_pool(TaPool::new(&mut buf));
 }
