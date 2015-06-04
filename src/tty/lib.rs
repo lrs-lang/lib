@@ -514,12 +514,25 @@ impl FDContainer for Tty {
     }
 }
 
+/// Returns whether a file descriptor refers to a tty.
+///
+/// [argument, fd]
+/// The file descriptor to check.
 pub fn is_a_tty<F>(fd: &F) -> bool
     where F: FDContainer
 {
     Tty::from_borrowed(fd.borrow()).line_discipline().is_ok()
 }
 
+/// Hangs up the controlling terminal of this process.
+///
+/// = Remarks
+///
+/// This requires the CAP_SYS_TTY_CONFIG capability.
+///
+/// = See also
+///
+/// * link:man:vhangup(2)
 pub fn hang_up() -> Result {
     rv!(vhangup())
 }
