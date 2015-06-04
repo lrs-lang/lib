@@ -35,7 +35,7 @@ use syscall::{
     ioctl_tiocexcl, ioctl_tiocgpgrp, ioctl_tiocnxcl, ioctl_tiocgexcl, ioctl_tiocnotty,
     ioctl_tiocsctty, ioctl_tiocspgrp, ioctl_tiocgsid, ioctl_tiocgetd, ioctl_tiocsetd,
     ioctl_tiocvhangup, ioctl_tiocgdev, ioctl_tcflsh, ioctl_tiocoutq, ioctl_fionread,
-    ioctl_tcxonc, ioctl_tcgets2,
+    ioctl_tcxonc, ioctl_tcgets2, ioctl_tcsets2,
 };
 use signal::signals::{Signal};
 use disc::{LineDiscipline};
@@ -45,6 +45,7 @@ mod lrs { pub use fmt::lrs::*; pub use cty; }
 
 pub mod disc;
 pub mod attr;
+pub mod key;
 
 pub struct Tty {
     fd: c_int,
@@ -390,23 +391,47 @@ impl Tty {
         Ok(buf)
     }
 
-    /// Suspends output 
+    /// Suspends output.
+    ///
+    /// = See also
+    ///
+    /// * link:man:tty_ioctl(4) and TCONC therein
     pub fn suspend_output(&self) -> Result {
         rv!(ioctl_tcxonc(self.fd, TCOOFF))
     }
 
+    /// Restarts output.
+    ///
+    /// = See also
+    ///
+    /// * link:man:tty_ioctl(4) and TCONC therein
     pub fn start_output(&self) -> Result {
         rv!(ioctl_tcxonc(self.fd, TCOON))
     }
 
+    /// Suspends input.
+    ///
+    /// = See also
+    ///
+    /// * link:man:tty_ioctl(4) and TCONC therein
     pub fn suspend_input(&self) -> Result {
         rv!(ioctl_tcxonc(self.fd, TCIOFF))
     }
 
+    /// Restarts input.
+    ///
+    /// = See also
+    ///
+    /// * link:man:tty_ioctl(4) and TCONC therein
     pub fn start_input(&self) -> Result {
         rv!(ioctl_tcxonc(self.fd, TCION))
     }
 
+    /// Retrieves the attributes of the terminal.
+    ///
+    /// = See also
+    ///
+    /// * link:man:tty_ioctl(4) and TCGETS therein
     pub fn attributes(&self) -> Result<TtyAttr> {
         let mut attrs: TtyAttr = mem::zeroed();
         try!(rv!(ioctl_tcgets2(self.fd, &mut attrs.0)));
@@ -453,6 +478,15 @@ impl Tty {
         }
 
         Ok(attrs)
+    }
+
+    /// Sets the attributes of the terminal.
+    ///
+    /// = See also
+    ///
+    /// * link:man:tty_ioctl(4) and TCSETS therein
+    pub fn set_attributes(&self, attrs: TtyAttr) -> Result {
+        rv!(ioctl_tcsets2(self.fd, &attrs.0))
     }
 }
 

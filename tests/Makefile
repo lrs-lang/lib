@@ -10,9 +10,9 @@ all: $(bins)
 
 bin/%: src/%.rs ../obj/liblrs.rlib Makefile
 	@mkdir -p "$(@D)"
-	rustc -O -C lto $(ops) -C link-args="-nostdlib $(musl)/lib/crt1.o -L $(musl)/lib -static -l c" "$<" -o "$@"
+	@# rustc -O -C lto $(ops) -C link-args="-nostdlib $(musl)/lib/crt1.o -L $(musl)/lib -static -l c" "$<" -o "$@"
 	@# rustc -O -C lto $(ops) "$<" -o "$@"
-	@# rustc -g $(ops) "$<" -o "$@"
+	rustc -g $(ops) "$<" -o "$@"
 
 clean:
 	rm bin/*

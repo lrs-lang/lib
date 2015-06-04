@@ -32,7 +32,7 @@ use cty::{
     F_GET_SEALS, PAGE_SIZE, TIOCGPTN, TIOCSPTLCK, TIOCGPTLCK, TIOCSIG, TIOCPKT, TIOCGPKT,
     TIOCSTI, winsize, TIOCGWINSZ, TIOCSWINSZ, TIOCSCTTY, TIOCNOTTY, TIOCGEXCL, TIOCNXCL,
     TIOCEXCL, TIOCCONS, TIOCGDEV, TIOCVHANGUP, TIOCSETD, TIOCGETD, TIOCGSID, TIOCSPGRP,
-    TIOCGPGRP, TCFLSH, TIOCOUTQ, TCXONC, TCGETS2, termios2,
+    TIOCGPGRP, TCFLSH, TIOCOUTQ, TCXONC, TCGETS2, termios2, TCSETS2,
 };
 
 mod lrs { pub use base::lrs::*; pub use cty; }
@@ -3606,4 +3606,19 @@ pub fn ioctl_tcxonc(fd: c_int, how: c_uint) -> c_int {
 /// * link:man:tty_ioctl(2) and TCGETS therein
 pub fn ioctl_tcgets2(fd: c_int, attrs: &mut termios2) -> c_int {
     unsafe { r::ioctl(fd as k_uint, TCGETS2(), attrs as *mut _ as k_ulong) }
+}
+
+/// Executes ioctl with the TCSETS2 option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, attrs]
+/// The tty attributes.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2) and TCSETS therein
+pub fn ioctl_tcsets2(fd: c_int, attrs: &termios2) -> c_int {
+    unsafe { r::ioctl(fd as k_uint, TCSETS2(), attrs as *const _ as k_ulong) }
 }
