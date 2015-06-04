@@ -10,6 +10,24 @@ use fmt::{Debug, Write};
 #[derive(Pod)]
 pub struct TtyAttr(pub termios2);
 
+impl TtyAttr {
+    pub fn input_speed(&self) -> u32 {
+        self.0.c_ispeed
+    }
+
+    pub fn set_input_speed(&mut self, val: u32) {
+        self.0.c_ispeed = val;
+    }
+
+    pub fn output_speed(&self) -> u32 {
+        self.0.c_ospeed
+    }
+
+    pub fn set_output_speed(&mut self, val: u32) {
+        self.0.c_ospeed = val;
+    }
+}
+
 impl Debug for TtyAttr {
     fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
         write!(w, "TtyAttr {{ in: {:?}, out: {:?}, ctrl: {:x} }}",
