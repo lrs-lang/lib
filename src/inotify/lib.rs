@@ -52,7 +52,7 @@ pub struct InodeWatch(pub c_int);
 
 /// An inotify event.
 #[repr(C)]
-#[derive(Pod)]
+#[derive(Copy)]
 pub struct InodeData {
     /// The watch that generated the event.
     pub watch: InodeWatch,
@@ -200,7 +200,7 @@ impl<'a> Iterator for InodeDataIter<'a> {
             return None;
         }
         let inode_data: &'static mut InodeData = unsafe {
-            mem::cast(mem::from_mut_bytes::<InodeData>(self.buf).unwrap())
+            &mut *(self.buf.as_mut_ptr() as *mut InodeData)
         };
         let len = mem::size_of::<InodeData>() + inode_data.len as usize;
         self.buf = &mut mem::replace(&mut self.buf, &mut [])[len..];

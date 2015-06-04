@@ -30,7 +30,9 @@ use cty::{
     O_LARGEFILE, SOCK_CLOEXEC, MSG_CMSG_CLOEXEC, TFD_CLOEXEC, SFD_CLOEXEC, sigaction,
     F_SETPIPE_SZ, F_GETPIPE_SZ, IN_CLOEXEC, tms, clock_t, MFD_CLOEXEC, F_ADD_SEALS,
     F_GET_SEALS, PAGE_SIZE, TIOCGPTN, TIOCSPTLCK, TIOCGPTLCK, TIOCSIG, TIOCPKT, TIOCGPKT,
-    TIOCSTI, winsize, TIOCGWINSZ, TIOCSWINSZ,
+    TIOCSTI, winsize, TIOCGWINSZ, TIOCSWINSZ, TIOCSCTTY, TIOCNOTTY, TIOCGEXCL, TIOCNXCL,
+    TIOCEXCL, TIOCCONS, TIOCGDEV, TIOCVHANGUP, TIOCSETD, TIOCGETD, TIOCGSID, TIOCSPGRP,
+    TIOCGPGRP, TCFLSH, TIOCOUTQ, TCXONC, TCGETS2, termios2,
 };
 
 mod lrs { pub use base::lrs::*; pub use cty; }
@@ -3275,9 +3277,6 @@ pub fn ioctl_tiocsig(fd: c_int, mut sig: c_int) -> c_int {
     unsafe { r::ioctl(fd as k_uint, TIOCSIG(), &mut sig as *mut _ as k_ulong) }
 }
 
-///////////
-
-
 /// Executes ioctl with the TIOCPKT option.
 ///
 /// [argument, fd]
@@ -3355,4 +3354,256 @@ pub fn ioctl_tiocgwinsz(fd: c_int, size: &mut winsize) -> c_int {
 /// * link:man:tty_ioctl(2)
 pub fn ioctl_tiocswinsz(fd: c_int, size: &winsize) -> c_int {
     unsafe { r::ioctl(fd as k_uint, TIOCSWINSZ, size as *const _ as k_ulong) }
+}
+
+/// Executes ioctl with the TIOCCONS option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2)
+pub fn ioctl_tioccons(fd: c_int) -> c_int {
+    unsafe { r::ioctl(fd as k_uint, TIOCCONS, 0) }
+}
+
+/// Executes ioctl with the TIOCEXCL option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2)
+pub fn ioctl_tiocexcl(fd: c_int) -> c_int {
+    unsafe { r::ioctl(fd as k_uint, TIOCEXCL, 0) }
+}
+
+/// Executes ioctl with the TIOCNXCL option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2)
+pub fn ioctl_tiocnxcl(fd: c_int) -> c_int {
+    unsafe { r::ioctl(fd as k_uint, TIOCNXCL, 0) }
+}
+
+/// Executes ioctl with the TIOCGEXCL option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, packet]
+/// Place where the status of exclusize mode will be stored.
+///
+/// = Remarks
+///
+/// == Kernel versions
+///
+/// The required kernel version is 3.8.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2)
+pub fn ioctl_tiocgexcl(fd: c_int, exclusive: &mut bool) -> c_int {
+    let mut p: c_int = 0;
+    let rv = unsafe { r::ioctl(fd as k_uint, TIOCGEXCL(), &mut p as *mut _ as k_ulong) };
+    *exclusive = p != 0;
+    rv
+}
+
+/// Executes ioctl with the TIOCNOTTY option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2)
+pub fn ioctl_tiocnotty(fd: c_int) -> c_int {
+    unsafe { r::ioctl(fd as k_uint, TIOCNOTTY, 0) }
+}
+
+/// Executes ioctl with the TIOCSCTTY option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, steal]
+/// Whether to steal the terminal.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2)
+pub fn ioctl_tiocsctty(fd: c_int, steal: bool) -> c_int {
+    unsafe { r::ioctl(fd as k_uint, TIOCSCTTY, steal as k_ulong) }
+}
+
+/// Executes ioctl with the TIOCGPGRP option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, id]
+/// Place where the process group id of the foreground process group will be stored.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2)
+pub fn ioctl_tiocgpgrp(fd: c_int, id: &mut pid_t) -> c_int {
+    unsafe { r::ioctl(fd as k_uint, TIOCGPGRP, id as *mut _ as k_ulong) }
+}
+
+/// Executes ioctl with the TIOCSPGRP option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, id]
+/// The process group id of the foreground process group.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2)
+pub fn ioctl_tiocspgrp(fd: c_int, id: pid_t) -> c_int {
+    unsafe { r::ioctl(fd as k_uint, TIOCSPGRP, &id as *const _ as k_ulong) }
+}
+
+/// Executes ioctl with the TIOCGSID option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, id]
+/// Place where the session id of the terminal will be stored.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2)
+pub fn ioctl_tiocgsid(fd: c_int, id: &mut pid_t) -> c_int {
+    unsafe { r::ioctl(fd as k_uint, TIOCGSID, id as *mut _ as k_ulong) }
+}
+
+/// Executes ioctl with the TIOCGETD option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, discipline]
+/// Place where the line discipline of the terminal will be stored.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2)
+pub fn ioctl_tiocgetd(fd: c_int, discipline: &mut c_int) -> c_int {
+    unsafe { r::ioctl(fd as k_uint, TIOCGETD, discipline as *mut _ as k_ulong) }
+}
+
+/// Executes ioctl with the TIOCSETD option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, discipline]
+/// The line discipline of the terminal.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2)
+pub fn ioctl_tiocsetd(fd: c_int, discipline: c_int) -> c_int {
+    unsafe { r::ioctl(fd as k_uint, TIOCSETD, &discipline as *const _ as k_ulong) }
+}
+
+/// Executes ioctl with the TIOCVHANGUP option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// = Remarks
+///
+/// This ioctl is undocumented but see drivers/tty/tty_io.c.
+pub fn ioctl_tiocvhangup(fd: c_int) -> c_int {
+    unsafe { r::ioctl(fd as k_uint, TIOCVHANGUP, 0) }
+}
+
+/// Executes ioctl with the TIOCGDEV option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, device]
+/// Place where the device of the terminal will be stored.
+///
+/// = Remarks
+///
+/// This ioctl is undocumented but see drivers/tty/tty_io.c.
+pub fn ioctl_tiocgdev(fd: c_int, dev: &mut c_uint) -> c_int {
+    unsafe { r::ioctl(fd as k_uint, TIOCGDEV(), dev as *mut _ as k_ulong) }
+}
+
+/// Executes ioctl with the TCFLSH option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, how]
+/// What to discard.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2)
+pub fn ioctl_tcflsh(fd: c_int, how: c_uint) -> c_int {
+    unsafe { r::ioctl(fd as k_uint, TCFLSH, how as k_ulong) }
+}
+
+/// Executes ioctl with the TIOCOUTQ option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, buf]
+/// Place where the number of pending output bytes will be stored.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2)
+pub fn ioctl_tiocoutq(fd: c_int, buf: &mut usize) -> c_int {
+    let mut tmp: c_int = 0;
+    let rv = unsafe { r::ioctl(fd as k_uint, TIOCOUTQ, &mut tmp as *mut _ as k_ulong) };
+    *buf = tmp as usize;
+    rv
+}
+
+/// Executes ioctl with the TCXONC option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, how]
+/// What to disable/enable.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2)
+pub fn ioctl_tcxonc(fd: c_int, how: c_uint) -> c_int {
+    unsafe { r::ioctl(fd as k_uint, TCXONC, how as k_ulong) }
+}
+
+/// Executes ioctl with the TCGETS2 option.
+///
+/// [argument, fd]
+/// The file descriptor on which to operate.
+///
+/// [argument, attrs]
+/// Place where the tty attributes will be stored.
+///
+/// = See also
+///
+/// * link:man:tty_ioctl(2) and TCGETS therein
+pub fn ioctl_tcgets2(fd: c_int, attrs: &mut termios2) -> c_int {
+    unsafe { r::ioctl(fd as k_uint, TCGETS2(), attrs as *mut _ as k_ulong) }
 }

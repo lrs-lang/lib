@@ -25,5 +25,9 @@ pub use lrs_syscall::{
     umask, eventfd2, times, pause, reboot, memfd_create, fcntl_add_seals, fcntl_get_seals,
     madvise, mprotect, mlock, munlock, mlockall, munlockall, mincore, setsid, getsid,
     fchdir, setpgid, getpgid, kill, tgkill, gettid, getrusage, ioctl_tiocgptn,
-    ioctl_tiocsptlck, ioctl_tiocgptlck, ioctl_tiocsig,
+    ioctl_tiocsptlck, ioctl_tiocgptlck, ioctl_tiocsig, ioctl_tiocpkt, ioctl_tiocgpkt,
+    ioctl_tiocsti, ioctl_tiocgwinsz, ioctl_tiocswinsz, ioctl_tioccons, ioctl_tiocexcl,
+    ioctl_tiocnxcl, ioctl_tiocgexcl, ioctl_tiocnotty, ioctl_tiocsctty, ioctl_tiocgpgrp,
+    ioctl_tiocspgrp, ioctl_tiocgsid, ioctl_tiocgetd, ioctl_tiocsetd, ioctl_tiocvhangup,
+    ioctl_tiocgdev, ioctl_tcflsh, ioctl_tiocoutq, ioctl_tcxonc, ioctl_tcgets2,
 };

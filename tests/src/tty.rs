@@ -10,11 +10,13 @@
 mod core { pub use lrs::core::*; }
 #[prelude_import] use lrs::prelude::*;
 
+use lrs::time::{self, Time};
 use lrs::tty::{Tty};
+use lrs::{process};
 use lrs::file::flags::{FILE_READ_WRITE};
 
 fn main() {
-    let tty = Tty::new_pty(FILE_READ_WRITE).unwrap();
-    println!("{:?}", tty.enable_slave());
-    println!("{:?}", tty.pty_id());
+    println!("{}", process::process_id());
+    let tty = Tty::from_borrowed(0);
+    println!("{:?}", tty.attributes());
 }

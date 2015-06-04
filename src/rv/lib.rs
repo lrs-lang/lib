@@ -8,6 +8,7 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
+#[macro_use]
 extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_int as int;
@@ -16,7 +17,9 @@ extern crate lrs_int as int;
 use int::{SignedInt, Int};
 use base::error::{Errno, c_int};
 
-#[cfg(feature = "retry")]
+mod lrs { pub use core::lrs::*; }
+
+#[cfg(retry)]
 pub fn retry<T: SignedInt, F: FnMut() -> T>(mut f: F) -> Result<T> {
     use base::{error};
 
@@ -33,7 +36,7 @@ pub fn retry<T: SignedInt, F: FnMut() -> T>(mut f: F) -> Result<T> {
     }
 }
 
-#[cfg(not(feature = "retry"))]
+#[cfg(not(retry))]
 pub fn retry<T: SignedInt, F: FnMut() -> T>(mut f: F) -> Result<T> {
     let ret = f();
     if ret.negative() {
