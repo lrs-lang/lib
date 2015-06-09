@@ -30,5 +30,7 @@ pub use lrs_syscall::{
     ioctl_tiocnxcl, ioctl_tiocgexcl, ioctl_tiocnotty, ioctl_tiocsctty, ioctl_tiocgpgrp,
     ioctl_tiocspgrp, ioctl_tiocgsid, ioctl_tiocgetd, ioctl_tiocsetd, ioctl_tiocvhangup,
     ioctl_tiocgdev, ioctl_tcflsh, ioctl_tiocoutq, ioctl_tcxonc, ioctl_tcgets2,
-    ioctl_tcsets2, vhangup,
+    ioctl_tcsets2, vhangup, mq_open, mq_unlink, mq_timedsend, mq_timedreceive,
+    mq_getsetattr, sched_setattr, sched_getattr, sched_yield, sched_get_priority_max,
+    sched_get_priority_min, sched_rr_get_interval, getpriority, setpriority,
 };

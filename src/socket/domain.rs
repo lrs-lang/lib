@@ -52,26 +52,20 @@ macro_rules! create {
 create! {
     #[doc = "Unspecified domain"]
     domain Unspecified = AF_UNSPEC;
-    #[doc = "Unix domain"]
-    #[doc = ""]
+    #[doc = "Unix domain\n"]
     #[doc = "= See also"]
-    #[doc = ""]
     #[doc = "* link:man:unix(7)"]
     domain Unix = AF_UNIX;
-    #[doc = "Ipv4"]
-    #[doc = ""]
+    #[doc = "Ipv4\n"]
     #[doc = "= See also"]
-    #[doc = ""]
     #[doc = "* link:man:ip(7)"]
     domain Ipv4 = AF_INET;
     #[doc = "Amateur radio AX.25"]
     domain Ax25 = AF_AX25;
     #[doc = "Internetwork Packet Exchange"]
     domain Ipx = AF_IPX;
-    #[doc = "AppleTalk"]
-    #[doc = ""]
+    #[doc = "AppleTalk\n"]
     #[doc = "= See also"]
-    #[doc = ""]
     #[doc = "* link:man:ddp(7)"]
     domain AppleTalk = AF_APPLETALK;
     #[doc = "Amateur radio NET/ROM"]
@@ -80,16 +74,12 @@ create! {
     domain Bridge = AF_BRIDGE;
     #[doc = "ATM PVCs"]
     domain AtmPvc = AF_ATMPVC;
-    #[doc = "X.25 interface"]
-    #[doc = ""]
+    #[doc = "X.25 interface\n"]
     #[doc = "= See also"]
-    #[doc = ""]
     #[doc = "* link:man:x25(7)"]
     domain X25 = AF_X25;
-    #[doc = "Ipv6"]
-    #[doc = ""]
+    #[doc = "Ipv6\n"]
     #[doc = "= See also"]
-    #[doc = ""]
     #[doc = "* link:man:ipv6(7)"]
     domain Ipv6 = AF_INET6;
     #[doc = "Amateur radio X.25 PLP"]
@@ -102,14 +92,11 @@ create! {
     domain Security = AF_SECURITY;
     #[doc = "Security association database interface"]
     domain Key = AF_KEY;
-    #[doc = "Kernel/Userspace communication"]
-    #[doc = ""]
+    #[doc = "Kernel/Userspace communication\n"]
     #[doc = "= See also"]
-    #[doc = ""]
     #[doc = "* link:man:netlink(7)"]
     domain Netlink = AF_NETLINK;
     #[doc = "Raw socket"]
-    #[doc = ""]
     domain Packet = AF_PACKET;
     #[doc = "Ash"]
     domain Ash = AF_ASH;

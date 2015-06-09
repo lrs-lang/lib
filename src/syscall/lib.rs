@@ -32,7 +32,7 @@ use cty::{
     F_GET_SEALS, PAGE_SIZE, TIOCGPTN, TIOCSPTLCK, TIOCGPTLCK, TIOCSIG, TIOCPKT, TIOCGPKT,
     TIOCSTI, winsize, TIOCGWINSZ, TIOCSWINSZ, TIOCSCTTY, TIOCNOTTY, TIOCGEXCL, TIOCNXCL,
     TIOCEXCL, TIOCCONS, TIOCGDEV, TIOCVHANGUP, TIOCSETD, TIOCGETD, TIOCGSID, TIOCSPGRP,
-    TIOCGPGRP, TCFLSH, TIOCOUTQ, TCXONC, TCGETS2, termios2, TCSETS2, mq_attr,
+    TIOCGPGRP, TCFLSH, TIOCOUTQ, TCXONC, TCGETS2, termios2, TCSETS2, mq_attr, sched_attr,
 };
 
 mod lrs { pub use base::lrs::*; pub use cty; }
@@ -3747,4 +3747,123 @@ pub fn mq_getsetattr(mq: c_int, new: Option<&mq_attr>,
     let new = new.map(|a| a as *const _).unwrap_or(0 as *const _);
     let old = old.map(|a| a as *mut _).unwrap_or(0 as *mut _);
     unsafe { r::mq_getsetattr(mq, new, old) }
+}
+
+/// Sets the scheduling policy of a thread.
+///
+/// [argument, pid]
+/// The thread to modify.
+///
+/// [argument, attr]
+/// The policy to set.
+///
+/// [argument, flags]
+/// Unused.
+///
+/// = See also
+///
+/// * link:man:sched_setattr(2)
+pub fn sched_setattr(pid: pid_t, attr: &mut sched_attr, flags: c_uint) -> c_int {
+    unsafe { r::sched_setattr(pid, attr, flags) }
+}
+
+/// Gets the scheduling policy of a thread.
+///
+/// [argument, pid]
+/// The thread whose policy to get.
+///
+/// [argument, attr]
+/// A place where the policy will be stored.
+///
+/// [argument, flags]
+/// Unused.
+///
+/// = See also
+///
+/// * link:man:sched_getattr(2)
+pub fn sched_getattr(pid: pid_t, attr: &mut sched_attr, flags: c_uint) -> c_int {
+    unsafe {
+        r::sched_getattr(pid, attr, mem::size_of::<sched_attr>() as c_uint, flags)
+    }
+}
+
+/// Relinquish the CPU.
+///
+/// = See also
+///
+/// * link:man:sched_yield(2)
+pub fn sched_yield() -> c_int {
+    unsafe { r::sched_yield() }
+}
+
+/// Returns the maximum priority of a scheduling policy.
+///
+/// [argument, policy]
+/// The policy.
+///
+/// = See also
+///
+/// * link:man:sched_get_priority_max(2)
+pub fn sched_get_priority_max(policy: c_int) -> c_int {
+    unsafe { r::sched_get_priority_max(policy) }
+}
+
+/// Returns the minimum priority of a scheduling policy.
+///
+/// [argument, policy]
+/// The policy.
+///
+/// = See also
+///
+/// * link:man:sched_get_priority_min(2)
+pub fn sched_get_priority_min(policy: c_int) -> c_int {
+    unsafe { r::sched_get_priority_min(policy) }
+}
+
+/// Returns the round-robin time slice of a thread.
+///
+/// [argument, pid]
+/// The thread to inspect.
+///
+/// [argument, tp]
+/// Place where the time slice will be stored.
+///
+/// = See also
+///
+/// * link:man:sched_rr_get_interval(2)
+pub fn sched_rr_get_interval(pid: pid_t, tp: &mut timespec) -> c_int {
+    unsafe { r::sched_rr_get_interval(pid, tp) }
+}
+
+/// Returns the scheduling priority of a process, process group, or user.
+///
+/// [argument, which]
+/// The id type of `who`.
+///
+/// [argument, who]
+/// Whose priority to return.
+///
+/// = See also
+///
+/// * link:man:getpriority(2)
+pub fn getpriority(which: c_int, who: c_int) -> c_int {
+    unsafe { r::getpriority(which, who) }
+}
+
+/// Sets the scheduling priority of a process, process group, or user.
+///
+/// [argument, which]
+/// The id type of `who`.
+///
+/// [argument, who]
+/// Whose priority to set.
+///
+/// [argument, prio]
+/// The scheduling priority.
+///
+/// = See also
+///
+/// * link:man:setpriority(2)
+pub fn setpriority(which: c_int, who: c_int, prio: c_int) -> c_int {
+    unsafe { r::setpriority(which, who, prio) }
 }

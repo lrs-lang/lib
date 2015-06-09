@@ -15,6 +15,7 @@ extern crate lrs_libc as libc;
 extern crate lrs_syscall as syscall;
 extern crate lrs_cty as cty;
 extern crate lrs_lock as lock;
+extern crate lrs_time_base as time_base;
 extern crate lrs_fmt as fmt;
 
 #[prelude_import] use base::prelude::*;
@@ -29,6 +30,7 @@ use lock::{LockGuard, LOCK_INIT};
 mod lrs { pub use fmt::lrs::*; pub use cty; }
 
 pub mod ids;
+pub mod sched;
 
 /// Returns the thread id of the calling thread.
 ///
@@ -49,6 +51,16 @@ pub fn thread_id() -> ProcessId {
 /// This is unsafe because `!Leak` data will not be destroyed.
 pub unsafe fn exit(code: c_int) -> ! {
     syscall::exit(code)
+}
+
+/// Relinquish the CPU.
+///
+/// = See also
+///
+/// * link:man:sched_yield(2)
+pub fn deschedule() {
+    // This function should actually be called yield.
+    syscall::sched_yield();
 }
 
 /// Spawns a new thread.

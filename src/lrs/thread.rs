@@ -31,3 +31,20 @@ pub use lrs_thread::ids::{
     set_effective_group_id, num_supplementary_groups, supplementary_groups,
     set_supplementary_groups
 };
+pub use lrs_thread::sched::{
+    Scheduler, SchedFlags, SchedAttr, set_scheduler, scheduler, process_priority,
+    group_priority, user_priority, set_process_priority, set_group_priority,
+    set_user_priority,
+};
+
+pub mod flags {
+    pub use lrs_thread::sched::{
+        SCHED_NONE, SCHED_RESET_ON_FORK,
+    };
+}
+
+pub mod sched {
+    pub use lrs_thread::sched::{
+        Normal, Fifo, Rr, Batch, Idle, Deadline,
+    };
+}
