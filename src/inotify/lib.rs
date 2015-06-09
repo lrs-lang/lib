@@ -196,13 +196,18 @@ pub struct InodeDataIter<'a> {
 impl<'a> Iterator for InodeDataIter<'a> {
     type Item = &'a mut InodeData;
     fn next(&mut self) -> Option<&'a mut InodeData> {
-        if self.buf.len() == 0 {
+        if !mem::is_suitable_for::<InodeData>(self.buf) {
             return None;
         }
         let inode_data: &'static mut InodeData = unsafe {
             &mut *(self.buf.as_mut_ptr() as *mut InodeData)
         };
         let len = mem::size_of::<InodeData>() + inode_data.len as usize;
+        if inode_data.len != 0 {
+            if self.buf.len() < len || self.buf[len - 1] != 0 {
+                return None;
+            }
+        }
         self.buf = &mut mem::replace(&mut self.buf, &mut [])[len..];
         Some(inode_data)
     }

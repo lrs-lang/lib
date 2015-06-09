@@ -63,6 +63,7 @@ obj poll       core base cty syscall fd rv saturating fmt time_base
 obj dev        core base fmt cty
 obj file       core base io cty fmt int syscall str_one str_two str_three arch_fns rv parse fd dev fs time_base vec rmo
 
+obj mqueue     core base cty fmt syscall fd file str_three rmo alloc time_base rv
 obj tty        core base syscall cty fd file signal dev fmt
 obj thread     core base syscall cty libc lock fmt
 obj process    core base syscall cty fmt str_one str_two str_three c_ptr_ptr alloc rt env file rmo rv time_base

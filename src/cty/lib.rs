@@ -936,6 +936,7 @@ pub struct mmap_arg_struct {
 pub const MQ_PRIO_MAX  : c_int = 32768;
 pub const MQ_BYTES_MAX : c_int = 819200;
 
+// XXX: Is this type correct?
 #[repr(C)]
 #[derive(Pod, Eq)]
 pub struct mq_attr {

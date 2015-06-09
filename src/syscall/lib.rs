@@ -32,7 +32,7 @@ use cty::{
     F_GET_SEALS, PAGE_SIZE, TIOCGPTN, TIOCSPTLCK, TIOCGPTLCK, TIOCSIG, TIOCPKT, TIOCGPKT,
     TIOCSTI, winsize, TIOCGWINSZ, TIOCSWINSZ, TIOCSCTTY, TIOCNOTTY, TIOCGEXCL, TIOCNXCL,
     TIOCEXCL, TIOCCONS, TIOCGDEV, TIOCVHANGUP, TIOCSETD, TIOCGETD, TIOCGSID, TIOCSPGRP,
-    TIOCGPGRP, TCFLSH, TIOCOUTQ, TCXONC, TCGETS2, termios2, TCSETS2,
+    TIOCGPGRP, TCFLSH, TIOCOUTQ, TCXONC, TCGETS2, termios2, TCSETS2, mq_attr,
 };
 
 mod lrs { pub use base::lrs::*; pub use cty; }
@@ -3623,11 +3623,128 @@ pub fn ioctl_tcsets2(fd: c_int, attrs: &termios2) -> c_int {
     unsafe { r::ioctl(fd as k_uint, TCSETS2(), attrs as *const _ as k_ulong) }
 }
 
-/// Simuales a hangup on the current terminal.
+/// Simulates a hangup on the current terminal.
 ///
 /// = See also
 ///
 /// * link:man:vhangup(2)
 pub fn vhangup() -> c_int {
     unsafe { r::vhangup() }
+}
+
+/// Opens a message queue.
+///
+/// [argument, name]
+/// The name of the queue.
+///
+/// [argument, flags]
+/// Flags used when opening the queue.
+///
+/// [argument, mode]
+/// Mode used on a new queue.
+///
+/// [argument, attr]
+/// Attributes set on a new queue.
+///
+/// = Remarks
+///
+/// Unless lrs was compiled with the `no-auto-cloexec` flag, this function automatically
+/// adds the `O_CLOEXEC` flag.
+///
+/// = See also
+///
+/// * link:man:mq_open(2)
+pub fn mq_open(name: &CStr, mut flags: c_int, mode: umode_t,
+               attr: Option<&mq_attr>) -> c_int {
+    if cfg!(not(no_auto_cloexec)) {
+        flags |= O_CLOEXEC;
+    }
+    let attr = attr.map(|a| a as *const _ as *mut _).unwrap_or(0 as *mut _);
+    unsafe { r::mq_open(name.as_ptr(), flags, mode, attr) }
+}
+
+/// Destroys a queue.
+///
+/// [argument, name]
+/// The name of the queue to destroy.
+///
+/// = See also
+///
+/// * link:man:mq_unlink(2)
+pub fn mq_unlink(name: &CStr) -> c_int {
+    unsafe { r::mq_unlink(name.as_ptr()) }
+}
+
+/// Sends a message over a message queue.
+///
+/// [argument, mq]
+/// The message queue.
+///
+/// [argument, msg]
+/// The message to send.
+///
+/// [argument, prio]
+/// The priority of the message.
+///
+/// [argument, timeout]
+/// The timeout of the operation.
+///
+/// = See also
+///
+/// * link:man:mq_timedsend(2)
+pub fn mq_timedsend(mq: c_int, msg: &[u8], prio: c_uint,
+                    timeout: Option<&timespec>) -> c_int {
+    let timeout = timeout.map(|a| a as *const _).unwrap_or(0 as *const _);
+    unsafe {
+        r::mq_timedsend(mq, msg.as_ptr() as *const c_char, msg.len() as size_t, prio,
+                        timeout)
+    }
+}
+
+/// Receives a message over a message queue.
+///
+/// [argument, mq]
+/// The message queue.
+///
+/// [argument, msg]
+/// A place where the message will be stored.
+///
+/// [argument, prio]
+/// A place where the priority will be stored.
+///
+/// [argument, timeout]
+/// The timeout of the operation.
+///
+/// = See also
+///
+/// * link:man:mq_timedreceive(2)
+pub fn mq_timedreceive(mq: c_int, msg: &mut [u8], prio: Option<&mut c_uint>,
+                       timeout: Option<&timespec>) -> ssize_t {
+    let prio = prio.map(|a| a as *mut _).unwrap_or(0 as *mut _);
+    let timeout = timeout.map(|a| a as *const _).unwrap_or(0 as *const _);
+    unsafe {
+        r::mq_timedreceive(mq, msg.as_mut_ptr() as *mut c_char, msg.len() as size_t, prio,
+                           timeout)
+    }
+}
+
+/// Sets or retrieves attributes of a message queue.
+///
+/// [argument, mq]
+/// The message queue.
+///
+/// [argument, new]
+/// The attributes to set.
+///
+/// [argument, old]
+/// A place where the old attributes will be stored.
+///
+/// = See also
+///
+/// * link:man:mq_getsetattr(2)
+pub fn mq_getsetattr(mq: c_int, new: Option<&mq_attr>,
+                     old: Option<&mut mq_attr>) -> c_int {
+    let new = new.map(|a| a as *const _).unwrap_or(0 as *const _);
+    let old = old.map(|a| a as *mut _).unwrap_or(0 as *mut _);
+    unsafe { r::mq_getsetattr(mq, new, old) }
 }
