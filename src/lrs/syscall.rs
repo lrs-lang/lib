@@ -33,5 +33,6 @@ pub use lrs_syscall::{
     ioctl_tcsets2, vhangup, mq_open, mq_unlink, mq_timedsend, mq_timedreceive,
     mq_getsetattr, sched_setattr, sched_getattr, sched_yield, sched_get_priority_max,
     sched_get_priority_min, sched_rr_get_interval, getpriority, setpriority,
-    sched_setaffinity, capget_v3, capset_v3,
+    sched_setaffinity, capget_v3, capset_v3, prctl_pr_capbset_read, prctl_pr_capbset_drop,
+    prctl_pr_get_keepcaps, prctl_pr_set_keepcaps,
 };

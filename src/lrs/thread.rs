@@ -38,7 +38,10 @@ pub use lrs_thread::sched::{
     group_niceness, user_niceness, set_process_niceness, set_group_niceness,
     set_user_niceness,
 };
-pub use lrs_thread::cap::{Capability, CapSet, capabilities, set_capabilities};
+pub use lrs_thread::cap::{
+    Capability, CapSet, capabilities, set_capabilities, has_bounding_cap,
+    drop_bounding_cap, keeps_caps, set_keeps_caps,
+};
 
 pub mod flags {
     pub use lrs_thread::sched::{

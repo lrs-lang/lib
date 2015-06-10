@@ -34,6 +34,7 @@ use cty::{
     TIOCEXCL, TIOCCONS, TIOCGDEV, TIOCVHANGUP, TIOCSETD, TIOCGETD, TIOCGSID, TIOCSPGRP,
     TIOCGPGRP, TCFLSH, TIOCOUTQ, TCXONC, TCGETS2, termios2, TCSETS2, mq_attr, sched_attr,
     __user_cap_data_struct, __user_cap_header_struct, _LINUX_CAPABILITY_VERSION_3,
+    PR_CAPBSET_READ, PR_CAPBSET_DROP, PR_GET_KEEPCAPS, PR_SET_KEEPCAPS,
 };
 
 mod lrs { pub use base::lrs::*; pub use cty; }
@@ -3926,4 +3927,49 @@ pub fn capset_v3(caps: &[__user_cap_data_struct; 2]) -> c_int {
         pid: 0,
     };
     unsafe { r::capset(&mut header, caps.as_ptr() as *mut _) }
+}
+
+/// Checks whether a capability is in the bounding set of this thread.
+///
+/// [argument, cap]
+/// The capability to check.
+///
+/// = See also
+///
+/// * link:man:prctl(2) and PR_CAPBSET_READ therein
+pub fn prctl_pr_capbset_read(cap: c_int) -> c_int {
+    unsafe { r::prctl(PR_CAPBSET_READ, cap as k_ulong, 0, 0, 0) }
+}
+
+/// Removes a capability from this thread's bounding set.
+///
+/// [argument, cap]
+/// The capability to remove.
+///
+/// = See also
+///
+/// * link:man:prctl(2) and PR_CAPBSET_DROP therein
+pub fn prctl_pr_capbset_drop(cap: c_int) -> c_int {
+    unsafe { r::prctl(PR_CAPBSET_DROP, cap as k_ulong, 0, 0, 0) }
+}
+
+/// Checks whether capabilities are dropped when all root user ids are dropped.
+///
+/// = See also
+///
+/// * link:man:prctl(2) and PR_GET_KEEPCAPS therein
+pub fn prctl_pr_get_keepcaps() -> c_int {
+    unsafe { r::prctl(PR_GET_KEEPCAPS, 0, 0, 0, 0) }
+}
+
+/// Sets whether capabilities are dropped when all root user ids are dropped.
+///
+/// [argument, keep]
+/// Whether the capabilities are kept.
+///
+/// = See also
+///
+/// * link:man:prctl(2) and PR_SET_KEEPCAPS therein
+pub fn prctl_pr_set_keepcaps(keep: bool) -> c_int {
+    unsafe { r::prctl(PR_SET_KEEPCAPS, keep as k_ulong, 0, 0, 0) }
 }

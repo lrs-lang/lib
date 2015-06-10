@@ -11,7 +11,10 @@ use cty::alias::{ProcessId};
 use cty::{
     self, c_int, __user_cap_data_struct, c_uint, CAP_LAST_CAP,
 };
-use syscall::{capget_v3, capset_v3};
+use syscall::{
+    capget_v3, capset_v3, prctl_pr_capbset_read, prctl_pr_capbset_drop,
+    prctl_pr_get_keepcaps, prctl_pr_set_keepcaps,
+};
 
 /// A Linux capability.
 ///
@@ -226,4 +229,51 @@ pub fn set_capabilities(caps: CapSet) -> Result {
         },
     ];
     rv!(capset_v3(&caps))
+}
+
+/// Checks whether a capability is in the bounding set of this thread.
+///
+/// [argument, cap]
+/// The capability to check.
+///
+/// = See also
+///
+/// * link:man:prctl(2) and PR_CAPBSET_READ therein
+pub fn has_bounding_cap(cap: Capability) -> Result<bool> {
+    rv!(prctl_pr_capbset_read(cap.0), -> c_int).map(|v| v != 0)
+}
+
+/// Removes a capability from this thread's bounding set.
+///
+/// [argument, cap]
+/// The capability to remove.
+///
+/// = See also
+///
+/// * link:man:prctl(2) and PR_CAPBSET_DROP therein
+pub fn drop_bounding_cap(cap: Capability) -> Result {
+    rv!(prctl_pr_capbset_drop(cap.0))
+}
+
+/// Returns whether this thread keeps its permitted capabilities when all `0` user ids are
+/// dropped.
+///
+/// = See also
+///
+/// * link:man:prctl(2) and PR_GET_KEEPCAPS therein
+pub fn keeps_caps() -> Result<bool> {
+    rv!(prctl_pr_get_keepcaps(), -> c_int).map(|v| v != 0)
+}
+
+/// Sets whether this thread keeps its permitted capabilities when all `0` user ids are
+/// dropped.
+///
+/// [argument, keep]
+/// Whether this thread keeps its capabilities.
+///
+/// = See also
+///
+/// * link:man:prctl(2) and PR_SET_KEEPCAPS therein
+pub fn set_keeps_caps(keep: bool) -> Result {
+    rv!(prctl_pr_set_keepcaps(keep))
 }

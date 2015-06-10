@@ -4947,3 +4947,117 @@ pub const N_GSM0710      : c_int = 21;
 pub const N_TI_WL        : c_int = 22;
 pub const N_TRACESINK    : c_int = 23;
 pub const N_TRACEROUTER  : c_int = 24;
+
+/////////////////////////////
+// include/uapi/linux/prctl.h
+/////////////////////////////
+
+pub const PR_SET_PDEATHSIG            : c_int = 1;
+pub const PR_GET_PDEATHSIG            : c_int = 2;
+pub const PR_GET_DUMPABLE             : c_int = 3;
+pub const PR_SET_DUMPABLE             : c_int = 4;
+pub const PR_GET_UNALIGN              : c_int = 5;
+pub const PR_SET_UNALIGN              : c_int = 6;
+pub const PR_UNALIGN_NOPRINT          : k_ulong = 1;
+pub const PR_UNALIGN_SIGBUS           : k_ulong = 2;
+pub const PR_GET_KEEPCAPS             : c_int = 7;
+pub const PR_SET_KEEPCAPS             : c_int = 8;
+pub const PR_GET_FPEMU                : c_int = 9;
+pub const PR_SET_FPEMU                : c_int = 10;
+pub const PR_FPEMU_NOPRINT            : k_ulong = 1;
+pub const PR_FPEMU_SIGFPE             : k_ulong = 2;
+pub const PR_GET_FPEXC                : c_int = 11;
+pub const PR_SET_FPEXC                : c_int = 12;
+pub const PR_FP_EXC_SW_ENABLE         : k_ulong = 0x80;
+pub const PR_FP_EXC_DIV               : k_ulong = 0x010000;
+pub const PR_FP_EXC_OVF               : k_ulong = 0x020000;
+pub const PR_FP_EXC_UND               : k_ulong = 0x040000;
+pub const PR_FP_EXC_RES               : k_ulong = 0x080000;
+pub const PR_FP_EXC_INV               : k_ulong = 0x100000;
+pub const PR_FP_EXC_DISABLED          : k_ulong = 0;
+pub const PR_FP_EXC_NONRECOV          : k_ulong = 1;
+pub const PR_FP_EXC_ASYNC             : k_ulong = 2;
+pub const PR_FP_EXC_PRECISE           : k_ulong = 3;
+pub const PR_GET_TIMING               : c_int = 13;
+pub const PR_SET_TIMING               : c_int = 14;
+pub const PR_TIMING_STATISTICAL       : k_ulong = 0;
+pub const PR_TIMING_TIMESTAMP         : k_ulong = 1;
+pub const PR_SET_NAME                 : c_int = 15;
+pub const PR_GET_NAME                 : c_int = 16;
+pub const PR_GET_ENDIAN               : c_int = 19;
+pub const PR_SET_ENDIAN               : c_int = 20;
+pub const PR_ENDIAN_BIG               : k_ulong = 0;
+pub const PR_ENDIAN_LITTLE            : k_ulong = 1;
+pub const PR_ENDIAN_PPC_LITTLE        : k_ulong = 2;
+pub const PR_GET_SECCOMP              : c_int = 21;
+pub const PR_SET_SECCOMP              : c_int = 22;
+pub const PR_CAPBSET_READ             : c_int = 23;
+pub const PR_CAPBSET_DROP             : c_int = 24;
+pub const PR_GET_TSC                  : c_int = 25;
+pub const PR_SET_TSC                  : c_int = 26;
+pub const PR_TSC_ENABLE               : k_ulong = 1;
+pub const PR_TSC_SIGSEGV              : k_ulong = 2;
+pub const PR_GET_SECUREBITS           : c_int = 27;
+pub const PR_SET_SECUREBITS           : c_int = 28;
+pub const PR_SET_TIMERSLACK           : c_int = 29;
+pub const PR_GET_TIMERSLACK           : c_int = 30;
+pub const PR_TASK_PERF_EVENTS_DISABLE : c_int = 31;
+pub const PR_TASK_PERF_EVENTS_ENABLE  : c_int = 32;
+pub const PR_MCE_KILL                 : c_int = 33;
+pub const PR_MCE_KILL_CLEAR           : k_ulong = 0;
+pub const PR_MCE_KILL_SET             : k_ulong = 1;
+pub const PR_MCE_KILL_LATE            : k_ulong = 0;
+pub const PR_MCE_KILL_EARLY           : k_ulong = 1;
+pub const PR_MCE_KILL_DEFAULT         : k_ulong = 2;
+pub const PR_MCE_KILL_GET             : c_int = 34;
+pub const PR_SET_MM                   : c_int = 35;
+pub const PR_SET_MM_START_CODE        : k_ulong = 1;
+pub const PR_SET_MM_END_CODE          : k_ulong = 2;
+pub const PR_SET_MM_START_DATA        : k_ulong = 3;
+pub const PR_SET_MM_END_DATA          : k_ulong = 4;
+pub const PR_SET_MM_START_STACK       : k_ulong = 5;
+pub const PR_SET_MM_START_BRK         : k_ulong = 6;
+pub const PR_SET_MM_BRK               : k_ulong = 7;
+pub const PR_SET_MM_ARG_START         : k_ulong = 8;
+pub const PR_SET_MM_ARG_END           : k_ulong = 9;
+pub const PR_SET_MM_ENV_START         : k_ulong = 10;
+pub const PR_SET_MM_ENV_END           : k_ulong = 11;
+pub const PR_SET_MM_AUXV              : k_ulong = 12;
+pub const PR_SET_MM_EXE_FILE          : k_ulong = 13;
+pub const PR_SET_MM_MAP               : k_ulong = 14;
+pub const PR_SET_MM_MAP_SIZE          : k_ulong = 15;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct prctl_mm_map {
+    pub start_code:  __u64,
+    pub end_code:    __u64,
+    pub start_data:  __u64,
+    pub end_data:    __u64,
+    pub start_brk:   __u64,
+    pub brk:         __u64,
+    pub start_stack: __u64,
+    pub arg_start:   __u64,
+    pub arg_end:     __u64,
+    pub env_start:   __u64,
+    pub env_end:     __u64,
+    pub auxv:        *mut __u64,
+    pub auxv_size:   __u32,
+    pub exe_fd:      __u32,
+}
+
+pub const PR_SET_PTRACER            : c_int = 0x59616d61;
+pub const PR_SET_PTRACER_ANY        : k_ulong = -1;
+pub const PR_SET_CHILD_SUBREAPER    : c_int = 36;
+pub const PR_GET_CHILD_SUBREAPER    : c_int = 37;
+pub const PR_SET_NO_NEW_PRIVS       : c_int = 38;
+pub const PR_GET_NO_NEW_PRIVS       : c_int = 39;
+pub const PR_GET_TID_ADDRESS        : c_int = 40;
+pub const PR_SET_THP_DISABLE        : c_int = 41;
+pub const PR_GET_THP_DISABLE        : c_int = 42;
+pub const PR_MPX_ENABLE_MANAGEMENT  : c_int = 43;
+pub const PR_MPX_DISABLE_MANAGEMENT : c_int = 44;
+pub const PR_SET_FP_MODE            : c_int = 45;
+pub const PR_GET_FP_MODE            : c_int = 46;
+pub const PR_FP_MODE_FR             : k_ulong = 1<<0;
+pub const PR_FP_MODE_FRE            : k_ulong = 1<<1;
