@@ -17,20 +17,170 @@ extern crate lrs_cty as cty;
 extern crate lrs_lock as lock;
 extern crate lrs_time_base as time_base;
 extern crate lrs_fmt as fmt;
+extern crate lrs_iter as iter;
 
 #[prelude_import] use base::prelude::*;
 use core::marker::{Leak};
-use core::ops::{Drop};
+use core::ops::{Drop, Index};
 use core::{mem, ptr, intrinsics};
 use cty::{c_int};
 use cty::alias::{ProcessId};
 use libc::{pthread_t, pthread_attr_t, PTHREAD_CREATE_DETACHED};
 use lock::{LockGuard, LOCK_INIT};
+use iter::{IteratorExt};
+use fmt::{Debug, Write};
 
 mod lrs { pub use fmt::lrs::*; pub use cty; }
 
 pub mod ids;
 pub mod sched;
+
+/// Returns the number of CPUs available to this thread.
+///
+/// = Remarks
+///
+/// Use link:lrs::thread::cpus[cpus] to get the number of CPUs available to other threads.
+///
+/// = See also
+///
+/// * link:man:sched_getaffinity(2)
+pub fn cpu_count() -> Result<usize> {
+    // XXX: Up to 512 CPUs which is the default maximum for ia64
+    let mut buf = [0; 512 / 8];
+    cpus(0, &mut buf).map(|c| c.count())
+}
+
+/// A bit-mask of CPUs.
+///
+/// = Remarks
+///
+/// The CPUs are stored in form of a `[u8]` such that available CPUs are stored as a `1`
+/// bit and unavailable CPUs are stored as a `0` bit. The structure supports indexing to
+/// check whether a CPU is available: `let have_one = mask[0]`. The value used to index
+/// must be at most `mask.len()`.
+pub struct CpuMask {
+    buf: [u8],
+}
+
+impl CpuMask {
+    /// Creates a new mask from a buffer.
+    ///
+    /// [argument, buf]
+    /// The buffer which contains the bitset of CPUs.
+    pub fn new(buf: &[u8]) -> &CpuMask {
+        unsafe { mem::cast(buf) }
+    }
+
+    /// Creates a new mask from a buffer.
+    ///
+    /// [argument, buf]
+    /// The buffer which contains the bitset of CPUs.
+    pub fn new_mut(buf: &mut [u8]) -> &mut CpuMask {
+        unsafe { mem::cast(buf) }
+    }
+
+    /// Returns the number of slots in this CPU mask.
+    pub fn len(&self) -> usize {
+        self.buf.len() * 8
+    }
+
+    /// Returns the number of online CPUs in this mask.
+    pub fn count(&self) -> usize {
+        self.buf.iter().map(|b| b.count_ones()).sum(0) as usize
+    }
+
+    /// Marks a CPU as online.
+    ///
+    /// [argument, id]
+    /// The id of the CPU to mark.
+    pub fn set(&mut self, id: usize) {
+        assert!(id < self.len());
+        self.buf[id / 8] |= 1 << id % 8;
+    }
+
+    /// Marks a CPU as offline.
+    ///
+    /// [argument, id]
+    /// The id of the CPU to mark.
+    pub fn unset(&mut self, id: usize) {
+        assert!(id < self.len());
+        self.buf[id / 8] &= !(1 << id % 8);
+    }
+}
+
+impl Deref for CpuMask {
+    type Target = [u8];
+    fn deref(&self) -> &[u8] {
+        &self.buf
+    }
+}
+
+impl DerefMut for CpuMask {
+    fn deref_mut(&mut self) -> &mut [u8] {
+        &mut self.buf
+    }
+}
+
+impl Index<usize> for CpuMask {
+    type Output = bool;
+    fn index(&self, val: usize) -> &bool {
+        assert!(val < self.len());
+        static TRUE: bool = true;
+        static FALSE: bool = false;
+        if self.buf[val / 8] & (1 << val % 8) != 0 {
+            &TRUE
+        } else {
+            &FALSE
+        }
+    }
+}
+
+impl Debug for CpuMask {
+    fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
+        let mut first = true;
+        for i in 0..self.len() {
+            if self[i] {
+                if !first { try!(write!(w, ",")); }
+                first = false;
+                try!(write!(w, "{}", i));
+            }
+        }
+        Ok(())
+    }
+}
+
+/// Returns the CPU mask of a thread.
+///
+/// [argument, thread]
+/// The thread to inspect or `0` for this thread.
+///
+/// [argument, buf]
+/// The buffer in which the mask will be stored.
+///
+/// = See also
+///
+/// * link:man:sched_getaffinity(2)
+pub fn cpus(thread: ProcessId, mut buf: &mut [u8]) -> Result<&mut CpuMask> {
+    let len = buf.len();
+    let buf = &mut buf[..len/8*8];
+    let len = try!(rv!(syscall::sched_getaffinity(thread, buf), -> usize));
+    Ok(CpuMask::new_mut(&mut buf[..len]))
+}
+
+/// Sets the CPU mask of a thread.
+///
+/// [argument, thread]
+/// The thread whose mask to set or `0` for this thread.
+///
+/// [argument, cpus]
+/// The CPU mask.
+///
+/// = See also
+///
+/// * link:man:sched_setaffinity(2)
+pub fn set_cpus(thread: ProcessId, cpus: &CpuMask) -> Result {
+    rv!(syscall::sched_setaffinity(thread, &cpus.buf))
+}
 
 /// Returns the thread id of the calling thread.
 ///

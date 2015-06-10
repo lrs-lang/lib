@@ -1578,12 +1578,36 @@ pub fn epoll_pwait(epfd: c_int, events: &mut [epoll_event], timeout: c_int,
 /// [return_value]
 /// Returns success or an error value.
 ///
+/// = Remarks
+///
+/// The set size must be a multiple of the size of `k_long`.
+///
 /// = See also
 ///
 /// * link:man:sched_getaffinity(2)
 pub fn sched_getaffinity(tid: pid_t, set: &mut [u8]) -> c_int {
     unsafe {
         r::sched_getaffinity(tid, set.len().saturating_cast(), set.as_mut_ptr() as *mut _)
+    }
+}
+
+/// Sets a thread's CPU affinity mask.
+///
+/// [argument, tid]
+/// The id of the thread.
+///
+/// [argument, set]
+/// The cpu affinity of the thread.
+///
+/// [return_value]
+/// Returns success or an error value.
+///
+/// = See also
+///
+/// * link:man:sched_setaffinity(2)
+pub fn sched_setaffinity(tid: pid_t, set: &[u8]) -> c_int {
+    unsafe {
+        r::sched_setaffinity(tid, set.len().saturating_cast(), set.as_ptr() as *mut _)
     }
 }
 

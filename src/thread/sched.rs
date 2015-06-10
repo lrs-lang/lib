@@ -178,19 +178,19 @@ create_flags! {
 /// * link:man:sched_setattr(2)
 pub struct SchedAttr {
     /// The scheduler itself.
-    scheduler: Scheduler,
+    pub scheduler: Scheduler,
     /// Flags that modify the scheduler behavior.
-    flags: SchedFlags,
+    pub flags: SchedFlags,
     /// The nice value of the thread.
-    nice: i8,
+    pub nice: u8,
     /// The static priority of the thread.
-    priority: u8,
+    pub priority: u8,
     /// The runtime attribute of the Deadline scheduler.
-    runtime: u64,
+    pub runtime: u64,
     /// The deadline attribute of the Deadline scheduler.
-    deadline: u64,
+    pub deadline: u64,
     /// The period attribute of the Deadline scheduler.
-    period: u64,
+    pub period: u64,
 }
 
 /// Set a thread's scheduler and its arguments.
@@ -215,7 +215,7 @@ pub fn set_scheduler(thread: ProcessId, attributes: SchedAttr) -> Result {
         size: mem::size_of::<sched_attr>() as u32,
         sched_policy: attributes.scheduler.0 as u32,
         sched_flags: attributes.flags.0 as u64,
-        sched_nice: attributes.nice as i32,
+        sched_nice: 20 - attributes.nice as i32,
         sched_priority: attributes.priority as u32,
         sched_runtime: attributes.runtime,
         sched_deadline: attributes.deadline,
@@ -244,7 +244,7 @@ pub fn scheduler(thread: ProcessId) -> Result<SchedAttr> {
     Ok(SchedAttr {
         scheduler: Scheduler(attr.sched_policy as c_int),
         flags: SchedFlags(attr.sched_flags),
-        nice: attr.sched_nice as i8,
+        nice: (20 - attr.sched_nice) as u8,
         priority: attr.sched_priority as u8,
         runtime: attr.sched_runtime,
         deadline: attr.sched_deadline,
@@ -270,113 +270,113 @@ pub fn round_robin_time_slice(thread: ProcessId) -> Result<Time> {
     Ok(time_from_timespec(time))
 }
 
-/// Returns the scheduling priority of a process.
+/// Returns the niceness of a process.
 ///
 /// [argument, id]
 /// The process to inspect, or `0` for this process.
 ///
 /// = Remarks
 ///
-/// The priority is a value between 1 and 40, with higher values meaning more favorable
+/// The niceness is a value between 1 and 40, with higher values meaning more favorable
 /// scheduling.
 ///
 /// = See also
 ///
 /// * link:man:getpriority(2)
-pub fn process_priority(id: ProcessId) -> Result<u8> {
+pub fn process_niceness(id: ProcessId) -> Result<u8> {
     rv!(getpriority(PRIO_PROCESS, id), -> u8)
 }
 
-/// Returns the scheduling priority of a process group.
+/// Returns the niceness of a process group.
 ///
 /// [argument, id]
 /// The process group to inspect, or `0` for this process group.
 ///
 /// = Remarks
 ///
-/// The priority is a value between 1 and 40, with higher values meaning more favorable
+/// The niceness is a value between 1 and 40, with higher values meaning more favorable
 /// scheduling.
 ///
 /// = See also
 ///
 /// * link:man:getpriority(2)
-pub fn group_priority(id: ProcessId) -> Result<u8> {
+pub fn group_niceness(id: ProcessId) -> Result<u8> {
     rv!(getpriority(PRIO_PGRP, id), -> u8)
 }
 
-/// Returns the scheduling priority of a user.
+/// Returns the niceness of a user.
 ///
 /// [argument, id]
 /// The user to inspect, or `0` for the real user id of this thread.
 ///
 /// = Remarks
 ///
-/// The priority is a value between 1 and 40, with higher values meaning more favorable
+/// The niceness is a value between 1 and 40, with higher values meaning more favorable
 /// scheduling.
 ///
 /// = See also
 ///
 /// * link:man:getpriority(2)
-pub fn user_priority(id: UserId) -> Result<u8> {
+pub fn user_niceness(id: UserId) -> Result<u8> {
     rv!(getpriority(PRIO_USER, id as i32), -> u8)
 }
 
-/// Sets the scheduling priority of a process.
+/// Sets the niceness of a process.
 ///
 /// [argument, id]
 /// The process to modify, or `0` for this process.
 ///
-/// [argument, priority]
-/// The new scheduling priority.
+/// [argument, niceness]
+/// The new niceness.
 ///
 /// = Remarks
 ///
-/// The priority is a value between 1 and 40, with higher values meaning more favorable
+/// The niceness is a value between 1 and 40, with higher values meaning more favorable
 /// scheduling.
 ///
 /// = See also
 ///
 /// * link:man:setpriority(2)
-pub fn set_process_priority(id: ProcessId, priority: u8) -> Result {
-    rv!(setpriority(PRIO_PROCESS, id, priority as c_int))
+pub fn set_process_niceness(id: ProcessId, niceness: u8) -> Result {
+    rv!(setpriority(PRIO_PROCESS, id, 20 - niceness as c_int))
 }
 
-/// Sets the scheduling priority of a process group.
+/// Sets the niceness of a process group.
 ///
 /// [argument, id]
 /// The process group to modify, or `0` for this process group.
 ///
-/// [argument, priority]
-/// The new scheduling priority.
+/// [argument, niceness]
+/// The new niceness.
 ///
 /// = Remarks
 ///
-/// The priority is a value between 1 and 40, with higher values meaning more favorable
+/// The niceness is a value between 1 and 40, with higher values meaning more favorable
 /// scheduling.
 ///
 /// = See also
 ///
 /// * link:man:setpriority(2)
-pub fn set_group_priority(id: ProcessId, priority: u8) -> Result {
-    rv!(setpriority(PRIO_PGRP, id, priority as c_int))
+pub fn set_group_niceness(id: ProcessId, niceness: u8) -> Result {
+    rv!(setpriority(PRIO_PGRP, id, 20 - niceness as c_int))
 }
 
-/// Sets the scheduling priority of a user.
+/// Sets the niceness of a user.
 ///
 /// [argument, id]
 /// The user to modify, or `0` for the real user id of this thread.
 ///
-/// [argument, priority]
-/// The new scheduling priority.
+/// [argument, niceness]
+/// The new niceness.
 ///
 /// = Remarks
 ///
-/// The priority is a value between 1 and 40, with higher values meaning more favorable
+/// The niceness is a value between 1 and 40, with higher values meaning more favorable
 /// scheduling.
 ///
 /// = See also
 ///
 /// * link:man:setpriority(2)
-pub fn set_user_priority(id: UserId, priority: u8) -> Result {
-    rv!(setpriority(PRIO_USER, id as i32, priority as c_int))
+pub fn set_user_niceness(id: UserId, niceness: u8) -> Result {
+    rv!(setpriority(PRIO_USER, id as i32, 20 - niceness as c_int))
 }

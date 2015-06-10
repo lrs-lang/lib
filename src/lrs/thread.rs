@@ -25,16 +25,18 @@
 //! }
 //! ----
 
-pub use lrs_thread::{Builder, spawn, scoped, JoinGuard};
+pub use lrs_thread::{
+    Builder, spawn, scoped, JoinGuard, cpu_count, CpuMask, cpus, set_cpus,
+};
 pub use lrs_thread::ids::{
     UserIds, GroupIds, drop_user_privileges, drop_group_privileges, set_effective_user_id,
     set_effective_group_id, num_supplementary_groups, supplementary_groups,
     set_supplementary_groups
 };
 pub use lrs_thread::sched::{
-    Scheduler, SchedFlags, SchedAttr, set_scheduler, scheduler, process_priority,
-    group_priority, user_priority, set_process_priority, set_group_priority,
-    set_user_priority,
+    Scheduler, SchedFlags, SchedAttr, set_scheduler, scheduler, process_niceness,
+    group_niceness, user_niceness, set_process_niceness, set_group_niceness,
+    set_user_niceness,
 };
 
 pub mod flags {

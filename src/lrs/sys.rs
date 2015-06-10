@@ -5,7 +5,7 @@
 //! System management.
 
 pub use lrs_sys::{
-    cpu_count, StrInfo, NumInfo, get_random, get_random_non_blocking, enable_accounting,
+    StrInfo, NumInfo, get_random, get_random_non_blocking, enable_accounting,
     set_host_name, set_domain_name, enable_ctrl_alt_delete, halt, exec_new_kernel,
     power_off, restart, hibernate,
 };

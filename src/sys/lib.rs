@@ -38,26 +38,17 @@ use cty::{
     LINUX_REBOOT_CMD_SW_SUSPEND,
 };
 use syscall::{
-    sched_getaffinity, uname, sysinfo, getrandom, acct, sethostname, setdomainname,
+    uname, sysinfo, getrandom, acct, sethostname, setdomainname,
     reboot,
 };
 use str_one::{AsCStr, ByteStr, CStr, ToCStr};
 use str_three::{ToCString};
 use base::rmo::{AsRef};
 use rv::{retry};
-use iter::{IteratorExt};
 use rmo::{Rmo};
 use alloc::{FbHeap};
 
 use time_base::{Time};
-
-/// Returns the number of CPU available to this thread.
-pub fn cpu_count() -> usize {
-    // XXX: Up to 512 CPUs which is the default maximum for ia64
-    let mut buf = [0; 512 / 8];
-    sched_getaffinity(0, &mut buf);
-    buf.iter().map(|b| b.count_ones()).sum(0) as usize
-}
 
 /// Returns information about the system in form of strings.
 #[derive(Pod)]

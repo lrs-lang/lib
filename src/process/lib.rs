@@ -36,18 +36,20 @@ mod lrs {
 use core::{mem};
 use syscall::{
     getpid, getppid, exit_group, umask, times, setsid, getsid, setpgid, getpgid,
-    getrusage,
+    getrusage, prlimit,
 };
 use cty::alias::{ProcessId};
-use cty::{c_int, tms, rusage};
+use cty::{c_int, tms, rusage, rlimit64};
 use file::flags::{Mode};
 use time_base::{Time};
 use res_user::{ResourceUser};
 use fmt::{Debug, Write};
+use res::{Resource};
 
 pub mod exec;
 pub mod wait;
 pub mod res_user;
+pub mod res;
 
 /// Returns the process id of this process.
 pub fn process_id() -> ProcessId {
@@ -274,8 +276,64 @@ impl Debug for ResourceUsage {
 ///
 /// [argument, who]
 /// Whose resource usage to return.
+///
+/// = See also
+///
+/// * link:man:getrusage(2)
 pub fn resource_usage(who: ResourceUser) -> Result<ResourceUsage> {
     let mut usage: ResourceUsage = mem::zeroed();
     try!(rv!(getrusage(who.0, &mut usage.data)));
     Ok(usage)
+}
+
+/// Returns a resource limit.
+///
+/// [argument, process]
+/// The process whose resource limit to return.
+///
+/// [argument, resource]
+/// The resource whose limit to return.
+///
+/// [return_value]
+/// Returns the soft limit in the first slot and the hard limit in the second slot.
+///
+/// = See also
+///
+/// * link:man:prlimit(2)
+pub fn resource_limit(process: ProcessId, resource: Resource) -> Result<(u64, u64)> {
+    let mut limit = mem::zeroed();
+    try!(rv!(prlimit(process, resource.0, None, Some(&mut limit))));
+    Ok((limit.rlim_cur, limit.rlim_max))
+}
+
+/// Sets a resource limit.
+///
+/// [argument, process]
+/// The process whose resource limit to set.
+///
+/// [argument, resource]
+/// The resource whose limit to set.
+///
+/// [argument, soft]
+/// The new soft limit.
+///
+/// [argument, hard]
+/// The new hard limit.
+///
+/// [return_value]
+/// Returns the old soft limit in the first slot and the old hard limit in the second
+/// slot.
+///
+/// = See also
+///
+/// * link:man:prlimit(2)
+pub fn set_resource_limit(process: ProcessId, resource: Resource, soft: u64,
+                          hard: u64) -> Result<(u64, u64)> {
+    let mut old = mem::zeroed();
+    let new = rlimit64 {
+        rlim_cur: soft,
+        rlim_max: hard,
+    };
+    try!(rv!(prlimit(process, resource.0, Some(&new), Some(&mut old))));
+    Ok((old.rlim_cur, old.rlim_max))
 }

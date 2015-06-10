@@ -57,7 +57,7 @@ obj fs         core base fmt cty syscall rv str_three alloc rmo
 obj socket     core base cty arch_fns str_one fmt syscall rv fd io saturating time_base alloc
 obj netlink    core base cty vec alloc fmt
 
-obj sys        core base fmt cty syscall str_one str_three rv time_base iter rmo alloc
+obj sys        core base fmt cty syscall str_one str_three rv time_base rmo alloc
 obj poll       core base cty syscall fd rv saturating fmt time_base
 
 obj dev        core base fmt cty
@@ -65,7 +65,7 @@ obj file       core base io cty fmt int syscall str_one str_two str_three arch_f
 
 obj mqueue     core base cty fmt syscall fd file str_three rmo alloc time_base rv
 obj tty        core base syscall cty fd file signal dev fmt
-obj thread     core base syscall cty libc lock fmt time_base
+obj thread     core base syscall cty libc lock fmt time_base iter
 obj process    core base syscall cty fmt str_one str_two str_three c_ptr_ptr alloc rt env file rmo rv time_base
 obj time_ext   core base fmt str_one file time_base io vec
 

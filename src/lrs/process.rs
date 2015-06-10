@@ -8,7 +8,9 @@ pub use lrs_cty::alias::{ProcessId};
 pub use lrs_process::{
     process_id, parent_process_id, exit, set_file_mask, Times, used_time, new_session,
     session, set_process_group, process_group, resource_usage, ResourceUsage,
+    resource_limit, set_resource_limit,
 };
+pub use lrs_process::res::{Resource};
 pub use lrs_process::res_user::{ResourceUser};
 pub use lrs_process::exec::{exec};
 pub use lrs_process::wait::{
@@ -30,5 +32,13 @@ pub mod clone {
 pub mod res_user {
     pub use lrs_process::res_user::{
         Process, Children, Thread,
+    };
+}
+
+pub mod resource {
+    pub use lrs_process::res::{
+        VirtualMemory, CoreDumpSize, CpuTime, ContiguousCpuTime, DataSegment, FileSize,
+        LockedMemory, MsgQueue, Niceness, FileDescriptors, Processes, Priority,
+        PendingSignals, Stack,
     };
 }
