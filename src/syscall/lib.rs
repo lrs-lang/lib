@@ -33,6 +33,7 @@ use cty::{
     TIOCSTI, winsize, TIOCGWINSZ, TIOCSWINSZ, TIOCSCTTY, TIOCNOTTY, TIOCGEXCL, TIOCNXCL,
     TIOCEXCL, TIOCCONS, TIOCGDEV, TIOCVHANGUP, TIOCSETD, TIOCGETD, TIOCGSID, TIOCSPGRP,
     TIOCGPGRP, TCFLSH, TIOCOUTQ, TCXONC, TCGETS2, termios2, TCSETS2, mq_attr, sched_attr,
+    __user_cap_data_struct, __user_cap_header_struct, _LINUX_CAPABILITY_VERSION_3,
 };
 
 mod lrs { pub use base::lrs::*; pub use cty; }
@@ -3890,4 +3891,39 @@ pub fn getpriority(which: c_int, who: c_int) -> c_int {
 /// * link:man:setpriority(2)
 pub fn setpriority(which: c_int, who: c_int, prio: c_int) -> c_int {
     unsafe { r::setpriority(which, who, prio) }
+}
+
+/// Retrieves the capabilities of a thread.
+///
+/// [argument, tid]
+/// The thread id.
+///
+/// [argument, buf]
+/// The buffer in which the capabilities will be stored.
+///
+/// = See also
+///
+/// * link:man:capget(2)
+pub fn capget_v3(tid: c_int, buf: &mut [__user_cap_data_struct; 2]) -> c_int {
+    let mut header = __user_cap_header_struct {
+        version: _LINUX_CAPABILITY_VERSION_3 as u32,
+        pid: tid,
+    };
+    unsafe { r::capget(&mut header, buf.as_mut_ptr()) }
+}
+
+/// Sets the capabilities of this thread.
+///
+/// [argument, caps]
+/// The capabilities.
+///
+/// = See also
+///
+/// * link:man:capset(2)
+pub fn capset_v3(caps: &[__user_cap_data_struct; 2]) -> c_int {
+    let mut header = __user_cap_header_struct {
+        version: _LINUX_CAPABILITY_VERSION_3 as u32,
+        pid: 0,
+    };
+    unsafe { r::capset(&mut header, caps.as_ptr() as *mut _) }
 }

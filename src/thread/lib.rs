@@ -34,6 +34,7 @@ mod lrs { pub use fmt::lrs::*; pub use cty; }
 
 pub mod ids;
 pub mod sched;
+pub mod cap;
 
 /// Returns the number of CPUs available to this thread.
 ///

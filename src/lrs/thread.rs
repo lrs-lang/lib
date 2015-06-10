@@ -38,6 +38,7 @@ pub use lrs_thread::sched::{
     group_niceness, user_niceness, set_process_niceness, set_group_niceness,
     set_user_niceness,
 };
+pub use lrs_thread::cap::{Capability, CapSet, capabilities, set_capabilities};
 
 pub mod flags {
     pub use lrs_thread::sched::{
@@ -48,5 +49,16 @@ pub mod flags {
 pub mod sched {
     pub use lrs_thread::sched::{
         Normal, Fifo, Rr, Batch, Idle, Deadline,
+    };
+}
+
+pub mod capability {
+    pub use lrs_thread::cap::{
+        ChangeOwner, ReadWriteExecute, ReadSearch, FileOwner, FileSetId, SendSignals,
+        SetGroupIds, SetUserIds, SetCapabilities, ImmutableFile, PrivilegedPorts, Network,
+        RawSockets, LockMemory, IpcOwner, KernelModules, RawIo, ChangeRoot, Trace,
+        Accounting, Admin, Reboot, Scheduling, Resources, Clock, Tty, DeviceFiles, Lease,
+        AuditWrite, AuditControl, FileCapabilities, MacOverride, MacAdmin, Syslog, Wakeup,
+        BlockSuspend, AuditRead,
     };
 }

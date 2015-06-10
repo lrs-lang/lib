@@ -370,7 +370,7 @@ pub type cap_user_header_t = *mut __user_cap_header_struct;
 
 #[repr(C)]
 #[derive(Pod, Eq)]
-struct __user_cap_data_struct {
+pub struct __user_cap_data_struct {
     pub effective:   __u32,
     pub permitted:   __u32,
     pub inheritable: __u32,
