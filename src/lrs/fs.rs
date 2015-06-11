@@ -4,7 +4,7 @@
 
 //! Filesystem information and mounting.
 
-pub use lrs_fs::{sync_all};
+pub use lrs_fs::{sync_all, set_root, move_root};
 pub use lrs_fs::mount::{mount, MountFlags};
 pub use lrs_fs::unmount::{unmount, UnmountFlags};
 pub use lrs_fs::info::{FileSystemInfo};

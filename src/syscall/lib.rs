@@ -4054,3 +4054,30 @@ pub fn swapon(path: &CStr, flags: c_int) -> c_int {
 pub fn swapoff(path: &CStr) -> c_int {
     unsafe { r::swapoff(path.as_ptr()) }
 }
+
+/// Changes the root directory of the process.
+///
+/// [argument, path]
+/// The new root directory.
+///
+/// = See also
+///
+/// * link:man:chroot(2)
+pub fn chroot(path: &CStr) -> c_int {
+    unsafe { r::chroot(path.as_ptr()) }
+}
+
+/// Moves the current root directory and sets a new one.
+///
+/// [argument, new]
+/// The path of the new root directory.
+///
+/// [argument, old]
+/// Where the old root directory will me moved to.
+///
+/// = See also
+///
+/// * link:man:pivot_root(2)
+pub fn pivot_root(new: &CStr, old: &CStr) -> c_int {
+    unsafe { r::pivot_root(new.as_ptr(), old.as_ptr()) }
+}
