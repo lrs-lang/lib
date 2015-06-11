@@ -50,6 +50,7 @@ obj str_two    core arch_fns base str_one fmt vec alloc
 obj rmo        core base fmt str_one vec str_two alloc
 obj str_three  core arch_fns base str_one str_two rmo alloc
 
+obj swap       core base cty syscall fmt alloc rmo str_three
 obj inotify    core base cty fmt syscall fd rv io str_one str_three alloc rmo
 obj env        core base str_one rt syscall alloc str_two str_three cty rmo
 
@@ -65,7 +66,7 @@ obj file       core base io cty fmt int syscall str_one str_two str_three arch_f
 
 obj mqueue     core base cty fmt syscall fd file str_three rmo alloc time_base rv
 obj tty        core base syscall cty fd file signal dev fmt
-obj thread     core base syscall cty libc lock fmt time_base iter
+obj thread     core base syscall cty libc lock fmt time_base iter clone fd
 obj process    core base syscall cty fmt str_one str_two str_three c_ptr_ptr alloc rt env file rmo rv time_base
 obj time_ext   core base fmt str_one file time_base io vec
 

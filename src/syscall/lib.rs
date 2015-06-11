@@ -35,6 +35,7 @@ use cty::{
     TIOCGPGRP, TCFLSH, TIOCOUTQ, TCXONC, TCGETS2, termios2, TCSETS2, mq_attr, sched_attr,
     __user_cap_data_struct, __user_cap_header_struct, _LINUX_CAPABILITY_VERSION_3,
     PR_CAPBSET_READ, PR_CAPBSET_DROP, PR_GET_KEEPCAPS, PR_SET_KEEPCAPS,
+    SECCOMP_SET_MODE_STRICT,
 };
 
 mod lrs { pub use base::lrs::*; pub use cty; }
@@ -3972,4 +3973,84 @@ pub fn prctl_pr_get_keepcaps() -> c_int {
 /// * link:man:prctl(2) and PR_SET_KEEPCAPS therein
 pub fn prctl_pr_set_keepcaps(keep: bool) -> c_int {
     unsafe { r::prctl(PR_SET_KEEPCAPS, keep as k_ulong, 0, 0, 0) }
+}
+
+/// Disassociate parts of the thread's execution context.
+///
+/// [argument, flags]
+/// What to disassociate.
+///
+/// = See also
+///
+/// * link:man:unshare(2)
+pub fn unshare(flags: c_int) -> c_int {
+    unsafe { r::unshare(flags as k_ulong) }
+}
+
+/// Retrieves the CPU and NUMA node this thread is running one.
+///
+/// [argument, cpu]
+/// Place where the CPU will be stored.
+///
+/// [argument, node]
+/// Place where the NUMA node will be stored.
+///
+/// = See also
+///
+/// * link:man:getcpu(2)
+pub fn getcpu(cpu: Option<&mut c_uint>, node: Option<&mut c_uint>) -> c_int {
+    let cpu = cpu.map(|c| c as *mut _).unwrap_or(0 as *mut _);
+    let node = node.map(|c| c as *mut _).unwrap_or(0 as *mut _);
+    unsafe { r::getcpu(cpu, node, 0 as *mut _) }
+}
+
+/// Associate a thread with a namespace.
+///
+/// [argument, fd]
+/// A file descriptor referring to the namespace.
+///
+/// [argument, nstype]
+/// Which namespace types can be joined.
+///
+/// = See also
+///
+/// * link:man:setns(2)
+pub fn setns(fd: c_int, nstype: c_int) -> c_int {
+    unsafe { r::setns(fd, nstype) }
+}
+
+/// Enables strict seccomp mode for this thread.
+///
+/// = See also
+///
+/// * link:man:seccomp(2) and SECCOMP_SET_MODE_STRICT therein
+pub fn seccomp_seccomp_set_mode_strict() -> c_int {
+    unsafe { r::seccomp(SECCOMP_SET_MODE_STRICT, 0, 0 as *mut _) }
+}
+
+/// Adds a swap file/device.
+///
+/// [argument, path]
+/// The path of the file/device.
+///
+/// [argument, flags]
+/// Flags to modify the swap behavior.
+///
+/// = See also
+///
+/// * link:man:swapon(2)
+pub fn swapon(path: &CStr, flags: c_int) -> c_int {
+    unsafe { r::swapon(path.as_ptr(), flags) }
+}
+
+/// Removes a swap file/device.
+///
+/// [argument, path]
+/// The path of the file/device.
+///
+/// = See also
+///
+/// * link:man:swapoff(2)
+pub fn swapoff(path: &CStr) -> c_int {
+    unsafe { r::swapoff(path.as_ptr()) }
 }

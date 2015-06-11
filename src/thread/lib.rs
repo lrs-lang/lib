@@ -18,6 +18,8 @@ extern crate lrs_lock as lock;
 extern crate lrs_time_base as time_base;
 extern crate lrs_fmt as fmt;
 extern crate lrs_iter as iter;
+extern crate lrs_clone as clone;
+extern crate lrs_fd as fd;
 
 #[prelude_import] use base::prelude::*;
 use core::marker::{Leak};
@@ -29,6 +31,8 @@ use libc::{pthread_t, pthread_attr_t, PTHREAD_CREATE_DETACHED};
 use lock::{LockGuard, LOCK_INIT};
 use iter::{IteratorExt};
 use fmt::{Debug, Write};
+use fd::{FDContainer};
+use clone::flags::{CloneFlags};
 
 mod lrs { pub use fmt::lrs::*; pub use cty; }
 
@@ -212,6 +216,64 @@ pub unsafe fn exit(code: c_int) -> ! {
 pub fn deschedule() {
     // This function should actually be called yield.
     syscall::sched_yield();
+}
+
+/// Disassociate parts of the thread's execution context.
+///
+/// [argument, flags]
+/// What to disassociate.
+///
+/// = See also
+///
+/// * link:man:unshare(2)
+pub fn unshare(flags: CloneFlags) -> Result {
+    rv!(syscall::unshare(flags.0))
+}
+
+/// Returns the CPU the thread is currently running on.
+///
+/// = See also
+///
+/// * link:man:getcpu(2)
+pub fn current_cpu() -> Result<u32> {
+    let mut cpu = 0;
+    try!(rv!(syscall::getcpu(Some(&mut cpu), None)));
+    Ok(cpu as u32)
+}
+
+/// Associates this thread with a namespace.
+///
+/// [argument, ns]
+/// A file descriptor referring to a namespace.
+///
+/// [argument, kind]
+/// Restricts what kind of namespace can be joined.
+///
+/// = See also
+///
+/// * link:man:setns(2)
+pub fn join_namespace<F>(ns: &F, kind: CloneFlags) -> Result
+    where F: FDContainer,
+{
+    rv!(syscall::setns(ns.borrow(), kind.0))
+}
+
+/// Enables strict seccomp mode for this thread.
+///
+/// = Remarks
+///
+/// :read: link:man:read(2)
+/// :write: link:man:write(2)
+/// :exit_group: link:man:exit_group(2)
+///
+/// After a successful call, the thread can only make calls to {read}, {write}, and
+/// {exit_group}.
+///
+/// = See also
+///
+/// * link:man:seccomp(2) and SECCOMP_SET_MODE_STRICT therein
+pub fn enter_strict_mode() -> Result {
+    rv!(syscall::seccomp_seccomp_set_mode_strict())
 }
 
 /// Spawns a new thread.

@@ -29,7 +29,7 @@ use str_three::{ToCString};
 use alloc::{Allocator, FbHeap};
 use rt::{env};
 use base::{error};
-use cty::{PATH_MAX};
+use cty::{PATH_MAX, PAGE_SIZE};
 use rmo::{Rmo};
 
 mod lrs { pub use base::lrs::*; pub use cty; }
@@ -92,10 +92,10 @@ impl Iterator for PathIter {
 ///
 /// [argument, buf]
 /// The buffer in which the current working directory will be stored.
-pub fn cwd<H>(buf: &mut NoNullString<H>) -> Result
+pub fn get_cwd<H>(buf: &mut NoNullString<H>) -> Result<&mut NoNullStr>
     where H: Allocator,
 {
-    for &res in &[0, 128, 256, 512, 1024, 2048, 4096][..] {
+    for &res in &[0, 128, 256, 512, 1024, 2048, PAGE_SIZE][..] {
         try!(buf.reserve(res));
         let size = match rv!(syscall::getcwd(buf.unused()), -> usize) {
             Ok(s) => s,
@@ -104,12 +104,12 @@ pub fn cwd<H>(buf: &mut NoNullString<H>) -> Result
         };
         let buf_len = buf.len();
         unsafe { buf.set_len(buf_len + size - 1); }
-        return Ok(());
+        return Ok(&mut buf[buf_len..buf_len+size-1]);
     }
     // This should never happen because the kernel returns PathTooLong if the cwd doesn't
-    // fit in one page = 4096 bytes which is the last thing we try above.
+    // fit in one page which is the last thing we try above.
     //
-    // XXX: However, some platforms use a larger page size.
+    // XXX: However, some platforms use a dynamic page size.
     abort!();
 }
 

@@ -5061,3 +5061,41 @@ pub const PR_SET_FP_MODE            : c_int = 45;
 pub const PR_GET_FP_MODE            : c_int = 46;
 pub const PR_FP_MODE_FR             : k_ulong = 1<<0;
 pub const PR_FP_MODE_FRE            : k_ulong = 1<<1;
+
+///////////////////////////////
+// include/uapi/linux/seccomp.h
+///////////////////////////////
+
+pub const SECCOMP_MODE_DISABLED     : c_uint = 0;
+pub const SECCOMP_MODE_STRICT       : c_uint = 1;
+pub const SECCOMP_MODE_FILTER       : c_uint = 2;
+pub const SECCOMP_SET_MODE_STRICT   : c_uint = 0;
+pub const SECCOMP_SET_MODE_FILTER   : c_uint = 1;
+pub const SECCOMP_FILTER_FLAG_TSYNC : c_uint = 1;
+pub const SECCOMP_RET_KILL          : c_uint = 0x00000000;
+pub const SECCOMP_RET_TRAP          : c_uint = 0x00030000;
+pub const SECCOMP_RET_ERRNO         : c_uint = 0x00050000;
+pub const SECCOMP_RET_TRACE         : c_uint = 0x7ff00000;
+pub const SECCOMP_RET_ALLOW         : c_uint = 0x7fff0000;
+pub const SECCOMP_RET_ACTION        : c_uint = 0x7fff0000;
+pub const SECCOMP_RET_DATA          : c_uint = 0x0000ffff;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct seccomp_data {
+    pub nr:                  c_int,
+    pub arch:                __u32,
+    pub instruction_pointer: __u64,
+    pub args:             [__u64; 6],
+}
+
+///////////////////////
+// include/linux/swap.h
+///////////////////////
+
+pub const SWAP_FLAG_PREFER        : c_int = 0x8000;
+pub const SWAP_FLAG_PRIO_MASK     : c_int = 0x7fff;
+pub const SWAP_FLAG_PRIO_SHIFT    : c_int = 0;
+pub const SWAP_FLAG_DISCARD       : c_int = 0x10000;
+pub const SWAP_FLAG_DISCARD_ONCE  : c_int = 0x20000;
+pub const SWAP_FLAG_DISCARD_PAGES : c_int = 0x40000;
