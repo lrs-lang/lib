@@ -6,25 +6,19 @@
 // some minor exceptions which are documented below.
 
 use cty::{
+    self,
     bpf_attr, cap_user_data_t, cap_user_header_t, clockid_t, c_void, epoll_event, gid_t,
-    key_serial_t, k_int, k_uint, k_ulong, loff_t, old_gid_t, old_uid_t, sigset_t, size_t,
-    sockaddr, timespec, timex, uid_t, umode_t, c_char, aio_context_t, clock_t,
-    fd_set, file_handle, getcpu_cache, iocb, io_event, iovec, itimerspec, itimerval,
-    kexec_segment, key_t, k_long, linux_dirent, linux_dirent64, mmap_arg_struct,
-    mmsghdr, mq_attr, mqd_t, msgbuf, msqid64_ds, new_utsname, off_t,
-    __old_kernel_stat, old_linux_dirent, oldold_utsname, old_sigaction, old_sigset_t,
-    old_utsname, perf_event_attr, pid_t, pollfd, qid_t, rlimit, rlimit64,
-    robust_list_head, rusage, __s32, sched_attr, sched_param, sel_arg_struct, sembuf,
-    shmid64_ds, sigaction, siginfo_t,
-    ssize_t, stack_t, stat, stat64, statfs, statfs64, __sysctl_args, sysinfo, timer_t,
-    time_t, timeval, timezone, tms, __u64, msghdr, ustat, utimbuf, IPC_64, k_uchar,
+    key_serial_t, k_int, k_uint, k_ulong, loff_t, sigset_t, size_t, timespec, timex,
+    uid_t, umode_t, c_char, aio_context_t, clock_t, fd_set, file_handle, getcpu_cache,
+    iocb, io_event, iovec, itimerspec, itimerval, kexec_segment, k_long, linux_dirent,
+    linux_dirent64, mq_attr, mqd_t, new_utsname, off_t,
+    perf_event_attr, pid_t, pollfd, qid_t, rlimit, rlimit64,
+    robust_list_head, rusage, __s32, sched_attr, sched_param, sigaction, siginfo_t,
+    ssize_t, stack_t, statfs, sysinfo, timer_t, time_t,
+    timeval, timezone, tms, ustat, utimbuf, k_uchar,
 };
 
-use cty::{self};
-
-use super::arch::{
-    syscall0, syscall1, syscall2, syscall3, syscall4, syscall5, syscall6, SCT
-};
+use super::arch::{SCT};
 
 pub unsafe fn access(filename: *const c_char, mode: k_int) -> k_int {
     call!(cty::__NR_access, filename, mode) as k_int
@@ -46,10 +40,6 @@ pub unsafe fn adjtimex(txc_p: *mut timex) -> k_int {
 
 pub unsafe fn alarm(seconds: k_uint) -> k_uint {
     call!(cty::__NR_alarm, seconds) as k_uint
-}
-
-pub unsafe fn bdflush(func: k_int, data: k_long) -> k_int {
-    call!(cty::__NR_bdflush, func, data) as k_int
 }
 
 pub unsafe fn bpf(cmd: k_int, uattr: *mut bpf_attr, size: k_uint) -> k_int {
@@ -209,10 +199,6 @@ pub unsafe fn fchown(fd: k_uint, user: uid_t, group: gid_t) -> k_int {
     call!(cty::__NR_fchown, fd, user, group) as k_int
 }
 
-pub unsafe fn fcntl64(fd: k_uint, cmd: k_uint, arg: k_ulong) -> k_int {
-    call!(cty::__NR_fcntl64, fd, cmd, arg) as k_int
-}
-
 pub unsafe fn fcntl(fd: k_uint, cmd: k_uint, arg: k_ulong) -> k_int {
     call!(cty::__NR_fcntl, fd, cmd, arg) as k_int
 }
@@ -251,23 +237,6 @@ pub unsafe fn fsetxattr(fd: k_int, name: *const c_char, value: *const c_void,
     call!(cty::__NR_fsetxattr, fd, name, value, size, flags) as k_int
 }
 
-pub unsafe fn fstat64(fd: k_ulong, statbuf: *mut stat64) -> k_int {
-    call!(cty::__NR_fstat64, fd, statbuf) as k_int
-}
-
-pub unsafe fn fstatat64(dfd: k_int, filename: *const c_char, statbuf: *mut stat64,
-                        flag: k_int) -> k_int {
-    call!(cty::__NR_fstatat64, dfd, filename, statbuf, flag) as k_int
-}
-
-pub unsafe fn fstat(fd: k_uint, statbuf: *mut __old_kernel_stat) -> k_int {
-    call!(cty::__NR_fstat, fd, statbuf) as k_int
-}
-
-pub unsafe fn fstatfs64(fd: k_uint, sz: size_t, buf: *mut statfs64) -> k_int {
-    call!(cty::__NR_fstatfs64, fd, sz, buf) as k_int
-}
-
 pub unsafe fn fstatfs(fd: k_uint, buf: *mut statfs) -> k_int {
     call!(cty::__NR_fstatfs, fd, buf) as k_int
 }
@@ -276,7 +245,8 @@ pub unsafe fn fsync(fd: k_uint) -> k_int {
     call!(cty::__NR_fsync, fd) as k_int
 }
 
-pub unsafe fn ftruncate(fd: k_uint, length: k_ulong) -> k_int {
+// length is k_ulong in the kernel but loff_t here for easier cross platform code
+pub unsafe fn ftruncate(fd: k_uint, length: loff_t) -> k_int {
     call!(cty::__NR_ftruncate, fd, length) as k_int
 }
 
@@ -457,11 +427,6 @@ pub unsafe fn io_submit(ctx_id: aio_context_t, nr: k_long,
     call!(cty::__NR_io_submit, ctx_id, nr, iocbpp) as k_int
 }
 
-pub unsafe fn ipc(call: k_uint, first: k_int, second: k_ulong, third: k_ulong,
-                  ptr: *mut c_void, fifth: k_long) -> k_int {
-    call!(cty::__NR_ipc, call, first, second, third, ptr, fifth) as k_int
-}
-
 pub unsafe fn kcmp(pid1: pid_t, pid2: pid_t, ty: k_int, idx1: k_ulong,
                    idx2: k_ulong) -> k_int {
     call!(cty::__NR_kcmp, pid1, pid2, ty, idx1, idx2) as k_int
@@ -516,11 +481,6 @@ pub unsafe fn llistxattr(pathname: *const c_char, list: *mut c_char,
     call!(cty::__NR_llistxattr, pathname, list, size) as ssize_t
 }
 
-pub unsafe fn llseek(fd: k_uint, offset_high: k_ulong, offset_low: k_ulong,
-                     result: *mut loff_t, whence: k_uint) -> k_int {
-    call!(cty::__NR__llseek, fd, offset_high, offset_low, result, whence) as k_int
-}
-
 pub unsafe fn lremovexattr(pathname: *const c_char, name: *const c_char) -> k_int {
     call!(cty::__NR_lremovexattr, pathname, name) as k_int
 }
@@ -532,14 +492,6 @@ pub unsafe fn lseek(fd: k_uint, offset: off_t, whence: k_uint) -> off_t {
 pub unsafe fn lsetxattr(pathname: *const c_char, name: *const c_char,
                         value: *const c_void, size: size_t, flags: k_int) -> k_int {
     call!(cty::__NR_lsetxattr, pathname, name, value, size, flags) as k_int
-}
-
-pub unsafe fn lstat64(filename: *const c_char, statbuf: *mut stat64) -> k_int {
-    call!(cty::__NR_lstat64, filename, statbuf) as k_int
-}
-
-pub unsafe fn lstat(filename: *const c_char, statbuf: *mut __old_kernel_stat) -> k_int {
-    call!(cty::__NR_lstat, filename, statbuf) as k_int
 }
 
 pub unsafe fn madvise(start: k_ulong, len_in: size_t, behavior: k_int) -> k_int {
@@ -589,10 +541,10 @@ pub unsafe fn mlock(start: k_ulong, len: size_t) -> k_int {
     call!(cty::__NR_mlock, start, len) as k_int
 }
 
-pub unsafe fn mmap_pgoff(addr: k_ulong, len: k_ulong, prot: k_ulong, flags: k_ulong,
-                         fd: k_ulong, pgoff: k_ulong) -> k_long {
-    call!(cty::__NR_mmap_pgoff, addr, len, prot, flags, fd, pgoff) as k_long
-}
+// pub unsafe fn mmap_pgoff(addr: k_ulong, len: k_ulong, prot: k_ulong, flags: k_ulong,
+//                          fd: k_ulong, pgoff: k_ulong) -> k_long {
+//     call!(cty::__NR_mmap_pgoff, addr, len, prot, flags, fd, pgoff) as k_long
+// }
 
 pub unsafe fn mount(dev_name: *mut c_char, dir_name: *mut c_char, ty: *mut c_char,
                     flags: k_ulong, data: *mut c_void) -> k_int {
@@ -670,54 +622,8 @@ pub unsafe fn nanosleep(rqtp: *mut timespec, rmtp: *mut timespec) -> k_int {
     call!(cty::__NR_nanosleep, rqtp, rmtp) as k_int
 }
 
-pub unsafe fn newfstatat(dfd: k_int, filename: *const c_char, statbuf: *mut stat,
-                         flag: k_int) -> k_int {
-    call!(cty::__NR_newfstatat, dfd, filename, statbuf, flag) as k_int
-}
-
-pub unsafe fn newfstat(fd: k_uint, statbuf: *mut stat) -> k_int {
-    call!(cty::__NR_newfstat, fd, statbuf) as k_int
-}
-
-pub unsafe fn newlstat(filename: *const c_char, statbuf: *mut stat) -> k_int {
-    call!(cty::__NR_newlstat, filename, statbuf) as k_int
-}
-
-pub unsafe fn newstat(filename: *const c_char, statbuf: *mut stat) -> k_int {
-    call!(cty::__NR_newstat, filename, statbuf) as k_int
-}
-
 pub unsafe fn newuname(name: *mut new_utsname) -> k_int {
     call!(cty::__NR_newuname, name) as k_int
-}
-
-pub unsafe fn nice(increment: k_int) -> k_int {
-    call!(cty::__NR_nice, increment) as k_int
-}
-
-pub unsafe fn old_getrlimit(resource: k_uint, rlim: *mut rlimit) -> k_int {
-    call!(cty::__NR_old_getrlimit, resource, rlim) as k_int
-}
-
-pub unsafe fn old_mmap(arg: *mut mmap_arg_struct) -> k_long {
-    call!(cty::__NR_old_mmap, arg) as k_long
-}
-
-pub unsafe fn old_readdir(fd: k_uint, dirent: *mut old_linux_dirent,
-                          count: k_uint) -> k_int {
-    call!(cty::__NR_old_readdir, fd, dirent, count) as k_int
-}
-
-pub unsafe fn old_select(arg: *mut sel_arg_struct) -> k_int {
-    call!(cty::__NR_old_select, arg) as k_int
-}
-
-pub unsafe fn oldumount(name: *mut c_char) -> k_int {
-    call!(cty::__NR_oldumount, name) as k_int
-}
-
-pub unsafe fn olduname(name: *mut oldold_utsname) -> k_int {
-    call!(cty::__NR_olduname, name) as k_int
 }
 
 pub unsafe fn openat(dfd: k_int, filename: *const c_char, flags: k_int,
@@ -738,15 +644,15 @@ pub unsafe fn pause() -> k_int {
     call!(cty::__NR_pause) as k_int 
 }
 
-pub unsafe fn pciconfig_read(bus: k_ulong, dfn: k_ulong, off: k_ulong, len: k_ulong,
-                             buf: *mut c_void) -> k_int {
-    call!(cty::__NR_pciconfig_read, bus, dfn, off, len, buf) as k_int
-}
-
-pub unsafe fn pciconfig_write(bus: k_ulong, dfn: k_ulong, off: k_ulong, len: k_ulong,
-                              buf: *mut c_void) -> k_int {
-    call!(cty::__NR_pciconfig_write, bus, dfn, off, len, buf) as k_int
-}
+// pub unsafe fn pciconfig_read(bus: k_ulong, dfn: k_ulong, off: k_ulong, len: k_ulong,
+//                              buf: *mut c_void) -> k_int {
+//     call!(cty::__NR_pciconfig_read, bus, dfn, off, len, buf) as k_int
+// }
+// 
+// pub unsafe fn pciconfig_write(bus: k_ulong, dfn: k_ulong, off: k_ulong, len: k_ulong,
+//                               buf: *mut c_void) -> k_int {
+//     call!(cty::__NR_pciconfig_write, bus, dfn, off, len, buf) as k_int
+// }
 
 pub unsafe fn perf_event_open(attr_uptr: *mut perf_event_attr, pid: pid_t, cpu: k_int,
                               group_fd: k_int, flags: k_ulong) -> k_int {
@@ -983,16 +889,6 @@ pub unsafe fn select(n: k_int, inp: *mut fd_set, outp: *mut fd_set, exp: *mut fd
     call!(cty::__NR_select, n, inp, outp, exp, tvp) as k_int
 }
 
-pub unsafe fn sendfile64(out_fd: k_int, in_fd: k_int, offset: *mut loff_t,
-                         count: size_t) -> ssize_t {
-    call!(cty::__NR_sendfile64, out_fd, in_fd, offset, count) as ssize_t
-}
-
-pub unsafe fn sendfile(out_fd: k_int, in_fd: k_int, offset: *mut off_t,
-                       count: size_t) -> ssize_t {
-    call!(cty::__NR_sendfile, out_fd, in_fd, offset, count) as ssize_t
-}
-
 pub unsafe fn setdomainname(name: *mut c_char, len: k_int) -> k_int {
     call!(cty::__NR_setdomainname, name, len) as k_int
 }
@@ -1084,40 +980,13 @@ pub unsafe fn setxattr(pathname: *const c_char, name: *const c_char, value: *con
     call!(cty::__NR_setxattr, pathname, name, value, size, flags) as k_int
 }
 
-pub unsafe fn sgetmask() -> k_long {
-    call!(cty::__NR_sgetmask) as k_long 
-}
-
-pub unsafe fn sigaction(sig: k_int, act: *const old_sigaction,
-                        oact: *mut old_sigaction) -> k_int {
-    call!(cty::__NR_sigaction, sig, act, oact) as k_int
-}
-
-pub unsafe fn sigaltstack(uss: *const stack_t, uoss: *mut stack_t) -> k_int {
-    call!(cty::__NR_sigaltstack, uss, uoss) as k_int
-}
-
 pub unsafe fn signalfd4(ufd: k_int, user_mask: *const sigset_t, sizemask: size_t,
                         flags: k_int) -> k_int {
     call!(cty::__NR_signalfd4, ufd, user_mask, sizemask, flags) as k_int
 }
 
-pub unsafe fn signalfd(ufd: k_int, user_mask: *const sigset_t,
-                       sizemask: size_t) -> k_int {
-    call!(cty::__NR_signalfd, ufd, user_mask, sizemask) as k_int
-}
-
-pub unsafe fn signal(sig: k_int, handler: usize) -> usize {
-    call!(cty::__NR_signal, sig, handler) as usize
-}
-
-pub unsafe fn sigpending(set: *mut old_sigset_t) -> k_int {
-    call!(cty::__NR_sigpending, set) as k_int
-}
-
-pub unsafe fn sigprocmask(how: k_int, nset: *mut old_sigset_t,
-                          oset: *mut old_sigset_t) -> k_int {
-    call!(cty::__NR_sigprocmask, how, nset, oset) as k_int
+pub unsafe fn sigaltstack(uss: *const stack_t, uoss: *mut stack_t) -> k_int {
+    call!(cty::__NR_sigaltstack, uss, uoss) as k_int
 }
 
 // There are two of the following and I don't know which one is the correct one. Both are
@@ -1136,28 +1005,8 @@ pub unsafe fn splice(fd_in: k_int, off_in: *mut loff_t, fd_out: k_int,
     call!(cty::__NR_splice, fd_in, off_in, fd_out, off_out, len, flags) as ssize_t
 }
 
-pub unsafe fn ssetmask(newmask: k_int) -> k_long {
-    call!(cty::__NR_ssetmask, newmask) as k_long
-}
-
-pub unsafe fn stat64(filename: *const c_char, statbuf: *mut stat64) -> k_int {
-    call!(cty::__NR_stat64, filename, statbuf) as k_int
-}
-
-pub unsafe fn stat(filename: *const c_char, statbuf: *mut __old_kernel_stat) -> k_int {
-    call!(cty::__NR_stat, filename, statbuf) as k_int
-}
-
-pub unsafe fn statfs64(pathname: *const c_char, sz: size_t, buf: *mut statfs64) -> k_int {
-    call!(cty::__NR_statfs64, pathname, sz, buf) as k_int
-}
-
 pub unsafe fn statfs(pathname: *const c_char, buf: *mut statfs) -> k_int {
     call!(cty::__NR_statfs, pathname, buf) as k_int
-}
-
-pub unsafe fn stime(tptr: *mut time_t) -> k_int {
-    call!(cty::__NR_stime, tptr) as k_int
 }
 
 pub unsafe fn swapoff(specialfile: *const c_char) -> k_int {
@@ -1183,10 +1032,6 @@ pub unsafe fn sync() {
 
 pub unsafe fn syncfs(fd: k_int) -> k_int {
     call!(cty::__NR_syncfs, fd) as k_int
-}
-
-pub unsafe fn sysctl(args: *mut __sysctl_args) -> k_int {
-    call!(cty::__NR__sysctl, args) as k_int
 }
 
 pub unsafe fn sysfs(option: k_int, arg1: k_ulong, arg2: k_ulong) -> k_int {
@@ -1270,10 +1115,6 @@ pub unsafe fn umount(name: *mut c_char, flags: k_int) -> k_int {
     call!(cty::__NR_umount, name, flags) as k_int
 }
 
-pub unsafe fn uname(name: *mut old_utsname) -> k_int {
-    call!(cty::__NR_uname, name) as k_int
-}
-
 pub unsafe fn unlinkat(dfd: k_int, pathname: *const c_char, flag: k_int) -> k_int {
     call!(cty::__NR_unlinkat, dfd, pathname, flag) as k_int
 }
@@ -1284,10 +1125,6 @@ pub unsafe fn unlink(pathname: *const c_char) -> k_int {
 
 pub unsafe fn unshare(unshare_flags: k_ulong) -> k_int {
     call!(cty::__NR_unshare, unshare_flags) as k_int
-}
-
-pub unsafe fn uselib(library: *const c_char) -> k_int {
-    call!(cty::__NR_uselib, library) as k_int
 }
 
 pub unsafe fn ustat(dev: k_uint, ubuf: *mut ustat) -> k_int {
@@ -1307,6 +1144,11 @@ pub unsafe fn utimes(filename: *const c_char, utimes: *const timeval) -> k_int {
     call!(cty::__NR_utimes, filename, utimes) as k_int
 }
 
+pub unsafe fn sendfile64(out_fd: k_int, in_fd: k_int, offset: *mut loff_t,
+                         count: size_t) -> ssize_t {
+    call!(cty::__NR_sendfile64, out_fd, in_fd, offset, count) as ssize_t
+}
+
 pub unsafe fn vfork() -> pid_t {
     call!(cty::__NR_vfork) as pid_t 
 }
@@ -1320,18 +1162,9 @@ pub unsafe fn vmsplice(fd: k_int, iov: *const iovec, nr_segs: k_ulong,
     call!(cty::__NR_vmsplice, fd, iov, nr_segs, flags) as ssize_t
 }
 
-pub unsafe fn wait4(upid: pid_t, stat_addr: *mut k_int, options: k_int,
-                    ru: *mut rusage) -> pid_t {
-    call!(cty::__NR_wait4, upid, stat_addr, options, ru) as pid_t
-}
-
 pub unsafe fn waitid(which: k_int, upid: pid_t, infop: *mut siginfo_t, options: k_int,
                      ru: *mut rusage) -> k_int {
     call!(cty::__NR_waitid, which, upid, infop, options, ru) as k_int
-}
-
-pub unsafe fn waitpid(pid: pid_t, stat_addr: *mut k_int, options: k_int) -> k_int {
-    call!(cty::__NR_waitpid, pid, stat_addr, options) as k_int
 }
 
 pub unsafe fn write(fd: k_uint, buf: *const c_char, count: size_t) -> ssize_t {
@@ -1340,6 +1173,82 @@ pub unsafe fn write(fd: k_uint, buf: *const c_char, count: size_t) -> ssize_t {
 
 pub unsafe fn writev(fd: k_ulong, vec: *const iovec, vlen: k_ulong) -> ssize_t {
     call!(cty::__NR_writev, fd, vec, vlen) as ssize_t
+}
+
+// 64 bit calls for 32 bit systems
+#[cfg(target_arch = "x86")]
+pub use self::_64_calls::*;
+
+#[cfg(target_arch = "x86")]
+mod _64_calls {
+    use cty::{
+        self, k_int, c_char, k_ulong, size_t, k_uint, stat64, statfs64, loff_t,
+    };
+    use ::arch::{SCT};
+
+    pub unsafe fn fcntl64(fd: k_uint, cmd: k_uint, arg: k_ulong) -> k_int {
+        call!(cty::__NR_fcntl64, fd, cmd, arg) as k_int
+    }
+
+    pub unsafe fn fstat64(fd: k_ulong, statbuf: *mut stat64) -> k_int {
+        call!(cty::__NR_fstat64, fd, statbuf) as k_int
+    }
+
+    pub unsafe fn fstatat64(dfd: k_int, filename: *const c_char, statbuf: *mut stat64,
+                            flag: k_int) -> k_int {
+        call!(cty::__NR_fstatat64, dfd, filename, statbuf, flag) as k_int
+    }
+
+    pub unsafe fn fstatfs64(fd: k_uint, sz: size_t, buf: *mut statfs64) -> k_int {
+        call!(cty::__NR_fstatfs64, fd, sz, buf) as k_int
+    }
+
+    pub unsafe fn lstat64(filename: *const c_char, statbuf: *mut stat64) -> k_int {
+        call!(cty::__NR_lstat64, filename, statbuf) as k_int
+    }
+
+    pub unsafe fn stat64(filename: *const c_char, statbuf: *mut stat64) -> k_int {
+        call!(cty::__NR_stat64, filename, statbuf) as k_int
+    }
+
+    pub unsafe fn statfs64(pathname: *const c_char, sz: size_t,
+                           buf: *mut statfs64) -> k_int {
+        call!(cty::__NR_statfs64, pathname, sz, buf) as k_int
+    }
+
+    pub unsafe fn llseek(fd: k_uint, offset_high: k_ulong, offset_low: k_ulong,
+                         result: *mut loff_t, whence: k_uint) -> k_int {
+        call!(cty::__NR_llseek, fd, offset_high, offset_low, result, whence) as k_int
+    }
+}
+
+// 64 bit calls for 64 bit systems
+#[cfg(target_arch = "x86_64")]
+pub use self::new_calls::*;
+
+#[cfg(target_arch = "x86_64")]
+mod new_calls {
+    use cty::{
+        self, k_int, c_char, k_uint, stat,
+    };
+    use ::arch::{SCT};
+
+    pub unsafe fn newfstatat(dfd: k_int, filename: *const c_char, statbuf: *mut stat,
+                             flag: k_int) -> k_int {
+        call!(cty::__NR_newfstatat, dfd, filename, statbuf, flag) as k_int
+    }
+    
+    pub unsafe fn newfstat(fd: k_uint, statbuf: *mut stat) -> k_int {
+        call!(cty::__NR_newfstat, fd, statbuf) as k_int
+    }
+    
+    pub unsafe fn newlstat(filename: *const c_char, statbuf: *mut stat) -> k_int {
+        call!(cty::__NR_newlstat, filename, statbuf) as k_int
+    }
+    
+    pub unsafe fn newstat(filename: *const c_char, statbuf: *mut stat) -> k_int {
+        call!(cty::__NR_newstat, filename, statbuf) as k_int
+    }
 }
 
 // ipc interface
@@ -1352,7 +1261,7 @@ pub use self::ipc_one::*;
 #[cfg(target_arch = "x86")]
 mod ipc_one {
     use cty::{
-        self, k_int, c_char, c_void, mmsghdr, IPC_64, msgbuf, k_long, ssize_t, timespec,
+        self, k_int, c_char, c_void, IPC_64, msgbuf, k_long, ssize_t, timespec,
         key_t, sembuf, k_ulong, size_t, c_long, msqid64_ds, shmid64_ds, k_uint,
     };
     use ::arch::{SCT};
@@ -1373,7 +1282,8 @@ mod ipc_one {
     pub unsafe fn semctl(semid: k_int, semnum: k_int, cmd: k_int, arg: k_ulong) -> k_int {
         // I kid you not: The last argument goes as a pointer that is immediately
         // dereferenced in the kernel.
-        call!(cty::__NR_ipc, cty::SEMCTL, semid, semnum, cmd | IPC_64, &arg) as k_int
+        call!(cty::__NR_ipc, cty::SEMCTL, semid, semnum, cmd | IPC_64,
+              &arg as *const _) as k_int
     }
 
     pub unsafe fn msgsnd(msqid: k_int, msgp: *mut msgbuf, msgsz: size_t,
@@ -1384,7 +1294,8 @@ mod ipc_one {
     pub unsafe fn msgrcv(msqid: k_int, msgp: *mut msgbuf, msgsz: size_t, msgtyp: k_long,
                          msgflg: k_int) -> ssize_t {
         let mut data = [msgp as c_long, msgtyp];
-        call!(cty::__NR_ipc, cty::MSGRCV, msqid, msgsz, msgflg, data.as_ptr()) as ssize_t
+        call!(cty::__NR_ipc, cty::MSGRCV, msqid, msgsz, msgflg,
+              data.as_mut_ptr()) as ssize_t
     }
 
     pub unsafe fn msgget(key: key_t, msgflg: k_int) -> k_int {
@@ -1413,7 +1324,7 @@ mod ipc_one {
 
     pub unsafe fn shmat(shmid: k_int, mut shmaddr: *mut c_char,
                         shmflg: k_int) -> *mut c_void {
-        call!(cty::__NR_ipc, cty::SHMAT, shmid, shmflg, &mut shmaddr,
+        call!(cty::__NR_ipc, cty::SHMAT, shmid, shmflg, &mut shmaddr as *mut _,
               shmaddr) as *mut c_void
     }
 }
@@ -1425,8 +1336,8 @@ pub use self::ipc_sep::*;
 #[cfg(target_arch = "x86_64")]
 mod ipc_sep {
     use cty::{
-        self, k_int, c_char, c_void, mmsghdr, IPC_64, msgbuf, k_long, ssize_t, timespec,
-        key_t, sembuf, k_ulong, size_t, c_long, msqid64_ds, shmid64_ds, k_uint,
+        self, k_int, c_char, c_void, IPC_64, msgbuf, k_long, ssize_t, timespec,
+        key_t, sembuf, k_ulong, size_t, msqid64_ds, shmid64_ds, k_uint,
     };
     use ::arch::{SCT};
 
@@ -1565,16 +1476,6 @@ mod sock_one {
         socketcall!(cty::SYS_SOCKETPAIR, family, ty, protocol, usockvec) as k_int
     }
 
-    pub unsafe fn send(fd: k_int, buff: *mut c_void, len: size_t,
-                       flags: k_uint) -> ssize_t {
-        socketcall!(cty::SYS_SEND, fd, buff, len, flags) as ssize_t
-    }
-
-    pub unsafe fn recv(fd: k_int, ubuf: *mut c_void, size: size_t,
-                       flags: k_uint) -> ssize_t {
-        socketcall!(cty::SYS_RECV, fd, ubuf, size, flags) as ssize_t
-    }
-
     pub unsafe fn recvfrom(fd: k_int, ubuf: *mut c_void, size: size_t, flags: k_uint,
                            addr: *mut sockaddr, addr_len: *mut k_int) -> ssize_t {
         socketcall!(cty::SYS_RECVFROM, fd, ubuf, size, flags, addr, addr_len) as ssize_t
@@ -1620,7 +1521,7 @@ pub use self::sock_sep::*;
 #[cfg(target_arch = "x86_64")]
 mod sock_sep {
     use cty::{
-        self, k_int, sockaddr, c_char, c_void, size_t, k_uint, ssize_t, k_ulong, msghdr,
+        self, k_int, sockaddr, c_char, c_void, size_t, k_uint, ssize_t, msghdr,
         timespec, mmsghdr,
     };
     use ::arch::{SCT};
@@ -1671,16 +1572,6 @@ mod sock_sep {
         call!(cty::__NR_socketpair, family, ty, protocol, usockvec) as k_int
     }
 
-    pub unsafe fn send(fd: k_int, buff: *mut c_void, len: size_t,
-                       flags: k_uint) -> ssize_t {
-        call!(cty::__NR_send, fd, buff, len, flags) as ssize_t
-    }
-
-    pub unsafe fn recv(fd: k_int, ubuf: *mut c_void, size: size_t,
-                       flags: k_uint) -> ssize_t {
-        call!(cty::__NR_recv, fd, ubuf, size, flags) as ssize_t
-    }
-
     pub unsafe fn recvfrom(fd: k_int, ubuf: *mut c_void, size: size_t, flags: k_uint,
                            addr: *mut sockaddr, addr_len: *mut k_int) -> ssize_t {
         call!(cty::__NR_recvfrom, fd, ubuf, size, flags, addr, addr_len) as ssize_t
@@ -1727,10 +1618,15 @@ pub use self::wide::*;
 
 #[cfg(target_arch = "x86_64")]
 mod wide {
-    pub unsafe fn fadvise64_64(fd: k_int, offset: loff_t, len: loff_t,
-                               advice: k_int) -> k_int {
-        call!(cty::__NR_fadvise64_64, fd, offset, len, advice) as k_int
-    }
+    use cty::{
+        self, k_int, c_char, size_t, k_uint, ssize_t, loff_t, __u64,
+    };
+    use ::arch::{SCT};
+
+    // pub unsafe fn fadvise64_64(fd: k_int, offset: loff_t, len: loff_t,
+    //                            advice: k_int) -> k_int {
+    //     call!(cty::__NR_fadvise64_64, fd, offset, len, advice) as k_int
+    // }
 
     pub unsafe fn fadvise64(fd: k_int, offset: loff_t, len: size_t,
                             advice: k_int) -> k_int {
@@ -1747,9 +1643,9 @@ mod wide {
         call!(cty::__NR_fanotify_mark, fanotify_fd, flags, mask, dfd, pathname) as k_int
     }
 
-    pub unsafe fn ftruncate64(fd: k_uint, length: loff_t) -> k_int {
-        call!(cty::__NR_ftruncate64, fd, length) as k_int
-    }
+    // pub unsafe fn ftruncate64(fd: k_uint, length: loff_t) -> k_int {
+    //     call!(cty::__NR_ftruncate64, fd, length) as k_int
+    // }
 
     pub unsafe fn lookup_dcookie(cookie64: u64, buf: *mut c_char, len: size_t) -> k_int {
         call!(cty::__NR_lookup_dcookie, cookie64, buf, len) as k_int
@@ -1769,19 +1665,19 @@ mod wide {
         call!(cty::__NR_readahead, fd, offset, count) as ssize_t
     }
 
-    pub unsafe fn sync_file_range2(fd: k_int, flags: k_uint, offset: loff_t,
-                                   nbytes: loff_t) -> k_int {
-        call!(cty::__NR_sync_file_range2, fd, flags, offset, nbytes) as k_int
-    }
+    // pub unsafe fn sync_file_range2(fd: k_int, flags: k_uint, offset: loff_t,
+    //                                nbytes: loff_t) -> k_int {
+    //     call!(cty::__NR_sync_file_range2, fd, flags, offset, nbytes) as k_int
+    // }
 
     pub unsafe fn sync_file_range(fd: k_int, offset: loff_t, nbytes: loff_t,
                                   flags: k_uint) -> k_int {
         call!(cty::__NR_sync_file_range, fd, offset, nbytes, flags) as k_int
     }
 
-    pub unsafe fn truncate64(path: *const c_char, length: loff_t) -> k_int {
-        call!(cty::__NR_truncate64, path, length) as k_int
-    }
+    // pub unsafe fn truncate64(path: *const c_char, length: loff_t) -> k_int {
+    //     call!(cty::__NR_truncate64, path, length) as k_int
+    // }
 }
 
 #[cfg(target_os = "TODO: add something like cfg(false)")]
@@ -1870,5 +1766,123 @@ mod deprecated {
 
     pub unsafe fn gethostname(name: *mut c_char, len: k_int) -> k_int {
         call!(cty::__NR_gethostname, name, len) as k_int
+    }
+
+    pub unsafe fn old_getrlimit(resource: k_uint, rlim: *mut rlimit) -> k_int {
+        call!(cty::__NR_old_getrlimit, resource, rlim) as k_int
+    }
+
+    pub unsafe fn old_mmap(arg: *mut mmap_arg_struct) -> k_long {
+        call!(cty::__NR_old_mmap, arg) as k_long
+    }
+
+    pub unsafe fn old_readdir(fd: k_uint, dirent: *mut old_linux_dirent,
+                              count: k_uint) -> k_int {
+        call!(cty::__NR_old_readdir, fd, dirent, count) as k_int
+    }
+
+    pub unsafe fn old_select(arg: *mut sel_arg_struct) -> k_int {
+        call!(cty::__NR_old_select, arg) as k_int
+    }
+
+    pub unsafe fn oldumount(name: *mut c_char) -> k_int {
+        call!(cty::__NR_oldumount, name) as k_int
+    }
+
+    pub unsafe fn olduname(name: *mut oldold_utsname) -> k_int {
+        call!(cty::__NR_olduname, name) as k_int
+    }
+
+    pub unsafe fn sendfile(out_fd: k_int, in_fd: k_int, offset: *mut off_t,
+                           count: size_t) -> ssize_t {
+        call!(cty::__NR_sendfile, out_fd, in_fd, offset, count) as ssize_t
+    }
+
+    pub unsafe fn sigaction(sig: k_int, act: *const old_sigaction,
+                            oact: *mut old_sigaction) -> k_int {
+        call!(cty::__NR_sigaction, sig, act, oact) as k_int
+    }
+
+    pub unsafe fn sigpending(set: *mut old_sigset_t) -> k_int {
+        call!(cty::__NR_sigpending, set) as k_int
+    }
+
+    pub unsafe fn sigprocmask(how: k_int, nset: *mut old_sigset_t,
+                              oset: *mut old_sigset_t) -> k_int {
+        call!(cty::__NR_sigprocmask, how, nset, oset) as k_int
+    }
+
+    pub unsafe fn signalfd(ufd: k_int, user_mask: *const sigset_t,
+                           sizemask: size_t) -> k_int {
+        call!(cty::__NR_signalfd, ufd, user_mask, sizemask) as k_int
+    }
+
+    pub unsafe fn signal(sig: k_int, handler: usize) -> usize {
+        call!(cty::__NR_signal, sig, handler) as usize
+    }
+
+    pub unsafe fn bdflush(func: k_int, data: k_long) -> k_int {
+        call!(cty::__NR_bdflush, func, data) as k_int
+    }
+
+    pub unsafe fn fstat(fd: k_uint, statbuf: *mut __old_kernel_stat) -> k_int {
+        call!(cty::__NR_fstat, fd, statbuf) as k_int
+    }
+
+    pub unsafe fn lstat(filename: *const c_char,
+                        statbuf: *mut __old_kernel_stat) -> k_int {
+        call!(cty::__NR_lstat, filename, statbuf) as k_int
+    }
+
+    pub unsafe fn nice(increment: k_int) -> k_int {
+        call!(cty::__NR_nice, increment) as k_int
+    }
+
+    pub unsafe fn sgetmask() -> k_long {
+        call!(cty::__NR_sgetmask) as k_long 
+    }
+
+    pub unsafe fn ssetmask(newmask: k_int) -> k_long {
+        call!(cty::__NR_ssetmask, newmask) as k_long
+    }
+
+    pub unsafe fn stat(filename: *const c_char,
+                       statbuf: *mut __old_kernel_stat) -> k_int {
+        call!(cty::__NR_stat, filename, statbuf) as k_int
+    }
+
+    pub unsafe fn stime(tptr: *mut time_t) -> k_int {
+        call!(cty::__NR_stime, tptr) as k_int
+    }
+
+    pub unsafe fn sysctl(args: *mut __sysctl_args) -> k_int {
+        call!(cty::__NR_sysctl, args) as k_int
+    }
+
+    pub unsafe fn uname(name: *mut old_utsname) -> k_int {
+        call!(cty::__NR_uname, name) as k_int
+    }
+
+    pub unsafe fn uselib(library: *const c_char) -> k_int {
+        call!(cty::__NR_uselib, library) as k_int
+    }
+
+    pub unsafe fn waitpid(pid: pid_t, stat_addr: *mut k_int, options: k_int) -> k_int {
+        call!(cty::__NR_waitpid, pid, stat_addr, options) as k_int
+    }
+
+    pub unsafe fn wait4(upid: pid_t, stat_addr: *mut k_int, options: k_int,
+                        ru: *mut rusage) -> pid_t {
+        call!(cty::__NR_wait4, upid, stat_addr, options, ru) as pid_t
+    }
+
+    pub unsafe fn send(fd: k_int, buff: *mut c_void, len: size_t,
+                       flags: k_uint) -> ssize_t {
+        call!(cty::__NR_send, fd, buff, len, flags) as ssize_t
+    }
+
+    pub unsafe fn recv(fd: k_int, ubuf: *mut c_void, size: size_t,
+                       flags: k_uint) -> ssize_t {
+        call!(cty::__NR_recv, fd, ubuf, size, flags) as ssize_t
     }
 }

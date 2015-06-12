@@ -22,7 +22,7 @@ use base::{error};
 use str_one::c_str::{CStr};
 use saturating::{SaturatingCast};
 use cty::{
-    c_int, ssize_t, rlimit64, pid_t, uid_t, gid_t, stat, c_char, size_t, statfs,
+    c_int, ssize_t, rlimit64, pid_t, uid_t, gid_t, c_char, size_t,
     timespec, dev_t, c_void, clockid_t, itimerspec, epoll_event, sigset_t, new_utsname,
     sysinfo, c_uint, c_ulong, umode_t, k_uint, loff_t, k_ulong, F_DUPFD_CLOEXEC, F_GETFL,
     F_SETFL, F_GETFD, F_SETFD, sockaddr, msghdr, mmsghdr, FUTEX_WAIT, FUTEX_WAKE,
@@ -37,6 +37,8 @@ use cty::{
     PR_CAPBSET_READ, PR_CAPBSET_DROP, PR_GET_KEEPCAPS, PR_SET_KEEPCAPS,
     SECCOMP_SET_MODE_STRICT,
 };
+
+pub use r::{StatType, StatfsType};
 
 mod lrs { pub use base::lrs::*; pub use cty; }
 
@@ -212,7 +214,7 @@ pub fn fcntl_setfd(fd: c_int, arg: c_int) -> c_int {
 ///
 /// * link:man:ftruncate(2)
 pub fn ftruncate(fd: c_int, offset: loff_t) -> c_int {
-    unsafe { r::ftruncate(fd as k_uint, offset as k_ulong) }
+    unsafe { r::ftruncate(fd as k_uint, offset) }
 }
 
 /// Returns the process id of this process.
@@ -350,7 +352,7 @@ pub fn syncfs(fd: c_int) -> c_int {
 ///
 /// * link:man:fadvise(2)
 pub fn fadvise(fd: c_int, offset: loff_t, len: loff_t, advice: c_int) -> c_int {
-    unsafe { r::fadvise(fd, offset, len as k_ulong, advice) }
+    unsafe { r::fadvise(fd, offset, len, advice) }
 }
 
 /// Changes the mode of an inode represented by a file descriptor.
@@ -750,7 +752,7 @@ pub fn setgroups(buf: &[gid_t]) -> c_int {
 /// = See also
 ///
 /// * link:man:statfs(2)
-pub fn statfs(path: &CStr, buf: &mut statfs) -> c_int {
+pub fn statfs(path: &CStr, buf: &mut StatfsType) -> c_int {
     unsafe { r::statfs(path.as_ptr(), buf) }
 }
 
@@ -768,7 +770,7 @@ pub fn statfs(path: &CStr, buf: &mut statfs) -> c_int {
 /// = See also
 ///
 /// * link:man:fstatfs(2)
-pub fn fstatfs(fd: c_int, buf: &mut statfs) -> c_int {
+pub fn fstatfs(fd: c_int, buf: &mut StatfsType) -> c_int {
     unsafe { r::fstatfs(fd as k_uint, buf) }
 }
 
@@ -839,7 +841,7 @@ pub fn getdents(fd: c_int, buf: &mut [u8]) -> c_int {
 /// = See also
 ///
 /// * link:man:fstatat(2)
-pub fn fstatat(dir: c_int, file: &CStr, buf: &mut stat, flags: c_int) -> c_int {
+pub fn fstatat(dir: c_int, file: &CStr, buf: &mut StatType, flags: c_int) -> c_int {
     unsafe { r::fstatat(dir, file.as_ptr(), buf, flags) }
 }
 
@@ -2329,7 +2331,7 @@ pub fn execveat(fd: c_int, filename: &CStr, argv: *const *const c_char,
 pub unsafe fn mmap(addr: usize, len: usize, prot: c_int, flags: c_int, fd: c_int,
                    off: u64) -> isize {
     r::mmap(addr as k_ulong, len as k_ulong, prot as k_ulong, flags as k_ulong,
-            fd as k_ulong, off as k_ulong) as isize
+            fd as k_ulong, off) as isize
 }
 
 /// Unmaps a file.

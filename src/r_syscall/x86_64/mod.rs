@@ -39,19 +39,20 @@ pub use ::common::{
     setitimer, set_mempolicy, setns, setpgid, setpriority, setregid, setresgid, setresuid,
     setreuid, setrlimit, set_robust_list, setsid, setsockopt, set_tid_address,
     settimeofday, setuid, setxattr, shmat, shmctl, shmdt, shmget, shutdown, sigaltstack,
-    signalfd, signalfd4, socket, socketpair, splice, statfs, swapoff, swapon, symlink,
+    signalfd4, socket, socketpair, splice, statfs, swapoff, swapon, symlink,
     symlinkat, sync, sync_file_range, syncfs, sysfs, sysinfo, syslog, tee, tgkill, time,
     timer_delete, timerfd_create, timerfd_gettime, timerfd_settime, timer_getoverrun,
     timer_gettime, timer_settime, times, tkill, truncate, umask, umount, unlink, unlinkat,
-    unshare, ustat, utime, utimensat, utimes, vfork, vhangup, vmsplice, wait4, waitid,
+    unshare, ustat, utime, utimensat, utimes, vfork, vhangup, vmsplice, waitid,
     write, writev,
 };
 
 use cty::{
-    c_uint, k_int, k_long, k_ulong, user_desc, c_char, k_uint, linux_dirent64, loff_t,
+    self,
+    c_uint, k_int, k_long, k_ulong, c_char, k_uint, linux_dirent64, loff_t,
     new_utsname, pid_t, rlimit64, size_t, ssize_t, stat,
 
-    __NR_iopl, __NR_set_thread_area, __NR_get_thread_area, __NR_mmap,
+    __NR_iopl, __NR_mmap,
 };
 
 #[cfg(target_pointer_width = "32")]
@@ -140,8 +141,10 @@ mod common {
     }
 }
 
-
 // cross platform unification:
+
+pub type StatType = stat;
+pub type StatfsType = cty::statfs;
 
 pub unsafe fn stat(filename: *const c_char, statbuf: *mut stat) -> k_int {
     ::common::newstat(filename, statbuf)
@@ -177,8 +180,8 @@ pub unsafe fn getdents(fd: k_uint, dirent: *mut linux_dirent64, count: k_uint) -
     ::common::getdents64(fd, dirent, count)
 }
 
-pub unsafe fn fadvise(fd: k_int, offset: loff_t, len: size_t, advice: k_int) -> k_int {
-    ::common::fadvise64(fd, offset, len, advice)
+pub unsafe fn fadvise(fd: k_int, offset: loff_t, len: loff_t, advice: k_int) -> k_int {
+    ::common::fadvise64(fd, offset, len as size_t, advice)
 }
 
 pub unsafe fn fstatat(dfd: k_int, filename: *const c_char, statbuf: *mut stat,
@@ -196,14 +199,6 @@ pub unsafe fn prlimit(pid: pid_t, resource: k_uint, new_rlim: *const rlimit64,
 
 pub unsafe fn iopl(level: c_uint) -> k_int {
     call!(__NR_iopl, level) as k_int
-}
-
-pub unsafe fn set_thread_area(u_info: *mut user_desc) -> k_int {
-    call!(__NR_set_thread_area, u_info) as k_int
-}
-
-pub unsafe fn get_thread_area(u_info: *mut user_desc) -> k_int {
-    call!(__NR_get_thread_area, u_info) as k_int
 }
 
 pub unsafe fn mmap(addr: k_ulong, len: k_ulong, prot: k_ulong, flags: k_ulong,

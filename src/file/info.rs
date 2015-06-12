@@ -4,14 +4,15 @@
 
 #[prelude_import] use base::prelude::*;
 use fmt::{Debug, Write};
-use cty::{stat, S_IFMT, S_IFDIR, S_IFCHR, S_IFBLK, S_IFREG, S_IFIFO, S_IFLNK,
+use cty::{S_IFMT, S_IFDIR, S_IFCHR, S_IFBLK, S_IFREG, S_IFIFO, S_IFLNK,
           S_IFSOCK, umode_t};
 use cty::alias::{InodeId, UserId, GroupId, DeviceId};
 use time_base::{Time};
 use dev::{Device, DeviceType};
 use flags::{Mode};
+use syscall::{StatType};
 
-pub fn info_from_stat(s: stat) -> Info { Info(s) }
+pub fn info_from_stat(s: StatType) -> Info { Info(s) }
 
 pub fn file_type_from_mode(i: umode_t) -> Type {
     match i & S_IFMT {
@@ -78,7 +79,7 @@ impl Debug for Type {
 
 /// Information about a file.
 #[derive(Pod, Eq)]
-pub struct Info(stat);
+pub struct Info(StatType);
 
 impl Info {
     /// Returns the device on which the file is stored.

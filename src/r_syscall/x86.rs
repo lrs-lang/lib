@@ -37,11 +37,11 @@ pub use ::common::{
     setitimer, set_mempolicy, setns, setpgid, setpriority, setregid, setresgid, setresuid,
     setreuid, setrlimit, set_robust_list, setsid, setsockopt, set_tid_address,
     settimeofday, setuid, setxattr, shmat, shmctl, shmdt, shmget, shutdown, sigaltstack,
-    signalfd, signalfd4, socket, socketpair, splice, swapoff, swapon, symlink,
+    signalfd4, socket, socketpair, splice, swapoff, swapon, symlink,
     symlinkat, sync, syncfs, sysfs, sysinfo, syslog, tee, tgkill, time,
     timer_delete, timerfd_create, timerfd_gettime, timerfd_settime, timer_getoverrun,
     timer_gettime, timer_settime, times, tkill, umask, umount, unlink, unlinkat,
-    unshare, ustat, utime, utimensat, utimes, vfork, vhangup, vmsplice, wait4, waitid,
+    unshare, ustat, utime, utimensat, utimes, vfork, vhangup, vmsplice, waitid,
     write, writev,
 };
 
@@ -49,6 +49,7 @@ use cty::{
     self,
     c_uint, k_int, k_long, k_ulong, user_desc, c_char, k_uint, linux_dirent64, loff_t,
     new_utsname, pid_t, rlimit64, size_t, ssize_t, statfs64, stat64, EINVAL, c_long,
+    __u64,
 };
 
 pub type SCT = c_long;
@@ -127,12 +128,15 @@ pub unsafe fn syscall6(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT, a5: SCT,
 }
 
 fn split_u64(val: u64) -> [u32; 2] {
-    mem::cast(val)
+    unsafe { mem::cast(val) }
 }
 
 fn split_i64(val: i64) -> [u32; 2] {
-    mem::cast(val)
+    unsafe { mem::cast(val) }
 }
+
+pub type StatType = stat64;
+pub type StatfsType = statfs64;
 
 pub unsafe fn stat(filename: *const c_char, statbuf: *mut stat64) -> k_int {
     ::common::stat64(filename, statbuf)
@@ -142,12 +146,12 @@ pub unsafe fn fstat(fd: k_uint, statbuf: *mut stat64) -> k_int {
     ::common::fstat64(fd, statbuf)
 }
 
-pub unsafe fn statfs(pathname: *const c_char, sz: size_t, buf: *mut statfs64) -> k_int {
-    ::common::statfs64(pathname, sz, buf)
+pub unsafe fn statfs(pathname: *const c_char, buf: *mut statfs64) -> k_int {
+    ::common::statfs64(pathname, mem::size_of::<statfs64>() as size_t, buf)
 }
 
-pub unsafe fn fstatfs(fd: k_uint, sz: size_t, buf: *mut statfs64) -> k_int {
-    ::common::fstatfs64(fd, sz, buf)
+pub unsafe fn fstatfs(fd: k_uint, buf: *mut statfs64) -> k_int {
+    ::common::fstatfs64(fd,  mem::size_of::<statfs64>() as size_t, buf)
 }
 
 pub unsafe fn lstat(filename: *const c_char, statbuf: *mut stat64) -> k_int {
@@ -159,12 +163,14 @@ pub unsafe fn fcntl(fd: k_uint, cmd: k_uint, arg: k_ulong) -> k_int {
 }
 
 pub unsafe fn pread(fd: k_uint, buf: *mut c_char, count: size_t, pos: loff_t) -> ssize_t {
-    ::common::pread64(fd, buf, count, pos)
+    let [pos_lo, pos_hi] = split_i64(pos);
+    call!(cty::__NR_pread64, fd, buf, count, pos_lo, pos_hi) as ssize_t
 }
 
 pub unsafe fn pwrite(fd: k_uint, buf: *const c_char, count: size_t,
                      pos: loff_t) -> ssize_t {
-    ::common::pwrite64(fd, buf, count, pos)
+    let [pos_lo, pos_hi] = split_i64(pos);
+    call!(cty::__NR_pwrite64, fd, buf, count, pos_lo, pos_hi) as ssize_t
 }
 
 pub unsafe fn sendfile(out_fd: k_int, in_fd: k_int, offset: *mut loff_t,
@@ -181,7 +187,10 @@ pub unsafe fn getdents(fd: k_uint, dirent: *mut linux_dirent64, count: k_uint) -
 }
 
 pub unsafe fn fadvise(fd: k_int, offset: loff_t, len: loff_t, advice: k_int) -> k_int {
-    ::common::fadvise64_64(fd, offset, len, advice)
+    let [offset_lo, offset_hi] = split_i64(offset);
+    let [len_lo, len_hi] = split_i64(len);
+    call!(cty::__NR_fadvise64_64, fd, offset_lo, offset_hi, len_lo, len_hi,
+          advice) as k_int
 }
 
 pub unsafe fn fstatat(dfd: k_int, filename: *const c_char, statbuf: *mut stat64,
@@ -195,11 +204,13 @@ pub unsafe fn prlimit(pid: pid_t, resource: k_uint, new_rlim: *const rlimit64,
 }
 
 pub unsafe fn ftruncate(fd: k_uint, length: loff_t) -> k_int {
-    ::common::ftruncate64(fd, length)
+    let [length_lo, length_hi] = split_i64(length);
+    call!(cty::__NR_ftruncate64, fd, length_lo, length_hi) as k_int
 }
 
 pub unsafe fn truncate(path: *const c_char, length: loff_t) -> k_int {
-    ::common::truncate64(path, length)
+    let [length_lo, length_hi] = split_i64(length);
+    call!(cty::__NR_truncate64, path, length_lo, length_hi) as k_int
 }
 
 pub unsafe fn lseek(fd: k_uint, offset: loff_t, whence: k_uint) -> loff_t {
@@ -215,16 +226,16 @@ pub unsafe fn lseek(fd: k_uint, offset: loff_t, whence: k_uint) -> loff_t {
 
 pub unsafe fn sync_file_range(fd: k_int, offset: loff_t, nbytes: loff_t,
                               flags: k_uint) -> k_int {
-    let [offset_lo, offset_hi] = split_u64(offset);
-    let [nbytes_lo, nbytes_hi] = split_u64(nbytes);
+    let [offset_lo, offset_hi] = split_i64(offset);
+    let [nbytes_lo, nbytes_hi] = split_i64(nbytes);
     call!(cty::__NR_sync_file_range, fd, offset_lo, offset_hi, nbytes_lo,
           nbytes_hi, flags) as k_int
 }
 
 pub unsafe fn fallocate(fd: k_int, mode: k_int, offset: loff_t,
                         len: loff_t) -> k_int {
-    let [offset_lo, offset_hi] = split_u64(offset);
-    let [len_lo, len_hi] = split_u64(len);
+    let [offset_lo, offset_hi] = split_i64(offset);
+    let [len_lo, len_hi] = split_i64(len);
     call!(cty::__NR_fallocate, fd, mode, offset_lo, offset_hi, len_lo, len_hi) as k_int
 }
 
@@ -241,7 +252,7 @@ pub unsafe fn lookup_dcookie(cookie: u64, buf: *mut c_char, len: size_t) -> k_in
 }
 
 pub unsafe fn readahead(fd: k_int, offset: loff_t, count: size_t) -> ssize_t {
-    let [offset_lo, offset_hi] = split_u64(offset);
+    let [offset_lo, offset_hi] = split_i64(offset);
     call!(cty::__NR_readahead, fd, offset_lo, offset_hi, count) as ssize_t
 }
 
@@ -262,5 +273,5 @@ pub unsafe fn mmap(addr: k_ulong, len: k_ulong, prot: k_ulong, flags: k_ulong,
     if off & (4096 - 1) != 0 {
         return -EINVAL;
     }
-    call!(cty::__NR_mmap2, addr, len, prot, flags, fd, off >> 12) as k_long
+    call!(cty::__NR_mmap_pgoff, addr, len, prot, flags, fd, off >> 12) as k_long
 }

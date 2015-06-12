@@ -5,8 +5,8 @@
 #[prelude_import] use base::prelude::*;
 use fmt::{Debug, Write};
 use core::{mem};
-use cty::{PATH_MAX, statfs, c_ulong};
-use syscall::{statfs};
+use cty::{PATH_MAX, c_ulong};
+use syscall::{statfs, StatfsType};
 use rv::{retry};
 use str_three::{ToCString};
 use alloc::{FbHeap};
@@ -18,13 +18,13 @@ use self::types::{FileSystem};
 pub mod types;
 pub mod mount;
 
-pub fn from_statfs(s: statfs) -> FileSystemInfo {
+pub fn from_statfs(s: StatfsType) -> FileSystemInfo {
     FileSystemInfo(s)
 }
 
 /// Filesystem information.
 #[derive(Pod, Eq)]
-pub struct FileSystemInfo(statfs);
+pub struct FileSystemInfo(StatfsType);
 
 impl FileSystemInfo {
     /// Returns information about the filesystem located at a path.

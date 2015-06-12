@@ -46,12 +46,16 @@ pub use ::arch::{
     sethostname, setitimer, set_mempolicy, setns, setpgid, setpriority, setregid,
     setresgid, setresuid, setreuid, setrlimit, set_robust_list, setsid, setsockopt,
     set_tid_address, settimeofday, setuid, setxattr, shmat, shmctl, shmdt, shmget,
-    shutdown, sigaltstack, signalfd, signalfd4, socket, socketpair, splice, stat, statfs,
+    shutdown, sigaltstack, signalfd4, socket, socketpair, splice, stat, statfs,
     swapoff, swapon, symlink, symlinkat, sync, sync_file_range, syncfs, sysfs, sysinfo,
     syslog, tee, tgkill, time, timer_delete, timerfd_create, timerfd_gettime,
     timerfd_settime, timer_getoverrun, timer_gettime, timer_settime, times, tkill,
     truncate, umask, umount, uname, unlink, unlinkat, unshare, ustat, utime, utimensat,
-    utimes, vfork, vhangup, vmsplice, wait4, waitid, write, writev,
+    utimes, vfork, vhangup, vmsplice, waitid, write, writev,
+};
+
+pub use ::arch::{
+    StatType, StatfsType,
 };
 
 macro_rules! call {

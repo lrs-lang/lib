@@ -1307,7 +1307,7 @@ impl Socket {
         };
         let time = timeval {
             tv_sec: val.seconds.saturating_cast(),
-            tv_usec: val.nanoseconds / 1000,
+            tv_usec: (val.nanoseconds / 1000).saturating_cast(),
         };
         rv!(setsockopt(self.fd, SOL_SOCKET, ty, mem::as_bytes(&time)))
     }
