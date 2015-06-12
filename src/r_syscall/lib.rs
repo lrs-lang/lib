@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_r_syscall"]
 #![crate_type = "lib"]
-#![feature(asm, plugin, no_std)]
+#![feature(asm, plugin, no_std, slice_patterns)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 #![allow(dead_code)]
@@ -26,7 +26,7 @@ pub use ::arch::{
     get_robust_list, getrusage, getsid, getsockname, getsockopt, gettid, gettimeofday,
     getuid, getxattr, init_module, inotify_add_watch, inotify_init, inotify_init1,
     inotify_rm_watch, io_cancel, ioctl, io_destroy, io_getevents, iopl, ioprio_get,
-    ioprio_set, io_setup, io_submit, kcmp, kexec_file_load, kexec_load, keyctl, kill,
+    ioprio_set, io_setup, io_submit, kcmp, kexec_load, keyctl, kill,
     lchown, lgetxattr, link, linkat, listen, listxattr, llistxattr, lookup_dcookie,
     lremovexattr, lseek, lsetxattr, lstat, madvise, mbind, memfd_create, migrate_pages,
     mincore, mkdir, mkdirat, mknod, mknodat, mlock, mlockall, mmap, mount, move_pages,
@@ -56,33 +56,33 @@ pub use ::arch::{
 
 macro_rules! call {
     ($nr:expr) => {
-        syscall0($nr as SCT)
+        ::arch::syscall0($nr as SCT)
     };
 
     ($nr:expr, $a1:expr) => {
-        syscall1($nr as SCT, $a1 as SCT)
+        ::arch::syscall1($nr as SCT, $a1 as SCT)
     };
 
     ($nr:expr, $a1:expr, $a2:expr) => {
-        syscall2($nr as SCT, $a1 as SCT, $a2 as SCT)
+        ::arch::syscall2($nr as SCT, $a1 as SCT, $a2 as SCT)
     };
 
     ($nr:expr, $a1:expr, $a2:expr, $a3:expr) => {
-        syscall3($nr as SCT, $a1 as SCT, $a2 as SCT, $a3 as SCT)
+        ::arch::syscall3($nr as SCT, $a1 as SCT, $a2 as SCT, $a3 as SCT)
     };
 
     ($nr:expr, $a1:expr, $a2:expr, $a3:expr, $a4:expr) => {
-        syscall4($nr as SCT, $a1 as SCT, $a2 as SCT, $a3 as SCT, $a4 as SCT)
+        ::arch::syscall4($nr as SCT, $a1 as SCT, $a2 as SCT, $a3 as SCT, $a4 as SCT)
     };
 
     ($nr:expr, $a1:expr, $a2:expr, $a3:expr, $a4:expr, $a5:expr) => {
-        syscall5($nr as SCT, $a1 as SCT, $a2 as SCT, $a3 as SCT, $a4 as SCT,
-                 $a5 as SCT)
+        ::arch::syscall5($nr as SCT, $a1 as SCT, $a2 as SCT, $a3 as SCT, $a4 as SCT,
+                         $a5 as SCT)
     };
 
     ($nr:expr, $a1:expr, $a2:expr, $a3:expr, $a4:expr, $a5:expr, $a6:expr) => {
-        syscall6($nr as SCT, $a1 as SCT, $a2 as SCT, $a3 as SCT, $a4 as SCT, $a5 as SCT,
-                 $a6 as SCT)
+        ::arch::syscall6($nr as SCT, $a1 as SCT, $a2 as SCT, $a3 as SCT, $a4 as SCT,
+                         $a5 as SCT, $a6 as SCT)
     };
 }
 
@@ -90,4 +90,8 @@ mod common;
 
 #[cfg(target_arch = "x86_64")]
 #[path = "x86_64/mod.rs"]
+mod arch;
+
+#[cfg(target_arch = "x86")]
+#[path = "x86.rs"]
 mod arch;

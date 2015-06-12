@@ -528,7 +528,7 @@ pub struct stat {
 
 #[repr(C)]
 #[derive(Pod, Eq)]
-struct stat64 {
+pub struct stat64 {
     pub st_dev:        c_ulonglong,
     pub __pad0:     [c_uchar; 4],
     pub __st_ino:      c_ulong,
@@ -963,3 +963,109 @@ pub const __NR_getrandom              : usize = 355;
 pub const __NR_memfd_create           : usize = 356;
 pub const __NR_bpf                    : usize = 357;
 pub const __NR_execveat               : usize = 358;
+
+// XXX is there a better constant?
+pub const GARBAGE_SYSCALL_NR : usize = !0;
+
+// pub const __NR_accept4          : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_accept           : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_bind             : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_chown16          : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_connect          : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_fchown16         : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_getegid16        : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_geteuid16        : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_getgid16         : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_getgroups16      : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_gethostname      : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_getpeername      : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_getresgid16      : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_getresuid16      : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_getsockname      : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_getsockopt       : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_getuid16         : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_kexec_file_load  : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_lchown16         : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_listen           : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_mmap_pgoff       : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_msgctl           : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_msgget           : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_msgrcv           : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_msgsnd           : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_newfstatat       : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_newfstat         : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_newlstat         : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_newstat          : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_newuname         : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_old_getrlimit    : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_old_mmap         : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_old_readdir      : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_old_select       : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_oldumount        : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_pciconfig_read   : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_pciconfig_write  : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_recv             : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_recvfrom         : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_recvmsg          : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_semget           : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_semop            : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_semtimedop       : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_send             : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_sendmsg          : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_sendto           : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_setfsgid16       : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_setfsuid16       : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_setgid16         : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_setgroups16      : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_setregid16       : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_setresgid16      : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_setresuid16      : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_setreuid16       : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_setsockopt       : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_setuid16         : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_shmat            : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_shmctl           : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_shmdt            : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_shmget           : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_shutdown         : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_socket           : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_socketpair       : usize = GARBAGE_SYSCALL_NR;
+// pub const __NR_sync_file_range2 : usize = GARBAGE_SYSCALL_NR;
+
+//////////////////////////////////
+// arch/x86/include/uapi/asm/ldt.h
+//////////////////////////////////
+
+pub const LDT_ENTRIES    : c_int = 8192;
+pub const LDT_ENTRY_SIZE : c_int = 8;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct user_desc {
+    pub entry_number: c_uint,
+    pub base_addr:    c_uint,
+    pub limit:        c_uint,
+    //unsigned int seg_32bit:1;
+    //unsigned int contents:2;
+    //unsigned int read_exec_only:1;
+    //unsigned int limit_in_pages:1;
+    //unsigned int seg_not_present:1;
+    //unsigned int useable:1;
+    __bitfield_one: c_uint,
+}
+
+impl user_desc {
+    pub fn seg_32bit       (&self) -> bool { bf32_get(self.__bitfield_one, 0, 1) != 0 }
+    pub fn contents        (&self) -> c_uint { bf32_get(self.__bitfield_one, 1, 2) }
+    pub fn read_exec_only  (&self) -> bool { bf32_get(self.__bitfield_one, 3, 1) != 0 }
+    pub fn limit_in_pages  (&self) -> bool { bf32_get(self.__bitfield_one, 4, 1) != 0 }
+    pub fn seg_not_present (&self) -> bool { bf32_get(self.__bitfield_one, 5, 1) != 0 }
+    pub fn useable         (&self) -> bool { bf32_get(self.__bitfield_one, 6, 1) != 0 }
+
+    pub fn set_seg_32bit       (&mut self, val: bool) { self.__bitfield_one = bf32_set(self.__bitfield_one, 0, 1, val as c_uint) }
+    pub fn set_contents        (&mut self, val: c_uint) { self.__bitfield_one = bf32_set(self.__bitfield_one, 1, 2, val) }
+    pub fn set_read_exec_only  (&mut self, val: bool) { self.__bitfield_one = bf32_set(self.__bitfield_one, 3, 1, val as c_uint) }
+    pub fn set_limit_in_pages  (&mut self, val: bool) { self.__bitfield_one = bf32_set(self.__bitfield_one, 4, 1, val as c_uint) }
+    pub fn set_seg_not_present (&mut self, val: bool) { self.__bitfield_one = bf32_set(self.__bitfield_one, 5, 1, val as c_uint) }
+    pub fn set_useable         (&mut self, val: bool) { self.__bitfield_one = bf32_set(self.__bitfield_one, 6, 1, val as c_uint) }
+}
