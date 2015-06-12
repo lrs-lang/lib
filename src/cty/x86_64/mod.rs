@@ -4,227 +4,6 @@
 
 #![allow(non_camel_case_types, raw_pointer_derive)]
 
-pub use ::gen::{
-    __s8, __u8, __s16, __u16, __s32, __u32, __s64, __u64,
-};
-
-pub use ::gen::{
-    __kernel_ino_t, __kernel_mode_t, BYTES_PER_KERNEL_MODE_T, __kernel_pid_t,
-    __kernel_ipc_pid_t, __kernel_uid_t, __kernel_gid_t, __kernel_suseconds_t,
-    __kernel_daddr_t, __kernel_uid32_t, __kernel_gid32_t,
-};
-
-pub use ::gen::{
-    __kernel_fsid_t,
-};
-
-pub use ::gen::{
-    __kernel_off_t, __kernel_loff_t, __kernel_time_t, __kernel_clock_t, __kernel_timer_t,
-    __kernel_clockid_t, __kernel_caddr_t, __kernel_uid16_t, __kernel_gid16_t,
-};
-
-pub use ::gen::{
-    O_ACCMODE, O_RDONLY, O_WRONLY, O_RDWR, O_CREAT, O_EXCL, O_NOCTTY, O_TRUNC, O_APPEND,
-    O_NONBLOCK, O_DSYNC, FASYNC, O_DIRECT, O_LARGEFILE, O_DIRECTORY, O_NOFOLLOW,
-    O_NOATIME, O_CLOEXEC, __O_SYNC, O_SYNC, O_PATH, __O_TMPFILE, O_TMPFILE,
-    O_TMPFILE_MASK, O_NDELAY,
-};
-
-pub use ::gen::{
-    F_DUPFD, F_GETFD, F_SETFD, F_GETFL, F_SETFL, F_GETLK, F_SETLK, F_SETLKW, F_SETOWN,
-    F_GETOWN, F_SETSIG, F_GETSIG, F_GETLK64, F_SETLK64, F_SETLKW64, F_SETOWN_EX,
-    F_GETOWN_EX, F_GETOWNER_UIDS, F_OFD_GETLK, F_OFD_SETLK, F_OFD_SETLKW, F_OWNER_TID,
-    F_OWNER_PID, F_OWNER_PGRP,
-};
-
-pub use ::gen::{
-    f_owner_ex,
-};
-
-pub use ::gen::{
-    FD_CLOEXEC, F_RDLCK, F_WRLCK, F_UNLCK, F_EXLCK, F_SHLCK, LOCK_SH, LOCK_EX, LOCK_NB,
-    LOCK_UN, LOCK_MAND, LOCK_READ, LOCK_WRITE, LOCK_RW, F_LINUX_SPECIFIC_BASE,
-};
-
-pub use ::gen::{
-    stat64, statfs
-};
-
-pub use ::gen::{
-    FIOSETOWN, SIOCSPGRP, FIOGETOWN, SIOCGPGRP, SIOCATMARK, SIOCGSTAMP, SIOCGSTAMPNS,
-};
-
-pub use ::gen::{
-    SOL_SOCKET, SO_DEBUG, SO_REUSEADDR, SO_TYPE, SO_ERROR, SO_DONTROUTE, SO_BROADCAST,
-    SO_SNDBUF, SO_RCVBUF, SO_SNDBUFFORCE, SO_RCVBUFFORCE, SO_KEEPALIVE, SO_OOBINLINE,
-    SO_NO_CHECK, SO_PRIORITY, SO_LINGER, SO_BSDCOMPAT, SO_REUSEPORT, SO_PASSCRED,
-    SO_PEERCRED, SO_RCVLOWAT, SO_SNDLOWAT, SO_RCVTIMEO, SO_SNDTIMEO,
-    SO_SECURITY_AUTHENTICATION, SO_SECURITY_ENCRYPTION_TRANSPORT,
-    SO_SECURITY_ENCRYPTION_NETWORK, SO_BINDTODEVICE, SO_ATTACH_FILTER, SO_DETACH_FILTER,
-    SO_GET_FILTER, SO_PEERNAME, SO_TIMESTAMP, SCM_TIMESTAMP, SO_ACCEPTCONN, SO_PEERSEC,
-    SO_PASSSEC, SO_TIMESTAMPNS, SCM_TIMESTAMPNS, SO_MARK, SO_TIMESTAMPING,
-    SCM_TIMESTAMPING, SO_PROTOCOL, SO_DOMAIN, SO_RXQ_OVFL, SO_WIFI_STATUS,
-    SCM_WIFI_STATUS, SO_PEEK_OFF, SO_NOFCS, SO_LOCK_FILTER, SO_SELECT_ERR_QUEUE,
-    SO_BUSY_POLL, SO_MAX_PACING_RATE, SO_BPF_EXTENSIONS,
-};
-
-pub use ::gen::{
-    ipc64_perm,
-};
-
-pub use ::gen::{
-    _NSIG, _NSIG_BPW, _NSIG_WORDS,
-};
-
-pub use ::gen::{
-    old_sigset_t,
-};
-
-pub use ::gen::{
-    _IOC_NRBITS, _IOC_TYPEBITS, _IOC_SIZEBITS, _IOC_DIRBITS, _IOC_NRMASK, _IOC_TYPEMASK,
-    _IOC_SIZEMASK, _IOC_DIRMASK, _IOC_NRSHIFT, _IOC_TYPESHIFT, _IOC_SIZESHIFT,
-    _IOC_DIRSHIFT, _IOC_NONE, _IOC_WRITE, _IOC_READ,
-};
-
-pub use ::gen::{
-    _IOC, _IOC_TYPECHECK, _IO, _IOR, _IOW, _IOWR, _IOR_BAD, _IOW_BAD, _IOWR_BAD, _IOC_DIR,
-    _IOC_TYPE, _IOC_NR, _IOC_SIZE, IOC_IN, IOC_OUT, IOC_INOUT, IOCSIZE_MASK,
-    IOCSIZE_SHIFT,
-};
-
-pub use ::gen::{
-    TCGETS, TCSETS, TCSETSW, TCSETSF, TCGETA, TCSETA, TCSETAW, TCSETAF, TCSBRK, TCXONC,
-    TCFLSH, TIOCEXCL, TIOCNXCL, TIOCSCTTY, TIOCGPGRP, TIOCSPGRP, TIOCOUTQ, TIOCSTI,
-    TIOCGWINSZ, TIOCSWINSZ, TIOCMGET, TIOCMBIS, TIOCMBIC, TIOCMSET, TIOCGSOFTCAR,
-    TIOCSSOFTCAR, FIONREAD, TIOCINQ, TIOCLINUX, TIOCCONS, TIOCGSERIAL, TIOCSSERIAL,
-    TIOCPKT, FIONBIO, TIOCNOTTY, TIOCSETD, TIOCGETD, TCSBRKP, TIOCSBRK, TIOCCBRK,
-    TIOCGSID, TIOCGRS485, TIOCSRS485, TCGETX, TCSETX, TCSETXF, TCSETXW, TIOCVHANGUP,
-    FIONCLEX, FIOCLEX, FIOASYNC, TIOCSERCONFIG, TIOCSERGWILD, TIOCSERSWILD,
-    TIOCGLCKTRMIOS, TIOCSLCKTRMIOS, TIOCSERGSTRUCT, TIOCSERGETLSR, TIOCSERGETMULTI,
-    TIOCSERSETMULTI, TIOCMIWAIT, TIOCGICOUNT, FIOQSIZE, TIOCPKT_DATA, TIOCPKT_FLUSHREAD,
-    TIOCPKT_FLUSHWRITE, TIOCPKT_STOP, TIOCPKT_START, TIOCPKT_NOSTOP, TIOCPKT_DOSTOP,
-    TIOCPKT_IOCTL, TIOCSER_TEMT,
-};
-
-pub use ::gen::{
-    SIG_BLOCK, SIG_UNBLOCK, SIG_SETMASK, __sighandler_t, __sigrestore_t, SIG_DFL, SIG_IGN,
-    SIG_ERR,
-};
-
-pub use ::gen::{
-    TCGETS2, TCSETS2, TCSETSW2, TCSETSF2, TIOCGPTN, TIOCSPTLCK, TIOCGDEV, TIOCSIG,
-    TIOCGPKT, TIOCGPTLCK, TIOCGEXCL,
-};
-
-pub use ::gen::{
-    cc_t, speed_t, tcflag_t, NCCS, termios, termios2, ktermios,
-};
-
-pub use ::gen::{
-    VINTR, VQUIT, VERASE, VKILL, VEOF, VTIME, VMIN, VSWTC, VSTART, VSTOP, VSUSP, VEOL,
-    VREPRINT, VDISCARD, VWERASE, VLNEXT, VEOL2, IGNBRK, BRKINT, IGNPAR, PARMRK, INPCK,
-    ISTRIP, INLCR, IGNCR, ICRNL, IUCLC, IXON, IXANY, IXOFF, IMAXBEL, IUTF8, OPOST, OLCUC,
-    ONLCR, OCRNL, ONOCR, ONLRET, OFILL, OFDEL, NLDLY, NL0, NL1, CRDLY, CR0, CR1, CR2, CR3,
-    TABDLY, TAB0, TAB1, TAB2, TAB3, XTABS, BSDLY, BS0, BS1, VTDLY, VT0, VT1, FFDLY, FF0,
-    FF1, CBAUD, B0, B50, B75, B110, B134, B150, B200, B300, B600, B1200, B1800, B2400,
-    B4800, B9600, B19200, B38400, EXTA, EXTB, CSIZE, CS5, CS6, CS7, CS8, CSTOPB, CREAD,
-    PARENB, PARODD, HUPCL, CLOCAL, CBAUDEX, BOTHER, B57600, B115200, B230400, B460800,
-    B500000, B576000, B921600, B1000000, B1152000, B1500000, B2000000, B2500000, B3000000,
-    B3500000, B4000000, CIBAUD, CMSPAR, CRTSCTS, IBSHIFT, ISIG, ICANON, XCASE, ECHO,
-    ECHOE, ECHOK, ECHONL, NOFLSH, TOSTOP, ECHOCTL, ECHOPRT, ECHOKE, FLUSHO, PENDIN,
-    IEXTEN, EXTPROC, TCOOFF, TCOON, TCIOFF, TCION, TCIFLUSH, TCOFLUSH, TCIOFLUSH, TCSANOW,
-    TCSADRAIN, TCSAFLUSH,
-};
-
-pub use ::gen::{
-    winsize, NCC, termio, TIOCM_LE, TIOCM_DTR, TIOCM_RTS, TIOCM_ST, TIOCM_SR, TIOCM_CTS,
-    TIOCM_CAR, TIOCM_RNG, TIOCM_DSR, TIOCM_CD, TIOCM_RI, TIOCM_OUT1, TIOCM_OUT2,
-    TIOCM_LOOP,
-};
-
-pub use ::gen::{
-    POLLIN, POLLPRI, POLLOUT, POLLERR, POLLHUP, POLLNVAL, POLLRDNORM, POLLRDBAND,
-    POLLWRNORM, POLLWRBAND, POLLMSG, POLLREMOVE, POLLRDHUP, POLLFREE, POLL_BUSY_LOOP,
-    pollfd,
-};
-
-pub use ::gen::{
-    RLIMIT_CPU, RLIMIT_FSIZE, RLIMIT_DATA, RLIMIT_STACK, RLIMIT_CORE, RLIMIT_RSS,
-    RLIMIT_NPROC, RLIMIT_NOFILE, RLIMIT_MEMLOCK, RLIMIT_AS, RLIMIT_LOCKS,
-    RLIMIT_SIGPENDING, RLIMIT_MSGQUEUE, RLIMIT_NICE, RLIMIT_RTPRIO, RLIMIT_RTTIME,
-    RLIM_NLIMITS, RLIM_INFINITY,
-};
-
-pub use ::gen::{
-    shminfo64,
-};
-
-pub use ::gen::{
-    POSIX_FADV_DONTNEED, POSIX_FADV_NOREUSE,
-};
-
-pub use ::gen::{
-    sigval_t, SI_MAX_SIZE, SI_PAD_SIZE, __ARCH_SI_UID_T, __ARCH_SI_BAND_T,
-    __ARCH_SI_CLOCK_T, siginfo_kill, BYTES_PER_ARCH_SI_UID_T, siginfo_timer, siginfo_rt,
-    siginfo_sigchld, siginfo_addr_bnd, siginfo_sigpoll, siginfo_sigsys, SI_USER,
-    SI_KERNEL, SI_QUEUE, SI_TIMER, SI_MESGQ, SI_ASYNCIO, SI_SIGIO, SI_TKILL, SI_DETHREAD,
-    ILL_ILLOPC, ILL_ILLOPN, ILL_ILLADR, ILL_ILLTRP, ILL_PRVOPC, ILL_PRVREG, ILL_COPROC,
-    ILL_BADSTK, NSIGILL, FPE_INTDIV, FPE_INTOVF, FPE_FLTDIV, FPE_FLTOVF, FPE_FLTUND,
-    FPE_FLTRES, FPE_FLTINV, FPE_FLTSUB, NSIGFPE, SEGV_MAPERR, SEGV_ACCERR, SEGV_BNDERR,
-    BUS_ADRALN, BUS_ADRERR, BUS_OBJERR, BUS_MCEERR_AR, BUS_MCEERR_AO, TRAP_BRKPT,
-    TRAP_TRACE, TRAP_BRANCH, TRAP_HWBKPT, NSIGTRAP, CLD_EXITED, CLD_KILLED, CLD_DUMPED,
-    CLD_TRAPPED, CLD_STOPPED, CLD_CONTINUED, NSIGCHLD, POLL_IN, POLL_OUT, POLL_MSG,
-    POLL_ERR, POLL_PRI, POLL_HUP, NSIGPOLL, SYS_SECCOMP, NSIGSYS, SIGEV_SIGNAL,
-    SIGEV_NONE, SIGEV_THREAD, SIGEV_THREAD_ID,
-};
-
-pub use gen::{
-    PROT_READ, PROT_WRITE, PROT_EXEC, PROT_SEM, PROT_NONE, PROT_GROWSDOWN, PROT_GROWSUP,
-    MAP_SHARED, MAP_PRIVATE, MAP_TYPE, MAP_FIXED, MAP_ANONYMOUS, MAP_UNINITIALIZED,
-    MS_ASYNC, MS_INVALIDATE, MS_SYNC, MADV_NORMAL, MADV_RANDOM, MADV_SEQUENTIAL,
-    MADV_WILLNEED, MADV_DONTNEED, MADV_REMOVE, MADV_DONTFORK, MADV_DOFORK, MADV_HWPOISON,
-    MADV_SOFT_OFFLINE, MADV_MERGEABLE, MADV_UNMERGEABLE, MADV_HUGEPAGE, MADV_NOHUGEPAGE,
-    MADV_DONTDUMP, MADV_DODUMP, MAP_FILE, MAP_HUGE_SHIFT, MAP_HUGE_MASK,
-};
-
-pub use gen::{
-    MAP_GROWSDOWN, MAP_DENYWRITE, MAP_EXECUTABLE, MAP_LOCKED, MAP_NORESERVE, MAP_POPULATE,
-    MAP_NONBLOCK, MAP_STACK, MAP_HUGETLB, MCL_CURRENT, MCL_FUTURE,
-};
-
-pub use gen::{
-    SOCK_STREAM, SOCK_DGRAM, SOCK_RAW, SOCK_RDM, SOCK_SEQPACKET, SOCK_DCCP, SOCK_PACKET,
-    SOCK_MAX, SOCK_TYPE_MASK, SOCK_CLOEXEC, SOCK_NONBLOCK,
-};
-
-pub use self::abi::{
-    __kernel_old_uid_t, __kernel_old_gid_t, __kernel_old_dev_t, __kernel_long_t,
-    __kernel_ulong_t, c_long, c_ulong,
-};
-
-pub use self::abi::{
-    USER_POINTER_ALIGN, BITS_PER_C_ULONG,
-};
-
-pub use self::abi::{
-    user_size_t,
-};
-
-pub use self::abi::{
-    __NR_rt_sigaction, __NR_rt_sigreturn, __NR_ioctl, __NR_readv, __NR_writev,
-    __NR_recvfrom, __NR_sendmsg, __NR_recvmsg, __NR_execve, __NR_ptrace,
-    __NR_rt_sigpending, __NR_rt_sigtimedwait, __NR_rt_sigqueueinfo, __NR_sigaltstack,
-    __NR_timer_create, __NR_mq_notify, __NR_kexec_load, __NR_waitid, __NR_set_robust_list,
-    __NR_get_robust_list, __NR_vmsplice, __NR_move_pages, __NR_preadv, __NR_pwritev,
-    __NR_rt_tgsigqueueinfo, __NR_recvmmsg, __NR_sendmmsg, __NR_process_vm_readv,
-    __NR_process_vm_writev, __NR_setsockopt, __NR_getsockopt, __NR_io_setup,
-    __NR_io_submit, __NR_execveat,
-};
-
-pub use self::abi::{
-    __ARCH_SI_PREAMBLE_SIZE,
-};
-
 #[cfg(target_pointer_width = "32")]
 #[path = "x32.rs"]
 mod abi;
@@ -252,6 +31,10 @@ pub type c_ulonglong  = u64;
 pub type c_float      = f32;
 pub type c_double     = f64;
 
+pub use self::abi::{
+    c_long, c_ulong,
+};
+
 // XXX: This is actually configurable and must not be correct. But musl just uses a
 // constant too. The real page size is given to programs via the auxiliary vector.
 pub const PAGE_SIZE: usize = 4096;
@@ -263,10 +46,6 @@ pub const __BITS_PER_LONG : usize = 64;
 pub const BYTES_PER_LONG  : usize = 8;
 pub const BYTES_PER_SHORT : usize = 2;
 pub const BYTES_PER_INT   : usize = 4;
-
-pub type __kernel_size_t    = __kernel_ulong_t;
-pub type __kernel_ssize_t   = __kernel_long_t;
-pub type __kernel_ptrdiff_t = __kernel_long_t;
 
 // We have to define this type because x32 doesn't use a compat layer.
 pub type timespec_tv_nsec_type = __kernel_long_t;
@@ -291,75 +70,17 @@ pub fn bf64_set(f: u64, start: usize, width: usize, val: u64) -> u64 {
     (f & !(mask << start)) | ((val & mask) << start)
 }
 
-// stat.h
+pub use self::abi::{
+    USER_POINTER_ALIGN, BITS_PER_C_ULONG,
+};
 
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct stat {
-    pub st_dev:        __kernel_ulong_t,
-    pub st_ino:        __kernel_ulong_t,
-    pub st_nlink:      __kernel_ulong_t,
-    pub st_mode:       c_uint,
-    pub st_uid:        c_uint,
-    pub st_gid:        c_uint,
-    pub __pad0:        c_uint,
-    pub st_rdev:       __kernel_ulong_t,
-    pub st_size:       __kernel_long_t,
-    pub st_blksize:    __kernel_long_t,
-    pub st_blocks:     __kernel_long_t,
-    pub st_atime:      __kernel_ulong_t,
-    pub st_atime_nsec: __kernel_ulong_t,
-    pub st_mtime:      __kernel_ulong_t,
-    pub st_mtime_nsec: __kernel_ulong_t,
-    pub st_ctime:      __kernel_ulong_t,
-    pub st_ctime_nsec: __kernel_ulong_t,
-    pub __unused:      [__kernel_long_t; 3],
-}
+pub use self::abi::{
+    user_size_t,
+};
 
-// x86_64 doesn't need a stat64. we (don't) use the genric one.
-
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct __old_kernel_stat {
-    pub st_dev:   c_ushort,
-    pub st_ino:   c_ushort,
-    pub st_mode:  c_ushort,
-    pub st_nlink: c_ushort,
-    pub st_uid:   c_ushort,
-    pub st_gid:   c_ushort,
-    pub st_rdev:  c_ushort,
-    pub st_size:  c_uint,
-    pub st_atime: c_uint,
-    pub st_mtime: c_uint,
-    pub st_ctime: c_uint,
-}
-
-// statfs.h
-
-pub type __statfs_word = __kernel_long_t;
-
-// These are not defined in the kernel uapi but can be derived from the stat struct
-pub type __fsword_t = __statfs_word;
-pub type fsblkcnt_t = __statfs_word;
-
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct statfs64 {
-    pub f_type:     __statfs_word,
-    pub f_bsize:    __statfs_word,
-    pub f_blocks:   __u64,
-    pub f_bfree:    __u64,
-    pub f_bavail:   __u64,
-    pub f_files:    __u64,
-    pub f_ffree:    __u64,
-    pub f_fsid:     __kernel_fsid_t,
-    pub f_namelen:  __statfs_word,
-    pub f_frsize:   __statfs_word,
-    pub f_flags:    __statfs_word,
-    pub f_spare: [__statfs_word; 4],
-}
-
-// eventpoll.h
+/////////////////////////////////
+// include/uapi/linux/eventpoll.h
+/////////////////////////////////
 
 #[repr(C, packed)]
 #[derive(Pod, Eq)]
@@ -368,9 +89,296 @@ pub struct epoll_event {
     pub data:   __u64,
 }
 
-// signal.h
+///////////////////////////////
+// include/uapi/linux/fadvise.h
+///////////////////////////////
+
+pub use ::gen::{
+    POSIX_FADV_DONTNEED, POSIX_FADV_NOREUSE,
+};
+
+///////////////////////////
+// include/uapi/linux/net.h
+///////////////////////////
+
+pub use gen::{
+    SOCK_STREAM, SOCK_DGRAM, SOCK_RAW, SOCK_RDM, SOCK_SEQPACKET, SOCK_DCCP, SOCK_PACKET,
+    SOCK_MAX, SOCK_TYPE_MASK, SOCK_CLOEXEC, SOCK_NONBLOCK,
+};
+
+////////////////////////////////////
+// arch/x86/include/uapi/asm/fcntl.h
+////////////////////////////////////
+
+pub use ::gen::{
+    O_ACCMODE, O_RDONLY, O_WRONLY, O_RDWR, O_CREAT, O_EXCL, O_NOCTTY, O_TRUNC, O_APPEND,
+    O_NONBLOCK, O_DSYNC, FASYNC, O_DIRECT, O_LARGEFILE, O_DIRECTORY, O_NOFOLLOW,
+    O_NOATIME, O_CLOEXEC, __O_SYNC, O_SYNC, O_PATH, __O_TMPFILE, O_TMPFILE,
+    O_TMPFILE_MASK, O_NDELAY,
+
+    F_DUPFD, F_GETFD, F_SETFD, F_GETFL, F_SETFL, F_GETLK, F_SETLK, F_SETLKW, F_SETOWN,
+    F_GETOWN, F_SETSIG, F_GETSIG, F_GETLK64, F_SETLK64, F_SETLKW64, F_SETOWN_EX,
+    F_GETOWN_EX, F_GETOWNER_UIDS, F_OFD_GETLK, F_OFD_SETLK, F_OFD_SETLKW, F_OWNER_TID,
+    F_OWNER_PID, F_OWNER_PGRP,
+
+    f_owner_ex,
+
+    FD_CLOEXEC, F_RDLCK, F_WRLCK, F_UNLCK, F_EXLCK, F_SHLCK, LOCK_SH, LOCK_EX, LOCK_NB,
+    LOCK_UN, LOCK_MAND, LOCK_READ, LOCK_WRITE, LOCK_RW, F_LINUX_SPECIFIC_BASE,
+};
+
+//////////////////////////////////////
+// include/uapi/asm-generic/int-ll64.h
+//////////////////////////////////////
+
+pub use ::gen::{
+    __s8, __u8, __s16, __u16, __s32, __u32, __s64, __u64,
+};
+
+////////////////////////////////////
+// arch/x86/include/uapi/asm/ioctl.h
+////////////////////////////////////
+
+pub use ::gen::{
+    _IOC_NRBITS, _IOC_TYPEBITS, _IOC_SIZEBITS, _IOC_DIRBITS, _IOC_NRMASK, _IOC_TYPEMASK,
+    _IOC_SIZEMASK, _IOC_DIRMASK, _IOC_NRSHIFT, _IOC_TYPESHIFT, _IOC_SIZESHIFT,
+    _IOC_DIRSHIFT, _IOC_NONE, _IOC_WRITE, _IOC_READ,
+
+    _IOC, _IOC_TYPECHECK, _IO, _IOR, _IOW, _IOWR, _IOR_BAD, _IOW_BAD, _IOWR_BAD, _IOC_DIR,
+    _IOC_TYPE, _IOC_NR, _IOC_SIZE, IOC_IN, IOC_OUT, IOC_INOUT, IOCSIZE_MASK,
+    IOCSIZE_SHIFT,
+};
+
+/////////////////////////////////////
+// arch/x86/include/uapi/asm/ioctls.h
+/////////////////////////////////////
+
+pub use ::gen::{
+    TCGETS, TCSETS, TCSETSW, TCSETSF, TCGETA, TCSETA, TCSETAW, TCSETAF, TCSBRK, TCXONC,
+    TCFLSH, TIOCEXCL, TIOCNXCL, TIOCSCTTY, TIOCGPGRP, TIOCSPGRP, TIOCOUTQ, TIOCSTI,
+    TIOCGWINSZ, TIOCSWINSZ, TIOCMGET, TIOCMBIS, TIOCMBIC, TIOCMSET, TIOCGSOFTCAR,
+    TIOCSSOFTCAR, FIONREAD, TIOCINQ, TIOCLINUX, TIOCCONS, TIOCGSERIAL, TIOCSSERIAL,
+    TIOCPKT, FIONBIO, TIOCNOTTY, TIOCSETD, TIOCGETD, TCSBRKP, TIOCSBRK, TIOCCBRK,
+    TIOCGSID, TIOCGRS485, TIOCSRS485, TCGETX, TCSETX, TCSETXF, TCSETXW, TIOCVHANGUP,
+    FIONCLEX, FIOCLEX, FIOASYNC, TIOCSERCONFIG, TIOCSERGWILD, TIOCSERSWILD,
+    TIOCGLCKTRMIOS, TIOCSLCKTRMIOS, TIOCSERGSTRUCT, TIOCSERGETLSR, TIOCSERGETMULTI,
+    TIOCSERSETMULTI, TIOCMIWAIT, TIOCGICOUNT, FIOQSIZE, TIOCPKT_DATA, TIOCPKT_FLUSHREAD,
+    TIOCPKT_FLUSHWRITE, TIOCPKT_STOP, TIOCPKT_START, TIOCPKT_NOSTOP, TIOCPKT_DOSTOP,
+    TIOCPKT_IOCTL, TIOCSER_TEMT,
+
+    TCGETS2, TCSETS2, TCSETSW2, TCSETSF2, TIOCGPTN, TIOCSPTLCK, TIOCGDEV, TIOCSIG,
+    TIOCGPKT, TIOCGPTLCK, TIOCGEXCL,
+};
+
+/////////////////////////////////////
+// arch/x86/include/uapi/asm/ipcbuf.h
+/////////////////////////////////////
+
+pub use ::gen::{
+    ipc64_perm,
+};
+
+/////////////////////////////////////////
+// include/uapi/asm-generic/mman-common.h
+/////////////////////////////////////////
+
+pub use gen::{
+    PROT_READ, PROT_WRITE, PROT_EXEC, PROT_SEM, PROT_NONE, PROT_GROWSDOWN, PROT_GROWSUP,
+    MAP_SHARED, MAP_PRIVATE, MAP_TYPE, MAP_FIXED, MAP_ANONYMOUS, MAP_UNINITIALIZED,
+    MS_ASYNC, MS_INVALIDATE, MS_SYNC, MADV_NORMAL, MADV_RANDOM, MADV_SEQUENTIAL,
+    MADV_WILLNEED, MADV_DONTNEED, MADV_REMOVE, MADV_DONTFORK, MADV_DOFORK, MADV_HWPOISON,
+    MADV_SOFT_OFFLINE, MADV_MERGEABLE, MADV_UNMERGEABLE, MADV_HUGEPAGE, MADV_NOHUGEPAGE,
+    MADV_DONTDUMP, MADV_DODUMP, MAP_FILE, MAP_HUGE_SHIFT, MAP_HUGE_MASK,
+};
+
+///////////////////////////////////
+// arch/x86/include/uapi/asm/mman.h
+///////////////////////////////////
+
+pub const MAP_32BIT    : ::c_int = 0x40;
+pub const MAP_HUGE_2MB : ::c_int = 21 << MAP_HUGE_SHIFT;
+pub const MAP_HUGE_1GB : ::c_int = 30 << MAP_HUGE_SHIFT;
+
+pub use gen::{
+    MAP_GROWSDOWN, MAP_DENYWRITE, MAP_EXECUTABLE, MAP_LOCKED, MAP_NORESERVE, MAP_POPULATE,
+    MAP_NONBLOCK, MAP_STACK, MAP_HUGETLB, MCL_CURRENT, MCL_FUTURE,
+};
+
+/////////////////////////////////////
+// arch/x86/include/uapi/asm/msgbuf.h
+/////////////////////////////////////
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct msqid64_ds {
+    pub msg_perm:   ipc64_perm,
+    pub msg_stime:  __kernel_time_t,
+    pub msg_rtime:  __kernel_time_t,
+    pub msg_ctime:  __kernel_time_t,
+    pub msg_cbytes: __kernel_ulong_t,
+    pub msg_qnum:   __kernel_ulong_t,
+    pub msg_qbytes: __kernel_ulong_t,
+    pub msg_lspid:  __kernel_pid_t,
+    pub msg_lrpid:  __kernel_pid_t,
+    pub __unused4:  __kernel_ulong_t,
+    pub __unused5:  __kernel_ulong_t,
+}
+
+////////////////////////////////////
+// arch/x86/include/uapi/asm/param.h
+////////////////////////////////////
+
+pub use gen::{
+    HZ, EXEC_PAGESIZE, NOGROUP, MAXHOSTNAMELEN,
+};
+
+///////////////////////////////////
+// arch/x86/include/uapi/asm/poll.h
+///////////////////////////////////
+
+pub use ::gen::{
+    POLLIN, POLLPRI, POLLOUT, POLLERR, POLLHUP, POLLNVAL, POLLRDNORM, POLLRDBAND,
+    POLLWRNORM, POLLWRBAND, POLLMSG, POLLREMOVE, POLLRDHUP, POLLFREE, POLL_BUSY_LOOP,
+    pollfd,
+};
+
+//////////////////////////////////////////
+// arch/x86/include/uapi/asm/posix_types.h
+//////////////////////////////////////////
+
+pub use self::abi::{
+    __kernel_old_uid_t, __kernel_old_gid_t, __kernel_old_dev_t, __kernel_long_t,
+    __kernel_ulong_t,
+};
+
+pub use ::gen::{
+    __kernel_ino_t, __kernel_mode_t, BYTES_PER_KERNEL_MODE_T, __kernel_pid_t,
+    __kernel_ipc_pid_t, __kernel_uid_t, __kernel_gid_t, __kernel_suseconds_t,
+    __kernel_daddr_t, __kernel_uid32_t, __kernel_gid32_t,
+
+    __kernel_fsid_t,
+
+    __kernel_off_t, __kernel_loff_t, __kernel_time_t, __kernel_clock_t, __kernel_timer_t,
+    __kernel_clockid_t, __kernel_caddr_t, __kernel_uid16_t, __kernel_gid16_t,
+};
+
+pub type __kernel_size_t    = __kernel_ulong_t;
+pub type __kernel_ssize_t   = __kernel_long_t;
+pub type __kernel_ptrdiff_t = __kernel_long_t;
+
+///////////////////////////////////////
+// arch/x86/include/uapi/asm/resource.h
+///////////////////////////////////////
+
+pub use ::gen::{
+    RLIMIT_CPU, RLIMIT_FSIZE, RLIMIT_DATA, RLIMIT_STACK, RLIMIT_CORE, RLIMIT_RSS,
+    RLIMIT_NPROC, RLIMIT_NOFILE, RLIMIT_MEMLOCK, RLIMIT_AS, RLIMIT_LOCKS,
+    RLIMIT_SIGPENDING, RLIMIT_MSGQUEUE, RLIMIT_NICE, RLIMIT_RTPRIO, RLIMIT_RTTIME,
+    RLIM_NLIMITS, RLIM_INFINITY,
+};
+
+/////////////////////////////////////
+// arch/x86/include/uapi/asm/sembuf.h
+/////////////////////////////////////
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct semid64_ds {
+    pub sem_perm:  ipc64_perm,
+    pub sem_otime: __kernel_time_t,
+    pub __unused1: __kernel_ulong_t,
+    pub sem_ctime: __kernel_time_t,
+    pub __unused2: __kernel_ulong_t,
+    pub sem_nsems: __kernel_ulong_t,
+    pub __unused3: __kernel_ulong_t,
+    pub __unused4: __kernel_ulong_t,
+}
+
+/////////////////////////////////////
+// arch/x86/include/uapi/asm/shmbuf.h
+/////////////////////////////////////
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct shmid64_ds {
+    pub shm_perm:   ipc64_perm,
+    pub shm_segsz:  __kernel_size_t, // XXX: was: size_t
+    pub shm_atime:  __kernel_time_t,
+    pub shm_dtime:  __kernel_time_t,
+    pub shm_ctime:  __kernel_time_t,
+    pub shm_cpid:   __kernel_pid_t,
+    pub shm_lpid:   __kernel_pid_t,
+    pub shm_nattch: __kernel_ulong_t,
+    pub __unused4:  __kernel_ulong_t,
+    pub __unused5:  __kernel_ulong_t,
+}
+
+pub use ::gen::{
+    shminfo64,
+};
+
+//////////////////////////////////////
+// arch/x86/include/uapi/asm/siginfo.h
+//////////////////////////////////////
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct siginfo_t {
+    data: [u64; SI_MAX_SIZE / 8],
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct siginfo_sigfault {
+    pub _addr: *mut c_void,
+    pub _addr_lsb: c_short,
+    pub _addr_bnd: siginfo_addr_bnd,
+}
+
+pub use self::abi::{
+    __ARCH_SI_CLOCK_T, __ARCH_SI_PREAMBLE_SIZE,
+};
+
+pub use ::gen::{
+    sigval_t, SI_MAX_SIZE, SI_PAD_SIZE, __ARCH_SI_UID_T, __ARCH_SI_BAND_T,
+    siginfo_kill, BYTES_PER_ARCH_SI_UID_T, siginfo_timer, siginfo_rt,
+    siginfo_sigchld, siginfo_addr_bnd, siginfo_sigpoll, siginfo_sigsys, SI_USER,
+    SI_KERNEL, SI_QUEUE, SI_TIMER, SI_MESGQ, SI_ASYNCIO, SI_SIGIO, SI_TKILL, SI_DETHREAD,
+    ILL_ILLOPC, ILL_ILLOPN, ILL_ILLADR, ILL_ILLTRP, ILL_PRVOPC, ILL_PRVREG, ILL_COPROC,
+    ILL_BADSTK, NSIGILL, FPE_INTDIV, FPE_INTOVF, FPE_FLTDIV, FPE_FLTOVF, FPE_FLTUND,
+    FPE_FLTRES, FPE_FLTINV, FPE_FLTSUB, NSIGFPE, SEGV_MAPERR, SEGV_ACCERR, SEGV_BNDERR,
+    BUS_ADRALN, BUS_ADRERR, BUS_OBJERR, BUS_MCEERR_AR, BUS_MCEERR_AO, TRAP_BRKPT,
+    TRAP_TRACE, TRAP_BRANCH, TRAP_HWBKPT, NSIGTRAP, CLD_EXITED, CLD_KILLED, CLD_DUMPED,
+    CLD_TRAPPED, CLD_STOPPED, CLD_CONTINUED, NSIGCHLD, POLL_IN, POLL_OUT, POLL_MSG,
+    POLL_ERR, POLL_PRI, POLL_HUP, NSIGPOLL, SYS_SECCOMP, NSIGSYS, SIGEV_SIGNAL,
+    SIGEV_NONE, SIGEV_THREAD, SIGEV_THREAD_ID,
+};
+
+/////////////////////////////////////////
+// include/uapi/asm-generic/signal-defs.h
+/////////////////////////////////////////
+
+pub use ::gen::{
+    SIG_BLOCK, SIG_UNBLOCK, SIG_SETMASK, __sighandler_t, __sigrestore_t, SIG_DFL, SIG_IGN,
+    SIG_ERR,
+};
+
+/////////////////////////////////////
+// arch/x86/include/uapi/asm/signal.h
+/////////////////////////////////////
+
+// This file doesn't actually seem to be used because it defined NSIG as the long obsolete
+// 32. XXX this should be investigated.
 
 pub const NSIG : usize = 64;
+
+pub use ::gen::{
+    _NSIG, _NSIG_BPW, _NSIG_WORDS,
+};
+
+pub use ::gen::{
+    old_sigset_t,
+};
 
 pub type SigsetVal = c_ulong;
 
@@ -431,7 +439,7 @@ pub const SA_RESTORER  : c_int = 0x04000000;
 #[derive(Pod)]
 pub struct sigaction {
     pub sa_handler: usize,
-    pub sa_flags: c_ulong, // this must be c_ulong because on x32 we usa a compat syscall
+    pub sa_flags: c_ulong, // this must be c_ulong because on x32 we use a compat syscall
     pub sa_restorer: usize,
     pub sa_mask: sigset_t,
 }
@@ -449,15 +457,164 @@ pub type stack_t = sigaltstack;
 pub const MINSIGSTKSZ : usize = 2048;
 pub const SIGSTKSZ    : usize = 8192;
 
-// sysinfo.h
+/////////////////////////////////////
+// arch/x86/include/uapi/asm/socket.h
+/////////////////////////////////////
 
-pub const SYSINFO_PADDING: usize = 0;
+pub use ::gen::{
+    SOL_SOCKET, SO_DEBUG, SO_REUSEADDR, SO_TYPE, SO_ERROR, SO_DONTROUTE, SO_BROADCAST,
+    SO_SNDBUF, SO_RCVBUF, SO_SNDBUFFORCE, SO_RCVBUFFORCE, SO_KEEPALIVE, SO_OOBINLINE,
+    SO_NO_CHECK, SO_PRIORITY, SO_LINGER, SO_BSDCOMPAT, SO_REUSEPORT, SO_PASSCRED,
+    SO_PEERCRED, SO_RCVLOWAT, SO_SNDLOWAT, SO_RCVTIMEO, SO_SNDTIMEO,
+    SO_SECURITY_AUTHENTICATION, SO_SECURITY_ENCRYPTION_TRANSPORT,
+    SO_SECURITY_ENCRYPTION_NETWORK, SO_BINDTODEVICE, SO_ATTACH_FILTER, SO_DETACH_FILTER,
+    SO_GET_FILTER, SO_PEERNAME, SO_TIMESTAMP, SCM_TIMESTAMP, SO_ACCEPTCONN, SO_PEERSEC,
+    SO_PASSSEC, SO_TIMESTAMPNS, SCM_TIMESTAMPNS, SO_MARK, SO_TIMESTAMPING,
+    SCM_TIMESTAMPING, SO_PROTOCOL, SO_DOMAIN, SO_RXQ_OVFL, SO_WIFI_STATUS,
+    SCM_WIFI_STATUS, SO_PEEK_OFF, SO_NOFCS, SO_LOCK_FILTER, SO_SELECT_ERR_QUEUE,
+    SO_BUSY_POLL, SO_MAX_PACING_RATE, SO_BPF_EXTENSIONS,
+};
 
-// unistd.h
+//////////////////////////////////////
+// arch/x86/include/uapi/asm/sockios.h
+//////////////////////////////////////
+
+pub use ::gen::{
+    FIOSETOWN, SIOCSPGRP, FIOGETOWN, SIOCGPGRP, SIOCATMARK, SIOCGSTAMP, SIOCGSTAMPNS,
+};
+
+/////////////////////////////////////
+// arch/x86/include/uapi/asm/statfs.h
+/////////////////////////////////////
+
+pub type __statfs_word = __kernel_long_t;
+
+// These are not defined in the kernel uapi but can be derived from the stat struct
+pub type __fsword_t = __statfs_word;
+pub type fsblkcnt_t = __statfs_word;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct statfs64 {
+    pub f_type:     __statfs_word,
+    pub f_bsize:    __statfs_word,
+    pub f_blocks:   __u64,
+    pub f_bfree:    __u64,
+    pub f_bavail:   __u64,
+    pub f_files:    __u64,
+    pub f_ffree:    __u64,
+    pub f_fsid:     __kernel_fsid_t,
+    pub f_namelen:  __statfs_word,
+    pub f_frsize:   __statfs_word,
+    pub f_flags:    __statfs_word,
+    pub f_spare: [__statfs_word; 4],
+}
+
+pub use ::gen::{
+    statfs,
+};
+
+///////////////////////////////////
+// arch/x86/include/uapi/asm/stat.h
+///////////////////////////////////
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct stat {
+    pub st_dev:        __kernel_ulong_t,
+    pub st_ino:        __kernel_ulong_t,
+    pub st_nlink:      __kernel_ulong_t,
+    pub st_mode:       c_uint,
+    pub st_uid:        c_uint,
+    pub st_gid:        c_uint,
+    pub __pad0:        c_uint,
+    pub st_rdev:       __kernel_ulong_t,
+    pub st_size:       __kernel_long_t,
+    pub st_blksize:    __kernel_long_t,
+    pub st_blocks:     __kernel_long_t,
+    pub st_atime:      __kernel_ulong_t,
+    pub st_atime_nsec: __kernel_ulong_t,
+    pub st_mtime:      __kernel_ulong_t,
+    pub st_mtime_nsec: __kernel_ulong_t,
+    pub st_ctime:      __kernel_ulong_t,
+    pub st_ctime_nsec: __kernel_ulong_t,
+    pub __unused:      [__kernel_long_t; 3],
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct __old_kernel_stat {
+    pub st_dev:   c_ushort,
+    pub st_ino:   c_ushort,
+    pub st_mode:  c_ushort,
+    pub st_nlink: c_ushort,
+    pub st_uid:   c_ushort,
+    pub st_gid:   c_ushort,
+    pub st_rdev:  c_ushort,
+    pub st_size:  c_uint,
+    pub st_atime: c_uint,
+    pub st_mtime: c_uint,
+    pub st_ctime: c_uint,
+}
+
+///////////////////////////////////////
+// arch/x86/include/uapi/asm/termbits.h
+///////////////////////////////////////
+
+pub use ::gen::{
+    cc_t, speed_t, tcflag_t, NCCS, termios, termios2, ktermios,
+
+    VINTR, VQUIT, VERASE, VKILL, VEOF, VTIME, VMIN, VSWTC, VSTART, VSTOP, VSUSP, VEOL,
+    VREPRINT, VDISCARD, VWERASE, VLNEXT, VEOL2, IGNBRK, BRKINT, IGNPAR, PARMRK, INPCK,
+    ISTRIP, INLCR, IGNCR, ICRNL, IUCLC, IXON, IXANY, IXOFF, IMAXBEL, IUTF8, OPOST, OLCUC,
+    ONLCR, OCRNL, ONOCR, ONLRET, OFILL, OFDEL, NLDLY, NL0, NL1, CRDLY, CR0, CR1, CR2, CR3,
+    TABDLY, TAB0, TAB1, TAB2, TAB3, XTABS, BSDLY, BS0, BS1, VTDLY, VT0, VT1, FFDLY, FF0,
+    FF1, CBAUD, B0, B50, B75, B110, B134, B150, B200, B300, B600, B1200, B1800, B2400,
+    B4800, B9600, B19200, B38400, EXTA, EXTB, CSIZE, CS5, CS6, CS7, CS8, CSTOPB, CREAD,
+    PARENB, PARODD, HUPCL, CLOCAL, CBAUDEX, BOTHER, B57600, B115200, B230400, B460800,
+    B500000, B576000, B921600, B1000000, B1152000, B1500000, B2000000, B2500000, B3000000,
+    B3500000, B4000000, CIBAUD, CMSPAR, CRTSCTS, IBSHIFT, ISIG, ICANON, XCASE, ECHO,
+    ECHOE, ECHOK, ECHONL, NOFLSH, TOSTOP, ECHOCTL, ECHOPRT, ECHOKE, FLUSHO, PENDIN,
+    IEXTEN, EXTPROC, TCOOFF, TCOON, TCIOFF, TCION, TCIFLUSH, TCOFLUSH, TCIOFLUSH, TCSANOW,
+    TCSADRAIN, TCSAFLUSH,
+};
+
+//////////////////////////////////////
+// arch/x86/include/uapi/asm/termios.h
+//////////////////////////////////////
+
+pub use ::gen::{
+    winsize, NCC, termio, TIOCM_LE, TIOCM_DTR, TIOCM_RTS, TIOCM_ST, TIOCM_SR, TIOCM_CTS,
+    TIOCM_CAR, TIOCM_RNG, TIOCM_DSR, TIOCM_CD, TIOCM_RI, TIOCM_OUT1, TIOCM_OUT2,
+    TIOCM_LOOP,
+};
+
+pub use self::abi::{
+    __NR_rt_sigaction, __NR_rt_sigreturn, __NR_ioctl, __NR_readv, __NR_writev,
+    __NR_recvfrom, __NR_sendmsg, __NR_recvmsg, __NR_execve, __NR_ptrace,
+    __NR_rt_sigpending, __NR_rt_sigtimedwait, __NR_rt_sigqueueinfo, __NR_sigaltstack,
+    __NR_timer_create, __NR_mq_notify, __NR_kexec_load, __NR_waitid, __NR_set_robust_list,
+    __NR_get_robust_list, __NR_vmsplice, __NR_move_pages, __NR_preadv, __NR_pwritev,
+    __NR_rt_tgsigqueueinfo, __NR_recvmmsg, __NR_sendmmsg, __NR_process_vm_readv,
+    __NR_process_vm_writev, __NR_setsockopt, __NR_getsockopt, __NR_io_setup,
+    __NR_io_submit, __NR_execveat,
+};
+
+/////////////////////////////////////
+// arch/x86/include/uapi/asm/unistd.h
+/////////////////////////////////////
 
 pub const __X32_SYSCALL_BIT: c_longlong = 0x40000000;
 
-// syscall_64.tbl
+///////////////////////////////
+// include/uapi/linux/sysinfo.h
+///////////////////////////////
+
+pub const SYSINFO_PADDING: usize = 0;
+
+///////////////////////////////////
+// arch/x86/syscalls/syscall_64.tbl
+///////////////////////////////////
 
 pub const __NR_read                   : usize = 0;
 pub const __NR_write                  : usize = 1;
@@ -825,56 +982,6 @@ impl ::bpf_insn {
     pub fn set_src_reg(&mut self, val: u8) { self.reg = (self.reg & 0x0F) | val << 4 }
 }
 
-// msgbuf.h
-
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct msqid64_ds {
-    pub msg_perm:   ipc64_perm,
-    pub msg_stime:  __kernel_time_t,
-    pub msg_rtime:  __kernel_time_t,
-    pub msg_ctime:  __kernel_time_t,
-    pub msg_cbytes: __kernel_ulong_t,
-    pub msg_qnum:   __kernel_ulong_t,
-    pub msg_qbytes: __kernel_ulong_t,
-    pub msg_lspid:  __kernel_pid_t,
-    pub msg_lrpid:  __kernel_pid_t,
-    pub __unused4:  __kernel_ulong_t,
-    pub __unused5:  __kernel_ulong_t,
-}
-
-// sembuf.h
-
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct semid64_ds {
-    pub sem_perm:  ipc64_perm,
-    pub sem_otime: __kernel_time_t,
-    pub __unused1: __kernel_ulong_t,
-    pub sem_ctime: __kernel_time_t,
-    pub __unused2: __kernel_ulong_t,
-    pub sem_nsems: __kernel_ulong_t,
-    pub __unused3: __kernel_ulong_t,
-    pub __unused4: __kernel_ulong_t,
-}
-
-// shmbuf.h
-
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct shmid64_ds {
-    pub shm_perm:   ipc64_perm,
-    pub shm_segsz:  __kernel_size_t, // XXX: was: size_t
-    pub shm_atime:  __kernel_time_t,
-    pub shm_dtime:  __kernel_time_t,
-    pub shm_ctime:  __kernel_time_t,
-    pub shm_cpid:   __kernel_pid_t,
-    pub shm_lpid:   __kernel_pid_t,
-    pub shm_nattch: __kernel_ulong_t,
-    pub __unused4:  __kernel_ulong_t,
-    pub __unused5:  __kernel_ulong_t,
-}
-
 // x86_64 specific:
 
 // ldt.h
@@ -915,25 +1022,3 @@ impl user_desc {
     pub fn set_useable         (&mut self, val: bool) { self.__bitfield_one = bf32_set(self.__bitfield_one, 6, 1, val as c_uint) }
     pub fn set_lm              (&mut self, val: bool) { self.__bitfield_one = bf32_set(self.__bitfield_one, 7, 1, val as c_uint) }
 }
-
-// siginfo.h
-
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct siginfo_t {
-    data: [u64; SI_MAX_SIZE / 8],
-}
-
-#[repr(C)]
-#[derive(Pod, Eq)]
-pub struct siginfo_sigfault {
-    pub _addr: *mut c_void,
-    pub _addr_lsb: c_short,
-    pub _addr_bnd: siginfo_addr_bnd,
-}
-
-// mman.h
-
-pub const MAP_32BIT    : ::c_int = 0x40;
-pub const MAP_HUGE_2MB : ::c_int = 21 << MAP_HUGE_SHIFT;
-pub const MAP_HUGE_1GB : ::c_int = 30 << MAP_HUGE_SHIFT;

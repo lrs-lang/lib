@@ -35,6 +35,10 @@ mod gen;
 #[path = "x86_64/mod.rs"]
 mod arch;
 
+#[cfg(target_arch = "x86")]
+#[path = "x86.rs"]
+mod arch;
+
 // Userspace aliases. NB: These are only correct for the kernel ABI. E.g. size_t is 32 bit
 // on x32 but __kernel_size_t is 64 bit on x32.
 
@@ -120,7 +124,7 @@ pub type __wsum  = __u32;
 #[derive(Pod, Eq)]
 pub struct timespec {
     pub tv_sec:  __kernel_time_t,
-    pub tv_nsec: __kernel_long_t,
+    pub tv_nsec: timespec_tv_nsec_type,
 }
 
 #[repr(C)]
@@ -179,6 +183,10 @@ pub struct linux_dirent64 {
     pub d_type:   c_uchar,
     pub d_name:   [c_char; 0],
 }
+
+///////////////////////////////
+// include/uapi/linux/sysinfo.h
+///////////////////////////////
 
 pub const SI_LOAD_SHIFT : __kernel_ulong_t = 16;
 

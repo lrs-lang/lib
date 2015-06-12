@@ -16,12 +16,15 @@ use core::marker::{Pod, Copy};
 pub use arch::{pthread_attr_t, pthread_t};
 
 #[cfg(all(target_arch = "x86_64", target_pointer_width = "64"))]
-#[cfg(target_arch = "x86_64")]
 #[path = "x86_64.rs"]
 mod arch;
 
 #[cfg(all(target_arch = "x86_64", target_pointer_width = "32"))]
 #[path = "x32.rs"]
+mod arch;
+
+#[cfg(target_arch = "x86")]
+#[path = "x86.rs"]
 mod arch;
 
 pub const PTHREAD_CREATE_JOINABLE: i32 = 0;

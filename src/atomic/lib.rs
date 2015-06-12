@@ -824,13 +824,16 @@ macro_rules! impl_atomic {
 impl_atomic!(AtomicU8,    ATOMIC_U8_INIT,    u8,    false);
 impl_atomic!(AtomicU16,   ATOMIC_U16_INIT,   u16,   false);
 impl_atomic!(AtomicU32,   ATOMIC_U32_INIT,   u32,   false);
-impl_atomic!(AtomicU64,   ATOMIC_U64_INIT,   u64,   false);
 impl_atomic!(AtomicUsize, ATOMIC_USIZE_INIT, usize, false);
 impl_atomic!(AtomicI8,    ATOMIC_I8_INIT,    i8,    true);
 impl_atomic!(AtomicI16,   ATOMIC_I16_INIT,   i16,   true);
 impl_atomic!(AtomicI32,   ATOMIC_I32_INIT,   i32,   true);
-impl_atomic!(AtomicI64,   ATOMIC_I64_INIT,   i64,   true);
 impl_atomic!(AtomicIsize, ATOMIC_ISIZE_INIT, isize, true);
+
+#[cfg(target_arch = "x86_64")]
+impl_atomic!(AtomicU64,   ATOMIC_U64_INIT,   u64,   false);
+#[cfg(target_arch = "x86_64")]
+impl_atomic!(AtomicI64,   ATOMIC_I64_INIT,   i64,   true);
 
 /// Atomic `c_int`.
 pub type AtomicCInt = AtomicI32;

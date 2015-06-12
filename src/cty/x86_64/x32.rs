@@ -5,7 +5,7 @@
 #![allow(non_camel_case_types, raw_pointer_derive)]
 
 pub use ::gen::{
-    __kernel_old_uid_t, __kernel_old_gid_t, __kernel_old_dev_t, __ARCH_SI_PREAMBLE_SIZE,
+    __kernel_old_uid_t, __kernel_old_gid_t, __kernel_old_dev_t,
 };
 
 pub const USER_POINTER_ALIGN : usize = 4;
@@ -54,6 +54,12 @@ pub const __NR_io_setup          : usize = 543;
 pub const __NR_io_submit         : usize = 544;
 pub const __NR_execveat          : usize = 545;
 
-// siginfo.h
+//////////////////////////////////////
+// arch/x86/include/uapi/asm/siginfo.h
+//////////////////////////////////////
 
 pub type __ARCH_SI_CLOCK_T = [u32; 2];
+
+pub use ::gen::{
+    __ARCH_SI_PREAMBLE_SIZE,
+};
