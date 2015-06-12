@@ -22,3 +22,7 @@ mod arch;
 #[cfg(target_arch = "x86")]
 #[path = "x86.rs"]
 mod arch;
+
+#[cfg(target_arch = "arm")]
+#[path = "arm.rs"]
+mod arch;

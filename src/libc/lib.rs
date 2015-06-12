@@ -27,6 +27,10 @@ mod arch;
 #[path = "x86.rs"]
 mod arch;
 
+#[cfg(target_arch = "arm")]
+#[path = "arm.rs"]
+mod arch;
+
 pub const PTHREAD_CREATE_JOINABLE: i32 = 0;
 pub const PTHREAD_CREATE_DETACHED: i32 = 1;
 
