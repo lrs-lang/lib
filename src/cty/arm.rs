@@ -387,61 +387,277 @@ pub use ::gen::{
     SIG_ERR,
 };
 
+////////////////////////////////
+// arch/arm/include/asm/signal.h
+////////////////////////////////
+
+pub use ::gen::{
+    _NSIG, _NSIG_BPW, _NSIG_WORDS,
+    old_sigset_t, SigsetVal, sigset_t, sigaction,
+};
+
+pub const SIGHUP       : c_int = 1;
+pub const SIGINT       : c_int = 2;
+pub const SIGQUIT      : c_int = 3;
+pub const SIGILL       : c_int = 4;
+pub const SIGTRAP      : c_int = 5;
+pub const SIGABRT      : c_int = 6;
+pub const SIGIOT       : c_int = 6;
+pub const SIGBUS       : c_int = 7;
+pub const SIGFPE       : c_int = 8;
+pub const SIGKILL      : c_int = 9;
+pub const SIGUSR1      : c_int = 10;
+pub const SIGSEGV      : c_int = 11;
+pub const SIGUSR2      : c_int = 12;
+pub const SIGPIPE      : c_int = 13;
+pub const SIGALRM      : c_int = 14;
+pub const SIGTERM      : c_int = 15;
+pub const SIGSTKFLT    : c_int = 16;
+pub const SIGCHLD      : c_int = 17;
+pub const SIGCONT      : c_int = 18;
+pub const SIGSTOP      : c_int = 19;
+pub const SIGTSTP      : c_int = 20;
+pub const SIGTTIN      : c_int = 21;
+pub const SIGTTOU      : c_int = 22;
+pub const SIGURG       : c_int = 23;
+pub const SIGXCPU      : c_int = 24;
+pub const SIGXFSZ      : c_int = 25;
+pub const SIGVTALRM    : c_int = 26;
+pub const SIGPROF      : c_int = 27;
+pub const SIGWINCH     : c_int = 28;
+pub const SIGIO        : c_int = 29;
+pub const SIGPOLL      : c_int = SIGIO;
+pub const SIGPWR       : c_int = 30;
+pub const SIGSYS       : c_int = 31;
+pub const SIGUNUSED    : c_int = 31;
+pub const SIGRTMIN     : c_int = 32;
+pub const SIGRTMAX     : c_int = _NSIG;
+pub const SIGSWI       : c_int = 32;
+
+pub const SA_NOCLDSTOP : c_int = 0x00000001;
+pub const SA_NOCLDWAIT : c_int = 0x00000002;
+pub const SA_SIGINFO   : c_int = 0x00000004;
+pub const SA_THIRTYTWO : c_int = 0x02000000;
+pub const SA_RESTORER  : c_int = 0x04000000;
+pub const SA_ONSTACK   : c_int = 0x08000000;
+pub const SA_RESTART   : c_int = 0x10000000;
+pub const SA_NODEFER   : c_int = 0x40000000;
+#[allow(overflowing_literals)]
+pub const SA_RESETHAND : c_int = 0x80000000;
+pub const SA_NOMASK    : c_int = SA_NODEFER;
+pub const SA_ONESHOT   : c_int = SA_RESETHAND;
+pub const MINSIGSTKSZ  : c_int = 2048;
+pub const SIGSTKSZ     : c_int = 8192;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct sigaltstack {
+    pub ss_sp: *mut ::c_void,
+    pub ss_flags: ::c_int,
+    pub ss_size: ::user_size_t,
+}
+
+pub type stack_t = ::sigaltstack;
+
 /////////////////////////////////////
-// arch/arm/include/uapi/asm/signal.h
+// arch/arm/include/uapi/asm/socket.h
 /////////////////////////////////////
 
-#define SIGHUP		 1
-#define SIGINT		 2
-#define SIGQUIT		 3
-#define SIGILL		 4
-#define SIGTRAP		 5
-#define SIGABRT		 6
-#define SIGIOT		 6
-#define SIGBUS		 7
-#define SIGFPE		 8
-#define SIGKILL		 9
-#define SIGUSR1		10
-#define SIGSEGV		11
-#define SIGUSR2		12
-#define SIGPIPE		13
-#define SIGALRM		14
-#define SIGTERM		15
-#define SIGSTKFLT	16
-#define SIGCHLD		17
-#define SIGCONT		18
-#define SIGSTOP		19
-#define SIGTSTP		20
-#define SIGTTIN		21
-#define SIGTTOU		22
-#define SIGURG		23
-#define SIGXCPU		24
-#define SIGXFSZ		25
-#define SIGVTALRM	26
-#define SIGPROF		27
-#define SIGWINCH	28
-#define SIGIO		29
-#define SIGPOLL		SIGIO
-#define SIGPWR		30
-#define SIGSYS		31
-#define	SIGUNUSED	31
-#define SIGRTMIN	32
-#define SIGRTMAX	_NSIG
-#define SIGSWI		32
+pub use ::gen::{
+    SOL_SOCKET, SO_DEBUG, SO_REUSEADDR, SO_TYPE, SO_ERROR, SO_DONTROUTE, SO_BROADCAST,
+    SO_SNDBUF, SO_RCVBUF, SO_SNDBUFFORCE, SO_RCVBUFFORCE, SO_KEEPALIVE, SO_OOBINLINE,
+    SO_NO_CHECK, SO_PRIORITY, SO_LINGER, SO_BSDCOMPAT, SO_REUSEPORT, SO_PASSCRED,
+    SO_PEERCRED, SO_RCVLOWAT, SO_SNDLOWAT, SO_RCVTIMEO, SO_SNDTIMEO,
+    SO_SECURITY_AUTHENTICATION, SO_SECURITY_ENCRYPTION_TRANSPORT,
+    SO_SECURITY_ENCRYPTION_NETWORK, SO_BINDTODEVICE, SO_ATTACH_FILTER, SO_DETACH_FILTER,
+    SO_GET_FILTER, SO_PEERNAME, SO_TIMESTAMP, SCM_TIMESTAMP, SO_ACCEPTCONN, SO_PEERSEC,
+    SO_PASSSEC, SO_TIMESTAMPNS, SCM_TIMESTAMPNS, SO_MARK, SO_TIMESTAMPING,
+    SCM_TIMESTAMPING, SO_PROTOCOL, SO_DOMAIN, SO_RXQ_OVFL, SO_WIFI_STATUS,
+    SCM_WIFI_STATUS, SO_PEEK_OFF, SO_NOFCS, SO_LOCK_FILTER, SO_SELECT_ERR_QUEUE,
+    SO_BUSY_POLL, SO_MAX_PACING_RATE, SO_BPF_EXTENSIONS,
+};
 
-#define SA_NOCLDSTOP	0x00000001
-#define SA_NOCLDWAIT	0x00000002
-#define SA_SIGINFO	0x00000004
-#define SA_THIRTYTWO	0x02000000
-#define SA_RESTORER	0x04000000
-#define SA_ONSTACK	0x08000000
-#define SA_RESTART	0x10000000
-#define SA_NODEFER	0x40000000
-#define SA_RESETHAND	0x80000000
-#define SA_NOMASK	SA_NODEFER
-#define SA_ONESHOT	SA_RESETHAND
-#define MINSIGSTKSZ	2048
-#define SIGSTKSZ	8192
+//////////////////////////////////////
+// arch/x86/include/uapi/asm/sockios.h
+//////////////////////////////////////
+
+pub use ::gen::{
+    FIOSETOWN, SIOCSPGRP, FIOGETOWN, SIOCGPGRP, SIOCATMARK, SIOCGSTAMP, SIOCGSTAMPNS,
+};
+
+/////////////////////////////////////
+// arch/arm/include/uapi/asm/statfs.h
+/////////////////////////////////////
+
+pub type __statfs_word = __u32;
+
+// These are not defined in the kernel uapi but can be derived from the stat struct
+pub type __fsword_t = __statfs_word;
+pub type fsblkcnt_t = __statfs_word;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct statfs64 {
+    pub f_type:     __statfs_word,
+    pub f_bsize:    __statfs_word,
+    pub f_blocks:   __u64,
+    pub f_bfree:    __u64,
+    pub f_bavail:   __u64,
+    pub f_files:    __u64,
+    pub f_ffree:    __u64,
+    pub f_fsid:     __kernel_fsid_t,
+    pub f_namelen:  __statfs_word,
+    pub f_frsize:   __statfs_word,
+    pub f_flags:    __statfs_word,
+    pub f_spare: [__statfs_word; 4],
+} // this is actually packed in the kernel but with the comment that we don't have to pack
+  // it.
+
+pub use ::gen::{
+    statfs,
+};
+
+///////////////////////////////////
+// arch/arm/include/uapi/asm/stat.h
+///////////////////////////////////
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct __old_kernel_stat {
+    pub st_dev:   c_ushort,
+    pub st_ino:   c_ushort,
+    pub st_mode:  c_ushort,
+    pub st_nlink: c_ushort,
+    pub st_uid:   c_ushort,
+    pub st_gid:   c_ushort,
+    pub st_rdev:  c_ushort,
+    pub st_size:  c_ulong,
+    pub st_atime: c_ulong,
+    pub st_mtime: c_ulong,
+    pub st_ctime: c_ulong,
+}
+
+// #[cfg(target_endian = "little")]
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct stat {
+    #[cfg(target_endian = "little")]
+    pub st_dev:        c_ulong,
+    #[cfg(target_endian = "big")]
+    pub st_dev:        c_ushort,
+    #[cfg(target_endian = "big")]
+    pub __pad1:        c_ushort,
+    pub st_ino:        c_ulong,
+    pub st_mode:       c_ushort,
+    pub st_nlink:      c_ushort,
+    pub st_uid:        c_ushort,
+    pub st_gid:        c_ushort,
+    #[cfg(target_endian = "little")]
+    pub st_rdev:       c_ulong,
+    #[cfg(target_endian = "big")]
+    pub st_rdev:       c_ushort,
+    #[cfg(target_endian = "big")]
+    pub __pad2:        c_ushort,
+    pub st_size:       c_ulong,
+    pub st_blksize:    c_ulong,
+    pub st_blocks:     c_ulong,
+    pub st_atime:      c_ulong,
+    pub st_atime_nsec: c_ulong,
+    pub st_mtime:      c_ulong,
+    pub st_mtime_nsec: c_ulong,
+    pub st_ctime:      c_ulong,
+    pub st_ctime_nsec: c_ulong,
+    pub __unused4:     c_ulong,
+    pub __unused5:     c_ulong,
+}
+
+// #[cfg(target_endian = "big")]
+// #[repr(C)]
+// #[derive(Pod, Eq)]
+// pub struct stat {
+//     pub st_dev:        c_ushort,
+//     pub __pad1:        c_ushort,
+//     pub st_ino:        c_ulong,
+//     pub st_mode:       c_ushort,
+//     pub st_nlink:      c_ushort,
+//     pub st_uid:        c_ushort,
+//     pub st_gid:        c_ushort,
+//     pub st_rdev:       c_ushort,
+//     pub __pad2:        c_ushort,
+//     pub st_size:       c_ulong,
+//     pub st_blksize:    c_ulong,
+//     pub st_blocks:     c_ulong,
+//     pub st_atime:      c_ulong,
+//     pub st_atime_nsec: c_ulong,
+//     pub st_mtime:      c_ulong,
+//     pub st_mtime_nsec: c_ulong,
+//     pub st_ctime:      c_ulong,
+//     pub st_ctime_nsec: c_ulong,
+//     pub __unused4:     c_ulong,
+//     pub __unused5:     c_ulong,
+// }
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct stat64 {
+    pub st_dev:        c_ulonglong,
+    pub __pad0:     [c_uchar; 4],
+    pub __st_ino:      c_ulong,
+    pub st_mode:       c_uint,
+    pub st_nlink:      c_uint,
+    pub st_uid:        c_ulong,
+    pub st_gid:        c_ulong,
+    pub st_rdev:       c_ulonglong,
+    pub __pad3:     [c_uchar; 4],
+    pub st_size:       c_longlong,
+    pub st_blksize:    c_ulong,
+    pub st_blocks:     c_ulonglong,
+    pub st_atime:      c_ulong,
+    pub st_atime_nsec: c_ulong,
+    pub st_mtime:      c_ulong,
+    pub st_mtime_nsec: c_ulong,
+    pub st_ctime:      c_ulong,
+    pub st_ctime_nsec: c_ulong,
+    pub st_ino:        c_ulonglong,
+}
+
+///////////////////////////////////////
+// arch/arm/include/uapi/asm/termbits.h
+///////////////////////////////////////
+
+pub use ::gen::{
+    cc_t, speed_t, tcflag_t, NCCS, termios, termios2, ktermios,
+
+    VINTR, VQUIT, VERASE, VKILL, VEOF, VTIME, VMIN, VSWTC, VSTART, VSTOP, VSUSP, VEOL,
+    VREPRINT, VDISCARD, VWERASE, VLNEXT, VEOL2, IGNBRK, BRKINT, IGNPAR, PARMRK, INPCK,
+    ISTRIP, INLCR, IGNCR, ICRNL, IUCLC, IXON, IXANY, IXOFF, IMAXBEL, IUTF8, OPOST, OLCUC,
+    ONLCR, OCRNL, ONOCR, ONLRET, OFILL, OFDEL, NLDLY, NL0, NL1, CRDLY, CR0, CR1, CR2, CR3,
+    TABDLY, TAB0, TAB1, TAB2, TAB3, XTABS, BSDLY, BS0, BS1, VTDLY, VT0, VT1, FFDLY, FF0,
+    FF1, CBAUD, B0, B50, B75, B110, B134, B150, B200, B300, B600, B1200, B1800, B2400,
+    B4800, B9600, B19200, B38400, EXTA, EXTB, CSIZE, CS5, CS6, CS7, CS8, CSTOPB, CREAD,
+    PARENB, PARODD, HUPCL, CLOCAL, CBAUDEX, BOTHER, B57600, B115200, B230400, B460800,
+    B500000, B576000, B921600, B1000000, B1152000, B1500000, B2000000, B2500000, B3000000,
+    B3500000, B4000000, CIBAUD, CMSPAR, CRTSCTS, IBSHIFT, ISIG, ICANON, XCASE, ECHO,
+    ECHOE, ECHOK, ECHONL, NOFLSH, TOSTOP, ECHOCTL, ECHOPRT, ECHOKE, FLUSHO, PENDIN,
+    IEXTEN, EXTPROC, TCOOFF, TCOON, TCIOFF, TCION, TCIFLUSH, TCOFLUSH, TCIOFLUSH, TCSANOW,
+    TCSADRAIN, TCSAFLUSH,
+};
+
+//////////////////////////////////////
+// arch/arm/include/uapi/asm/termios.h
+//////////////////////////////////////
+
+pub use ::gen::{
+    winsize, NCC, termio, TIOCM_LE, TIOCM_DTR, TIOCM_RTS, TIOCM_ST, TIOCM_SR, TIOCM_CTS,
+    TIOCM_CAR, TIOCM_RNG, TIOCM_DSR, TIOCM_CD, TIOCM_RI, TIOCM_OUT1, TIOCM_OUT2,
+    TIOCM_LOOP,
+};
+
+///////////////////////////////
+// include/uapi/linux/sysinfo.h
+///////////////////////////////
+
+pub const SYSINFO_PADDING: usize = 8;
 
 //////////////////////////
 // arch/arm/kernel/calls.S

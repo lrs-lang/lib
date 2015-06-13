@@ -14,6 +14,8 @@ extern crate lrs_core as core;
 extern crate lrs_cty_base as cty_base;
 extern crate lrs_base as base;
 
+// TODO: look at include/linux/compat.h and check that all types here are compatible
+
 use core::{mem};
 
 pub use self::arch::*;

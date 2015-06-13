@@ -831,7 +831,7 @@ pub const SIG_ERR : usize = !0;
 ////////////////////////////////////
 
 pub const _NSIG       : usize = 64;
-pub const _NSIG_BPW   : usize = ::__BITS_PER_LONG;
+pub const _NSIG_BPW   : usize = ::__BITS_PER_C_ULONG; // c_ulong for compat
 pub const _NSIG_WORDS : usize = ::_NSIG / ::_NSIG_BPW;
 
 pub const SIGHUP    : ::c_int = 1;
@@ -883,32 +883,41 @@ pub const SA_ONESHOT   : ::c_int = ::SA_RESETHAND;
 pub const MINSIGSTKSZ : usize = 2048;
 pub const SIGSTKSZ    : usize = 8192;
 
+pub type SigsetVal = ::c_ulong;
+
 #[repr(C)]
 #[derive(Pod, Eq)]
 pub struct sigset_t {
-    pub sig: [::k_ulong; ::_NSIG_WORDS],
+    pub sig: [::c_ulong; ::_NSIG_WORDS], // c_ulong for compat
 }
 
 pub type old_sigset_t = ::c_ulong;
-
-// struct sigaction {
-//         __sighandler_t sa_handler;
-//         unsigned long sa_flags;
-// #ifdef SA_RESTORER
-//         __sigrestore_t sa_restorer;
-// #endif
-//         sigset_t sa_mask;                /* mask last for extensibility */
-// };
 
 #[repr(C)]
 #[derive(Pod, Eq)]
 pub struct sigaltstack {
     pub ss_sp: *mut ::c_void,
     pub ss_flags: ::c_int,
-    pub ss_size: ::size_t,
+    pub ss_size: ::user_size_t,
 }
 
 pub type stack_t = ::sigaltstack;
+
+/////////////////////////
+// include/linux/signal.h
+/////////////////////////
+
+// For some reason the uapi exposes another type in uapi/asm-generic/signal.h. But this is
+// the type expected is syscalls.
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct sigaction {
+    pub sa_handler:  usize,
+    pub sa_flags:    c_ulong, // c_ulong because compat
+    pub sa_restorer: usize,
+    pub sa_mask:     sigset_t,
+}
 
 ////////////////////////////////////
 // include/uapi/asm-generic/socket.h

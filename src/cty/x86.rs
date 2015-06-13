@@ -352,26 +352,10 @@ pub use ::gen::{
 // include/uapi/asm-generic/signal.h
 ////////////////////////////////////
 
-// This file doesn't actually seem to be used because it defined NSIG as the long obsolete
-// 32. XXX this should be investigated.
-
-pub const NSIG : usize = 64;
-
 pub use ::gen::{
     _NSIG, _NSIG_BPW, _NSIG_WORDS,
+    old_sigset_t, SigsetVal, sigset_t, sigaction,
 };
-
-pub use ::gen::{
-    old_sigset_t,
-};
-
-pub type SigsetVal = c_ulong;
-
-#[repr(C, packed)]
-#[derive(Pod, Eq)]
-pub struct sigset_t {
-    pub sig: [SigsetVal; _NSIG / BITS_PER_C_ULONG],
-}
 
 pub const SIGHUP    : c_int = 1;
 pub const SIGINT    : c_int = 2;
@@ -421,20 +405,11 @@ pub const SA_ONESHOT   : c_int = SA_RESETHAND;
 pub const SA_RESTORER  : c_int = 0x04000000;
 
 #[repr(C)]
-#[derive(Pod)]
-pub struct sigaction {
-    pub sa_handler: usize,
-    pub sa_mask: sigset_t,
-    pub sa_flags: c_ulong,
-    pub sa_restorer: usize,
-}
-
-#[repr(C)]
 #[derive(Pod, Eq)]
 pub struct sigaltstack {
     pub ss_sp: *mut c_void,
     pub ss_flags: c_int,
-    pub ss_size: ::size_t,
+    pub ss_size: ::user_size_t, // for compat
 }
 
 pub type stack_t = sigaltstack;
@@ -544,7 +519,7 @@ pub struct stat64 {
     pub st_atime:      c_ulong,
     pub st_atime_nsec: c_ulong,
     pub st_mtime:      c_ulong,
-    pub st_mtime_nsec: c_uint,
+    pub st_mtime_nsec: c_uint, // WTF?
     pub st_ctime:      c_ulong,
     pub st_ctime_nsec: c_ulong,
     pub st_ino:        c_ulonglong,
