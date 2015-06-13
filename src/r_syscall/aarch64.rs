@@ -2,10 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub use ::arch::abi::{
-    syscall0, syscall1, syscall2, syscall3, syscall4, syscall5, syscall6, SCT,
-};
-
 pub use ::common::{
     accept, accept4, acct, add_key, adjtimex, bind, bpf, brk, capget,
     capset, chdir, chroot, clock_adjtime, clock_getres, clock_gettime,
@@ -49,99 +45,97 @@ pub use ::common::{
 
 use cty::{
     self,
-    c_uint, k_int, k_long, k_ulong, c_char, k_uint, linux_dirent64, loff_t,
+    k_int, k_long, k_ulong, c_char, k_uint, linux_dirent64, loff_t,
     new_utsname, pid_t, rlimit64, size_t, ssize_t, stat,
 
-    __NR_iopl, __NR_mmap,
+    __NR_mmap,
 };
 
-#[cfg(target_pointer_width = "32")]
-#[path = "x32.rs"]
-mod abi;
+pub type SCT = k_long;
 
-#[cfg(target_pointer_width = "64")]
-#[path = "x64.rs"]
-mod abi;
-
-mod common {
-    use ::arch::abi::{SCT};
-
-    #[inline(always)]
-    pub unsafe fn syscall0(n: SCT) -> SCT {
-        let mut ret: SCT;
-        asm!("syscall" : "={rax}"(ret)
-                       : "{rax}"(n)
-                       : "rcx", "r11", "memory"
-                       : "volatile");
-        ret
-    }
-
-    #[inline(always)]
-    pub unsafe fn syscall1(n: SCT, a1: SCT) -> SCT {
-        let mut ret: SCT;
-        asm!("syscall" : "={rax}"(ret)
-                       : "{rax}"(n), "{rdi}"(a1)
-                       : "rcx", "r11", "memory"
-                       : "volatile");
-        ret
-    }
-
-    #[inline(always)]
-    pub unsafe fn syscall2(n: SCT, a1: SCT, a2: SCT) -> SCT {
-        let mut ret: SCT;
-        asm!("syscall" : "={rax}"(ret)
-                       : "{rax}"(n), "{rdi}"(a1), "{rsi}"(a2)
-                       : "rcx", "r11", "memory"
-                       : "volatile");
-        ret
-    }
-
-    #[inline(always)]
-    pub unsafe fn syscall3(n: SCT, a1: SCT, a2: SCT, a3: SCT) -> SCT {
-        let mut ret: SCT;
-        asm!("syscall" : "={rax}"(ret)
-                       : "{rax}"(n), "{rdi}"(a1), "{rsi}"(a2), "{rdx}"(a3)
-                       : "rcx", "r11", "memory"
-                       : "volatile");
-        ret
-    }
-
-    #[inline(always)]
-    pub unsafe fn syscall4(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT) -> SCT {
-        let mut ret: SCT;
-        asm!("syscall" : "={rax}"(ret)
-                       : "{rax}"(n), "{rdi}"(a1), "{rsi}"(a2), "{rdx}"(a3),
-                         "{r10}"(a4)
-                       : "rcx", "r11", "memory"
-                       : "volatile");
-        ret
-    }
-
-    #[inline(always)]
-    pub unsafe fn syscall5(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT, a5: SCT) -> SCT {
-        let mut ret: SCT;
-        asm!("syscall" : "={rax}"(ret)
-                       : "{rax}"(n), "{rdi}"(a1), "{rsi}"(a2), "{rdx}"(a3),
-                         "{r10}"(a4), "{r8}"(a5)
-                       : "rcx", "r11", "memory"
-                       : "volatile");
-        ret
-    }
-
-    #[inline(always)]
-    pub unsafe fn syscall6(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT, a5: SCT,
-                           a6: SCT) -> SCT {
-        let mut ret: SCT;
-        asm!("syscall" : "={rax}"(ret)
-                       : "{rax}"(n), "{rdi}"(a1), "{rsi}"(a2), "{rdx}"(a3),
-                         "{r10}"(a4), "{r8}"(a5), "{r9}"(a6)
-                       : "rcx", "r11", "memory"
-                       : "volatile");
-        ret
-    }
+#[inline(always)]
+pub unsafe fn syscall0(n: SCT) -> SCT {
+    let mut ret: SCT;
+    asm!("svc 0" : "={x0}"(ret)
+                 : "{x8}"(n)
+                 : "memory", "cc"
+                 : "volatile");
+    ret
 }
 
-// cross platform unification:
+#[inline(always)]
+pub unsafe fn syscall1(n: SCT, a1: SCT) -> SCT {
+    let mut ret: SCT;
+    asm!("svc 0" : "={x0}"(ret)
+                 : "{x8}"(n), "{x0}"(a1)
+                 : "memory", "cc"
+                 : "volatile");
+    ret
+}
+
+#[inline(always)]
+pub unsafe fn syscall2(n: SCT, a1: SCT, a2: SCT) -> SCT {
+    let mut ret: SCT;
+    asm!("svc 0" : "={x0}"(ret)
+                 : "{x8}"(n), "{x0}"(a1), "{x1}"(a2)
+                 : "memory", "cc"
+                 : "volatile");
+    ret
+}
+
+#[inline(always)]
+pub unsafe fn syscall3(n: SCT, a1: SCT, a2: SCT, a3: SCT) -> SCT {
+    let mut ret: SCT;
+    asm!("svc 0" : "={x0}"(ret)
+                 : "{x8}"(n), "{x0}"(a1), "{x1}"(a2), "{x2}"(a3)
+                 : "memory", "cc"
+                 : "volatile");
+    ret
+}
+
+#[inline(always)]
+pub unsafe fn syscall4(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT) -> SCT {
+    let mut ret: SCT;
+    asm!("svc 0" : "={x0}"(ret)
+                 : "{x8}"(n), "{x0}"(a1), "{x1}"(a2), "{x2}"(a3), "{x3}"(a4)
+                 : "memory", "cc"
+                 : "volatile");
+    ret
+}
+
+#[inline(always)]
+pub unsafe fn syscall5(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT, a5: SCT) -> SCT {
+    let mut ret: SCT;
+    asm!("svc 0" : "={x0}"(ret)
+                 : "{x8}"(n), "{x0}"(a1), "{x1}"(a2), "{x2}"(a3), "{x3}"(a4), "{x4}"(a5)
+                 : "memory", "cc"
+                 : "volatile");
+    ret
+}
+
+#[inline(always)]
+pub unsafe fn syscall6(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT, a5: SCT,
+                       a6: SCT) -> SCT {
+    let mut ret: SCT;
+    asm!("svc 0" : "={x0}"(ret)
+                 : "{x8}"(n), "{x0}"(a1), "{x1}"(a2), "{x2}"(a3), "{x3}"(a4),
+                   "{x4}"(a5), "{x5}"(a6)
+                 : "memory", "cc"
+                 : "volatile");
+    ret
+}
+
+#[inline(always)]
+pub unsafe fn syscall7(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT, a5: SCT, a6: SCT,
+                       a7: SCT) -> SCT {
+    let mut ret: SCT;
+    asm!("svc 0" : "={x0}"(ret)
+                 : "{x8}"(n), "{x0}"(a1), "{x1}"(a2), "{x2}"(a3), "{x3}"(a4),
+                   "{x4}"(a5), "{x5}"(a6), "{x6}"(a7)
+                 : "memory", "cc"
+                 : "volatile");
+    ret
+}
 
 pub type StatType = stat;
 pub type StatfsType = cty::statfs;
@@ -169,7 +163,7 @@ pub unsafe fn getdents(fd: k_uint, dirent: *mut linux_dirent64, count: k_uint) -
 }
 
 pub unsafe fn fadvise(fd: k_int, offset: loff_t, len: loff_t, advice: k_int) -> k_int {
-    ::common::fadvise64(fd, offset, len as size_t, advice)
+    ::common::fadvise64_64(fd, offset, len, advice)
 }
 
 pub unsafe fn fstatat(dfd: k_int, filename: *const c_char, statbuf: *mut stat,
@@ -180,13 +174,6 @@ pub unsafe fn fstatat(dfd: k_int, filename: *const c_char, statbuf: *mut stat,
 pub unsafe fn prlimit(pid: pid_t, resource: k_uint, new_rlim: *const rlimit64,
                       old_rlim: *mut rlimit64) -> k_int {
     ::common::prlimit64(pid, resource, new_rlim, old_rlim)
-}
-
-
-// x86_64 specific
-
-pub unsafe fn iopl(level: c_uint) -> k_int {
-    call!(__NR_iopl, level) as k_int
 }
 
 pub unsafe fn mmap(addr: k_ulong, len: k_ulong, prot: k_ulong, flags: k_ulong,

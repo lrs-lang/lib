@@ -55,7 +55,7 @@
 
 pub use lrs_signal::{
     Sigset, blocked_signals, block_signal, unblock_signal, block_signals, unblock_signals,
-    set_blocked_signals, pending_signals, suspend, SigInfo, wait, wait_timeout,
+    set_blocked_signals, pending_signals, SigInfo, wait, wait_timeout,
     SigHandler, set_handler, suspend_with, send, send_to_thread,
 };
 pub use lrs_signal::signals::{Signal};

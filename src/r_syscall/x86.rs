@@ -5,43 +5,43 @@
 use core::{mem};
 
 pub use ::common::{
-    accept, accept4, access, acct, add_key, adjtimex, bind, bpf, brk, capget,
-    capset, chdir, chmod, chown, chroot, clock_adjtime, clock_getres, clock_gettime,
-    clock_nanosleep, clock_settime, close, connect, creat, delete_module, dup, dup2, dup3,
-    epoll_create, epoll_create1, epoll_ctl, epoll_pwait, epoll_wait, eventfd, eventfd2,
+    accept, accept4, acct, add_key, adjtimex, bind, bpf, brk, capget,
+    capset, chdir, chroot, clock_adjtime, clock_getres, clock_gettime,
+    clock_nanosleep, clock_settime, close, connect, delete_module, dup, dup3,
+    epoll_create1, epoll_ctl, epoll_pwait, eventfd2,
     execve, execveat, exit, exit_group, faccessat, fanotify_init,
     fchdir, fchmod, fchmodat, fchown, fchownat, fdatasync,
-    fgetxattr, finit_module, flistxattr, flock, fork, fremovexattr, fsetxattr,
-    fsync, futex, futimesat, getcpu, getcwd, getegid, geteuid, getgid,
-    getgroups, getitimer, get_mempolicy, getpeername, getpgid, getpgrp, getpid, getppid,
+    fgetxattr, finit_module, flistxattr, flock, fremovexattr, fsetxattr,
+    fsync, futex, getcpu, getcwd, getegid, geteuid, getgid,
+    getgroups, getitimer, get_mempolicy, getpeername, getpgid, getpid, getppid,
     getpriority, getrandom, getresgid, getresuid, getrlimit, get_robust_list, getrusage,
     getsid, getsockname, getsockopt, gettid, gettimeofday, getuid, getxattr, init_module,
-    inotify_add_watch, inotify_init, inotify_init1, inotify_rm_watch, io_cancel, ioctl,
+    inotify_add_watch, inotify_init1, inotify_rm_watch, io_cancel, ioctl,
     io_destroy, io_getevents, ioprio_get, ioprio_set, io_setup, io_submit, kcmp,
-    kexec_load, keyctl, kill, lchown, lgetxattr, link, linkat, listen,
+    kexec_load, keyctl, kill, lgetxattr, linkat, listen,
     listxattr, llistxattr, lremovexattr, lsetxattr, madvise, mbind,
-    memfd_create, mincore, mkdir, mkdirat, mknod, mknodat, mlock, mlockall,
+    memfd_create, mincore, mkdirat, mknodat, mlock, mlockall,
     mount, move_pages, mprotect, mq_getsetattr, mq_open, mq_timedreceive, mq_timedsend,
     mq_unlink, mremap, msgctl, msgget, msgrcv, msgsnd, msync, munlock, munlockall, munmap,
-    name_to_handle_at, nanosleep, open, openat, open_by_handle_at, pause, perf_event_open,
-    personality, pipe, pipe2, pivot_root, poll, ppoll, prctl, preadv, process_vm_readv,
-    process_vm_writev, pselect6, ptrace, pwritev, quotactl, read, readlink,
+    name_to_handle_at, nanosleep, openat, open_by_handle_at, perf_event_open,
+    personality, pipe2, pivot_root, ppoll, prctl, preadv, process_vm_readv,
+    process_vm_writev, pselect6, ptrace, pwritev, quotactl, read,
     readlinkat, readv, reboot, recvfrom, recvmmsg, recvmsg, remap_file_pages, removexattr,
-    rename, renameat, renameat2, request_key, restart_syscall, rmdir, rt_sigaction,
+    renameat, renameat2, request_key, restart_syscall, rt_sigaction,
     rt_sigpending, rt_sigprocmask, rt_sigqueueinfo, rt_sigsuspend, rt_sigreturn,
     rt_sigtimedwait, rt_tgsigqueueinfo, sched_getaffinity, sched_getattr, sched_getparam,
     sched_get_priority_max, sched_get_priority_min, sched_getscheduler,
     sched_rr_get_interval, sched_setaffinity, sched_setattr, sched_setparam,
-    sched_setscheduler, sched_yield, seccomp, select, semget, semop, semtimedop, sendmmsg,
+    sched_setscheduler, sched_yield, seccomp, semget, semop, semtimedop, sendmmsg,
     sendmsg, sendto, setdomainname, setfsgid, setfsuid, setgid, setgroups, sethostname,
     setitimer, set_mempolicy, setns, setpgid, setpriority, setregid, setresgid, setresuid,
     setreuid, setrlimit, set_robust_list, setsid, setsockopt, set_tid_address,
     settimeofday, setuid, setxattr, shmat, shmctl, shmdt, shmget, shutdown, sigaltstack,
-    signalfd4, socket, socketpair, splice, swapoff, swapon, symlink,
-    symlinkat, sync, syncfs, sysfs, sysinfo, syslog, tee, tgkill,
+    signalfd4, socket, socketpair, splice, swapoff, swapon,
+    symlinkat, sync, syncfs, sysinfo, syslog, tee, tgkill,
     timer_delete, timerfd_create, timerfd_gettime, timerfd_settime, timer_getoverrun,
-    timer_gettime, timer_settime, times, tkill, umask, umount, unlink, unlinkat,
-    unshare, ustat, utimensat, utimes, vfork, vhangup, vmsplice, waitid,
+    timer_gettime, timer_settime, times, tkill, umask, umount, unlinkat,
+    unshare, utimensat, vhangup, vmsplice, waitid,
     write, writev,
 };
 
@@ -138,24 +138,12 @@ fn split_i64(val: i64) -> [u32; 2] {
 pub type StatType = stat64;
 pub type StatfsType = statfs64;
 
-pub unsafe fn stat(filename: *const c_char, statbuf: *mut stat64) -> k_int {
-    ::common::stat64(filename, statbuf)
-}
-
-pub unsafe fn fstat(fd: k_uint, statbuf: *mut stat64) -> k_int {
-    ::common::fstat64(fd, statbuf)
-}
-
 pub unsafe fn statfs(pathname: *const c_char, buf: *mut statfs64) -> k_int {
     ::common::statfs64(pathname, mem::size_of::<statfs64>() as size_t, buf)
 }
 
 pub unsafe fn fstatfs(fd: k_uint, buf: *mut statfs64) -> k_int {
     ::common::fstatfs64(fd,  mem::size_of::<statfs64>() as size_t, buf)
-}
-
-pub unsafe fn lstat(filename: *const c_char, statbuf: *mut stat64) -> k_int {
-    ::common::lstat64(filename, statbuf)
 }
 
 pub unsafe fn fcntl(fd: k_uint, cmd: k_uint, arg: k_ulong) -> k_int {

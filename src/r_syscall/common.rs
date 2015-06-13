@@ -10,19 +10,15 @@ use cty::{
     bpf_attr, cap_user_data_t, cap_user_header_t, clockid_t, c_void, epoll_event, gid_t,
     key_serial_t, k_int, k_uint, k_ulong, loff_t, sigset_t, size_t, timespec, timex,
     uid_t, umode_t, c_char, aio_context_t, clock_t, fd_set, file_handle, getcpu_cache,
-    iocb, io_event, iovec, itimerspec, itimerval, kexec_segment, k_long, linux_dirent,
+    iocb, io_event, iovec, itimerspec, itimerval, kexec_segment, k_long,
     linux_dirent64, mq_attr, mqd_t, new_utsname, off_t,
     perf_event_attr, pid_t, pollfd, qid_t, rlimit, rlimit64,
     robust_list_head, rusage, __s32, sched_attr, sched_param, sigaction, siginfo_t,
     ssize_t, stack_t, statfs, sysinfo, timer_t,
-    timeval, timezone, tms, ustat, k_uchar,
+    timeval, timezone, tms, k_uchar,
 };
 
 use super::arch::{SCT};
-
-pub unsafe fn access(filename: *const c_char, mode: k_int) -> k_int {
-    call!(cty::__NR_access, filename, mode) as k_int
-}
 
 pub unsafe fn acct(name: *const c_char) -> k_int {
     call!(cty::__NR_acct, name) as k_int
@@ -58,14 +54,6 @@ pub unsafe fn chdir(filename: *const c_char) -> k_int {
     call!(cty::__NR_chdir, filename) as k_int
 }
 
-pub unsafe fn chmod(filename: *const c_char, mode: umode_t) -> k_int {
-    call!(cty::__NR_chmod, filename, mode) as k_int
-}
-
-pub unsafe fn chown(filename: *const c_char, user: uid_t, group: gid_t) -> k_int {
-    call!(cty::__NR_chown, filename, user, group) as k_int
-}
-
 pub unsafe fn chroot(filename: *const c_char) -> k_int {
     call!(cty::__NR_chroot, filename) as k_int
 }
@@ -95,16 +83,8 @@ pub unsafe fn close(fd: k_uint) -> k_int {
     call!(cty::__NR_close, fd) as k_int
 }
 
-pub unsafe fn creat(pathname: *const c_char, mode: umode_t) -> k_int {
-    call!(cty::__NR_creat, pathname, mode) as k_int
-}
-
 pub unsafe fn delete_module(name_user: *const c_char, flags: k_uint) -> k_int {
     call!(cty::__NR_delete_module, name_user, flags) as k_int
-}
-
-pub unsafe fn dup2(oldfd: k_uint, newfd: k_uint) -> k_int {
-    call!(cty::__NR_dup2, oldfd, newfd) as k_int
 }
 
 pub unsafe fn dup3(oldfd: k_uint, newfd: k_uint, flags: k_int) -> k_int {
@@ -119,10 +99,6 @@ pub unsafe fn epoll_create1(flags: k_int) -> k_int {
     call!(cty::__NR_epoll_create1, flags) as k_int
 }
 
-pub unsafe fn epoll_create(size: k_int) -> k_int {
-    call!(cty::__NR_epoll_create, size) as k_int
-}
-
 pub unsafe fn epoll_ctl(epfd: k_int, op: k_int, fd: k_int,
                         event: *mut epoll_event) -> k_int {
     call!(cty::__NR_epoll_ctl, epfd, op, fd, event) as k_int
@@ -135,17 +111,8 @@ pub unsafe fn epoll_pwait(epfd: k_int, events: *mut epoll_event, maxevents: k_in
           sigsetsize) as k_int
 }
 
-pub unsafe fn epoll_wait(epfd: k_int, events: *mut epoll_event, maxevents: k_int,
-                         timeout: k_int) -> k_int {
-    call!(cty::__NR_epoll_wait, epfd, events, maxevents, timeout) as k_int
-}
-
 pub unsafe fn eventfd2(count: k_uint, flags: k_int) -> k_int {
     call!(cty::__NR_eventfd2, count, flags) as k_int
-}
-
-pub unsafe fn eventfd(count: k_uint) -> k_int {
-    call!(cty::__NR_eventfd, count) as k_int
 }
 
 pub unsafe fn execveat(fd: k_int, filename: *const c_char, argv: *const *const c_char,
@@ -220,10 +187,6 @@ pub unsafe fn flock(fd: k_uint, cmd: k_uint) -> k_int {
     call!(cty::__NR_flock, fd, cmd) as k_int
 }
 
-pub unsafe fn fork() -> pid_t {
-    call!(cty::__NR_fork) as pid_t 
-}
-
 pub unsafe fn fremovexattr(fd: k_int, name: *const c_char) -> k_int {
     call!(cty::__NR_fremovexattr, fd, name) as k_int
 }
@@ -251,11 +214,6 @@ pub unsafe fn futex(uaddr: *mut u32, op: k_int, val: u32, utime: *mut timespec,
     call!(cty::__NR_futex, uaddr, op, val, utime, uaddr2, val3) as k_int
 }
 
-pub unsafe fn futimesat(dfd: k_int, filename: *const c_char,
-                        utimes: *mut timeval) -> k_int {
-    call!(cty::__NR_futimesat, dfd, filename, utimes) as k_int
-}
-
 pub unsafe fn getcpu(cpup: *mut k_uint, nodep: *mut k_uint,
                      unused: *mut getcpu_cache) -> k_int {
     call!(cty::__NR_getcpu, cpup, nodep, unused) as k_int
@@ -268,10 +226,6 @@ pub unsafe fn getcwd(buf: *mut c_char, size: k_ulong) -> k_int {
 pub unsafe fn getdents64(fd: k_uint, dirent: *mut linux_dirent64,
                          count: k_uint) -> k_int {
     call!(cty::__NR_getdents64, fd, dirent, count) as k_int
-}
-
-pub unsafe fn getdents(fd: k_uint, dirent: *mut linux_dirent, count: k_uint) -> k_int {
-    call!(cty::__NR_getdents, fd, dirent, count) as k_int
 }
 
 pub unsafe fn getegid() -> gid_t {
@@ -301,10 +255,6 @@ pub unsafe fn get_mempolicy(policy: *mut k_int, nmask: *mut k_ulong, maxnode: k_
 
 pub unsafe fn getpgid(pid: pid_t) -> pid_t {
     call!(cty::__NR_getpgid, pid) as pid_t
-}
-
-pub unsafe fn getpgrp() -> pid_t {
-    call!(cty::__NR_getpgrp) as pid_t 
 }
 
 pub unsafe fn getpid() -> pid_t {
@@ -376,10 +326,6 @@ pub unsafe fn inotify_add_watch(fd: k_int, pathname: *const c_char, mask: u32) -
     call!(cty::__NR_inotify_add_watch, fd, pathname, mask) as k_int
 }
 
-pub unsafe fn inotify_init() -> k_int {
-    call!(cty::__NR_inotify_init) as k_int 
-}
-
 pub unsafe fn inotify_init1(flags: k_int) -> k_int {
     call!(cty::__NR_inotify_init1, flags) as k_int
 }
@@ -449,10 +395,6 @@ pub unsafe fn kill(pid: pid_t, sig: k_int) -> k_int {
     call!(cty::__NR_kill, pid, sig) as k_int
 }
 
-pub unsafe fn lchown(filename: *const c_char, user: uid_t, group: gid_t) -> k_int {
-    call!(cty::__NR_lchown, filename, user, group) as k_int
-}
-
 pub unsafe fn lgetxattr(pathname: *const c_char, name: *const c_char, value: *mut c_void,
                         size: size_t) -> ssize_t {
     call!(cty::__NR_lgetxattr, pathname, name, value, size) as ssize_t
@@ -461,10 +403,6 @@ pub unsafe fn lgetxattr(pathname: *const c_char, name: *const c_char, value: *mu
 pub unsafe fn linkat(olddfd: k_int, oldname: *const c_char, newdfd: k_int,
                      newname: *const c_char, flags: k_int) -> k_int {
     call!(cty::__NR_linkat, olddfd, oldname, newdfd, newname, flags) as k_int
-}
-
-pub unsafe fn link(oldname: *const c_char, newname: *const c_char) -> k_int {
-    call!(cty::__NR_link, oldname, newname) as k_int
 }
 
 pub unsafe fn listxattr(pathname: *const c_char, list: *mut c_char,
@@ -516,17 +454,9 @@ pub unsafe fn mkdirat(dfd: k_int, pathname: *const c_char, mode: umode_t) -> k_i
     call!(cty::__NR_mkdirat, dfd, pathname, mode) as k_int
 }
 
-pub unsafe fn mkdir(pathname: *const c_char, mode: umode_t) -> k_int {
-    call!(cty::__NR_mkdir, pathname, mode) as k_int
-}
-
 pub unsafe fn mknodat(dfd: k_int, filename: *const c_char, mode: umode_t,
                       dev: k_uint) -> k_int {
     call!(cty::__NR_mknodat, dfd, filename, mode, dev) as k_int
-}
-
-pub unsafe fn mknod(filename: *const c_char, mode: umode_t, dev: k_uint) -> k_int {
-    call!(cty::__NR_mknod, filename, mode, dev) as k_int
 }
 
 pub unsafe fn mlockall(flags: k_int) -> k_int {
@@ -632,14 +562,6 @@ pub unsafe fn open_by_handle_at(mountdirfd: k_int, handle: *mut file_handle,
     call!(cty::__NR_open_by_handle_at, mountdirfd, handle, flags) as k_int
 }
 
-pub unsafe fn open(filename: *const c_char, flags: k_int, mode: umode_t) -> k_int {
-    call!(cty::__NR_open, filename, flags, mode) as k_int
-}
-
-pub unsafe fn pause() -> k_int {
-    call!(cty::__NR_pause) as k_int 
-}
-
 // pub unsafe fn pciconfig_read(bus: k_ulong, dfn: k_ulong, off: k_ulong, len: k_ulong,
 //                              buf: *mut c_void) -> k_int {
 //     call!(cty::__NR_pciconfig_read, bus, dfn, off, len, buf) as k_int
@@ -663,16 +585,8 @@ pub unsafe fn pipe2(fildes: *mut k_int, flags: k_int) -> k_int {
     call!(cty::__NR_pipe2, fildes, flags) as k_int
 }
 
-pub unsafe fn pipe(fildes: *mut k_int) -> k_int {
-    call!(cty::__NR_pipe, fildes) as k_int
-}
-
 pub unsafe fn pivot_root(new_root: *const c_char, put_old: *const c_char) -> k_int {
     call!(cty::__NR_pivot_root, new_root, put_old) as k_int
-}
-
-pub unsafe fn poll(ufds: *mut pollfd, nfds: k_uint, timeout_msecs: k_int) -> k_int {
-    call!(cty::__NR_poll, ufds, nfds, timeout_msecs) as k_int
 }
 
 pub unsafe fn ppoll(ufds: *mut pollfd, nfds: k_uint, tsp: *mut timespec,
@@ -737,10 +651,6 @@ pub unsafe fn readlinkat(dfd: k_int, pathname: *const c_char, buf: *mut c_char,
     call!(cty::__NR_readlinkat, dfd, pathname, buf, bufsiz) as ssize_t
 }
 
-pub unsafe fn readlink(path: *const c_char, buf: *mut c_char, bufsiz: k_int) -> ssize_t {
-    call!(cty::__NR_readlink, path, buf, bufsiz) as ssize_t
-}
-
 pub unsafe fn readv(fd: k_ulong, vec: *const iovec, vlen: k_ulong) -> ssize_t {
     call!(cty::__NR_readv, fd, vec, vlen) as ssize_t
 }
@@ -769,10 +679,6 @@ pub unsafe fn renameat(olddfd: k_int, oldname: *const c_char, newdfd: k_int,
     call!(cty::__NR_renameat, olddfd, oldname, newdfd, newname) as k_int
 }
 
-pub unsafe fn rename(oldname: *const c_char, newname: *const c_char) -> k_int {
-    call!(cty::__NR_rename, oldname, newname) as k_int
-}
-
 pub unsafe fn request_key(_type: *const c_char, _description: *const c_char,
                           _callout_info: *const c_char,
                           destringid: key_serial_t) -> key_serial_t {
@@ -782,10 +688,6 @@ pub unsafe fn request_key(_type: *const c_char, _description: *const c_char,
 
 pub unsafe fn restart_syscall() -> k_int {
     call!(cty::__NR_restart_syscall) as k_int 
-}
-
-pub unsafe fn rmdir(pathname: *const c_char) -> k_int {
-    call!(cty::__NR_rmdir, pathname) as k_int
 }
 
 pub unsafe fn rt_sigaction(sig: k_int, act: *const sigaction, oact: *mut sigaction,
@@ -878,11 +780,6 @@ pub unsafe fn sched_yield() -> k_int {
 
 pub unsafe fn seccomp(op: k_uint, flags: k_uint, uargs: *const c_char) -> k_int {
     call!(cty::__NR_seccomp, op, flags, uargs) as k_int
-}
-
-pub unsafe fn select(n: k_int, inp: *mut fd_set, outp: *mut fd_set, exp: *mut fd_set,
-                     tvp: *mut timeval) -> k_int {
-    call!(cty::__NR_select, n, inp, outp, exp, tvp) as k_int
 }
 
 pub unsafe fn setdomainname(name: *mut c_char, len: k_int) -> k_int {
@@ -1018,20 +915,12 @@ pub unsafe fn symlinkat(oldname: *const c_char, newdfd: k_int,
     call!(cty::__NR_symlinkat, oldname, newdfd, newname) as k_int
 }
 
-pub unsafe fn symlink(oldname: *const c_char, newname: *const c_char) -> k_int {
-    call!(cty::__NR_symlink, oldname, newname) as k_int
-}
-
 pub unsafe fn sync() {
     call!(cty::__NR_sync);
 }
 
 pub unsafe fn syncfs(fd: k_int) -> k_int {
     call!(cty::__NR_syncfs, fd) as k_int
-}
-
-pub unsafe fn sysfs(option: k_int, arg1: k_ulong, arg2: k_ulong) -> k_int {
-    call!(cty::__NR_sysfs, option, arg1, arg2) as k_int
 }
 
 pub unsafe fn sysinfo(info: *mut sysinfo) -> k_int {
@@ -1111,16 +1000,8 @@ pub unsafe fn unlinkat(dfd: k_int, pathname: *const c_char, flag: k_int) -> k_in
     call!(cty::__NR_unlinkat, dfd, pathname, flag) as k_int
 }
 
-pub unsafe fn unlink(pathname: *const c_char) -> k_int {
-    call!(cty::__NR_unlink, pathname) as k_int
-}
-
 pub unsafe fn unshare(unshare_flags: k_ulong) -> k_int {
     call!(cty::__NR_unshare, unshare_flags) as k_int
-}
-
-pub unsafe fn ustat(dev: k_uint, ubuf: *mut ustat) -> k_int {
-    call!(cty::__NR_ustat, dev, ubuf) as k_int
 }
 
 pub unsafe fn utimensat(dfd: k_int, filename: *const c_char, utimes: *const timespec,
@@ -1128,17 +1009,9 @@ pub unsafe fn utimensat(dfd: k_int, filename: *const c_char, utimes: *const time
     call!(cty::__NR_utimensat, dfd, filename, utimes, flags) as k_int
 }
 
-pub unsafe fn utimes(filename: *const c_char, utimes: *const timeval) -> k_int {
-    call!(cty::__NR_utimes, filename, utimes) as k_int
-}
-
 pub unsafe fn sendfile64(out_fd: k_int, in_fd: k_int, offset: *mut loff_t,
                          count: size_t) -> ssize_t {
     call!(cty::__NR_sendfile64, out_fd, in_fd, offset, count) as ssize_t
-}
-
-pub unsafe fn vfork() -> pid_t {
-    call!(cty::__NR_vfork) as pid_t 
 }
 
 pub unsafe fn vhangup() -> k_int {
@@ -1191,14 +1064,6 @@ mod _64_calls {
         call!(cty::__NR_fstatfs64, fd, sz, buf) as k_int
     }
 
-    pub unsafe fn lstat64(filename: *const c_char, statbuf: *mut stat64) -> k_int {
-        call!(cty::__NR_lstat64, filename, statbuf) as k_int
-    }
-
-    pub unsafe fn stat64(filename: *const c_char, statbuf: *mut stat64) -> k_int {
-        call!(cty::__NR_stat64, filename, statbuf) as k_int
-    }
-
     pub unsafe fn statfs64(pathname: *const c_char, sz: size_t,
                            buf: *mut statfs64) -> k_int {
         call!(cty::__NR_statfs64, pathname, sz, buf) as k_int
@@ -1210,11 +1075,11 @@ mod _64_calls {
     }
 }
 
-// 64 bit calls for 64 bit systems
-#[cfg(target_arch = "x86_64")]
+// new calls for 64 bit systems
+#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 pub use self::new_calls::*;
 
-#[cfg(target_arch = "x86_64")]
+#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 mod new_calls {
     use cty::{
         self, k_int, c_char, k_uint, stat,
@@ -1228,14 +1093,6 @@ mod new_calls {
     
     pub unsafe fn newfstat(fd: k_uint, statbuf: *mut stat) -> k_int {
         call!(cty::__NR_newfstat, fd, statbuf) as k_int
-    }
-    
-    pub unsafe fn newlstat(filename: *const c_char, statbuf: *mut stat) -> k_int {
-        call!(cty::__NR_newlstat, filename, statbuf) as k_int
-    }
-    
-    pub unsafe fn newstat(filename: *const c_char, statbuf: *mut stat) -> k_int {
-        call!(cty::__NR_newstat, filename, statbuf) as k_int
     }
 }
 
@@ -1318,10 +1175,10 @@ mod ipc_one {
 }
 
 // separate ipc calls
-#[cfg(any(target_arch = "x86_64", target_arch = "arm"))]
+#[cfg(any(target_arch = "x86_64", target_arch = "arm", target_arch = "aarch64"))]
 pub use self::ipc_sep::*;
 
-#[cfg(any(target_arch = "x86_64", target_arch = "arm"))]
+#[cfg(any(target_arch = "x86_64", target_arch = "arm", target_arch = "aarch64"))]
 mod ipc_sep {
     use cty::{
         self, k_int, c_char, c_void, IPC_64, msgbuf, k_long, ssize_t, timespec,
@@ -1503,10 +1360,10 @@ mod sock_one {
 }
 
 // separate socket calls
-#[cfg(any(target_arch = "x86_64", target_arch = "arm"))]
+#[cfg(any(target_arch = "x86_64", target_arch = "arm", target_arch = "aarch64"))]
 pub use self::sock_sep::*;
 
-#[cfg(any(target_arch = "x86_64", target_arch = "arm"))]
+#[cfg(any(target_arch = "x86_64", target_arch = "arm", target_arch = "aarch64"))]
 mod sock_sep {
     use cty::{
         self, k_int, sockaddr, c_char, c_void, size_t, k_uint, ssize_t, msghdr,
@@ -1601,21 +1458,23 @@ mod sock_sep {
 // syscalls with 64-bit arguments
 //
 // these implementations cannot be used on 32 bit systems
-#[cfg(target_arch = "x86_64")]
+#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 pub use self::wide::*;
 
-#[cfg(target_arch = "x86_64")]
+#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 mod wide {
     use cty::{
         self, k_int, c_char, size_t, k_uint, ssize_t, loff_t, __u64,
     };
     use ::arch::{SCT};
 
-    // pub unsafe fn fadvise64_64(fd: k_int, offset: loff_t, len: loff_t,
-    //                            advice: k_int) -> k_int {
-    //     call!(cty::__NR_fadvise64_64, fd, offset, len, advice) as k_int
-    // }
+    #[cfg(any(target_arch = "aarch64"))]
+    pub unsafe fn fadvise64_64(fd: k_int, offset: loff_t, len: loff_t,
+                               advice: k_int) -> k_int {
+        call!(cty::__NR_fadvise64_64, fd, offset, len, advice) as k_int
+    }
 
+    #[cfg(any(target_arch = "x86_64"))]
     pub unsafe fn fadvise64(fd: k_int, offset: loff_t, len: size_t,
                             advice: k_int) -> k_int {
         call!(cty::__NR_fadvise64, fd, offset, len, advice) as k_int
@@ -1884,5 +1743,149 @@ mod deprecated {
 
     pub unsafe fn alarm(seconds: k_uint) -> k_uint {
         call!(cty::__NR_alarm, seconds) as k_uint
+    }
+    
+    pub unsafe fn newlstat(filename: *const c_char, statbuf: *mut stat) -> k_int {
+        call!(cty::__NR_newlstat, filename, statbuf) as k_int
+    }
+    
+    pub unsafe fn newstat(filename: *const c_char, statbuf: *mut stat) -> k_int {
+        call!(cty::__NR_newstat, filename, statbuf) as k_int
+    }
+
+    pub unsafe fn lstat64(filename: *const c_char, statbuf: *mut stat64) -> k_int {
+        call!(cty::__NR_lstat64, filename, statbuf) as k_int
+    }
+
+    pub unsafe fn stat64(filename: *const c_char, statbuf: *mut stat64) -> k_int {
+        call!(cty::__NR_stat64, filename, statbuf) as k_int
+    }
+
+    pub unsafe fn access(filename: *const c_char, mode: k_int) -> k_int {
+        call!(cty::__NR_access, filename, mode) as k_int
+    }
+
+    pub unsafe fn chmod(filename: *const c_char, mode: umode_t) -> k_int {
+        call!(cty::__NR_chmod, filename, mode) as k_int
+    }
+
+    pub unsafe fn chown(filename: *const c_char, user: uid_t, group: gid_t) -> k_int {
+        call!(cty::__NR_chown, filename, user, group) as k_int
+    }
+
+    pub unsafe fn creat(pathname: *const c_char, mode: umode_t) -> k_int {
+        call!(cty::__NR_creat, pathname, mode) as k_int
+    }
+
+    pub unsafe fn dup2(oldfd: k_uint, newfd: k_uint) -> k_int {
+        call!(cty::__NR_dup2, oldfd, newfd) as k_int
+    }
+
+    pub unsafe fn epoll_create(size: k_int) -> k_int {
+        call!(cty::__NR_epoll_create, size) as k_int
+    }
+
+    pub unsafe fn epoll_wait(epfd: k_int, events: *mut epoll_event, maxevents: k_int,
+                             timeout: k_int) -> k_int {
+        call!(cty::__NR_epoll_wait, epfd, events, maxevents, timeout) as k_int
+    }
+
+    pub unsafe fn eventfd(count: k_uint) -> k_int {
+        call!(cty::__NR_eventfd, count) as k_int
+    }
+
+    pub unsafe fn fork() -> pid_t {
+        call!(cty::__NR_fork) as pid_t 
+    }
+
+    pub unsafe fn futimesat(dfd: k_int, filename: *const c_char,
+                            utimes: *mut timeval) -> k_int {
+        call!(cty::__NR_futimesat, dfd, filename, utimes) as k_int
+    }
+
+    pub unsafe fn getdents(fd: k_uint, dirent: *mut linux_dirent, count: k_uint) -> k_int {
+        call!(cty::__NR_getdents, fd, dirent, count) as k_int
+    }
+
+    pub unsafe fn getpgrp() -> pid_t {
+        call!(cty::__NR_getpgrp) as pid_t 
+    }
+
+    pub unsafe fn inotify_init() -> k_int {
+        call!(cty::__NR_inotify_init) as k_int 
+    }
+
+    pub unsafe fn lchown(filename: *const c_char, user: uid_t, group: gid_t) -> k_int {
+        call!(cty::__NR_lchown, filename, user, group) as k_int
+    }
+
+    pub unsafe fn link(oldname: *const c_char, newname: *const c_char) -> k_int {
+        call!(cty::__NR_link, oldname, newname) as k_int
+    }
+
+    pub unsafe fn mkdir(pathname: *const c_char, mode: umode_t) -> k_int {
+        call!(cty::__NR_mkdir, pathname, mode) as k_int
+    }
+
+    pub unsafe fn mknod(filename: *const c_char, mode: umode_t, dev: k_uint) -> k_int {
+        call!(cty::__NR_mknod, filename, mode, dev) as k_int
+    }
+
+    pub unsafe fn open(filename: *const c_char, flags: k_int, mode: umode_t) -> k_int {
+        call!(cty::__NR_open, filename, flags, mode) as k_int
+    }
+
+    pub unsafe fn pause() -> k_int {
+        call!(cty::__NR_pause) as k_int 
+    }
+
+    pub unsafe fn pipe(fildes: *mut k_int) -> k_int {
+        call!(cty::__NR_pipe, fildes) as k_int
+    }
+
+    pub unsafe fn poll(ufds: *mut pollfd, nfds: k_uint, timeout_msecs: k_int) -> k_int {
+        call!(cty::__NR_poll, ufds, nfds, timeout_msecs) as k_int
+    }
+
+    pub unsafe fn readlink(path: *const c_char, buf: *mut c_char,
+                           bufsiz: k_int) -> ssize_t {
+        call!(cty::__NR_readlink, path, buf, bufsiz) as ssize_t
+    }
+
+    pub unsafe fn rename(oldname: *const c_char, newname: *const c_char) -> k_int {
+        call!(cty::__NR_rename, oldname, newname) as k_int
+    }
+
+    pub unsafe fn rmdir(pathname: *const c_char) -> k_int {
+        call!(cty::__NR_rmdir, pathname) as k_int
+    }
+
+    pub unsafe fn select(n: k_int, inp: *mut fd_set, outp: *mut fd_set, exp: *mut fd_set,
+                         tvp: *mut timeval) -> k_int {
+        call!(cty::__NR_select, n, inp, outp, exp, tvp) as k_int
+    }
+
+    pub unsafe fn symlink(oldname: *const c_char, newname: *const c_char) -> k_int {
+        call!(cty::__NR_symlink, oldname, newname) as k_int
+    }
+
+    pub unsafe fn sysfs(option: k_int, arg1: k_ulong, arg2: k_ulong) -> k_int {
+        call!(cty::__NR_sysfs, option, arg1, arg2) as k_int
+    }
+
+    pub unsafe fn unlink(pathname: *const c_char) -> k_int {
+        call!(cty::__NR_unlink, pathname) as k_int
+    }
+
+    pub unsafe fn ustat(dev: k_uint, ubuf: *mut ustat) -> k_int {
+        call!(cty::__NR_ustat, dev, ubuf) as k_int
+    }
+
+    pub unsafe fn utimes(filename: *const c_char, utimes: *const timeval) -> k_int {
+        call!(cty::__NR_utimes, filename, utimes) as k_int
+    }
+
+    pub unsafe fn vfork() -> pid_t {
+        call!(cty::__NR_vfork) as pid_t 
     }
 }

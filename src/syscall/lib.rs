@@ -2892,14 +2892,14 @@ pub fn times(buf: *mut tms) -> clock_t {
     unsafe { r::times(buf) }
 }
 
-/// Suspends the thread until a signal handler is invoked.
-///
-/// = See also
-///
-/// * link:man:pause(2)
-pub fn pause() -> c_int {
-    unsafe { r::pause() }
-}
+// /// Suspends the thread until a signal handler is invoked.
+// ///
+// /// = See also
+// ///
+// /// * link:man:pause(2)
+// pub fn pause() -> c_int {
+//     unsafe { r::pause() }
+// }
 
 /// Performs reboot-related operations.
 ///
