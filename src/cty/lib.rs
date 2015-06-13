@@ -45,6 +45,10 @@ mod arch;
 #[path = "arm.rs"]
 mod arch;
 
+#[cfg(target_arch = "aarch64")]
+#[path = "aarch64.rs"]
+mod arch;
+
 // Userspace aliases. NB: These are only correct for the kernel ABI. E.g. size_t is 32 bit
 // on x32 but __kernel_size_t is 64 bit on x32.
 

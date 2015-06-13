@@ -31,6 +31,10 @@ mod arch;
 #[path = "arm.rs"]
 mod arch;
 
+#[cfg(target_arch = "aarch64")]
+#[path = "aarch64.rs"]
+mod arch;
+
 pub const PTHREAD_CREATE_JOINABLE: i32 = 0;
 pub const PTHREAD_CREATE_DETACHED: i32 = 1;
 

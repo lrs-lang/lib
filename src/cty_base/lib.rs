@@ -26,3 +26,7 @@ mod arch;
 #[cfg(target_arch = "arm")]
 #[path = "arm.rs"]
 mod arch;
+
+#[cfg(target_arch = "aarch64")]
+#[path = "aarch64.rs"]
+mod arch;

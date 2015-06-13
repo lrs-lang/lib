@@ -103,9 +103,9 @@ pub use ::gen::{
     POSIX_FADV_DONTNEED, POSIX_FADV_NOREUSE,
 };
 
-///////////////////////////
-// include/uapi/linux/net.h
-///////////////////////////
+//////////////////////
+// include/linux/net.h
+//////////////////////
 
 pub use ::gen::{
     SOCK_STREAM, SOCK_DGRAM, SOCK_RAW, SOCK_RDM, SOCK_SEQPACKET, SOCK_DCCP, SOCK_PACKET,
@@ -298,12 +298,12 @@ pub use ::gen::{
 pub struct semid64_ds {
     pub sem_perm:  ipc64_perm,
     pub sem_otime: __kernel_time_t,
-    pub __unused1: __kernel_ulong_t,
+    pub __unused1: c_ulong,
     pub sem_ctime: __kernel_time_t,
-    pub __unused2: __kernel_ulong_t,
-    pub sem_nsems: __kernel_ulong_t,
-    pub __unused3: __kernel_ulong_t,
-    pub __unused4: __kernel_ulong_t,
+    pub __unused2: c_ulong,
+    pub sem_nsems: c_ulong,
+    pub __unused3: c_ulong,
+    pub __unused4: c_ulong,
 }
 
 ////////////////////////////////////

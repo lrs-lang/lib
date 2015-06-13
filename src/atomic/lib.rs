@@ -830,9 +830,9 @@ impl_atomic!(AtomicI16,   ATOMIC_I16_INIT,   i16,   true);
 impl_atomic!(AtomicI32,   ATOMIC_I32_INIT,   i32,   true);
 impl_atomic!(AtomicIsize, ATOMIC_ISIZE_INIT, isize, true);
 
-#[cfg(target_arch = "x86_64")]
+#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 impl_atomic!(AtomicU64,   ATOMIC_U64_INIT,   u64,   false);
-#[cfg(target_arch = "x86_64")]
+#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 impl_atomic!(AtomicI64,   ATOMIC_I64_INIT,   i64,   true);
 
 /// Atomic `c_int`.
