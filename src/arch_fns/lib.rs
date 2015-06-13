@@ -11,6 +11,7 @@
 #[macro_use]
 extern crate lrs_core as core;
 extern crate lrs_libc as libc;
+
 #[prelude_import] use core::prelude::*;
 
 /// Returns the first occurrence of a byte in a byte slice if any.
@@ -142,9 +143,9 @@ pub fn spin() {
         unsafe { asm!("pause" : : : "memory"); }
     }
 
-    #[cfg(not(any(target_arch = "x86_64", target_arch = "x86")))]
+    #[cfg(any(target_arch = "arm"))]
     fn spin_int() {
-        atomic::fence_seqcst();
+        unsafe { core::intrinsics::atomic_fence(); }
     }
 
     spin_int();

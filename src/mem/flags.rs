@@ -59,10 +59,11 @@ macro_rules! create_flags {
 }
 
 create_flags! {
-    #[doc = "Put the mapping into the first 2GB of the address space.\n"]
-    #[doc = "= See also"]
-    #[doc = "* link:man:mmap(2) and MAP_32BIT therein"]
-    flag MMAP_32BIT = MAP_32BIT;
+    // Exists only on x86
+    // #[doc = "Put the mapping into the first 2GB of the address space.\n"]
+    // #[doc = "= See also"]
+    // #[doc = "* link:man:mmap(2) and MAP_32BIT therein"]
+    // flag MMAP_32BIT = MAP_32BIT;
 
     #[doc = "Provide memory not backed by a file.\n"]
     #[doc = "= See also"]
@@ -82,21 +83,23 @@ create_flags! {
     #[doc = "* link:man:mmap(2) and MAP_HUGETLB therein"]
     flag MMAP_HUGE_PAGES = MAP_HUGETLB;
 
-    #[doc = "Use 2MB pages for this mapping.\n"]
-    #[doc = "= Remarks"]
-    #[doc = "== Kernel versions"]
-    #[doc = "The minimum required kernel version is 3.8."]
-    #[doc = "= See also"]
-    #[doc = "* link:man:mmap(2) and MAP_HUGE_2MB therein"]
-    flag MMAP_HUGE_2MB = MAP_HUGE_2MB;
+    // Exists only on x86
+    // #[doc = "Use 2MB pages for this mapping.\n"]
+    // #[doc = "= Remarks"]
+    // #[doc = "== Kernel versions"]
+    // #[doc = "The minimum required kernel version is 3.8."]
+    // #[doc = "= See also"]
+    // #[doc = "* link:man:mmap(2) and MAP_HUGE_2MB therein"]
+    // flag MMAP_HUGE_2MB = MAP_HUGE_2MB;
 
-    #[doc = "Use 1GB pages for this mapping.\n"]
-    #[doc = "= Remarks"]
-    #[doc = "== Kernel versions"]
-    #[doc = "The minimum required kernel version is 3.8."]
-    #[doc = "= See also"]
-    #[doc = "* link:man:mmap(2) and MAP_HUGE_1GB therein"]
-    flag MMAP_HUGE_1GB = MAP_HUGE_1GB;
+    // Exists only on x86
+    // #[doc = "Use 1GB pages for this mapping.\n"]
+    // #[doc = "= Remarks"]
+    // #[doc = "== Kernel versions"]
+    // #[doc = "The minimum required kernel version is 3.8."]
+    // #[doc = "= See also"]
+    // #[doc = "* link:man:mmap(2) and MAP_HUGE_1GB therein"]
+    // flag MMAP_HUGE_1GB = MAP_HUGE_1GB;
 
     #[doc = "Lock the mapping into memory.\n"]
     #[doc = "= See also"]

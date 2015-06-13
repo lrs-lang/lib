@@ -7,7 +7,7 @@ pub use ::arch::abi::{
 };
 
 pub use ::common::{
-    accept, accept4, access, acct, add_key, adjtimex, alarm, bind, bpf, brk, capget,
+    accept, accept4, access, acct, add_key, adjtimex, bind, bpf, brk, capget,
     capset, chdir, chmod, chown, chroot, clock_adjtime, clock_getres, clock_gettime,
     clock_nanosleep, clock_settime, close, connect, creat, delete_module, dup, dup2, dup3,
     epoll_create, epoll_create1, epoll_ctl, epoll_pwait, epoll_wait, eventfd, eventfd2,
@@ -22,7 +22,7 @@ pub use ::common::{
     io_destroy, io_getevents, ioprio_get, ioprio_set, io_setup, io_submit, kcmp,
     kexec_file_load, kexec_load, keyctl, kill, lchown, lgetxattr, link, linkat, listen,
     listxattr, llistxattr, lookup_dcookie, lremovexattr, lseek, lsetxattr, madvise, mbind,
-    memfd_create, migrate_pages, mincore, mkdir, mkdirat, mknod, mknodat, mlock, mlockall,
+    memfd_create, mincore, mkdir, mkdirat, mknod, mknodat, mlock, mlockall,
     mount, move_pages, mprotect, mq_getsetattr, mq_open, mq_timedreceive, mq_timedsend,
     mq_unlink, mremap, msgctl, msgget, msgrcv, msgsnd, msync, munlock, munlockall, munmap,
     name_to_handle_at, nanosleep, open, openat, open_by_handle_at, pause, perf_event_open,
@@ -40,10 +40,10 @@ pub use ::common::{
     setreuid, setrlimit, set_robust_list, setsid, setsockopt, set_tid_address,
     settimeofday, setuid, setxattr, shmat, shmctl, shmdt, shmget, shutdown, sigaltstack,
     signalfd4, socket, socketpair, splice, statfs, swapoff, swapon, symlink,
-    symlinkat, sync, sync_file_range, syncfs, sysfs, sysinfo, syslog, tee, tgkill, time,
+    symlinkat, sync, sync_file_range, syncfs, sysfs, sysinfo, syslog, tee, tgkill,
     timer_delete, timerfd_create, timerfd_gettime, timerfd_settime, timer_getoverrun,
     timer_gettime, timer_settime, times, tkill, truncate, umask, umount, unlink, unlinkat,
-    unshare, ustat, utime, utimensat, utimes, vfork, vhangup, vmsplice, waitid,
+    unshare, ustat, utimensat, utimes, vfork, vhangup, vmsplice, waitid,
     write, writev,
 };
 

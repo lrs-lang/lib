@@ -831,7 +831,7 @@ pub const SIG_ERR : usize = !0;
 ////////////////////////////////////
 
 pub const _NSIG       : usize = 64;
-pub const _NSIG_BPW   : usize = ::__BITS_PER_C_ULONG; // c_ulong for compat
+pub const _NSIG_BPW   : usize = ::BITS_PER_C_ULONG; // c_ulong for compat
 pub const _NSIG_WORDS : usize = ::_NSIG / ::_NSIG_BPW;
 
 pub const SIGHUP    : ::c_int = 1;
@@ -914,9 +914,9 @@ pub type stack_t = ::sigaltstack;
 #[derive(Pod, Eq)]
 pub struct sigaction {
     pub sa_handler:  usize,
-    pub sa_flags:    c_ulong, // c_ulong because compat
+    pub sa_flags:    ::c_ulong, // c_ulong because compat
     pub sa_restorer: usize,
-    pub sa_mask:     sigset_t,
+    pub sa_mask:     ::sigset_t,
 }
 
 ////////////////////////////////////

@@ -14,8 +14,8 @@ use cty::{
     linux_dirent64, mq_attr, mqd_t, new_utsname, off_t,
     perf_event_attr, pid_t, pollfd, qid_t, rlimit, rlimit64,
     robust_list_head, rusage, __s32, sched_attr, sched_param, sigaction, siginfo_t,
-    ssize_t, stack_t, statfs, sysinfo, timer_t, time_t,
-    timeval, timezone, tms, ustat, utimbuf, k_uchar,
+    ssize_t, stack_t, statfs, sysinfo, timer_t,
+    timeval, timezone, tms, ustat, k_uchar,
 };
 
 use super::arch::{SCT};
@@ -36,10 +36,6 @@ pub unsafe fn add_key(_type: *const c_char, _description: *const c_char,
 
 pub unsafe fn adjtimex(txc_p: *mut timex) -> k_int {
     call!(cty::__NR_adjtimex, txc_p) as k_int
-}
-
-pub unsafe fn alarm(seconds: k_uint) -> k_uint {
-    call!(cty::__NR_alarm, seconds) as k_uint
 }
 
 pub unsafe fn bpf(cmd: k_int, uattr: *mut bpf_attr, size: k_uint) -> k_int {
@@ -507,10 +503,10 @@ pub unsafe fn memfd_create(uname: *const c_char, flags: k_uint) -> k_int {
     call!(cty::__NR_memfd_create, uname, flags) as k_int
 }
 
-pub unsafe fn migrate_pages(pid: pid_t, maxnode: k_ulong, old_nodes: *const k_ulong,
-                            new_nodes: *const k_ulong) -> k_long {
-    call!(cty::__NR_migrate_pages, pid, maxnode, old_nodes, new_nodes) as k_long
-}
+// pub unsafe fn migrate_pages(pid: pid_t, maxnode: k_ulong, old_nodes: *const k_ulong,
+//                             new_nodes: *const k_ulong) -> k_long {
+//     call!(cty::__NR_migrate_pages, pid, maxnode, old_nodes, new_nodes) as k_long
+// }
 
 pub unsafe fn mincore(start: k_ulong, len: size_t, vec: *mut k_uchar) -> k_int {
     call!(cty::__NR_mincore, start, len, vec) as k_int
@@ -1095,10 +1091,6 @@ pub unsafe fn times(tbuf: *mut tms) -> clock_t {
     call!(cty::__NR_times, tbuf) as clock_t
 }
 
-pub unsafe fn time(tloc: *mut time_t) -> time_t {
-    call!(cty::__NR_time, tloc) as time_t
-}
-
 pub unsafe fn tkill(pid: pid_t, sig: k_int) -> k_int {
     call!(cty::__NR_tkill, pid, sig) as k_int
 }
@@ -1129,10 +1121,6 @@ pub unsafe fn unshare(unshare_flags: k_ulong) -> k_int {
 
 pub unsafe fn ustat(dev: k_uint, ubuf: *mut ustat) -> k_int {
     call!(cty::__NR_ustat, dev, ubuf) as k_int
-}
-
-pub unsafe fn utime(filename: *const c_char, times: *const utimbuf) -> k_int {
-    call!(cty::__NR_utime, filename, times) as k_int
 }
 
 pub unsafe fn utimensat(dfd: k_int, filename: *const c_char, utimes: *const timespec,
@@ -1176,10 +1164,10 @@ pub unsafe fn writev(fd: k_ulong, vec: *const iovec, vlen: k_ulong) -> ssize_t {
 }
 
 // 64 bit calls for 32 bit systems
-#[cfg(target_arch = "x86")]
+#[cfg(any(target_arch = "x86", target_arch = "arm"))]
 pub use self::_64_calls::*;
 
-#[cfg(target_arch = "x86")]
+#[cfg(any(target_arch = "x86", target_arch = "arm"))]
 mod _64_calls {
     use cty::{
         self, k_int, c_char, k_ulong, size_t, k_uint, stat64, statfs64, loff_t,
@@ -1330,10 +1318,10 @@ mod ipc_one {
 }
 
 // separate ipc calls
-#[cfg(target_arch = "x86_64")]
+#[cfg(any(target_arch = "x86_64", target_arch = "arm"))]
 pub use self::ipc_sep::*;
 
-#[cfg(target_arch = "x86_64")]
+#[cfg(any(target_arch = "x86_64", target_arch = "arm"))]
 mod ipc_sep {
     use cty::{
         self, k_int, c_char, c_void, IPC_64, msgbuf, k_long, ssize_t, timespec,
@@ -1515,10 +1503,10 @@ mod sock_one {
 }
 
 // separate socket calls
-#[cfg(target_arch = "x86_64")]
+#[cfg(any(target_arch = "x86_64", target_arch = "arm"))]
 pub use self::sock_sep::*;
 
-#[cfg(target_arch = "x86_64")]
+#[cfg(any(target_arch = "x86_64", target_arch = "arm"))]
 mod sock_sep {
     use cty::{
         self, k_int, sockaddr, c_char, c_void, size_t, k_uint, ssize_t, msghdr,
@@ -1884,5 +1872,17 @@ mod deprecated {
     pub unsafe fn recv(fd: k_int, ubuf: *mut c_void, size: size_t,
                        flags: k_uint) -> ssize_t {
         call!(cty::__NR_recv, fd, ubuf, size, flags) as ssize_t
+    }
+
+    pub unsafe fn time(tloc: *mut time_t) -> time_t {
+        call!(cty::__NR_time, tloc) as time_t
+    }
+
+    pub unsafe fn utime(filename: *const c_char, times: *const utimbuf) -> k_int {
+        call!(cty::__NR_utime, filename, times) as k_int
+    }
+
+    pub unsafe fn alarm(seconds: k_uint) -> k_uint {
+        call!(cty::__NR_alarm, seconds) as k_uint
     }
 }

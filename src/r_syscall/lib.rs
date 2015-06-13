@@ -13,7 +13,7 @@ extern crate lrs_core as core;
 extern crate lrs_cty as cty;
 
 pub use ::arch::{
-    accept, accept4, access, acct, add_key, adjtimex, alarm, bind, bpf, brk, capget,
+    accept, accept4, access, acct, add_key, adjtimex, bind, bpf, brk, capget,
     capset, chdir, chmod, chown, chroot, clock_adjtime, clock_getres, clock_gettime,
     clock_nanosleep, clock_settime, close, connect, creat, delete_module, dup, dup2, dup3,
     epoll_create, epoll_create1, epoll_ctl, epoll_pwait, epoll_wait, eventfd, eventfd2,
@@ -25,10 +25,10 @@ pub use ::arch::{
     getpgrp, getpid, getppid, getpriority, getrandom, getresgid, getresuid, getrlimit,
     get_robust_list, getrusage, getsid, getsockname, getsockopt, gettid, gettimeofday,
     getuid, getxattr, init_module, inotify_add_watch, inotify_init, inotify_init1,
-    inotify_rm_watch, io_cancel, ioctl, io_destroy, io_getevents, iopl, ioprio_get,
+    inotify_rm_watch, io_cancel, ioctl, io_destroy, io_getevents, ioprio_get,
     ioprio_set, io_setup, io_submit, kcmp, kexec_load, keyctl, kill,
     lchown, lgetxattr, link, linkat, listen, listxattr, llistxattr, lookup_dcookie,
-    lremovexattr, lseek, lsetxattr, lstat, madvise, mbind, memfd_create, migrate_pages,
+    lremovexattr, lseek, lsetxattr, lstat, madvise, mbind, memfd_create,
     mincore, mkdir, mkdirat, mknod, mknodat, mlock, mlockall, mmap, mount, move_pages,
     mprotect, mq_getsetattr, mq_open, mq_timedreceive, mq_timedsend, mq_unlink, mremap,
     msgctl, msgget, msgrcv, msgsnd, msync, munlock, munlockall, munmap, name_to_handle_at,
@@ -48,9 +48,9 @@ pub use ::arch::{
     set_tid_address, settimeofday, setuid, setxattr, shmat, shmctl, shmdt, shmget,
     shutdown, sigaltstack, signalfd4, socket, socketpair, splice, stat, statfs,
     swapoff, swapon, symlink, symlinkat, sync, sync_file_range, syncfs, sysfs, sysinfo,
-    syslog, tee, tgkill, time, timer_delete, timerfd_create, timerfd_gettime,
+    syslog, tee, tgkill, timer_delete, timerfd_create, timerfd_gettime,
     timerfd_settime, timer_getoverrun, timer_gettime, timer_settime, times, tkill,
-    truncate, umask, umount, uname, unlink, unlinkat, unshare, ustat, utime, utimensat,
+    truncate, umask, umount, uname, unlink, unlinkat, unshare, ustat, utimensat,
     utimes, vfork, vhangup, vmsplice, waitid, write, writev,
 };
 
@@ -98,4 +98,8 @@ mod arch;
 
 #[cfg(target_arch = "x86")]
 #[path = "x86.rs"]
+mod arch;
+
+#[cfg(target_arch = "arm")]
+#[path = "arm.rs"]
 mod arch;

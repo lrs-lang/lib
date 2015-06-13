@@ -431,7 +431,7 @@ pub const SIGPWR       : c_int = 30;
 pub const SIGSYS       : c_int = 31;
 pub const SIGUNUSED    : c_int = 31;
 pub const SIGRTMIN     : c_int = 32;
-pub const SIGRTMAX     : c_int = _NSIG;
+pub const SIGRTMAX     : c_int = _NSIG as c_int;
 pub const SIGSWI       : c_int = 32;
 
 pub const SA_NOCLDSTOP : c_int = 0x00000001;
@@ -796,7 +796,8 @@ pub const __NR_poll                   : usize = 168;
 pub const __NR_setresgid16            : usize = 170;
 pub const __NR_getresgid16            : usize = 171;
 pub const __NR_prctl                  : usize = 172;
-pub const __NR_rt_sigreturn_wrapper   : usize = 173;
+// pub const __NR_rt_sigreturn_wrapper   : usize = 173;
+pub const __NR_rt_sigreturn           : usize = 173;
 pub const __NR_rt_sigaction           : usize = 174;
 pub const __NR_rt_sigprocmask         : usize = 175;
 pub const __NR_rt_sigpending          : usize = 176;
@@ -883,8 +884,12 @@ pub const __NR_clock_settime          : usize = 262;
 pub const __NR_clock_gettime          : usize = 263;
 pub const __NR_clock_getres           : usize = 264;
 pub const __NR_clock_nanosleep        : usize = 265;
-pub const __NR_statfs64_wrapper       : usize = 266;
-pub const __NR_fstatfs64_wrapper      : usize = 267;
+// pub const __NR_statfs64_wrapper       : usize = 266;
+// pub const __NR_fstatfs64_wrapper      : usize = 267;
+// These exist because packing of the structures. See the comment near the definition of
+// statfs64 above.
+pub const __NR_statfs64               : usize = 266;
+pub const __NR_fstatfs64              : usize = 267;
 pub const __NR_tgkill                 : usize = 268;
 pub const __NR_utimes                 : usize = 269;
 pub const __NR_arm_fadvise64_64       : usize = 270;

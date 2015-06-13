@@ -47,7 +47,7 @@ pub use ::common::{
 
 use cty::{
     self,
-    c_uint, k_int, k_long, k_ulong, user_desc, c_char, k_uint, linux_dirent64, loff_t,
+    k_int, k_long, k_ulong, c_char, k_uint, linux_dirent64, loff_t,
     new_utsname, pid_t, rlimit64, size_t, ssize_t, statfs64, stat64, EINVAL, c_long,
     __u64,
 };
@@ -57,61 +57,60 @@ pub type SCT = c_long;
 #[inline(always)]
 pub unsafe fn syscall0(n: SCT) -> SCT {
     let mut ret: SCT;
-    asm!("int $$0x80" : "={eax}"(ret)
-                      : "{eax}"(n)
-                      : "memory", "cc"
-                      : "volatile");
+    asm!("swi $$0" : "={r0}"(ret)
+                   : "{r7}"(n)
+                   : "memory" "cc"
+                   : "volatile");
     ret
 }
 
 #[inline(always)]
 pub unsafe fn syscall1(n: SCT, a1: SCT) -> SCT {
     let mut ret: SCT;
-    asm!("int $$0x80" : "={eax}"(ret)
-                      : "{eax}"(n), "{ebx}"(a1)
-                      : "memory", "cc"
-                      : "volatile");
+    asm!("swi $$0" : "={r0}"(ret)
+                   : "{r7}"(n), "{r0}"(a1)
+                   : "memory" "cc"
+                   : "volatile");
     ret
 }
 
 #[inline(always)]
 pub unsafe fn syscall2(n: SCT, a1: SCT, a2: SCT) -> SCT {
     let mut ret: SCT;
-    asm!("int $$0x80" : "={eax}"(ret)
-                      : "{eax}"(n), "{ebx}"(a1), "{ecx}"(a2)
-                      : "memory", "cc"
-                      : "volatile");
+    asm!("swi $$0" : "={r0}"(ret)
+                   : "{r7}"(n), "{r0}"(a1), "{r1}"(a2)
+                   : "memory" "cc"
+                   : "volatile");
     ret
 }
 
 #[inline(always)]
 pub unsafe fn syscall3(n: SCT, a1: SCT, a2: SCT, a3: SCT) -> SCT {
     let mut ret: SCT;
-    asm!("int $$0x80" : "={eax}"(ret)
-                      : "{eax}"(n), "{ebx}"(a1), "{ecx}"(a2), "{edx}"(a3)
-                      : "memory", "cc"
-                      : "volatile");
+    asm!("swi $$0" : "={r0}"(ret)
+                   : "{r7}"(n), "{r0}"(a1), "{r1}"(a2), "{r2}"(a3)
+                   : "memory" "cc"
+                   : "volatile");
     ret
 }
 
 #[inline(always)]
 pub unsafe fn syscall4(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT) -> SCT {
     let mut ret: SCT;
-    asm!("int $$0x80" : "={eax}"(ret)
-                      : "{eax}"(n), "{ebx}"(a1), "{ecx}"(a2), "{edx}"(a3), "{esi}"(a4)
-                      : "memory", "cc"
-                      : "volatile");
+    asm!("swi $$0" : "={r0}"(ret)
+                   : "{r7}"(n), "{r0}"(a1), "{r1}"(a2), "{r2}"(a3), "{r3}"(a4)
+                   : "memory" "cc"
+                   : "volatile");
     ret
 }
 
 #[inline(always)]
 pub unsafe fn syscall5(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT, a5: SCT) -> SCT {
     let mut ret: SCT;
-    asm!("int $$0x80" : "={eax}"(ret)
-                      : "{eax}"(n), "{ebx}"(a1), "{ecx}"(a2), "{edx}"(a3), "{esi}"(a4),
-                        "{edi}"(a5)
-                      : "memory", "cc"
-                      : "volatile");
+    asm!("swi $$0" : "={r0}"(ret)
+                   : "{r7}"(n), "{r0}"(a1), "{r1}"(a2), "{r2}"(a3), "{r3}"(a4), "{r4}"(a5)
+                   : "memory" "cc"
+                   : "volatile");
     ret
 }
 
@@ -119,11 +118,23 @@ pub unsafe fn syscall5(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT, a5: SCT) -> S
 pub unsafe fn syscall6(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT, a5: SCT,
                        a6: SCT) -> SCT {
     let mut ret: SCT;
-    asm!("int $$0x80" : "={eax}"(ret)
-                      : "{eax}"(n), "{ebx}"(a1), "{ecx}"(a2), "{edx}"(a3), "{esi}"(a4),
-                        "{edi}"(a5), "{ebp}"(a6)
-                      : "memory", "cc"
-                      : "volatile");
+    asm!("swi $$0" : "={r0}"(ret)
+                   : "{r7}"(n), "{r0}"(a1), "{r1}"(a2), "{r2}"(a3), "{r3}"(a4),
+                     "{r4}"(a5), "{r5}"(a6)
+                   : "memory" "cc"
+                   : "volatile");
+    ret
+}
+
+#[inline(always)]
+pub unsafe fn syscall7(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT, a5: SCT, a6: SCT,
+                       a7: SCT) -> SCT {
+    let mut ret: SCT;
+    asm!("swi $$0" : "={r0}"(ret)
+                   : "{r7}"(n), "{r0}"(a1), "{r1}"(a2), "{r2}"(a3), "{r3}"(a4),
+                     "{r4}"(a5), "{r5}"(a6), "{r6}"(a7)
+                   : "memory" "cc"
+                   : "volatile");
     ret
 }
 
@@ -189,8 +200,8 @@ pub unsafe fn getdents(fd: k_uint, dirent: *mut linux_dirent64, count: k_uint) -
 pub unsafe fn fadvise(fd: k_int, offset: loff_t, len: loff_t, advice: k_int) -> k_int {
     let [offset_lo, offset_hi] = split_i64(offset);
     let [len_lo, len_hi] = split_i64(len);
-    call!(cty::__NR_fadvise64_64, fd, offset_lo, offset_hi, len_lo, len_hi,
-          advice) as k_int
+    call!(cty::__NR_arm_fadvise64_64, fd, advice, offset_lo, offset_hi, len_lo,
+          len_hi) as k_int
 }
 
 pub unsafe fn fstatat(dfd: k_int, filename: *const c_char, statbuf: *mut stat64,
@@ -228,8 +239,8 @@ pub unsafe fn sync_file_range(fd: k_int, offset: loff_t, nbytes: loff_t,
                               flags: k_uint) -> k_int {
     let [offset_lo, offset_hi] = split_i64(offset);
     let [nbytes_lo, nbytes_hi] = split_i64(nbytes);
-    call!(cty::__NR_sync_file_range, fd, offset_lo, offset_hi, nbytes_lo,
-          nbytes_hi, flags) as k_int
+    call!(cty::__NR_sync_file_range2, fd, flags, offset_lo, offset_hi, nbytes_lo,
+          nbytes_hi) as k_int
 }
 
 pub unsafe fn fallocate(fd: k_int, mode: k_int, offset: loff_t,
@@ -256,22 +267,10 @@ pub unsafe fn readahead(fd: k_int, offset: loff_t, count: size_t) -> ssize_t {
     call!(cty::__NR_readahead, fd, offset_lo, offset_hi, count) as ssize_t
 }
 
-pub unsafe fn iopl(level: c_uint) -> k_int {
-    call!(cty::__NR_iopl, level) as k_int
-}
-
-pub unsafe fn set_thread_area(u_info: *mut user_desc) -> k_int {
-    call!(cty::__NR_set_thread_area, u_info) as k_int
-}
-
-pub unsafe fn get_thread_area(u_info: *mut user_desc) -> k_int {
-    call!(cty::__NR_get_thread_area, u_info) as k_int
-}
-
 pub unsafe fn mmap(addr: k_ulong, len: k_ulong, prot: k_ulong, flags: k_ulong,
                    fd: k_ulong, off: u64) -> k_long {
     if off & (4096 - 1) != 0 {
         return -EINVAL;
     }
-    call!(cty::__NR_mmap_pgoff, addr, len, prot, flags, fd, off >> 12) as k_long
+    call!(cty::__NR_mmap2, addr, len, prot, flags, fd, off >> 12) as k_long
 }
