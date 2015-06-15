@@ -10,3 +10,4 @@ pub use lrs_int::{
 pub use lrs_saturating::{
     SaturatingCast,
 };
+pub use lrs_wrapping::{W8, W16, W32, W64, Wusize};

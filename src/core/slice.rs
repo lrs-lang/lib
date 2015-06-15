@@ -216,6 +216,89 @@ impl<T> [T] {
             unsafe { sort(self, &mut f); }
         }
     }
+
+    /// Creates a subslice without checking the range for correctness.
+    ///
+    /// [argument, from]
+    /// From where to slice.
+    ///
+    /// [argument, to]
+    /// To where to slice.
+    ///
+    /// = Remarks
+    ///
+    /// If the arguments are invalid, the behavior is undefined.
+    pub unsafe fn unchecked_slice(&self, from: usize, to: usize) -> &[T] {
+        let len = to - from;
+        let start = self.as_ptr().add(from);
+        from_ptr(start, len)
+    }
+
+    /// Creates a mutable subslice without checking the range for correctness.
+    ///
+    /// [argument, from]
+    /// From where to slice.
+    ///
+    /// [argument, to]
+    /// To where to slice.
+    ///
+    /// = Remarks
+    ///
+    /// If the arguments are invalid, the behavior is undefined.
+    pub unsafe fn unchecked_mut_slice(&mut self, from: usize, to: usize) -> &mut [T] {
+        let len = to - from;
+        let start = self.as_ptr().add(from);
+        from_ptr(start, len)
+    }
+
+    /// Creates a subslice without checking the range for correctness.
+    ///
+    /// [argument, from]
+    /// From where to slice.
+    ///
+    /// = Remarks
+    ///
+    /// If the argument are invalid, the behavior is undefined.
+    pub unsafe fn unchecked_slice_from(&self, from: usize) -> &[T] {
+        self.unchecked_slice(from, self.len())
+    }
+
+    /// Creates a mutable subslice without checking the range for correctness.
+    ///
+    /// [argument, from]
+    /// From where to slice.
+    ///
+    /// = Remarks
+    ///
+    /// If the argument are invalid, the behavior is undefined.
+    pub unsafe fn unchecked_mut_slice_from(&mut self, from: usize) -> &mut [T] {
+        let len = self.len();
+        self.unchecked_mut_slice(from, len)
+    }
+
+    /// Creates a mutable subslice without checking the range for correctness.
+    ///
+    /// [argument, to]
+    /// To where to slice.
+    ///
+    /// = Remarks
+    ///
+    /// If the arguments are invalid, the behavior is undefined.
+    pub unsafe fn unchecked_slice_to(&self, to: usize) -> &[T] {
+        self.unchecked_slice(0, to)
+    }
+
+    /// Creates a mutable subslice without checking the range for correctness.
+    ///
+    /// [argument, to]
+    /// To where to slice.
+    ///
+    /// = Remarks
+    ///
+    /// If the arguments are invalid, the behavior is undefined.
+    pub unsafe fn unchecked_mut_slice_to(&mut self, to: usize) -> &mut [T] {
+        self.unchecked_mut_slice(0, to)
+    }
 }
 
 impl<T: PartialOrd> PartialOrd for [T] {

@@ -2,10 +2,12 @@ obj core
 obj libc       core
 obj int        core
 obj saturating core
+obj wrapping   core
 obj cty_base   core
 obj arch_fns   core libc
 obj base       core cty_base
 
+obj hash       core base wrapping
 obj rv         core base int
 obj parse      core base
 obj io         core base arch_fns

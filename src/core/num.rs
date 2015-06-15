@@ -189,11 +189,6 @@ macro_rules! int_impls {
                 self as $as_u
             }
 
-            /// Returns the width of this type in bits.
-            pub fn width(self) -> usize {
-                $width
-            }
-
             /// Returns whether this integer is negative.
             #[allow(unused_comparisons)]
             pub fn negative(self) -> bool {
@@ -358,6 +353,52 @@ macro_rules! int_impls {
             /// Returns the quotient and the remainder.
             pub fn div_rem(self, other: $t) -> ($t, $t) {
                 (self / other, self % other)
+            }
+
+            /// Rotates the value to the right.
+            ///
+            /// [argument, bits]
+            /// The number of bits to rotate.
+            ///
+            /// = Remarks
+            ///
+            /// The bits argument must be in the range `(0, width)`, otherwise the
+            /// behavior is undefined. Here, width is the width of the type in bits.
+            ///
+            /// This method is implemented for signed types due to a compiler limitation.
+            /// It should only be used on unsigned values.
+            ///
+            /// = Examples
+            ///
+            /// ----
+            /// let x = 1u32;
+            /// assert!(x.rotate_right(1) == 0x8000_0000);
+            /// ----
+            pub fn rotate_right(self, bits: usize) -> $t {
+                self >> bits | self << ($width - bits)
+            }
+
+            /// Rotates the value to the right.
+            ///
+            /// [argument, bits]
+            /// The number of bits to rotate.
+            ///
+            /// = Remarks
+            ///
+            /// The bits argument must be in the range `(0, width)`, otherwise the
+            /// behavior is undefined. Here, width is the width of the type in bits.
+            ///
+            /// This method is implemented for signed types due to a compiler limitation.
+            /// It should only be used on unsigned values.
+            ///
+            /// = Examples
+            ///
+            /// ----
+            /// let x = 1u32;
+            /// assert!(x.rotate_left(1) == 3);
+            /// ----
+            pub fn rotate_left(self, bits: usize) -> $t {
+                self << bits | self >> ($width - bits)
             }
 
             /// Returns the minimum value of this type.
