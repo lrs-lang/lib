@@ -55,8 +55,10 @@ use syscall::{
     llistxattr, flistxattr, flock, memfd_create, fcntl_get_seals, fcntl_add_seals,
     fchdir,
 };
-use str_one::{AsCStr, CStr, ByteStr, AsByteStr, NoNullStr, AsMutNoNullStr, ToCStr};
-use str_two::{ByteString, NoNullString};
+use str_one::{
+    AsCStr, CStr, ByteStr, AsByteStr, NoNullStr, ToCStr, AsMutCStr,
+};
+use str_two::{ByteString, NoNullString, CString};
 use str_three::{ToCString};
 use arch_fns::{memchr};
 use rv::{retry};
@@ -72,7 +74,10 @@ use fs::info::{FileSystemInfo, from_statfs};
 
 use dev::{Device, DeviceType};
 
-use flags::{FileFlags, Mode, AccessMode, FILE_READ_ONLY, MemfdFlags, FileSeals};
+use flags::{
+    FileFlags, Mode, AccessMode, FILE_READ_ONLY,  MemfdFlags, FileSeals, FILE_PATH,
+    FILE_DONT_BLOCK, FILE_CLOSE_ON_EXEC,
+};
 use info::{Info, info_from_stat, Type, file_type_to_mode};
 
 pub mod flags;
@@ -1158,6 +1163,45 @@ pub fn list_attr_no_follow<P>(path: P) -> Result<ListAttrIterator>
     list_attr_common(|buf| llistxattr(&path, buf))
 }
 
+/// Returns a canonicalized absolute path.
+///
+/// [argument, path]
+/// The path to canonicalize.
+///
+/// [argument, buf]
+/// The buffer where the path will be stored in.
+///
+/// = Remarks
+///
+/// The path will not contain any `/./`, `/../`, or `//`.
+///
+/// = See also
+///
+/// * link:man:realpath(3)
+pub fn real_path_buf<'a, P>(path: P, buf: &'a mut [u8]) -> Result<&'a mut CStr>
+    where P: ToCString,
+{
+    File::current_dir().rel_real_path_buf(path, buf)
+}
+
+/// Returns a canonicalized absolute path.
+///
+/// [argument, path]
+/// The path to canonicalize.
+///
+/// = Remarks
+///
+/// The path will not contain any `/./`, `/../`, or `//`.
+///
+/// = See also
+///
+/// * link:man:realpath(3)
+pub fn real_path<P>(path: P) -> Result<CString>
+    where P: ToCString,
+{
+    File::current_dir().rel_real_path(path)
+}
+
 /// An opened file in a filesystem.
 #[derive(Eq)]
 pub struct File {
@@ -1881,13 +1925,18 @@ impl File {
     /// = See also
     ///
     /// * link:man:readlinkat(2)
-    pub fn filename_buf<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut NoNullStr> {
+    pub fn filename_buf<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
         // enough space for "/proc/self/fd/-{u64::MAX}\0"
         let mut proc_buf = [0; 36];
         let _ = write!(&mut proc_buf[..], "/proc/self/fd/{}", self.fd);
         let cstr = proc_buf.as_cstr().unwrap();
         let len = try!(rv!(readlinkat(self.fd, cstr, buf), -> usize));
-        Ok(buf[..len].as_mut_no_null_str().unwrap())
+        if buf.len() <= len {
+            Err(error::NoMemory)
+        } else {
+            buf[len] = 0;
+            Ok(buf[..len+1].as_mut_cstr().unwrap())
+        }
     }
 
     /// Returns the path of the file that was used to open this file.
@@ -1899,7 +1948,7 @@ impl File {
     /// = See also
     ///
     /// * link:man:readlinkat(2)
-    pub fn filename(&self) -> Result<NoNullString> {
+    pub fn filename(&self) -> Result<CString> {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
         self.filename_buf(&mut buf).chain(|f| f.to_owned())
     }
@@ -2805,6 +2854,62 @@ impl File {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
         let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
         rv!(mknodat(self.fd, &path, file_type_to_mode(ty) | mode.0, dev.id()))
+    }
+
+    /// Returns a canonicalized absolute path relative to this file.
+    ///
+    /// [argument, path]
+    /// The path to canonicalize.
+    ///
+    /// [argument, buf]
+    /// The buffer where the path will be stored in.
+    ///
+    /// = Remarks
+    ///
+    /// The path will not contain any `/./`, `/../`, or `//`.
+    ///
+    /// If the path is relative, this file must be a directory and the path will be
+    /// interpreted relative to it.
+    ///
+    /// = See also
+    ///
+    /// * link:man:realpath(3)
+    pub fn rel_real_path_buf<'a, P>(&self, path: P,
+                                    buf: &'a mut [u8]) -> Result<&'a mut CStr>
+        where P: ToCString,
+    {
+        let file = try!(self.rel_open(path, FILE_PATH|FILE_DONT_BLOCK|FILE_CLOSE_ON_EXEC,
+                                      Mode(0)));
+        let path = try!(file.filename_buf(buf));
+        let ifile = try!(file.info());
+        let ipath = try!(_info(&path));
+        if ifile.device() != ipath.device() || ifile.inode() != ipath.inode() {
+            Err(error::TooManySymlinks)
+        } else {
+            Ok(path)
+        }
+    }
+
+    /// Returns a canonicalized absolute path relative to this file.
+    ///
+    /// [argument, path]
+    /// The path to canonicalize.
+    ///
+    /// = Remarks
+    ///
+    /// The path will not contain any `/./`, `/../`, or `//`.
+    ///
+    /// If the path is relative, this file must be a directory and the path will be
+    /// interpreted relative to it.
+    ///
+    /// = See also
+    ///
+    /// * link:man:realpath(3)
+    pub fn rel_real_path<'a, P>(&self, path: P) -> Result<CString>
+        where P: ToCString,
+    {
+        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        self.rel_real_path_buf(path, &mut buf).chain(|p| p.to_owned())
     }
 }
 
