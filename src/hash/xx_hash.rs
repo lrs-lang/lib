@@ -41,6 +41,7 @@ use core::marker::{Pod};
 use core::ops::{Deref};
 use base::rmo::{AsRef, AsMut};
 use wrapping::{W32, W64};
+use {Hasher};
 
 pub const PRIME32_1 : u32 = 2654435761;
 pub const PRIME32_2 : u32 = 2246822519;
@@ -733,3 +734,58 @@ impl U64Hasher {
         hash.0
     }
 }
+
+macro_rules! impl_hasher {
+    ($name:ident,
+     $inner:ident,
+     $digest:ident,
+     $bytes:ident,
+     $u8:ident,
+     $u16:ident,
+     $u32:ident,
+     $u64:ident,
+     $usize:ident
+     ) => {
+        pub struct $name {
+            data: $inner,
+        }
+
+        impl Hasher for $name {
+            type Digest = $digest;
+
+            fn new(seed: Self::Digest) -> Self { $name { data: $inner::new(seed) } }
+            fn reset(&mut self, seed: Self::Digest) { self.data.reset(seed); }
+
+            fn write_bytes (&mut self, val: &[u8] ) { self.data.write_bytes(val); }
+            fn write_u8    (&mut self, val: u8    ) { self.write_bytes(val.as_ref()); }
+            fn write_u16   (&mut self, val: u16   ) { self.write_bytes(val.as_ref()); }
+            fn write_u32   (&mut self, val: u32   ) { self.write_bytes(val.as_ref()); }
+            fn write_u64   (&mut self, val: u64   ) { self.write_bytes(val.as_ref()); }
+            fn write_usize (&mut self, val: usize ) { self.write_bytes(val.as_ref()); }
+            fn write_i8    (&mut self, val: i8    ) { self.write_bytes(val.as_ref()); }
+            fn write_i16   (&mut self, val: i16   ) { self.write_bytes(val.as_ref()); }
+            fn write_i32   (&mut self, val: i32   ) { self.write_bytes(val.as_ref()); }
+            fn write_i64   (&mut self, val: i64   ) { self.write_bytes(val.as_ref()); }
+            fn write_isize (&mut self, val: isize ) { self.write_bytes(val.as_ref()); }
+
+            fn digest(&self) -> Self::Digest { self.data.digest() }
+
+            fn hash_bytes( val: &[u8], seed: Self::Digest) -> Self::Digest { $bytes(val, seed) }
+            fn hash_u8(    val: u8,    seed: Self::Digest) -> Self::Digest { $u8(val, seed) }
+            fn hash_u16(   val: u16,   seed: Self::Digest) -> Self::Digest { $u16(val, seed) }
+            fn hash_u32(   val: u32,   seed: Self::Digest) -> Self::Digest { $u32(val, seed) }
+            fn hash_u64(   val: u64,   seed: Self::Digest) -> Self::Digest { $u64(val, seed) }
+            fn hash_usize( val: usize, seed: Self::Digest) -> Self::Digest { $usize(val, seed) }
+            fn hash_i8(    val: i8,    seed: Self::Digest) -> Self::Digest { $u8(val as u8, seed) }
+            fn hash_i16(   val: i16,   seed: Self::Digest) -> Self::Digest { $u16(val as u16, seed) }
+            fn hash_i32(   val: i32,   seed: Self::Digest) -> Self::Digest { $u32(val as u32, seed) }
+            fn hash_i64(   val: i64,   seed: Self::Digest) -> Self::Digest { $u64(val as u64, seed) }
+            fn hash_isize( val: isize, seed: Self::Digest) -> Self::Digest { $usize(val as usize, seed) }
+        }
+    }
+}
+
+impl_hasher!(XxHash32, U32Hasher, u32, u32hash_bytes, u32hash_u8, u32hash_u16, u32hash_u32,
+             u32hash_u64, u32hash_usize);
+impl_hasher!(XxHash64, U64Hasher, u64, u64hash_bytes, u64hash_u8, u64hash_u16, u64hash_u32,
+             u64hash_u64, u64hash_usize);

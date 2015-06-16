@@ -10,6 +10,7 @@
 
 #[macro_use]
 extern crate lrs_core as core;
+extern crate lrs_wrapping as wrapping;
 extern crate lrs_cty_base as cty_base;
 
 pub mod lrs {

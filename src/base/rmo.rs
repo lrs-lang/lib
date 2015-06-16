@@ -4,6 +4,7 @@
 
 #[prelude_import] use core::prelude::*;
 use core::{mem, slice};
+use wrapping::{W8, W16, W32, W64, Wsize};
 
 /// Objects that can be immutably borrowed.
 pub trait AsRef<Target: ?Sized> {
@@ -77,5 +78,69 @@ impl_for_int!(i64);
 impl_for_int!(u64);
 impl_for_int!(isize);
 impl_for_int!(usize);
+impl_for_int!(W8);
+impl_for_int!(W16);
+impl_for_int!(W32);
+impl_for_int!(W64);
+impl_for_int!(Wsize);
 
 impl AsRef<[u8]> for str { fn as_ref(&self) -> &[u8] { self.as_bytes() } }
+
+impl AsRef<[u8]> for char {
+    fn as_ref(&self) -> &[u8] {
+        unsafe {
+            slice::from_ptr(self as *const _ as *const _, mem::size_of::<char>())
+        }
+    }
+}
+
+impl AsRef<[u8]> for [char] {
+    fn as_ref(&self) -> &[u8] {
+        unsafe {
+            let ptr = self.as_ptr();
+            let size = mem::size_of::<char>() * self.len();
+            slice::from_ptr(ptr as *const _, size)
+        }
+    }
+}
+
+macro_rules! impl_for_ptr {
+    ($t:ty) => {
+        impl<T> AsRef<[u8]> for $t {
+            fn as_ref(&self) -> &[u8] {
+                unsafe {
+                    slice::from_ptr(self as *const _ as *const _, usize::bytes())
+                }
+            }
+        }
+        impl<T> AsMut<[u8]> for $t {
+            fn as_mut(&mut self) -> &mut [u8] {
+                unsafe {
+                    slice::from_ptr(self as *mut _ as *mut _, usize::bytes())
+                }
+            }
+        }
+
+        impl<T> AsRef<[u8]> for [$t] {
+            fn as_ref(&self) -> &[u8] {
+                unsafe {
+                    let ptr = self.as_ptr();
+                    let size = usize::bytes() * self.len();
+                    slice::from_ptr(ptr as *const _, size)
+                }
+            }
+        }
+        impl<T> AsMut<[u8]> for [$t] {
+            fn as_mut(&mut self) -> &mut [u8] {
+                unsafe {
+                    let ptr = self.as_ptr();
+                    let size = usize::bytes() * self.len();
+                    slice::from_ptr(ptr as *const _, size)
+                }
+            }
+        }
+    }
+}
+
+impl_for_ptr!(*const T);
+impl_for_ptr!(*mut T);

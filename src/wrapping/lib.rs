@@ -473,4 +473,4 @@ wint_impls!(W8; u8);
 wint_impls!(W16; u16);
 wint_impls!(W32; u32);
 wint_impls!(W64; u64);
-wint_impls!(Wusize; usize);
+wint_impls!(Wsize; usize);
