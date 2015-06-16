@@ -10,7 +10,7 @@ impl Hash for Errno {
         h.write_i32(self.0)
     }
 
-    fn hash<H: Hasher>(&self, seed: H::Digest) -> H::Digest {
+    fn hash<H: Hasher>(&self, seed: H::Seed) -> H::Digest {
         H::hash_i32(self.0, seed)
     }
 }

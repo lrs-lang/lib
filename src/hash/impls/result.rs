@@ -6,7 +6,7 @@ use base::prelude::*;
 use {Hash, Hasher};
 
 impl<T: Hash, E: Hash> Hash for Result<T, E> {
-    fn hash<H: Hasher>(&self, seed: H::Digest) -> H::Digest {
+    fn hash<H: Hasher>(&self, seed: H::Seed) -> H::Digest {
         match *self {
             Ok(ref o) => o.hash::<H>(seed),
             Err(ref e) => e.hash::<H>(seed),

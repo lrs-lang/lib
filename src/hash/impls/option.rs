@@ -6,7 +6,7 @@ use base::prelude::*;
 use {Hash, Hasher};
 
 impl<T: Hash> Hash for Option<T> {
-    fn hash<H: Hasher>(&self, seed: H::Digest) -> H::Digest {
+    fn hash<H: Hasher>(&self, seed: H::Seed) -> H::Digest {
         match *self {
             Some(ref o) => o.hash::<H>(seed),
             _ => H::hash_u8(0, seed),

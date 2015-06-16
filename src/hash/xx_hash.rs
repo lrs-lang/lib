@@ -746,15 +746,17 @@ macro_rules! impl_hasher {
      $u64:ident,
      $usize:ident
      ) => {
+        /// An implementation of the xxHash algorithm.
         pub struct $name {
             data: $inner,
         }
 
         impl Hasher for $name {
+            type Seed = $digest;
             type Digest = $digest;
 
-            fn new(seed: Self::Digest) -> Self { $name { data: $inner::new(seed) } }
-            fn reset(&mut self, seed: Self::Digest) { self.data.reset(seed); }
+            fn new(seed: Self::Seed) -> Self { $name { data: $inner::new(seed) } }
+            fn reset(&mut self, seed: Self::Seed) { self.data.reset(seed); }
 
             fn write_bytes (&mut self, val: &[u8] ) { self.data.write_bytes(val); }
             fn write_u8    (&mut self, val: u8    ) { self.write_bytes(val.as_ref()); }
@@ -770,17 +772,17 @@ macro_rules! impl_hasher {
 
             fn digest(&self) -> Self::Digest { self.data.digest() }
 
-            fn hash_bytes( val: &[u8], seed: Self::Digest) -> Self::Digest { $bytes(val, seed) }
-            fn hash_u8(    val: u8,    seed: Self::Digest) -> Self::Digest { $u8(val, seed) }
-            fn hash_u16(   val: u16,   seed: Self::Digest) -> Self::Digest { $u16(val, seed) }
-            fn hash_u32(   val: u32,   seed: Self::Digest) -> Self::Digest { $u32(val, seed) }
-            fn hash_u64(   val: u64,   seed: Self::Digest) -> Self::Digest { $u64(val, seed) }
-            fn hash_usize( val: usize, seed: Self::Digest) -> Self::Digest { $usize(val, seed) }
-            fn hash_i8(    val: i8,    seed: Self::Digest) -> Self::Digest { $u8(val as u8, seed) }
-            fn hash_i16(   val: i16,   seed: Self::Digest) -> Self::Digest { $u16(val as u16, seed) }
-            fn hash_i32(   val: i32,   seed: Self::Digest) -> Self::Digest { $u32(val as u32, seed) }
-            fn hash_i64(   val: i64,   seed: Self::Digest) -> Self::Digest { $u64(val as u64, seed) }
-            fn hash_isize( val: isize, seed: Self::Digest) -> Self::Digest { $usize(val as usize, seed) }
+            fn hash_bytes( val: &[u8], seed: Self::Seed) -> Self::Digest { $bytes(val, seed) }
+            fn hash_u8(    val: u8,    seed: Self::Seed) -> Self::Digest { $u8(val, seed) }
+            fn hash_u16(   val: u16,   seed: Self::Seed) -> Self::Digest { $u16(val, seed) }
+            fn hash_u32(   val: u32,   seed: Self::Seed) -> Self::Digest { $u32(val, seed) }
+            fn hash_u64(   val: u64,   seed: Self::Seed) -> Self::Digest { $u64(val, seed) }
+            fn hash_usize( val: usize, seed: Self::Seed) -> Self::Digest { $usize(val, seed) }
+            fn hash_i8(    val: i8,    seed: Self::Seed) -> Self::Digest { $u8(val as u8, seed) }
+            fn hash_i16(   val: i16,   seed: Self::Seed) -> Self::Digest { $u16(val as u16, seed) }
+            fn hash_i32(   val: i32,   seed: Self::Seed) -> Self::Digest { $u32(val as u32, seed) }
+            fn hash_i64(   val: i64,   seed: Self::Seed) -> Self::Digest { $u64(val as u64, seed) }
+            fn hash_isize( val: isize, seed: Self::Seed) -> Self::Digest { $usize(val as usize, seed) }
         }
     }
 }

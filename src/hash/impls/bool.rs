@@ -9,7 +9,7 @@ impl Hash for bool {
         h.write_u8(*self as u8);
     }
 
-    fn hash<H: Hasher>(&self, seed: H::Digest) -> H::Digest {
+    fn hash<H: Hasher>(&self, seed: H::Seed) -> H::Digest {
         H::hash_u8(*self as u8, seed)
     }
 }

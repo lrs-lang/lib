@@ -9,7 +9,7 @@ impl<T: Hash> Hash for [T] {
         T::stateful_hash_slice(self, h);
     }
 
-    fn hash<H: Hasher>(&self, seed: H::Digest) -> H::Digest {
+    fn hash<H: Hasher>(&self, seed: H::Seed) -> H::Digest {
         T::hash_slice::<H>(self, seed)
     }
 }
@@ -19,7 +19,7 @@ impl Hash for str {
         self.as_bytes().stateful_hash(h);
     }
 
-    fn hash<H: Hasher>(&self, seed: H::Digest) -> H::Digest {
+    fn hash<H: Hasher>(&self, seed: H::Seed) -> H::Digest {
         self.as_bytes().hash::<H>(seed)
     }
 }

@@ -14,11 +14,11 @@ impl Hash for char {
         h.write_bytes(val.as_ref());
     }
 
-    fn hash<H: Hasher>(&self, seed: H::Digest) -> H::Digest {
+    fn hash<H: Hasher>(&self, seed: H::Seed) -> H::Digest {
         H::hash_u8(*self as u8, seed)
     }
 
-    fn hash_slice<H: Hasher>(val: &[Self], seed: H::Digest) -> H::Digest {
+    fn hash_slice<H: Hasher>(val: &[Self], seed: H::Seed) -> H::Digest {
         H::hash_bytes(val.as_ref(), seed)
     }
 }

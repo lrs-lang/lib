@@ -9,7 +9,7 @@ impl Hash for () {
         h.write_u8(0)
     }
 
-    fn hash<H: Hasher>(&self, seed: H::Digest) -> H::Digest {
+    fn hash<H: Hasher>(&self, seed: H::Seed) -> H::Digest {
         H::hash_u8(0, seed)
     }
 }
@@ -19,7 +19,7 @@ impl<T0: Hash> Hash for (T0,) {
         self.0.stateful_hash(h)
     }
 
-    fn hash<H: Hasher>(&self, seed: H::Digest) -> H::Digest {
+    fn hash<H: Hasher>(&self, seed: H::Seed) -> H::Digest {
         self.0.hash::<H>(seed)
     }
 }
