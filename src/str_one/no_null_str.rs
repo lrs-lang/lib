@@ -7,6 +7,7 @@ use core::{mem};
 use core::ops::{Index, IndexMut, Range, RangeFrom, RangeTo, RangeFull};
 use base::rmo::{AsRef};
 use base::{error};
+// use base::unused::{UnusedState};
 use arch_fns::{memrchr, memchr};
 use fmt::{Debug, Write};
 
@@ -99,6 +100,24 @@ impl NoNullStr {
         mem::cast(bytes)
     }
 }
+
+// unsafe impl<'a> UnusedState for &'a NoNullStr {
+//     type Plain = <&'static [u8] as UnusedState>::Plain;
+//     const NUM: usize = <&'static [u8] as UnusedState>::NUM;
+// 
+//     fn unused_state(n: usize) -> Self::Plain {
+//         <&'static [u8] as UnusedState>::unused_state(n)
+//     }
+// }
+// 
+// unsafe impl<'a> UnusedState for &'a mut NoNullStr {
+//     type Plain = <&'static mut [u8] as UnusedState>::Plain;
+//     const NUM: usize = <&'static mut [u8] as UnusedState>::NUM;
+// 
+//     fn unused_state(n: usize) -> Self::Plain {
+//         <&'static mut [u8] as UnusedState>::unused_state(n)
+//     }
+// }
 
 impl Deref for NoNullStr {
     type Target = ByteStr;

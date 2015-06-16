@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_pipe"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, custom_derive)]
+#![feature(plugin, no_std, custom_derive, associated_consts)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
@@ -24,6 +24,7 @@ use syscall::{
     close, pipe2, read, write, readv, writev, fcntl_setpipe_sz, fcntl_getpipe_sz,
     ioctl_fionread, tee, splice,
 };
+use base::unused::{UnusedState};
 use core::{mem};
 use cty::{c_int, c_uint};
 use fd::{FDContainer};
@@ -364,6 +365,20 @@ impl Pipe {
         retry(|| {
             splice(self.fd, None, dst.borrow(), Some(at), n, flags.0)
         }).map(|v| v as usize)
+    }
+}
+
+unsafe impl UnusedState for Pipe {
+    type Plain = [c_int; 2];
+    const NUM: usize = <bool as UnusedState>::NUM;
+
+    fn unused_state(n: usize) -> [c_int; 2] {
+        unsafe {
+            mem::cast(Pipe {
+                fd: 0,
+                owned: mem::cast(<bool as UnusedState>::unused_state(n))
+            })
+        }
     }
 }
 

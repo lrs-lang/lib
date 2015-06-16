@@ -4,6 +4,7 @@
 
 #[prelude_import] use base::prelude::*;
 use core::{mem};
+use base::unused::{UnusedState};
 use fmt::{Debug, Display, Write};
 use vec::{Vec};
 use alloc::{self, Allocator};
@@ -12,8 +13,20 @@ use alloc::{self, Allocator};
 pub struct String<Heap = alloc::Heap>
     where Heap: Allocator,
 {
-    data: Vec<u8>,
-    _marker: PhantomData<Heap>,
+    data: Vec<u8, Heap>,
+}
+
+unsafe impl<H> UnusedState for String<H>
+    where H: Allocator<Pool = ()>,
+{
+    type Plain = <Vec<u8, H> as UnusedState>::Plain;
+    // FIXME: Should be Vec<u8, H>
+    const NUM: usize = <Vec<u8, alloc::Heap> as UnusedState>::NUM;
+
+    fn unused_state(n: usize) -> [usize; 4] {
+        assert!(mem::size_of::<String<H>>() == mem::size_of::<Self::Plain>());
+        <Vec<u8, H> as UnusedState>::unused_state(n)
+    }
 }
 
 impl<H> Deref for String<H>

@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_signal"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, optin_builtin_traits, custom_derive)]
+#![feature(plugin, no_std, optin_builtin_traits, custom_derive, associated_consts)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 

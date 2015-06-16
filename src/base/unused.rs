@@ -3,7 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use core::marker::{Copy};
-use core::{mem, slice};
 
 /// Types that can never match certain bit patterns.
 ///
@@ -67,32 +66,64 @@ unsafe impl UnusedState for char {
     }
 }
 
-unsafe impl<'a, T> UnusedState for &'a [T] {
-    type Plain = [usize; 2];
-    const NUM: usize = (!0 >> 1) + 1;
+// NOTE: It is possible for the first page to be mapped but in this case we're already
+// fucked because of the null pointer optimization performed by the compiler.
 
-    fn unused_state(n: usize) -> [usize; 2] {
-        assert!(n <= !0 >> 1);
-        unsafe { mem::cast(slice::from_ptr(0 as *const T, !0 - n)) }
+#[cfg(any(target_arch = "x86",
+          target_arch = "x86_64",
+          target_arch = "arm",
+          target_arch = "aarch64"))]
+const PAGE_SIZE: usize = 4096;
+
+unsafe impl<'a, T> UnusedState for &'a T {
+    type Plain = usize;
+    const NUM: usize = PAGE_SIZE;
+
+    fn unused_state(n: usize) -> usize {
+        assert!(n < PAGE_SIZE);
+        n
     }
 }
 
-unsafe impl<'a, T> UnusedState for &'a mut [T] {
-    type Plain = [usize; 2];
-    const NUM: usize = (!0 >> 1) + 1;
+unsafe impl<'a, T> UnusedState for &'a mut T {
+    type Plain = usize;
+    const NUM: usize = PAGE_SIZE;
 
-    fn unused_state(n: usize) -> [usize; 2] {
-        assert!(n <= !0 >> 1);
-        unsafe { mem::cast(slice::from_ptr(0 as *const T, !0 - n)) }
+    fn unused_state(n: usize) -> usize {
+        assert!(n < PAGE_SIZE);
+        n
     }
 }
 
-unsafe impl<'a> UnusedState for &'a str {
-    type Plain = [usize; 2];
-    const NUM: usize = (!0 >> 1) + 1;
+// FIXME: The following implementations conflict with the implementations above for some
+// reason. The compiler is being retarded again. Fork and fix.
 
-    fn unused_state(n: usize) -> [usize; 2] {
-        assert!(n <= !0 >> 1);
-        unsafe { mem::cast(slice::from_ptr(0 as *const u8, !0 - n)) }
-    }
-}
+// unsafe impl<'a, T> UnusedState for &'a [T] {
+//     type Plain = [usize; 2];
+//     const NUM: usize = (!0 >> 1) + 1;
+// 
+//     fn unused_state(n: usize) -> [usize; 2] {
+//         assert!(n <= !0 >> 1);
+//         unsafe { mem::cast(slice::from_ptr(0 as *const T, !0 - n)) }
+//     }
+// }
+//
+// unsafe impl<'a, T> UnusedState for &'a mut [T] {
+//     type Plain = [usize; 2];
+//     const NUM: usize = (!0 >> 1) + 1;
+// 
+//     fn unused_state(n: usize) -> [usize; 2] {
+//         assert!(n <= !0 >> 1);
+//         unsafe { mem::cast(slice::from_ptr(0 as *const T, !0 - n)) }
+//     }
+// }
+//
+// unsafe impl<'a> UnusedState for &'a str {
+//     type Plain = [usize; 2];
+//     const NUM: usize = (!0 >> 1) + 1;
+// 
+//     fn unused_state(n: usize) -> [usize; 2] {
+//         assert!(n <= !0 >> 1);
+//         unsafe { mem::cast(slice::from_ptr(0 as *const u8, !0 - n)) }
+//     }
+// }

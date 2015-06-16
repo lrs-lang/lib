@@ -5,6 +5,7 @@
 #[prelude_import] use base::prelude::*;
 use base::rmo::{AsRef, AsMut};
 use base::default::{Default};
+use base::unused::{UnusedState};
 use core::{mem};
 use str_one::{NoNullStr, AsNoNullStr, AsMutNoNullStr, AsMutCStr, CStr};
 use vec::{Vec};
@@ -147,6 +148,19 @@ impl<H> Deref for NoNullString<H>
     type Target = NoNullStr;
     fn deref(&self) -> &NoNullStr {
         self.as_ref()
+    }
+}
+
+unsafe impl<H> UnusedState for NoNullString<H>
+    where H: Allocator<Pool = ()>,
+{
+    type Plain = <Vec<u8, H> as UnusedState>::Plain;
+    // FIXME: Should be Vec<u8, H>
+    const NUM: usize = <Vec<u8, alloc::Heap> as UnusedState>::NUM;
+
+    fn unused_state(n: usize) -> [usize; 4] {
+        assert!(mem::size_of::<NoNullString<H>>() == mem::size_of::<Self::Plain>());
+        <Vec<u8, H> as UnusedState>::unused_state(n)
     }
 }
 

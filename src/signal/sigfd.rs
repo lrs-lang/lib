@@ -4,6 +4,7 @@
 
 #[prelude_import] use base::prelude::*;
 use core::{mem};
+use base::unused::{UnusedState};
 use cty::{c_int};
 use syscall::{close, read, signalfd4};
 use fd::{FDContainer};
@@ -105,6 +106,20 @@ impl Sigfd {
         let len = try!(retry(|| read(self.fd, buf.as_mut_bytes())));
         let num = len as usize / mem::size_of::<SigfdInfo>();
         Ok(&mut buf[..num])
+    }
+}
+
+unsafe impl UnusedState for Sigfd {
+    type Plain = [c_int; 2];
+    const NUM: usize = <bool as UnusedState>::NUM;
+
+    fn unused_state(n: usize) -> [c_int; 2] {
+        unsafe {
+            mem::cast(Sigfd {
+                fd: 0,
+                owned: mem::cast(<bool as UnusedState>::unused_state(n))
+            })
+        }
     }
 }
 

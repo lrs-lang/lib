@@ -5,6 +5,7 @@
 #[prelude_import] use base::prelude::*;
 use core::{mem};
 use base::clone::{Clone};
+use base::unused::{UnusedState};
 use base::default::{Default};
 use base::rmo::{AsRef, AsMut};
 use str_one::{ByteStr, ToCStr, CStr};
@@ -51,6 +52,19 @@ impl<H> ByteString<H>
     /// Unwraps the vector contained in the string.
     pub fn unwrap(self) -> Vec<u8, H> {
         self.data
+    }
+}
+
+unsafe impl<H> UnusedState for ByteString<H>
+    where H: Allocator<Pool = ()>,
+{
+    type Plain = <Vec<u8, H> as UnusedState>::Plain;
+    // FIXME: Should be Vec<u8, H>
+    const NUM: usize = <Vec<u8, alloc::Heap> as UnusedState>::NUM;
+
+    fn unused_state(n: usize) -> [usize; 4] {
+        assert!(mem::size_of::<ByteString<H>>() == mem::size_of::<Self::Plain>());
+        <Vec<u8, H> as UnusedState>::unused_state(n)
     }
 }
 

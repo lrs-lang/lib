@@ -3,10 +3,12 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
+use core::{mem};
 use core::ops::{Eq};
+use base::unused::{UnusedState};
 use atomic::{AtomicCInt, ATOMIC_CINT_INIT};
 use syscall::{futex_wait, futex_wake};
-use cty::{c_int};
+use cty::{c_int, c_uint};
 
 pub const LOCK_INIT: Lock = Lock { val: ATOMIC_CINT_INIT };
 
@@ -41,7 +43,7 @@ pub struct Lock {
 /// Two locks are equal if their addresses are equal.
 impl Eq for Lock {
     fn eq(&self, other: &Lock) -> bool {
-        self as *const Lock as usize == other as *const Lock as usize
+        mem::addr(self) == mem::addr(other)
     }
 }
 
@@ -95,6 +97,16 @@ impl<'a> Lock {
                 return self.guard();
             }
         }
+    }
+}
+
+unsafe impl UnusedState for Lock {
+    type Plain = c_uint;
+    const NUM: usize = c_uint::max() as usize - 2;
+    
+    fn unused_state(n: usize) -> c_uint {
+        assert!(n < Self::NUM);
+        n as c_uint + 3
     }
 }
 

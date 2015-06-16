@@ -8,6 +8,7 @@ use core::marker::{Leak};
 use core::{mem, ptr, intrinsics};
 use base::clone::{Clone};
 use base::default::{Default};
+use base::unused::{UnusedState};
 use cell::copy_cell::{CopyCell};
 use fmt::{Debug, Write};
 use alloc::{self, Allocator};
@@ -118,6 +119,24 @@ impl<T, H> Rc<T, H>
             data.count.set(data.count.get() + 1);
             Rc { data: self.data }
         }
+    }
+}
+
+unsafe impl<T, H> UnusedState for Rc<T, H>
+    where H: Allocator,
+          T: Leak,
+{
+    type Plain = [usize; 2];
+    const NUM: usize = <&'static u8 as UnusedState>::NUM;
+
+    fn unused_state(n: usize) -> [usize; 2] {
+        let unused_ptr = <&'static u8 as UnusedState>::unused_state(n);
+
+        // The compiler is terminally broken and won't let us use use <T, H> here. It will
+        // then complain that we have to use `[usize; 3]` and compile fine with that.
+        // After monomorphization it promptly ICEs.
+
+        unsafe { mem::cast(Rc { data: unused_ptr as *mut Inner<T, alloc::Heap> }) }
     }
 }
 

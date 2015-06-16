@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_str_one"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std)]
+#![feature(plugin, no_std, associated_consts)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 

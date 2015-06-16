@@ -6,6 +6,7 @@
 use core::ops::{Index, IndexMut, RangeFrom, RangeTo, Range, RangeFull};
 use core::{mem, slice};
 use base::rmo::{AsRef};
+// use base::unused::{UnusedState};
 use base::{error};
 use arch_fns::{all_bytes, memchr, strlen};
 use cty_base::types::{c_char};
@@ -152,6 +153,24 @@ impl CStr {
         &self.data
     }
 }
+
+// unsafe impl<'a> UnusedState for &'a CStr {
+//     type Plain = <&'static [u8] as UnusedState>::Plain;
+//     const NUM: usize = <&'static [u8] as UnusedState>::NUM;
+// 
+//     fn unused_state(n: usize) -> Self::Plain {
+//         <&'static [u8] as UnusedState>::unused_state(n)
+//     }
+// }
+// 
+// unsafe impl<'a> UnusedState for &'a mut CStr {
+//     type Plain = <&'static mut [u8] as UnusedState>::Plain;
+//     const NUM: usize = <&'static mut [u8] as UnusedState>::NUM;
+// 
+//     fn unused_state(n: usize) -> Self::Plain {
+//         <&'static mut [u8] as UnusedState>::unused_state(n)
+//     }
+// }
 
 impl Deref for CStr {
     type Target = NoNullStr;

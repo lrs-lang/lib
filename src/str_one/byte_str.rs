@@ -7,6 +7,7 @@ use core::ops::{Index, IndexMut, Range, RangeFrom, RangeTo, RangeFull, PartialOr
 use core::cmp::{Ord, Ordering};
 use core::{mem, str};
 use base::rmo::{AsRef, AsMut};
+// use base::unused::{UnusedState};
 use fmt::{self, Debug, Display, UpperHex, Write};
 use parse::{Parse, Parsable};
 
@@ -79,6 +80,24 @@ impl ByteStr {
         self.data.starts_with(arg.as_ref())
     }
 }
+
+// unsafe impl<'a> UnusedState for &'a ByteStr {
+//     type Plain = <&'static [u8] as UnusedState>::Plain;
+//     const NUM: usize = <&'static [u8] as UnusedState>::NUM;
+// 
+//     fn unused_state(n: usize) -> Self::Plain {
+//         <&'static [u8] as UnusedState>::unused_state(n)
+//     }
+// }
+// 
+// unsafe impl<'a> UnusedState for &'a mut ByteStr {
+//     type Plain = <&'static mut [u8] as UnusedState>::Plain;
+//     const NUM: usize = <&'static mut [u8] as UnusedState>::NUM;
+// 
+//     fn unused_state(n: usize) -> Self::Plain {
+//         <&'static mut [u8] as UnusedState>::unused_state(n)
+//     }
+// }
 
 impl Deref for ByteStr {
     type Target = [u8];

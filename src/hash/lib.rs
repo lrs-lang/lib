@@ -46,7 +46,7 @@ pub trait Hash {
     ///
     /// [argument, seed]
     /// A seed for the hasher.
-    fn hash<H: Hasher>(&self, seed: H::Digest) -> H::Digest {
+    fn hash<H: Hasher>(&self, seed: H::Seed) -> H::Digest {
         let mut hasher = H::new(seed);
         self.stateful_hash(&mut hasher);
         hasher.digest()
@@ -59,7 +59,7 @@ pub trait Hash {
     ///
     /// [argument, seed]
     /// A seed for the hasher.
-    fn hash_slice<H: Hasher>(val: &[Self], seed: H::Digest) -> H::Digest
+    fn hash_slice<H: Hasher>(val: &[Self], seed: H::Seed) -> H::Digest
         where Self: Sized
     {
         let mut hasher = H::new(seed);

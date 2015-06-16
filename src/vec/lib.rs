@@ -4,8 +4,9 @@
 
 #![crate_name = "lrs_vec"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, optin_builtin_traits)]
+#![feature(plugin, no_std, optin_builtin_traits, associated_consts)]
 #![plugin(lrs_core_plugin)]
+#![allow(drop_with_repr_extern)] // Doesn't work when attached to items.
 #![no_std]
 
 #[macro_use]
@@ -24,6 +25,7 @@ pub mod lrs {
 #[prelude_import] use base::prelude::*;
 use core::{mem, ptr, cmp, slice};
 use base::clone::{Clone};
+use base::unused::{UnusedState};
 use base::default::{Default};
 use core::ops::{Eq, Deref, DerefMut};
 use core::iter::{IntoIterator};
@@ -35,6 +37,7 @@ use str_one::{ByteStr, CStr, AsCStr, AsMutCStr, ToCStr, NoNullStr, AsMutNoNullSt
               AsNoNullStr};
 
 /// A vector.
+#[repr(C)] // See the UnusedState implementation for why we use this.
 pub struct Vec<T, Heap = alloc::Heap>
     where Heap: Allocator,
 {
@@ -263,6 +266,25 @@ impl<T, H> Vec<T, H>
     pub unsafe fn set_len(&mut self, len: usize) {
         assert!(len <= self.cap);
         self.len = len;
+    }
+}
+
+unsafe impl<T, H> UnusedState for Vec<T, H>
+    where H: Allocator<Pool = ()>,
+{
+    type Plain = [usize; 4];
+    const NUM: usize = <&'static u8 as UnusedState>::NUM;
+
+    fn unused_state(n: usize) -> [usize; 4] {
+        assert!(mem::size_of::<Vec<T, H>>() == mem::size_of::<Self::Plain>());
+        unsafe {
+            mem::cast::<Vec<_, alloc::Heap>, _>(Vec {
+                ptr: <&'static u8 as UnusedState>::unused_state(n) as *mut u8,
+                len: 0,
+                cap: 0,
+                pool: (),
+            })
+        }
     }
 }
 

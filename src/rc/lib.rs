@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_rc"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, optin_builtin_traits)]
+#![feature(plugin, no_std, optin_builtin_traits, associated_consts)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 

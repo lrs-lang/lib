@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_mem"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, custom_derive)]
+#![feature(plugin, no_std, custom_derive, associated_consts)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
@@ -21,6 +21,7 @@ use core::{slice, mem};
 use core::ops::{Range};
 use base::{error};
 use base::into::{Into};
+use base::unused::{UnusedState};
 use cty::{MAP_SHARED, MAP_PRIVATE, c_int, PAGE_SIZE, MAP_FIXED, MREMAP_FIXED};
 use flags::{
     MemMapFlags, MemProtFlags, MemReMapFlags, MMAP_ANON, MemSyncFlags, MemLockFlags,
@@ -234,6 +235,16 @@ impl MemMap {
             return Err(error::InvalidArgument);
         }
         rv!(mprotect(range.start, range.end - range.start, protection.0))
+    }
+}
+
+unsafe impl UnusedState for MemMap {
+    type Plain = [usize; 3];
+    const NUM: usize = (!0 >> 1) + 1;
+
+    fn unused_state(n: usize) -> [usize; 3] {
+        assert!(n < Self::NUM);
+        unsafe { mem::cast(MemMap { ptr: 0 as *mut _, len: !0 - n }) }
     }
 }
 

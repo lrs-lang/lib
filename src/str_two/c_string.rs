@@ -5,6 +5,7 @@
 #[prelude_import] use base::prelude::*;
 use core::{mem};
 use base::rmo::{AsRef, AsMut};
+use base::unused::{UnusedState};
 use str_one::c_str::{CStr, ToCStr};
 use fmt::{Debug, Write};
 use vec::{Vec};
@@ -31,6 +32,19 @@ impl<H> CString<H>
     /// is undefined.
     pub unsafe fn from_bytes_unchecked(bytes: Vec<u8, H>) -> CString<H> {
         CString { data: bytes }
+    }
+}
+
+unsafe impl<H> UnusedState for CString<H>
+    where H: Allocator<Pool = ()>,
+{
+    type Plain = <Vec<u8, H> as UnusedState>::Plain;
+    // FIXME: Should be Vec<u8, H>
+    const NUM: usize = <Vec<u8, alloc::Heap> as UnusedState>::NUM;
+
+    fn unused_state(n: usize) -> [usize; 4] {
+        assert!(mem::size_of::<CString<H>>() == mem::size_of::<Self::Plain>());
+        <Vec<u8, H> as UnusedState>::unused_state(n)
     }
 }
 
