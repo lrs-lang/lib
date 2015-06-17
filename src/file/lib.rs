@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_file"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, negate_unsigned, custom_derive)]
+#![feature(plugin, no_std, negate_unsigned, custom_derive, associated_consts)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
@@ -37,6 +37,7 @@ use vec::{Vec};
 use core::{mem};
 use io::{Read};
 use base::rmo::{AsRef};
+use base::unused::{UnusedState};
 use base::error::{self, Errno};
 use cty::{
     c_int, loff_t, c_uint, AT_FDCWD, AT_EMPTY_PATH, AT_SYMLINK_NOFOLLOW, UTIME_NOW,
@@ -2922,6 +2923,20 @@ impl Read for File {
 impl Write for File {
     fn gather_write(&mut self, buf: &[&[u8]]) -> Result<usize> {
         File::gather_write(self, buf)
+    }
+}
+
+unsafe impl UnusedState for File {
+    type Plain = [c_int; 2];
+    const NUM: usize = <bool as UnusedState>::NUM;
+
+    fn unused_state(n: usize) -> [c_int; 2] {
+        unsafe {
+            mem::cast(File {
+                fd: 0,
+                owned: mem::cast(<bool as UnusedState>::unused_state(n))
+            })
+        }
     }
 }
 

@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_inotify"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, custom_derive)]
+#![feature(plugin, no_std, custom_derive, associated_consts)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
@@ -26,6 +26,7 @@ extern crate lrs_rmo as rmo;
 use syscall::{
     close, inotify_init1, inotify_add_watch, inotify_rm_watch, ioctl_fionread,
 };
+use base::unused::{UnusedState};
 use io::{Read};
 use cty::{c_int, c_char, PATH_MAX};
 use core::{mem};
@@ -155,6 +156,20 @@ impl Inotify {
         let mut unread = 0;
         try!(rv!(ioctl_fionread(self.fd, &mut unread)));
         Ok(unread)
+    }
+}
+
+unsafe impl UnusedState for Inotify {
+    type Plain = [c_int; 2];
+    const NUM: usize = <bool as UnusedState>::NUM;
+
+    fn unused_state(n: usize) -> [c_int; 2] {
+        unsafe {
+            mem::cast(Inotify {
+                fd: 0,
+                owned: mem::cast(<bool as UnusedState>::unused_state(n))
+            })
+        }
     }
 }
 

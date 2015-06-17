@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_mqueue"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, custom_derive)]
+#![feature(plugin, no_std, custom_derive, associated_consts)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
@@ -24,6 +24,7 @@ extern crate lrs_str_three as str_three;
 
 #[prelude_import] use base::prelude::*;
 use core::{mem};
+use base::unused::{UnusedState};
 use fd::{FDContainer};
 use file::flags::{FileFlags, Mode};
 use fmt::{Debug, Write};
@@ -254,9 +255,25 @@ impl MsgQueue {
     }
 }
 
+unsafe impl UnusedState for MsgQueue {
+    type Plain = [c_int; 2];
+    const NUM: usize = <bool as UnusedState>::NUM;
+
+    fn unused_state(n: usize) -> [c_int; 2] {
+        unsafe {
+            mem::cast(MsgQueue {
+                fd: 0,
+                owned: mem::cast(<bool as UnusedState>::unused_state(n))
+            })
+        }
+    }
+}
+
 impl Drop for MsgQueue {
     fn drop(&mut self) {
-        close(self.fd);
+        if self.owned {
+            close(self.fd);
+        }
     }
 }
 

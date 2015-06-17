@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_poll"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, custom_derive)]
+#![feature(plugin, no_std, custom_derive, associated_consts)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
@@ -24,6 +24,7 @@ mod lrs { pub use base::lrs::*; pub use {cty}; }
 
 use core::{mem};
 use core::ops::{BitOr, Not, BitAnd};
+use base::unused::{UnusedState};
 use cty::{
     c_int, EPOLL_CTL_ADD, EPOLL_CTL_MOD, EPOLL_CTL_DEL, epoll_event,
     POLLIN, POLLOUT, POLLRDHUP, POLLPRI, EPOLLET, EPOLLONESHOT, EPOLLWAKEUP,
@@ -281,6 +282,20 @@ impl Epoll {
         let ret = try!(retry(|| epoll_pwait(self.fd, events, timeout, None)));
         let events: &mut [Event] = unsafe { mem::cast(events) };
         Ok(&mut events[..ret as usize])
+    }
+}
+
+unsafe impl UnusedState for Epoll {
+    type Plain = [c_int; 2];
+    const NUM: usize = <bool as UnusedState>::NUM;
+
+    fn unused_state(n: usize) -> [c_int; 2] {
+        unsafe {
+            mem::cast(Epoll {
+                fd: 0,
+                owned: mem::cast(<bool as UnusedState>::unused_state(n))
+            })
+        }
     }
 }
 
