@@ -132,7 +132,7 @@ impl<'a> Debug for Info<'a> {
 }
 
 /// Struct holding allocated group info.
-#[derive(Clone, Eq)]
+#[derive(MaybeClone, Eq)]
 pub struct Information {
     name:     ByteString,
     password: ByteString,

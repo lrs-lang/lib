@@ -67,7 +67,7 @@ pub struct Box<T, Heap = alloc::Heap>
 
 impl<T, H> Box<T, H>
     where H: alloc::Allocator,
-          (): Into<H::Pool>, /* H::Pool: Default, */
+          H::Pool: Default,
 {
     /// Creates a new box.
     ///

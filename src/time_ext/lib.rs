@@ -89,7 +89,7 @@ impl Debug for DateTime {
 }
 
 /// A time zone.
-#[derive(Clone, Eq)]
+#[derive(MaybeClone, Eq)]
 pub struct Zone {
     /// (UTC offset, summer time) (at least one exists in every zone)
     states: Vec<(i64, bool)>,

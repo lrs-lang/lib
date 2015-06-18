@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_user_group"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, negate_unsigned)]
+#![feature(plugin, no_std, negate_unsigned, custom_derive)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 

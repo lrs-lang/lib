@@ -72,7 +72,7 @@ pub struct Arc<T, Heap = alloc::Heap>
 
 impl<T, H> Arc<T, H>
     where H: Allocator,
-          (): Into<H::Pool>, /* H::Pool: Default, */
+          H::Pool: Default,
           T: Leak,
 {
     /// Creates a new Arc.

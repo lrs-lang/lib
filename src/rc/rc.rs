@@ -72,7 +72,7 @@ pub struct Rc<T, Heap = alloc::Heap>
 
 impl<T, H> Rc<T, H>
     where H: Allocator,
-          (): Into<H::Pool>, /* H::Pool: Default, */
+          H::Pool: Default,
           T: Leak,
 {
     /// Creates a new Rc.

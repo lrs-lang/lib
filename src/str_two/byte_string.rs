@@ -4,7 +4,7 @@
 
 #[prelude_import] use base::prelude::*;
 use core::{mem};
-use base::clone::{Clone};
+use base::clone::{MaybeClone};
 use base::unused::{UnusedState};
 use base::default::{Default};
 use base::rmo::{AsRef, AsMut};
@@ -133,12 +133,12 @@ impl<H> AsMut<ByteStr> for ByteString<H>
     }
 }
 
-impl<H> Clone for ByteString<H>
+impl<H> MaybeClone for ByteString<H>
     where H: Allocator,
           H::Pool: Default,
 {
-    fn clone(&self) -> Result<ByteString<H>> {
-        self.data.clone().map(|o| ByteString { data: o })
+    fn maybe_clone(&self) -> Result<ByteString<H>> {
+        self.data.maybe_clone().map(|o| ByteString { data: o })
     }
 }
 

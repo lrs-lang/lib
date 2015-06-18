@@ -23,8 +23,8 @@ pub mod result;
 pub mod error;
 pub mod rmo;
 pub mod into;
-pub mod default;
 pub mod unused;
+pub mod default;
 
 pub mod prelude {
     pub use core::prelude::*;

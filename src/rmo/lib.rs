@@ -18,8 +18,8 @@ extern crate lrs_str_two as str_two;
 extern crate lrs_alloc   as alloc;
 
 #[prelude_import] use base::prelude::*;
-use base::default::{Default};
 use base::rmo::{AsRef, AsMut};
+use base::default::{Default};
 use core::ops::{Deref};
 use alloc::{Allocator};
 
@@ -44,7 +44,7 @@ pub trait ToOwned<H = alloc::Heap>
 
     /// Converts the object into its owned version.
     fn to_owned(&self) -> Result<Self::Owned>
-        where H::Pool: Default
+        where H::Pool: Default,
     {
         self.to_owned_with_pool(H::Pool::default())
     }

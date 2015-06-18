@@ -68,7 +68,7 @@ impl<T, H> Vec<T, H>
 {
     /// Creates a new allocating vector.
     pub fn new() -> Vec<T, H>
-        where (): Into<H::Pool>, /* H::Pool: Default, */
+        where H::Pool: Default,
     {
         Vec { ptr: empty_ptr(), len: 0, cap: 0, pool: H::Pool::default(), }
     }

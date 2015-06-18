@@ -4,8 +4,8 @@
 
 #[prelude_import] use base::prelude::*;
 use base::rmo::{AsRef, AsMut};
-use base::default::{Default};
 use base::unused::{UnusedState};
+use base::default::{Default};
 use core::{mem};
 use str_one::{NoNullStr, AsNoNullStr, AsMutNoNullStr, AsMutCStr, CStr};
 use vec::{Vec};

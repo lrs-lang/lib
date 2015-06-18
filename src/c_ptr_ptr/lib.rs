@@ -71,7 +71,7 @@ impl<'a> CPtrPtr<alloc::NoMem<'a>> {
 
 impl<Heap> CPtrPtr<Heap>
     where Heap: Allocator,
-          (): Into<Heap::Pool>, /* H::Pool: Default, */
+          Heap::Pool: Default,
 {
     /// Allocates a new `CPtrPtr`.
     pub fn new() -> Result<CPtrPtr<Heap>> {

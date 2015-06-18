@@ -152,7 +152,7 @@ pub fn derive_maybe_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem,
     let trait_def = TraitDef {
         span: span,
         attributes: Vec::new(),
-        path: path_std!(cx, lrs::clone::Clone),
+        path: path_std!(cx, lrs::clone::MaybeClone),
         additional_bounds: Vec::new(),
         generics: LifetimeBounds::empty(),
         methods: vec!(

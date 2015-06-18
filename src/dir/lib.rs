@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_dir"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, negate_unsigned)]
+#![feature(plugin, no_std, negate_unsigned, custom_derive)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
@@ -141,7 +141,7 @@ impl<'a> Iter<'a> {
 }
 
 /// An entry in a directory.
-#[derive(Clone)]
+#[derive(MaybeClone)]
 pub struct Entry {
     /// The inode of the entry.
     pub inode: u64,

@@ -6,13 +6,13 @@ use core::marker::{Sized};
 use into::{Into};
 
 /// Types that have a default value.
-pub trait Default: Sized
-    where (): Into<Self>,
-{
+pub trait Default: Sized {
     /// Returns the default value of this type.
+    fn default() -> Self;
+}
+
+impl<T> Default for T where (): Into<T> {
     fn default() -> Self {
         ().into()
     }
 }
-
-impl<T> Default for T where (): Into<T> { }
