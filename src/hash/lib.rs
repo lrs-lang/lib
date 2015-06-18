@@ -15,7 +15,9 @@ extern crate lrs_wrapping as wrapping;
 
 mod lrs { pub use base::lrs::*; }
 
-use base::prelude::*;
+#[prelude_import] use base::prelude::*;
+use base::default::{Default};
+use base::into::{Into};
 
 pub mod xx_hash;
 
@@ -46,7 +48,7 @@ pub trait Hash {
     ///
     /// [argument, seed]
     /// A seed for the hasher.
-    fn hash<H: Hasher>(&self, seed: H::Seed) -> H::Digest {
+    fn hash<H: Hasher, S: Into<H::Seed>>(&self, seed: S) -> H::Digest {
         let mut hasher = H::new(seed);
         self.stateful_hash(&mut hasher);
         hasher.digest()
@@ -59,7 +61,7 @@ pub trait Hash {
     ///
     /// [argument, seed]
     /// A seed for the hasher.
-    fn hash_slice<H: Hasher>(val: &[Self], seed: H::Seed) -> H::Digest
+    fn hash_slice<H: Hasher, S: Into<H::Seed>>(val: &[Self], seed: S) -> H::Digest
         where Self: Sized
     {
         let mut hasher = H::new(seed);
@@ -71,23 +73,23 @@ pub trait Hash {
 }
 
 /// Objects that can hash other objects.
-pub trait Hasher {
+pub trait Hasher: Sized {
     /// The type used to seed a hash operation.
-    type Seed;
+    type Seed: Default;
     /// The output of the hash operation.
-    type Digest;
+    type Digest: Into<u64>;
 
     /// Creates a new hasher for stateful hashing.
     ///
     /// [argument, seed]
     /// The seed of the hash operation.
-    fn new(seed: Self::Seed) -> Self;
+    fn new<S: Into<Self::Seed>>(seed: S) -> Self;
 
     /// Resets the hasher to it's initial state with a new seed.
     ///
     /// [argument, seed]
     /// The new seed of the hasher.
-    fn reset(&mut self, seed: Self::Seed);
+    fn reset<S: Into<Self::Seed>>(&mut self, seed: S);
 
     /// Adds a slice of bytes to the hasher.
     ///
@@ -158,6 +160,17 @@ pub trait Hasher {
     /// Returns the digest of the hasher.
     fn digest(&self) -> Self::Digest;
 
+    /// Hashes a value with this hasher.
+    ///
+    /// [argument, val]
+    /// The value to hash.
+    ///
+    /// [argument, seed]
+    /// The seed of the operation.
+    fn hash<T: Hash+?Sized, S: Into<Self::Seed>>(val: &T, seed: S) -> Self::Digest {
+        val.hash::<Self,S>(seed)
+    }
+
     /// Hashes a sequence of bytes.
     ///
     /// [argument, val]
@@ -165,7 +178,7 @@ pub trait Hasher {
     ///
     /// [argument, seed]
     /// The seed of the operation.
-    fn hash_bytes( val: &[u8], seed: Self::Seed) -> Self::Digest;
+    fn hash_bytes<S: Into<Self::Seed>>( val: &[u8], seed: S) -> Self::Digest;
 
     /// Hashes a `u8`.
     ///
@@ -174,7 +187,7 @@ pub trait Hasher {
     ///
     /// [argument, seed]
     /// The seed of the operation.
-    fn hash_u8(    val: u8,    seed: Self::Seed) -> Self::Digest { Self::hash_bytes(val.as_ref(), seed) }
+    fn hash_u8<S: Into<Self::Seed>>( val: u8, seed: S) -> Self::Digest { Self::hash_bytes(val.as_ref(), seed) }
 
     /// Hashes a `u16`.
     ///
@@ -183,7 +196,7 @@ pub trait Hasher {
     ///
     /// [argument, seed]
     /// The seed of the operation.
-    fn hash_u16(   val: u16,   seed: Self::Seed) -> Self::Digest { Self::hash_bytes(val.as_ref(), seed) }
+    fn hash_u16<S: Into<Self::Seed>>( val: u16, seed: S) -> Self::Digest { Self::hash_bytes(val.as_ref(), seed) }
 
     /// Hashes a `u32`.
     ///
@@ -192,7 +205,7 @@ pub trait Hasher {
     ///
     /// [argument, seed]
     /// The seed of the operation.
-    fn hash_u32(   val: u32,   seed: Self::Seed) -> Self::Digest { Self::hash_bytes(val.as_ref(), seed) }
+    fn hash_u32<S: Into<Self::Seed>>( val: u32, seed: S) -> Self::Digest { Self::hash_bytes(val.as_ref(), seed) }
 
     /// Hashes a `u64`.
     ///
@@ -201,7 +214,7 @@ pub trait Hasher {
     ///
     /// [argument, seed]
     /// The seed of the operation.
-    fn hash_u64(   val: u64,   seed: Self::Seed) -> Self::Digest { Self::hash_bytes(val.as_ref(), seed) }
+    fn hash_u64<S: Into<Self::Seed>>( val: u64, seed: S) -> Self::Digest { Self::hash_bytes(val.as_ref(), seed) }
 
     /// Hashes a `usize`.
     ///
@@ -210,7 +223,7 @@ pub trait Hasher {
     ///
     /// [argument, seed]
     /// The seed of the operation.
-    fn hash_usize( val: usize, seed: Self::Seed) -> Self::Digest { Self::hash_bytes(val.as_ref(), seed) }
+    fn hash_usize<S: Into<Self::Seed>>( val: usize, seed: S) -> Self::Digest { Self::hash_bytes(val.as_ref(), seed) }
 
     /// Hashes an `i8`.
     ///
@@ -219,7 +232,7 @@ pub trait Hasher {
     ///
     /// [argument, seed]
     /// The seed of the operation.
-    fn hash_i8(    val: i8,    seed: Self::Seed) -> Self::Digest { Self::hash_bytes(val.as_ref(), seed) }
+    fn hash_i8<S: Into<Self::Seed>>( val: i8, seed: S) -> Self::Digest { Self::hash_bytes(val.as_ref(), seed) }
 
     /// Hashes an `i16`.
     ///
@@ -228,7 +241,7 @@ pub trait Hasher {
     ///
     /// [argument, seed]
     /// The seed of the operation.
-    fn hash_i16(   val: i16,   seed: Self::Seed) -> Self::Digest { Self::hash_bytes(val.as_ref(), seed) }
+    fn hash_i16<S: Into<Self::Seed>>( val: i16, seed: S) -> Self::Digest { Self::hash_bytes(val.as_ref(), seed) }
 
     /// Hashes an `i32`.
     ///
@@ -237,7 +250,7 @@ pub trait Hasher {
     ///
     /// [argument, seed]
     /// The seed of the operation.
-    fn hash_i32(   val: i32,   seed: Self::Seed) -> Self::Digest { Self::hash_bytes(val.as_ref(), seed) }
+    fn hash_i32<S: Into<Self::Seed>>( val: i32, seed: S) -> Self::Digest { Self::hash_bytes(val.as_ref(), seed) }
 
     /// Hashes an `i64`.
     ///
@@ -246,7 +259,7 @@ pub trait Hasher {
     ///
     /// [argument, seed]
     /// The seed of the operation.
-    fn hash_i64(   val: i64,   seed: Self::Seed) -> Self::Digest { Self::hash_bytes(val.as_ref(), seed) }
+    fn hash_i64<S: Into<Self::Seed>>( val: i64, seed: S) -> Self::Digest { Self::hash_bytes(val.as_ref(), seed) }
 
     /// Hashes an `usize`.
     ///
@@ -255,7 +268,7 @@ pub trait Hasher {
     ///
     /// [argument, seed]
     /// The seed of the operation.
-    fn hash_isize( val: isize, seed: Self::Seed) -> Self::Digest { Self::hash_bytes(val.as_ref(), seed) }
+    fn hash_isize<S: Into<Self::Seed>>( val: isize, seed: S) -> Self::Digest { Self::hash_bytes(val.as_ref(), seed) }
 }
 
 mod impls {

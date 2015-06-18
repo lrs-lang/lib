@@ -3,14 +3,15 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use {Hash, Hasher};
+use base::into::{Into};
 
 impl<T: Hash> Hash for [T] {
     fn stateful_hash<H: Hasher>(&self, h: &mut H) {
         T::stateful_hash_slice(self, h);
     }
 
-    fn hash<H: Hasher>(&self, seed: H::Seed) -> H::Digest {
-        T::hash_slice::<H>(self, seed)
+    fn hash<H: Hasher, S: Into<H::Seed>>(&self, seed: S) -> H::Digest {
+        T::hash_slice::<H,_>(self, seed)
     }
 }
 
@@ -19,7 +20,7 @@ impl Hash for str {
         self.as_bytes().stateful_hash(h);
     }
 
-    fn hash<H: Hasher>(&self, seed: H::Seed) -> H::Digest {
-        self.as_bytes().hash::<H>(seed)
+    fn hash<H: Hasher, S: Into<H::Seed>>(&self, seed: S) -> H::Digest {
+        H::hash(self.as_bytes(), seed)
     }
 }

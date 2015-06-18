@@ -128,6 +128,15 @@ pub fn forget<T: Leak>(val: T) {
     unsafe { intrinsics::forget(val); }
 }
 
+/// Destroys an object without running its destructor even if the type does not implement
+/// `Leak`.
+///
+/// [argument, val]
+/// The object to be destroyed.
+pub unsafe fn unsafe_forget<T>(val: T) {
+    intrinsics::forget(val);
+}
+
 /// Drops a value.
 ///
 /// [argument, _val]

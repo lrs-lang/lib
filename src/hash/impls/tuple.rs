@@ -3,13 +3,14 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use {Hash, Hasher};
+use base::into::{Into};
 
 impl Hash for () {
     fn stateful_hash<H: Hasher>(&self, h: &mut H) {
         h.write_u8(0)
     }
 
-    fn hash<H: Hasher>(&self, seed: H::Seed) -> H::Digest {
+    fn hash<H: Hasher, S: Into<H::Seed>>(&self, seed: S) -> H::Digest {
         H::hash_u8(0, seed)
     }
 }
@@ -19,8 +20,8 @@ impl<T0: Hash> Hash for (T0,) {
         self.0.stateful_hash(h)
     }
 
-    fn hash<H: Hasher>(&self, seed: H::Seed) -> H::Digest {
-        self.0.hash::<H>(seed)
+    fn hash<H: Hasher, S: Into<H::Seed>>(&self, seed: S) -> H::Digest {
+        H::hash(&self.0, seed)
     }
 }
 

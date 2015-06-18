@@ -2,8 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use base::prelude::*;
+#[prelude_import] use base::prelude::*;
 use {Hash, Hasher};
+use base::into::{Into};
 
 macro_rules! impl_ptr {
     ($t:ty) => {
@@ -16,11 +17,12 @@ macro_rules! impl_ptr {
                 h.write_bytes(val.as_ref());
             }
 
-            fn hash<H: Hasher>(&self, seed: H::Seed) -> H::Digest {
+            fn hash<H: Hasher, S: Into<H::Seed>>(&self, seed: S) -> H::Digest {
                 H::hash_usize(*self as usize, seed)
             }
 
-            fn hash_slice<H: Hasher>(val: &[Self], seed: H::Seed) -> H::Digest {
+            fn hash_slice<H: Hasher, S: Into<H::Seed>>(val: &[Self],
+                                                       seed: S) -> H::Digest {
                 H::hash_bytes(val.as_ref(), seed)
             }
         }

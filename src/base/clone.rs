@@ -11,20 +11,20 @@
 /// Duplication might not succeed (e.g. out of memory) in which case an error is returned.
 pub trait Clone {
     /// Clones the value.
-    fn clone(&self) -> Result<Self>;
+    fn clone(&self) -> Self;
 }
 
 impl<T> Clone for PhantomData<T> {
-    fn clone(&self) -> Result<PhantomData<T>> {
-        Ok(*self)
+    fn clone(&self) -> PhantomData<T> {
+        *self
     }
 }
 
 macro_rules! imp {
     ($ty:ident) => {
         impl Clone for $ty {
-            fn clone(&self) -> Result<$ty> {
-                Ok(*self)
+            fn clone(&self) -> $ty {
+                *self
             }
         }
     }
@@ -43,14 +43,14 @@ imp!(isize);
 imp!(bool);
 
 impl Clone for () {
-    fn clone(&self) -> Result<()> { Ok(()) }
+    fn clone(&self) -> () { () }
 }
 
 impl<T0> Clone for (T0,)
     where T0: Clone,
 {
-    fn clone(&self) -> Result<(T0,)> {
-        Ok((try!(self.0.clone()),))
+    fn clone(&self) -> (T0,) {
+        (self.0.clone(),)
     }
 }
 
@@ -58,7 +58,23 @@ impl<T0, T1> Clone for (T0,T1)
     where T0: Clone,
           T1: Clone,
 {
-    fn clone(&self) -> Result<(T0,T1)> {
-        Ok((try!(self.0.clone()),try!(self.1.clone())))
+    fn clone(&self) -> (T0,T1) {
+        (self.0.clone(),self.1.clone())
+    }
+}
+
+/// Objects that can be duplicated.
+///
+/// = Remarks
+///
+/// Duplication might not succeed (e.g. out of memory) in which case an error is returned.
+pub trait MaybeClone {
+    /// Clones the value.
+    fn maybe_clone(&self) -> Result<Self>;
+}
+
+impl<T: Clone> MaybeClone for T {
+    fn maybe_clone(&self) -> Result<Self> {
+        Ok(self.clone())
     }
 }

@@ -97,6 +97,10 @@ pub fn plugin_registrar(reg: &mut Registry) {
         MultiDecorator(Box::new(lrs_ext::derive_clone)));
 
     reg.register_syntax_extension(
+        token::intern("derive_MaybeClone"),
+        MultiDecorator(Box::new(lrs_ext::derive_maybe_clone)));
+
+    reg.register_syntax_extension(
         token::intern("derive_Copy"),
         MultiDecorator(Box::new(lrs_ext::derive_copy_and_clone)));
 

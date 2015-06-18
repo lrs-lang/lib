@@ -14,6 +14,12 @@ macro_rules! assert {
     ($pred:expr) => { if !$pred { abort!() } }
 }
 
+/// Asserts that a condition is satisfied. Aborts the process otherwise.
+#[macro_export]
+macro_rules! debug_assert {
+    ($pred:expr) => { if cfg!(debug_assertions) { assert!($pred) } }
+}
+
 /// Unwraps the `Ok` branch of a `Result` and returns the error from the calling function
 /// otherwise.
 #[cfg(not(try_abort))]

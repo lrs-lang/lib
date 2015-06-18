@@ -24,7 +24,7 @@ pub mod lrs {
 
 #[prelude_import] use base::prelude::*;
 use core::{mem, ptr, cmp, slice};
-use base::clone::{Clone};
+use base::clone::{MaybeClone};
 use base::unused::{UnusedState};
 use base::default::{Default};
 use core::ops::{Eq, Deref, DerefMut};
@@ -68,7 +68,7 @@ impl<T, H> Vec<T, H>
 {
     /// Creates a new allocating vector.
     pub fn new() -> Vec<T, H>
-        where H::Pool: Default,
+        where (): Into<H::Pool>, /* H::Pool: Default, */
     {
         Vec { ptr: empty_ptr(), len: 0, cap: 0, pool: H::Pool::default(), }
     }
@@ -386,15 +386,15 @@ impl<T, H> Debug for Vec<T, H>
     }
 }
 
-impl<T, H> Clone for Vec<T, H>
-    where T: Clone,
+impl<T, H> MaybeClone for Vec<T, H>
+    where T: MaybeClone,
           H: Allocator,
           H::Pool: Default,
 {
-    fn clone(&self) -> Result<Vec<T, H>> {
+    fn maybe_clone(&self) -> Result<Vec<T, H>> {
         let mut vec = try!(Vec::with_capacity(self.len()));
         for i in 0..self.len() {
-            vec.push(try!(self[i].clone()));
+            vec.push(try!(self[i].maybe_clone()));
         }
         Ok(vec)
     }

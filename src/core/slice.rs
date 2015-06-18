@@ -462,6 +462,9 @@ impl<T: Eq> Eq for [T] {
         if self.len() != other.len() {
             return false;
         }
+        if self.addr() == other.addr() {
+            return true;
+        }
         let mut idx = 0;
         while idx < self.len() {
             if self[idx] != other[idx] {

@@ -32,4 +32,5 @@ pub mod prelude {
     pub use result::{Result};
     pub use result::Result::{Ok, Err};
     pub use rmo::{AsRef, AsMut};
+    pub use into::{Into};
 }

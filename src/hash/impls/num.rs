@@ -2,9 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use base::prelude::*;
+#[prelude_import] use base::prelude::*;
 use {Hash, Hasher};
 use wrapping::{W8, W16, W32, W64, Wsize};
+use base::into::{Into};
 
 macro_rules! impl_num {
     ($ty:ty, $hfn:ident, $wfn:ident) => {
@@ -17,11 +18,12 @@ macro_rules! impl_num {
                 h.write_bytes(val.as_ref());
             }
 
-            fn hash<H: Hasher>(&self, seed: H::Seed) -> H::Digest {
+            fn hash<H: Hasher, S: Into<H::Seed>>(&self, seed: S) -> H::Digest {
                 H::$hfn(*self, seed)
             }
 
-            fn hash_slice<H: Hasher>(val: &[Self], seed: H::Seed) -> H::Digest {
+            fn hash_slice<H: Hasher, S: Into<H::Seed>>(val: &[Self],
+                                                       seed: S) -> H::Digest {
                 H::hash_bytes(val.as_ref(), seed)
             }
         }
@@ -52,11 +54,12 @@ macro_rules! impl_wnum {
                 h.write_bytes(val.as_ref());
             }
 
-            fn hash<H: Hasher>(&self, seed: H::Seed) -> H::Digest {
+            fn hash<H: Hasher, S: Into<H::Seed>>(&self, seed: S) -> H::Digest {
                 H::$hfn(**self, seed)
             }
 
-            fn hash_slice<H: Hasher>(val: &[Self], seed: H::Seed) -> H::Digest
+            fn hash_slice<H: Hasher, S: Into<H::Seed>>(val: &[Self],
+                                                       seed: S) -> H::Digest
                 where Self: Sized
             {
                 H::hash_bytes(val.as_ref(), seed)

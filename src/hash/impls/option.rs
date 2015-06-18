@@ -2,13 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use base::prelude::*;
+#[prelude_import] use base::prelude::*;
 use {Hash, Hasher};
+use base::into::{Into};
 
 impl<T: Hash> Hash for Option<T> {
-    fn hash<H: Hasher>(&self, seed: H::Seed) -> H::Digest {
+    fn hash<H: Hasher, S: Into<H::Seed>>(&self, seed: S) -> H::Digest {
         match *self {
-            Some(ref o) => o.hash::<H>(seed),
+            Some(ref o) => H::hash(o, seed),
             _ => H::hash_u8(0, seed),
         }
     }

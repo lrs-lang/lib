@@ -41,7 +41,7 @@ pub struct BufReader<R, Heap = alloc::Heap>
 impl<R, H> BufReader<R, H>
     where R: Read,
           H: Allocator,
-          H::Pool: Default,
+          (): Into<H::Pool>, /* H::Pool: Default, */
 {
     /// Allocates a new buffered reader.
     ///

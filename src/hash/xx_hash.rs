@@ -40,6 +40,7 @@ use core::{mem};
 use core::marker::{Pod};
 use core::ops::{Deref};
 use base::rmo::{AsRef, AsMut};
+use base::into::{Into};
 use wrapping::{W32, W64};
 use {Hasher};
 
@@ -755,8 +756,8 @@ macro_rules! impl_hasher {
             type Seed = $digest;
             type Digest = $digest;
 
-            fn new(seed: Self::Seed) -> Self { $name { data: $inner::new(seed) } }
-            fn reset(&mut self, seed: Self::Seed) { self.data.reset(seed); }
+            fn new<S: Into<$digest>>(seed: S) -> Self { $name { data: $inner::new(seed.into()) } }
+            fn reset<S: Into<$digest>>(&mut self, seed: S) { self.data.reset(seed.into()); }
 
             fn write_bytes (&mut self, val: &[u8] ) { self.data.write_bytes(val); }
             fn write_u8    (&mut self, val: u8    ) { self.write_bytes(val.as_ref()); }
@@ -772,17 +773,17 @@ macro_rules! impl_hasher {
 
             fn digest(&self) -> Self::Digest { self.data.digest() }
 
-            fn hash_bytes( val: &[u8], seed: Self::Seed) -> Self::Digest { $bytes(val, seed) }
-            fn hash_u8(    val: u8,    seed: Self::Seed) -> Self::Digest { $u8(val, seed) }
-            fn hash_u16(   val: u16,   seed: Self::Seed) -> Self::Digest { $u16(val, seed) }
-            fn hash_u32(   val: u32,   seed: Self::Seed) -> Self::Digest { $u32(val, seed) }
-            fn hash_u64(   val: u64,   seed: Self::Seed) -> Self::Digest { $u64(val, seed) }
-            fn hash_usize( val: usize, seed: Self::Seed) -> Self::Digest { $usize(val, seed) }
-            fn hash_i8(    val: i8,    seed: Self::Seed) -> Self::Digest { $u8(val as u8, seed) }
-            fn hash_i16(   val: i16,   seed: Self::Seed) -> Self::Digest { $u16(val as u16, seed) }
-            fn hash_i32(   val: i32,   seed: Self::Seed) -> Self::Digest { $u32(val as u32, seed) }
-            fn hash_i64(   val: i64,   seed: Self::Seed) -> Self::Digest { $u64(val as u64, seed) }
-            fn hash_isize( val: isize, seed: Self::Seed) -> Self::Digest { $usize(val as usize, seed) }
+            fn hash_bytes <S: Into<$digest>>( val: &[u8], seed: S) -> Self::Digest { $bytes(val, seed.into()) }
+            fn hash_u8    <S: Into<$digest>>( val: u8,    seed: S) -> Self::Digest { $u8(val,    seed.into()) }
+            fn hash_u16   <S: Into<$digest>>( val: u16,   seed: S) -> Self::Digest { $u16(val,   seed.into()) }
+            fn hash_u32   <S: Into<$digest>>( val: u32,   seed: S) -> Self::Digest { $u32(val,   seed.into()) }
+            fn hash_u64   <S: Into<$digest>>( val: u64,   seed: S) -> Self::Digest { $u64(val,   seed.into()) }
+            fn hash_usize <S: Into<$digest>>( val: usize, seed: S) -> Self::Digest { $usize(val, seed.into()) }
+            fn hash_i8    <S: Into<$digest>>( val: i8,    seed: S) -> Self::Digest { $u8(val     as    u8,    seed.into()) }
+            fn hash_i16   <S: Into<$digest>>( val: i16,   seed: S) -> Self::Digest { $u16(val    as    u16,   seed.into()) }
+            fn hash_i32   <S: Into<$digest>>( val: i32,   seed: S) -> Self::Digest { $u32(val    as    u32,   seed.into()) }
+            fn hash_i64   <S: Into<$digest>>( val: i64,   seed: S) -> Self::Digest { $u64(val    as    u64,   seed.into()) }
+            fn hash_isize <S: Into<$digest>>( val: isize, seed: S) -> Self::Digest { $usize(val  as    usize, seed.into()) }
         }
     }
 }

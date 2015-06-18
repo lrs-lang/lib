@@ -62,6 +62,9 @@ pub fn equal(one: &[u8], two: &[u8]) -> bool {
     if one.len() != two.len() {
         return false;
     }
+    if one.addr() == two.addr() {
+        return true;
+    }
     unsafe { libc::memcmp(one.as_ptr(), two.as_ptr(), one.len()) == 0 }
 }
 

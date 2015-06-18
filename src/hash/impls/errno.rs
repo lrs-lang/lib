@@ -4,13 +4,14 @@
 
 use {Hash, Hasher};
 use base::error::{Errno};
+use base::into::{Into};
 
 impl Hash for Errno {
     fn stateful_hash<H: Hasher>(&self, h: &mut H) {
         h.write_i32(self.0)
     }
 
-    fn hash<H: Hasher>(&self, seed: H::Seed) -> H::Digest {
+    fn hash<H: Hasher, S: Into<H::Seed>>(&self, seed: S) -> H::Digest {
         H::hash_i32(self.0, seed)
     }
 }

@@ -72,7 +72,7 @@ pub struct Arc<T, Heap = alloc::Heap>
 
 impl<T, H> Arc<T, H>
     where H: Allocator,
-          H::Pool: Default,
+          (): Into<H::Pool>, /* H::Pool: Default, */
           T: Leak,
 {
     /// Creates a new Arc.
@@ -176,8 +176,8 @@ impl<T, H> Clone for Arc<T, H>
     where H: Allocator,
           T: Leak,
 {
-    fn clone(&self) -> Result<Arc<T, H>> {
-        Ok(self.add_ref())
+    fn clone(&self) -> Arc<T, H> {
+        self.add_ref()
     }
 }
 

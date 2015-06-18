@@ -71,7 +71,7 @@ pub struct Queue<T, Heap = alloc::Heap>
 
 impl<T, H> Queue<T, H>
     where H: Allocator,
-          H::Pool: Default,
+          (): Into<H::Pool>, /* H::Pool: Default, */
 {
     /// Creates a new queue with allocated memory.
     ///
