@@ -4,7 +4,7 @@
 
 #[prelude_import] use base::prelude::*;
 use base::error::{self, Errno};
-use base::unused::{UnusedState};
+use base::undef::{UndefState};
 use cty::{
     msghdr, c_void, iovec, c_int, AF_UNSPEC, sa_family_t, SHUT_RD, SHUT_WR, SHUT_RDWR,
     SOL_SOCKET, SO_ACCEPTCONN, SO_BINDTODEVICE, IFNAMSIZ, SO_BROADCAST, SO_DEBUG,
@@ -2352,17 +2352,15 @@ impl Socket {
     }
 }
 
-unsafe impl UnusedState for Socket {
-    type Plain = [c_int; 2];
-    const NUM: usize = <bool as UnusedState>::NUM;
+unsafe impl UndefState for Socket {
+    fn num() -> usize { bool::num() }
 
-    fn unused_state(n: usize) -> [c_int; 2] {
-        unsafe {
-            mem::cast(Socket {
-                fd: 0,
-                owned: mem::cast(<bool as UnusedState>::unused_state(n))
-            })
-        }
+    unsafe fn set_undef(val: *mut Socket, n: usize) {
+        bool::set_undef(&mut (*val).owned, n);
+    }
+
+    unsafe fn is_undef(val: *const Socket, n: usize) -> bool {
+        bool::is_undef(&(*val).owned, n)
     }
 }
 

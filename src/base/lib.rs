@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_base"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, custom_derive, associated_consts)]
+#![feature(plugin, no_std, custom_derive)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
@@ -23,7 +23,7 @@ pub mod result;
 pub mod error;
 pub mod rmo;
 pub mod into;
-pub mod unused;
+pub mod undef;
 pub mod default;
 
 pub mod prelude {

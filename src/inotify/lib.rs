@@ -26,7 +26,7 @@ extern crate lrs_rmo as rmo;
 use syscall::{
     close, inotify_init1, inotify_add_watch, inotify_rm_watch, ioctl_fionread,
 };
-use base::unused::{UnusedState};
+use base::undef::{UndefState};
 use io::{Read};
 use cty::{c_int, c_char, PATH_MAX};
 use core::{mem};
@@ -159,17 +159,15 @@ impl Inotify {
     }
 }
 
-unsafe impl UnusedState for Inotify {
-    type Plain = [c_int; 2];
-    const NUM: usize = <bool as UnusedState>::NUM;
+unsafe impl UndefState for Inotify {
+    fn num() -> usize { bool::num() }
 
-    fn unused_state(n: usize) -> [c_int; 2] {
-        unsafe {
-            mem::cast(Inotify {
-                fd: 0,
-                owned: mem::cast(<bool as UnusedState>::unused_state(n))
-            })
-        }
+    unsafe fn set_undef(val: *mut Inotify, n: usize) {
+        bool::set_undef(&mut (*val).owned, n);
+    }
+
+    unsafe fn is_undef(val: *const Inotify, n: usize) -> bool {
+        bool::is_undef(&(*val).owned, n)
     }
 }
 

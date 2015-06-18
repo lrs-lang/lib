@@ -5,7 +5,7 @@
 #[prelude_import] use base::prelude::*;
 use core::{mem};
 use base::rmo::{AsRef, AsMut};
-use base::unused::{UnusedState};
+use base::undef::{UndefState};
 use str_one::c_str::{CStr, ToCStr};
 use fmt::{Debug, Write};
 use vec::{Vec};
@@ -35,16 +35,17 @@ impl<H> CString<H>
     }
 }
 
-unsafe impl<H> UnusedState for CString<H>
-    where H: Allocator<Pool = ()>,
+unsafe impl<H> UndefState for CString<H>
+    where H: Allocator, 
 {
-    type Plain = <Vec<u8, H> as UnusedState>::Plain;
-    // FIXME: Should be Vec<u8, H>
-    const NUM: usize = <Vec<u8, alloc::Heap> as UnusedState>::NUM;
+    fn num() -> usize { <Vec<u8, H> as UndefState>::num() }
 
-    fn unused_state(n: usize) -> [usize; 4] {
-        assert!(mem::size_of::<CString<H>>() == mem::size_of::<Self::Plain>());
-        <Vec<u8, H> as UnusedState>::unused_state(n)
+    unsafe fn set_undef(val: *mut CString<H>, n: usize) {
+        <Vec<u8, H> as UndefState>::set_undef(&mut (*val).data, n)
+    }
+
+    unsafe fn is_undef(val: *const CString<H>, n: usize) -> bool {
+        <Vec<u8, H> as UndefState>::is_undef(&(*val).data, n)
     }
 }
 

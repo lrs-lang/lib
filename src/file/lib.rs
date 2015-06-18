@@ -37,7 +37,7 @@ use vec::{Vec};
 use core::{mem};
 use io::{Read};
 use base::rmo::{AsRef};
-use base::unused::{UnusedState};
+use base::undef::{UndefState};
 use base::error::{self, Errno};
 use cty::{
     c_int, loff_t, c_uint, AT_FDCWD, AT_EMPTY_PATH, AT_SYMLINK_NOFOLLOW, UTIME_NOW,
@@ -2926,17 +2926,15 @@ impl Write for File {
     }
 }
 
-unsafe impl UnusedState for File {
-    type Plain = [c_int; 2];
-    const NUM: usize = <bool as UnusedState>::NUM;
+unsafe impl UndefState for File {
+    fn num() -> usize { bool::num() }
 
-    fn unused_state(n: usize) -> [c_int; 2] {
-        unsafe {
-            mem::cast(File {
-                fd: 0,
-                owned: mem::cast(<bool as UnusedState>::unused_state(n))
-            })
-        }
+    unsafe fn set_undef(val: *mut File, n: usize) {
+        bool::set_undef(&mut (*val).owned, n);
+    }
+
+    unsafe fn is_undef(val: *const File, n: usize) -> bool {
+        bool::is_undef(&(*val).owned, n)
     }
 }
 

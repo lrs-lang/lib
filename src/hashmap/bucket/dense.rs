@@ -4,7 +4,7 @@
 
 #[prelude_import] use base::prelude::*;
 use core::{mem, ptr};
-use base::unused::{UnusedState};
+use base::undef::{UndefState};
 
 use bucket::{Bucket};
 
@@ -12,21 +12,21 @@ const DELETED: usize = 0;
 const EMPTY: usize = 1;
 
 pub struct DenseBucket<K, V>
-    where K: UnusedState,
+    where K: UndefState,
 {
     key: K,
     value: V,
 }
 
 impl<K, V> Bucket<K, V> for DenseBucket<K, V>
-    where K: UnusedState,
+    where K: UndefState,
 {
     fn is_empty(&self) -> bool {
-        mem::as_bytes(&self.key) == mem::as_bytes(&K::unused_state(EMPTY))
+        unsafe { K::is_undef(&self.key, EMPTY) }
     }
 
     fn is_deleted(&self) -> bool {
-        mem::as_bytes(&self.key) == mem::as_bytes(&K::unused_state(DELETED))
+        unsafe { K::is_undef(&self.key, DELETED) }
     }
 
     fn is_set(&self) -> bool {
@@ -39,11 +39,11 @@ impl<K, V> Bucket<K, V> for DenseBucket<K, V>
     }
 
     unsafe fn set_empty(&mut self) {
-        ptr::write(&mut self.key as *mut _ as *mut K::Plain, K::unused_state(EMPTY));
+        K::set_undef(&mut self.key, EMPTY);
     }
 
     unsafe fn set_deleted(&mut self) {
-        ptr::write(&mut self.key as *mut _ as *mut K::Plain, K::unused_state(DELETED));
+        K::set_undef(&mut self.key, DELETED);
     }
 
     unsafe fn set(&mut self, key: K, value: V) {
@@ -60,7 +60,7 @@ impl<K, V> Bucket<K, V> for DenseBucket<K, V>
     unsafe fn remove(&mut self) -> (K, V) {
         let key = ptr::read(&self.key);
         let value = ptr::read(&self.value);
-        ptr::write(&mut self.key as *mut _ as *mut K::Plain, K::unused_state(DELETED));
+        self.set_deleted();
         (key, value)
     }
 

@@ -25,7 +25,7 @@ pub mod lrs {
 #[prelude_import] use base::prelude::*;
 use core::{mem, ptr, cmp, slice};
 use base::clone::{MaybeClone};
-use base::unused::{UnusedState};
+use base::undef::{UndefState};
 use base::default::{Default};
 use core::ops::{Eq, Deref, DerefMut};
 use core::iter::{IntoIterator};
@@ -37,7 +37,6 @@ use str_one::{ByteStr, CStr, AsCStr, AsMutCStr, ToCStr, NoNullStr, AsMutNoNullSt
               AsNoNullStr};
 
 /// A vector.
-#[repr(C)] // See the UnusedState implementation for why we use this.
 pub struct Vec<T, Heap = alloc::Heap>
     where Heap: Allocator,
 {
@@ -269,22 +268,17 @@ impl<T, H> Vec<T, H>
     }
 }
 
-unsafe impl<T, H> UnusedState for Vec<T, H>
-    where H: Allocator<Pool = ()>,
+unsafe impl<T, H> UndefState for Vec<T, H>
+    where H: Allocator,
 {
-    type Plain = [usize; 4];
-    const NUM: usize = <&'static u8 as UnusedState>::NUM;
+    fn num() -> usize { <&mut T as UndefState>::num() }
 
-    fn unused_state(n: usize) -> [usize; 4] {
-        assert!(mem::size_of::<Vec<T, H>>() == mem::size_of::<Self::Plain>());
-        unsafe {
-            mem::cast::<Vec<_, alloc::Heap>, _>(Vec {
-                ptr: <&'static u8 as UnusedState>::unused_state(n) as *mut u8,
-                len: 0,
-                cap: 0,
-                pool: (),
-            })
-        }
+    unsafe fn set_undef(val: *mut Vec<T, H>, n: usize) {
+        <&mut T as UndefState>::set_undef(&mut &mut *(*val).ptr, n);
+    }
+
+    unsafe fn is_undef(val: *const Vec<T, H>, n: usize) -> bool {
+        <&mut T as UndefState>::is_undef(&&mut *(*val).ptr, n)
     }
 }
 

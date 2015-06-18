@@ -4,7 +4,7 @@
 
 #[prelude_import] use base::prelude::*;
 use core::{mem};
-use base::unused::{UnusedState};
+use base::undef::{UndefState};
 use cty::{c_int};
 use syscall::{close, read, signalfd4};
 use fd::{FDContainer};
@@ -109,17 +109,15 @@ impl Sigfd {
     }
 }
 
-unsafe impl UnusedState for Sigfd {
-    type Plain = [c_int; 2];
-    const NUM: usize = <bool as UnusedState>::NUM;
+unsafe impl UndefState for Sigfd {
+    fn num() -> usize { bool::num() }
 
-    fn unused_state(n: usize) -> [c_int; 2] {
-        unsafe {
-            mem::cast(Sigfd {
-                fd: 0,
-                owned: mem::cast(<bool as UnusedState>::unused_state(n))
-            })
-        }
+    unsafe fn set_undef(val: *mut Sigfd, n: usize) {
+        bool::set_undef(&mut (*val).owned, n);
+    }
+
+    unsafe fn is_undef(val: *const Sigfd, n: usize) -> bool {
+        bool::is_undef(&(*val).owned, n)
     }
 }
 

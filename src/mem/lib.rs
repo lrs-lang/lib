@@ -21,7 +21,7 @@ use core::{slice, mem};
 use core::ops::{Range};
 use base::{error};
 use base::into::{Into};
-use base::unused::{UnusedState};
+use base::undef::{UndefState};
 use cty::{MAP_SHARED, MAP_PRIVATE, c_int, PAGE_SIZE, MAP_FIXED, MREMAP_FIXED};
 use flags::{
     MemMapFlags, MemProtFlags, MemReMapFlags, MMAP_ANON, MemSyncFlags, MemLockFlags,
@@ -238,13 +238,15 @@ impl MemMap {
     }
 }
 
-unsafe impl UnusedState for MemMap {
-    type Plain = [usize; 3];
-    const NUM: usize = (!0 >> 1) + 1;
+unsafe impl UndefState for MemMap {
+    fn num() -> usize { <&u8>::num() }
 
-    fn unused_state(n: usize) -> [usize; 3] {
-        assert!(n < Self::NUM);
-        unsafe { mem::cast(MemMap { ptr: 0 as *mut _, len: !0 - n }) }
+    unsafe fn set_undef(val: *mut MemMap, n: usize) {
+        <&mut u8>::set_undef(&mut &mut *(*val).ptr, n)
+    }
+
+    unsafe fn is_undef(val: *const MemMap, n: usize) -> bool {
+        <&mut u8>::is_undef(&&mut *(*val).ptr, n)
     }
 }
 

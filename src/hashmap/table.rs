@@ -5,7 +5,7 @@
 #[prelude_import] use base::prelude::*;
 use core::{mem, ptr};
 use core::ops::{Eq};
-use base::unused::{UnusedState};
+use base::undef::{UndefState};
 use base::clone::{Clone};
 use hash::{Hash, Hasher};
 use hash::xx_hash::{XxHash32};
@@ -24,8 +24,7 @@ pub struct Table<K, V, B, H, S, A>
           B: Bucket<K, V>,
           H: Hasher,
           S: Into<H::Seed>+Clone,
-          K: Eq + Hash + UnusedState,
-          /* <K as UnusedState>::NUM >= 2, */
+          K: Eq + Hash,
 {
     table: *mut B,
     /// Invariant: Power of two.
@@ -42,7 +41,7 @@ impl<K, V, B, H, S, A> Table<K, V, B, H, S, A>
           B: Bucket<K, V>,
           H: Hasher,
           S: Into<H::Seed>+Clone,
-          K: Eq + Hash + UnusedState,
+          K: Eq + Hash,
 {
     /// Searches for a key in the table.
     ///
@@ -413,7 +412,7 @@ impl<K, V, B, H, S, A> Table<K, V, B, H, S, A>
 
 pub enum Entry<'a, K, V, B>
     where B: Bucket<K, V> + 'a,
-          K: Eq + Hash + UnusedState,
+          K: Eq + Hash,
 {
     Occupied(OccupiedEntry<'a, K, V, B>),
     Vacant(VacantEntry<'a, K, V, B>),
@@ -421,7 +420,7 @@ pub enum Entry<'a, K, V, B>
 
 impl<'a, K, V, B> Entry<'a, K, V, B>
     where B: Bucket<K, V> + 'a,
-          K: Eq + Hash + UnusedState,
+          K: Eq + Hash,
 {
     pub fn or_insert(self, key: K, value: V) -> OccupiedEntry<'a, K, V, B> {
         self.or_insert_with(|| (key, value))
@@ -443,7 +442,7 @@ impl<'a, K, V, B> Entry<'a, K, V, B>
 
 pub struct VacantEntry<'a, K, V, B>
     where B: Bucket<K, V> + 'a,
-          K: Eq + Hash + UnusedState,
+          K: Eq + Hash,
 {
     bucket: &'a mut B,
     was_empty: bool,
@@ -452,7 +451,7 @@ pub struct VacantEntry<'a, K, V, B>
 
 impl<'a, K, V, B> VacantEntry<'a, K, V, B>
     where B: Bucket<K, V>,
-          K: Eq + Hash + UnusedState,
+          K: Eq + Hash,
 {
     unsafe fn from_bucket(b: &'a mut B, was_empty: bool) -> VacantEntry<'a, K, V, B> {
         VacantEntry {
@@ -476,7 +475,7 @@ impl<'a, K, V, B> VacantEntry<'a, K, V, B>
 
 impl<'a, K, V, B> Drop for VacantEntry<'a, K, V, B>
     where B: Bucket<K, V>,
-          K: Eq + Hash + UnusedState,
+          K: Eq + Hash,
 {
     fn drop(&mut self) {
         unsafe {
@@ -491,7 +490,7 @@ impl<'a, K, V, B> Drop for VacantEntry<'a, K, V, B>
 
 pub struct OccupiedEntry<'a, K, V, B>
     where B: Bucket<K, V> + 'a,
-          K: Eq + Hash + UnusedState,
+          K: Eq + Hash,
 {
     bucket: &'a mut B,
     _marker: PhantomData<(K, V)>,
@@ -499,7 +498,7 @@ pub struct OccupiedEntry<'a, K, V, B>
 
 impl<'a, K, V, B> OccupiedEntry<'a, K, V, B>
     where B: Bucket<K, V>,
-          K: Eq + Hash + UnusedState,
+          K: Eq + Hash,
 {
     unsafe fn from_bucket(b: &'a mut B) -> OccupiedEntry<'a, K, V, B> {
         OccupiedEntry {
@@ -527,7 +526,7 @@ impl<'a, K, V, B> OccupiedEntry<'a, K, V, B>
 
 impl<'a, K, V, B> Deref for OccupiedEntry<'a, K, V, B>
     where B: Bucket<K, V>,
-          K: Eq + Hash + UnusedState,
+          K: Eq + Hash,
 {
     type Target = V;
     fn deref(&self) -> &V {
@@ -537,7 +536,7 @@ impl<'a, K, V, B> Deref for OccupiedEntry<'a, K, V, B>
 
 impl<'a, K, V, B> DerefMut for OccupiedEntry<'a, K, V, B>
     where B: Bucket<K, V>,
-          K: Eq + Hash + UnusedState,
+          K: Eq + Hash,
 {
     fn deref_mut(&mut self) -> &mut V {
         unsafe { self.bucket.mut_value() }

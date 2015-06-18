@@ -5,7 +5,7 @@
 #[prelude_import] use base::prelude::*;
 use core::{mem};
 use core::ops::{Eq};
-use base::unused::{UnusedState};
+use base::undef::{UndefState};
 use atomic::{AtomicCInt, ATOMIC_CINT_INIT};
 use syscall::{futex_wait, futex_wake};
 use cty::{c_int, c_uint};
@@ -100,13 +100,18 @@ impl<'a> Lock {
     }
 }
 
-unsafe impl UnusedState for Lock {
-    type Plain = c_uint;
-    const NUM: usize = c_uint::max() as usize - 2;
+unsafe impl UndefState for Lock {
+    fn num() -> usize { c_uint::max() as usize - 2 }
     
-    fn unused_state(n: usize) -> c_uint {
-        assert!(n < Self::NUM);
-        n as c_uint + 3
+    unsafe fn set_undef(val: *mut Lock, n: usize) {
+        assert!(n < Self::num());
+        assert!(mem::size_of::<Lock>() == mem::size_of::<c_uint>());
+        *(val as *mut c_uint) = n as c_uint + 3;
+    }
+
+    unsafe fn is_undef(val: *const Lock, n: usize) -> bool {
+        assert!(mem::size_of::<Lock>() == mem::size_of::<c_uint>());
+        *(val as *const c_uint) == n as c_uint + 3
     }
 }
 

@@ -24,7 +24,7 @@ use syscall::{
     close, pipe2, read, write, readv, writev, fcntl_setpipe_sz, fcntl_getpipe_sz,
     ioctl_fionread, tee, splice,
 };
-use base::unused::{UnusedState};
+use base::undef::{UndefState};
 use core::{mem};
 use cty::{c_int, c_uint};
 use fd::{FDContainer};
@@ -368,17 +368,15 @@ impl Pipe {
     }
 }
 
-unsafe impl UnusedState for Pipe {
-    type Plain = [c_int; 2];
-    const NUM: usize = <bool as UnusedState>::NUM;
+unsafe impl UndefState for Pipe {
+    fn num() -> usize { bool::num() }
 
-    fn unused_state(n: usize) -> [c_int; 2] {
-        unsafe {
-            mem::cast(Pipe {
-                fd: 0,
-                owned: mem::cast(<bool as UnusedState>::unused_state(n))
-            })
-        }
+    unsafe fn set_undef(val: *mut Pipe, n: usize) {
+        bool::set_undef(&mut (*val).owned, n);
+    }
+
+    unsafe fn is_undef(val: *const Pipe, n: usize) -> bool {
+        bool::is_undef(&(*val).owned, n)
     }
 }
 

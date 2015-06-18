@@ -8,12 +8,12 @@ use core::{mem, ptr, intrinsics};
 use core::marker::{Leak};
 use base::clone::{Clone};
 use base::default::{Default};
-use base::unused::{UnusedState};
+use base::undef::{UndefState};
 use atomic::{AtomicUsize};
 use fmt::{Debug, Write};
 use alloc::{self, Allocator};
 
-struct Inner<T, H>
+struct Inner<T, H = alloc::Heap>
     where H: Allocator,
 {
     count: AtomicUsize,
@@ -122,21 +122,18 @@ impl<T, H> Arc<T, H>
     }
 }
 
-unsafe impl<T, H> UnusedState for Arc<T, H>
+unsafe impl<T, H> UndefState for Arc<T, H>
     where H: Allocator,
           T: Leak,
 {
-    type Plain = [usize; 2];
-    const NUM: usize = <&'static u8 as UnusedState>::NUM;
+    fn num() -> usize { <&mut Inner<T, H> as UndefState>::num() }
 
-    fn unused_state(n: usize) -> [usize; 2] {
-        let unused_ptr = <&'static u8 as UnusedState>::unused_state(n);
+    unsafe fn set_undef(val: *mut Arc<T, H>, n: usize) {
+        <&mut Inner<T, H> as UndefState>::set_undef(&mut &mut *(*val).data, n);
+    }
 
-        // The compiler is terminally broken and won't let us use use <T, H> here. It will
-        // then complain that we have to use `[usize; 3]` and compile fine with that.
-        // After monomorphization it promptly ICEs.
-
-        unsafe { mem::cast(Arc { data: unused_ptr as *mut Inner<T, alloc::Heap> }) }
+    unsafe fn is_undef(val: *const Arc<T, H>, n: usize) -> bool {
+        <&mut Inner<T, H> as UndefState>::is_undef(&&mut *(*val).data, n)
     }
 }
 

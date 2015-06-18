@@ -24,7 +24,7 @@ mod lrs { pub use base::lrs::*; pub use {cty}; }
 
 use core::{mem};
 use core::ops::{BitOr, Not, BitAnd};
-use base::unused::{UnusedState};
+use base::undef::{UndefState};
 use cty::{
     c_int, EPOLL_CTL_ADD, EPOLL_CTL_MOD, EPOLL_CTL_DEL, epoll_event,
     POLLIN, POLLOUT, POLLRDHUP, POLLPRI, EPOLLET, EPOLLONESHOT, EPOLLWAKEUP,
@@ -285,17 +285,15 @@ impl Epoll {
     }
 }
 
-unsafe impl UnusedState for Epoll {
-    type Plain = [c_int; 2];
-    const NUM: usize = <bool as UnusedState>::NUM;
+unsafe impl UndefState for Epoll {
+    fn num() -> usize { bool::num() }
 
-    fn unused_state(n: usize) -> [c_int; 2] {
-        unsafe {
-            mem::cast(Epoll {
-                fd: 0,
-                owned: mem::cast(<bool as UnusedState>::unused_state(n))
-            })
-        }
+    unsafe fn set_undef(val: *mut Epoll, n: usize) {
+        bool::set_undef(&mut (*val).owned, n);
+    }
+
+    unsafe fn is_undef(val: *const Epoll, n: usize) -> bool {
+        bool::is_undef(&(*val).owned, n)
     }
 }
 

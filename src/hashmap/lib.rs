@@ -17,7 +17,7 @@ extern crate lrs_fmt as fmt;
 
 #[prelude_import] use base::prelude::*;
 use core::{mem};
-use base::unused::{UnusedState};
+use base::undef::{UndefState};
 use alloc::{Allocator};
 use hash::{Hash, Hasher};
 use hash::xx_hash::{XxHash32};

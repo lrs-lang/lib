@@ -2,7 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use core::marker::{Copy};
+use core::marker::{Sized};
+use core::{mem};
 
 /// Types that can never match certain bit patterns.
 ///
@@ -32,37 +33,45 @@ use core::marker::{Copy};
 /// * `mem::size_of::<Self::Plain>() == mem::size_of::<Self>()`
 /// * If `Self::unused_state` is called with an argument `>= Self::NUM`, the process is
 ///   aborted.
-pub unsafe trait UnusedState {
-    /// A copyable representation of an unused bit pattern.
-    type Plain: Copy;
+pub unsafe trait UndefState: Sized {
     /// The number of available unused states.
-    const NUM: usize;
+    fn num() -> usize;
 
     /// Returns an unused state.
     ///
     /// [argument, n]
     /// The id of the unused state. This value must be below `Self::NUM`, otherwise the
-    /// process is aborted.
-    fn unused_state(n: usize) -> Self::Plain;
+    /// behavior is undefined.
+    unsafe fn set_undef(val: *mut Self, n: usize);
+
+    unsafe fn is_undef(val: *const Self, n: usize) -> bool;
 }
 
-unsafe impl UnusedState for bool {
-    type Plain = u8;
-    const NUM: usize = 256 - 2;
+unsafe impl UndefState for bool {
+    fn num() -> usize { 256 - 2 }
 
-    fn unused_state(n: usize) -> u8 {
-        assert!(n < Self::NUM);
-        n as u8 + 2
+    unsafe fn set_undef(val: *mut bool, n: usize) {
+        assert!(n < Self::num());
+        assert!(mem::size_of::<bool>() == 1);
+        *(val as *mut u8) = n as u8 + 2;
+    }
+
+    unsafe fn is_undef(val: *const bool, n: usize) -> bool {
+        *(val as *const u8) as usize == n + 2
     }
 }
 
-unsafe impl UnusedState for char {
-    type Plain = u32;
-    const NUM: usize = 0xE000 - 0xD800;
+unsafe impl UndefState for char {
+    fn num() -> usize { 0xE000 - 0xD800 }
 
-    fn unused_state(n: usize) -> u32 {
-        assert!(n < Self::NUM);
-        n as u32 + 0xE000
+    unsafe fn set_undef(val: *mut char, n: usize) {
+        assert!(n < Self::num());
+        assert!(mem::size_of::<char>() == 4);
+        *(val as *mut u32) = n as u32 + 0xE000;
+    }
+
+    unsafe fn is_undef(val: *const char, n: usize) -> bool {
+        *(val as *const u32) == n as u32 + 0xE000
     }
 }
 
@@ -75,23 +84,29 @@ unsafe impl UnusedState for char {
           target_arch = "aarch64"))]
 const PAGE_SIZE: usize = 4096;
 
-unsafe impl<'a, T> UnusedState for &'a T {
-    type Plain = usize;
-    const NUM: usize = PAGE_SIZE;
+unsafe impl<'a, T> UndefState for &'a T {
+    fn num() -> usize { PAGE_SIZE }
 
-    fn unused_state(n: usize) -> usize {
-        assert!(n < PAGE_SIZE);
-        n
+    unsafe fn set_undef(val: *mut &'a T, n: usize) {
+        assert!(n < Self::num());
+        *(val as *mut usize) = n;
+    }
+
+    unsafe fn is_undef(val: *const &'a T, n: usize) -> bool {
+        *(val as *const usize) == n
     }
 }
 
-unsafe impl<'a, T> UnusedState for &'a mut T {
-    type Plain = usize;
-    const NUM: usize = PAGE_SIZE;
+unsafe impl<'a, T> UndefState for &'a mut T {
+    fn num() -> usize { PAGE_SIZE }
 
-    fn unused_state(n: usize) -> usize {
-        assert!(n < PAGE_SIZE);
-        n
+    unsafe fn set_undef(val: *mut &'a mut T, n: usize) {
+        assert!(n < Self::num());
+        *(val as *mut usize) = n;
+    }
+
+    unsafe fn is_undef(val: *const &'a mut T, n: usize) -> bool {
+        *(val as *const usize) == n
     }
 }
 

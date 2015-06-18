@@ -18,7 +18,7 @@ extern crate lrs_cty as cty;
 extern crate lrs_syscall as syscall;
 
 #[prelude_import] use base::prelude::*;
-use base::unused::{UnusedState};
+use base::undef::{UndefState};
 use cty::{c_int};
 use syscall::{close, eventfd2};
 use core::{mem};
@@ -108,17 +108,15 @@ impl Eventfd {
     }
 }
 
-unsafe impl UnusedState for Eventfd {
-    type Plain = [c_int; 2];
-    const NUM: usize = <bool as UnusedState>::NUM;
+unsafe impl UndefState for Eventfd {
+    fn num() -> usize { bool::num() }
 
-    fn unused_state(n: usize) -> [c_int; 2] {
-        unsafe {
-            mem::cast(Eventfd {
-                fd: 0,
-                owned: mem::cast(<bool as UnusedState>::unused_state(n))
-            })
-        }
+    unsafe fn set_undef(val: *mut Eventfd, n: usize) {
+        bool::set_undef(&mut (*val).owned, n);
+    }
+
+    unsafe fn is_undef(val: *const Eventfd, n: usize) -> bool {
+        bool::is_undef(&(*val).owned, n)
     }
 }
 

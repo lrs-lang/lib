@@ -24,7 +24,7 @@ extern crate lrs_str_three as str_three;
 
 #[prelude_import] use base::prelude::*;
 use core::{mem};
-use base::unused::{UnusedState};
+use base::undef::{UndefState};
 use fd::{FDContainer};
 use file::flags::{FileFlags, Mode};
 use fmt::{Debug, Write};
@@ -255,17 +255,15 @@ impl MsgQueue {
     }
 }
 
-unsafe impl UnusedState for MsgQueue {
-    type Plain = [c_int; 2];
-    const NUM: usize = <bool as UnusedState>::NUM;
+unsafe impl UndefState for MsgQueue {
+    fn num() -> usize { bool::num() }
 
-    fn unused_state(n: usize) -> [c_int; 2] {
-        unsafe {
-            mem::cast(MsgQueue {
-                fd: 0,
-                owned: mem::cast(<bool as UnusedState>::unused_state(n))
-            })
-        }
+    unsafe fn set_undef(val: *mut MsgQueue, n: usize) {
+        bool::set_undef(&mut (*val).owned, n);
+    }
+
+    unsafe fn is_undef(val: *const MsgQueue, n: usize) -> bool {
+        bool::is_undef(&(*val).owned, n)
     }
 }
 
