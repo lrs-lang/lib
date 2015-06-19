@@ -5,7 +5,8 @@
 #[prelude_import] use base::prelude::*;
 use core::{mem};
 
-pub mod dense;
+pub mod compact;
+pub mod loose;
 
 pub trait Bucket<K, V> {
     fn is_empty(&self) -> bool;
@@ -17,35 +18,13 @@ pub trait Bucket<K, V> {
     unsafe fn copy(&mut self, other: &Self);
 
     unsafe fn set(&mut self, key: K, value: V);
-    unsafe fn replace(&mut self, key: K, value: V) -> (K, V);
+    unsafe fn swap(&mut self, key: K, value: V) -> (K, V);
+    unsafe fn replace(&mut self, key: K, value: V);
     unsafe fn remove(&mut self) -> (K, V);
     unsafe fn key(&self) -> &K;
     unsafe fn mut_key(&mut self) -> &mut K;
     unsafe fn value(&self) -> &V;
     unsafe fn mut_value(&mut self) -> &mut V;
-}
-
-pub struct EmptyBucket<'a, K: 'a, V: 'a, B: 'a>
-    where B: Bucket<K, V>
-{
-    bucket: &'a mut B,
-    _marker: PhantomData<(K, V)>,
-}
-
-impl<'a, K, V, B> EmptyBucket<'a, K, V, B>
-    where B: Bucket<K, V>
-{
-    pub unsafe fn from_bucket(bucket: &'a mut B) -> Self {
-        // debug_assert!(bucket.is_empty());
-        EmptyBucket { bucket: bucket, _marker: PhantomData }
-    }
-
-    pub fn set(self, key: K, value: V) -> MutSetBucket<'a, K, V, B> {
-        unsafe {
-            self.bucket.set(key, value);
-            MutSetBucket::from_bucket(self.bucket)
-        }
-    }
 }
 
 pub struct SetBucket<'a, K: 'a, V: 'a, B: 'a>
@@ -61,10 +40,6 @@ impl<'a, K, V, B> SetBucket<'a, K, V, B>
     pub unsafe fn from_bucket(bucket: &'a B) -> Self {
         // debug_assert!(bucket.is_set());
         SetBucket { bucket: bucket, _marker: PhantomData }
-    }
-
-    pub fn key(&self) -> &'a K {
-        unsafe { self.bucket.key() }
     }
 
     pub fn value(&self) -> &'a V {
@@ -89,14 +64,6 @@ impl<'a, K, V, B> MutSetBucket<'a, K, V, B>
 
     pub fn mut_value(self) -> &'a mut V {
         unsafe { self.bucket.mut_value() }
-    }
-
-    pub fn remove(self) -> (EmptyBucket<'a, K, V, B>, K, V) {
-        unsafe {
-            let (k, v) = self.bucket.remove();
-            let b = EmptyBucket::from_bucket(self.bucket);
-            (b, k, v)
-        }
     }
 }
 

@@ -4,57 +4,63 @@
 
 #[prelude_import] use base::prelude::*;
 use core::{mem, ptr};
-use base::undef::{UndefState};
 
 use bucket::{Bucket};
 
-const DELETED: usize = 0;
-const EMPTY: usize = 1;
+const DELETED: u8 = 0;
+const EMPTY: u8 = 1;
+const SET: u8 = 2;
 
-pub struct DenseBucket<K, V>
-    where K: UndefState,
-{
-    key: K,
+pub struct LooseBucket<K, V> {
     value: V,
+    key: K,
+    state: u8,
 }
 
-impl<K, V> Bucket<K, V> for DenseBucket<K, V>
-    where K: UndefState,
-{
+impl<K, V> Bucket<K, V> for LooseBucket<K, V> {
     fn is_empty(&self) -> bool {
-        unsafe { K::is_undef(&self.key, EMPTY) }
+        self.state == EMPTY
     }
 
     fn is_deleted(&self) -> bool {
-        unsafe { K::is_undef(&self.key, DELETED) }
+        self.state == DELETED
     }
 
     fn is_set(&self) -> bool {
-        !self.is_empty() && !self.is_deleted()
+        self.state == SET
     }
 
-    unsafe fn copy(&mut self, other: &DenseBucket<K, V>) {
+    unsafe fn copy(&mut self, other: &LooseBucket<K, V>) {
         ptr::memcpy(&mut self.key, &other.key, 1);
         ptr::memcpy(&mut self.value, &other.value, 1);
+        self.state = SET;
     }
 
     unsafe fn set_empty(&mut self) {
-        K::set_undef(&mut self.key, EMPTY);
+        self.state = EMPTY;
     }
 
     unsafe fn set_deleted(&mut self) {
-        K::set_undef(&mut self.key, DELETED);
+        self.state = DELETED;
     }
 
     unsafe fn set(&mut self, key: K, value: V) {
         ptr::write(&mut self.key, key);
         ptr::write(&mut self.value, value);
+        self.state = SET;
     }
 
-    unsafe fn replace(&mut self, mut key: K, mut value: V) -> (K, V) {
+    unsafe fn swap(&mut self, mut key: K, mut value: V) -> (K, V) {
         mem::swap(&mut self.key, &mut key);
         mem::swap(&mut self.value, &mut value);
         (key, value)
+    }
+
+    unsafe fn replace(&mut self, key: K, value: V) {
+        ptr::drop(&mut self.key);
+        ptr::drop(&mut self.value);
+        ptr::write(&mut self.key, key);
+        ptr::write(&mut self.value, value);
     }
 
     unsafe fn remove(&mut self) -> (K, V) {

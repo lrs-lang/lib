@@ -8,7 +8,7 @@ use base::into::{Into};
 
 impl Hash for char {
     fn stateful_hash<H: Hasher>(&self, h: &mut H) {
-        h.write_u8(*self as u8);
+        h.write_u32(*self as u32);
     }
 
     fn stateful_hash_slice<H: Hasher>(val: &[Self], h: &mut H) {
@@ -16,7 +16,7 @@ impl Hash for char {
     }
 
     fn hash<H: Hasher, S: Into<H::Seed>>(&self, seed: S) -> H::Digest {
-        H::hash_u8(*self as u8, seed)
+        H::hash_u32(*self as u32, seed)
     }
 
     fn hash_slice<H: Hasher, S: Into<H::Seed>>(val: &[Self], seed: S) -> H::Digest {

@@ -5,12 +5,11 @@
 #[prelude_import] use base::prelude::*;
 use core::{mem, ptr};
 use core::ops::{Eq};
-use base::undef::{UndefState};
 use base::clone::{Clone};
 use hash::{Hash, Hasher};
-use hash::xx_hash::{XxHash32};
-use alloc::{self, Allocator};
-use bucket::{Bucket, EmptyBucket, SetBucket, MutSetBucket};
+use alloc::{Allocator};
+use bucket::{Bucket, SetBucket, MutSetBucket};
+use {Entry, VacantEntry, OccupiedEntry};
 
 #[derive(Eq)]
 enum SearchResult {
@@ -43,6 +42,30 @@ impl<K, V, B, H, S, A> Table<K, V, B, H, S, A>
           S: Into<H::Seed>+Clone,
           K: Eq + Hash,
 {
+    pub fn new(mut pool: A::Pool, seed: S,
+               capacity: usize) -> Result<Table<K, V, B, H, S, A>> {
+        let buckets = capacity.checked_next_power_of_two().unwrap_or(!0);
+
+        let table = unsafe {
+            let table: *mut B = try!(A::allocate_array(&mut pool, buckets));
+            for i in 0..buckets {
+                (&mut *table.add(i)).set_empty();
+            }
+            table
+        };
+
+        let map = Table {
+            table: table,
+            buckets: buckets,
+            elements: 0,
+            deleted: 0,
+            pool: pool,
+            seed: seed,
+            _marker: PhantomData,
+        };
+        Ok(map)
+    }
+
     /// Searches for a key in the table.
     ///
     /// [argument, key]
@@ -75,7 +98,10 @@ impl<K, V, B, H, S, A> Table<K, V, B, H, S, A>
     /// where `0 <= n < m < num_buckets. One of the two factors is odd. The other one is
     /// strictly bounded by `2*num_buckes`. Due to the denominator, the whole thing has a
     /// non-zero remainder when divided by `num_buckets`.
-    unsafe fn search(&self, key: &K) -> (SearchResult, usize) {
+    unsafe fn search<Q>(&self, key: &Q) -> (SearchResult, usize)
+        where Q: Hash,
+              K: Eq<Q>,
+    {
         let hash = H::hash(key, self.seed.clone()).into() as usize;
         self.search2(key, hash, true)
     }
@@ -96,35 +122,69 @@ impl<K, V, B, H, S, A> Table<K, V, B, H, S, A>
     /// = Remarks
     ///
     /// See the documentation of search above.
-    unsafe fn search2(&self, key: &K, hash: usize,
-                      may_exist: bool) -> (SearchResult, usize) {
+    unsafe fn search2<Q>(&self, key: &Q, hash: usize,
+                         may_exist: bool) -> (SearchResult, usize)
+        where Q: Hash,
+              K: Eq<Q>,
+    {
         let mut bucket = self.bucket_idx(hash);
         let mut del_pos = None;
 
-        for i in 1..self.buckets {
+        let mut i = 1;
+        loop {
+            let cur = *(key as *const _ as *const u32);
+            // println!("{:x}, {:x}, {:x}", cur, bucket, *(self.get_bucket(bucket).key() as *const _ as *const u32));
             if self.is_empty(bucket) {
+                // println!("iterations: {} buckets: {}, entries: {}",
+                //          i, self.buckets, self.elements);
                 return match del_pos {
                     Some(pos) => (SearchResult::Deleted, pos),
                     _         => (SearchResult::Empty, bucket),
                 };
             } else if self.is_deleted(bucket) {
+                abort!();
                 if del_pos.is_none() {
                     del_pos = Some(bucket);
                 }
             } else if may_exist && self.contains_key(bucket, key) {
+                // println!("iterations: {} buckets: {}, entries: {}",
+                //          i, self.buckets, self.elements);
                 return (SearchResult::Exists, bucket);
             }
+            // println!("conflict");
             bucket = self.bucket_idx(bucket + i);
+            i += 1;
         }
-        // Can't happen unless the contract of the function is violated.
-        abort!();
+    }
+
+    pub fn debug(&self) {
+        let trailing = self.buckets.trailing_zeros();
+        let height = 1 << (trailing / 2);
+        let width = 1 << (trailing - trailing / 2);
+        println!("P1");
+        println!("{} {}", width, height);
+        for i in 0..self.buckets {
+            unsafe {
+                if self.get_bucket(i).is_empty() {
+                    write!(::fd::STDOUT, "0 ");
+                } else {
+                    write!(::fd::STDOUT, "1 ");
+                }
+                if (i + 1) % width == 0 {
+                    println!("");
+                }
+            }
+        }
     }
 
     /// Finds an entry in the table and returns a reference to it.
     ///
     /// [argument, key]
     /// The key of the entry to find.
-    pub fn find<'a>(&'a self, key: &K) -> Option<&'a V> {
+    pub fn find<Q>(&self, key: &Q) -> Option<&V>
+        where Q: Hash,
+              K: Eq<Q>,
+    {
         unsafe {
             match self.search(key) {
                 (SearchResult::Exists, bucket) => {
@@ -139,11 +199,46 @@ impl<K, V, B, H, S, A> Table<K, V, B, H, S, A>
     ///
     /// [argument, key]
     /// The key of the entry to find.
-    pub fn find_mut(&mut self, key: &K) -> Option<&mut V> {
+    pub fn find_mut<Q>(&mut self, key: &Q) -> Option<&mut V>
+        where Q: Hash,
+              K: Eq<Q>,
+    {
         unsafe {
             match self.search(key) {
                 (SearchResult::Exists, bucket) => {
                     Some(self.get_mut_set_bucket(bucket).mut_value())
+                },
+                _ => None,
+            }
+        }
+    }
+
+    pub fn set(&mut self, key: K, value: V) {
+        self.reserve(1).unwrap();
+        unsafe {
+            let (kind, bucket) = self.search(&key);
+            match kind {
+                SearchResult::Empty => self.elements += 1,
+                SearchResult::Deleted => self.deleted -= 1,
+                _ => { },
+            }
+            let bucket = self.get_mut_bucket(bucket);
+            match kind {
+                SearchResult::Exists => *bucket.mut_value() = value,
+                _ => bucket.set(key, value),
+            }
+        }
+    }
+
+    pub fn remove<Q>(&mut self, key: &Q) -> Option<(K, V)>
+        where Q: Hash,
+              K: Eq<Q>,
+    {
+        unsafe {
+            match self.search(key) {
+                (SearchResult::Exists, bucket) => {
+                    self.deleted += 1;
+                    Some(self.get_mut_bucket(bucket).remove())
                 },
                 _ => None,
             }
@@ -162,7 +257,7 @@ impl<K, V, B, H, S, A> Table<K, V, B, H, S, A>
             }
         }
 
-        let mut create_vacant = |table: &'a mut Table<K, V, B, H, S, A>, key, bucket, kind| {
+        let create_vacant = |table: &'a mut Table<K, V, B, H, S, A>, key, bucket, kind| {
             unsafe {
                 let bucket = table.get_mut_bucket(bucket);
                 ptr::memcpy(bucket.mut_key(), key, 1);
@@ -198,21 +293,20 @@ impl<K, V, B, H, S, A> Table<K, V, B, H, S, A>
             return Ok(false);
         }
 
-        let new_buckets = (self.elements - self.deleted)
+        // let new_buckets = (self.elements - self.deleted)
+        //                             .checked_add(n).unwrap_or(!0)
+        //                             .checked_next_power_of_two().unwrap_or(!0);
+        let new_buckets = self.buckets
                                     .checked_add(n).unwrap_or(!0)
                                     .checked_next_power_of_two().unwrap_or(!0);
 
-        // It would be nice if we could just create a new table, populate it, swap it, set
-        // the number of elements of the old one to zero, and let the destructor take care
-        // of the rest. But that's not possible since we can't give up ownership of the
-        // memory pool. So let's do it manually.
-
         unsafe {
-            let mut new_table = try!(A::allocate_array(&mut self.pool, new_buckets));
+            let new_table = try!(A::allocate_array(&mut self.pool, new_buckets));
             self.copy_table(new_table, new_buckets);
 
             let old_table = mem::replace(&mut self.table, new_table);
             let old_buckets = mem::replace(&mut self.buckets, new_buckets);
+            self.elements -= self.deleted;
             self.deleted = 0;
             A::free_array(&mut self.pool, old_table, old_buckets);
         }
@@ -256,13 +350,17 @@ impl<K, V, B, H, S, A> Table<K, V, B, H, S, A>
                 // Find an empty bucket in the new array.
                 let mut new_pos = H::hash(bucket.key(), self.seed.clone()).into() as usize
                                                             & (new_buckets - 1);
-                for i in 1..new_buckets {
+                let mut i = 1;
+                loop {
                     let mut new_bucket = &mut *new_table.add(new_pos);
                     if new_bucket.is_empty() {
                         new_bucket.copy(bucket);
                         break;
                     }
+                    new_pos = (new_pos + i) & (new_buckets - 1);
+                    i += 1;
                 }
+                // println!("{}", i);
                 elements -= 1;
             }
             bucketp = bucketp.add(1);
@@ -329,7 +427,10 @@ impl<K, V, B, H, S, A> Table<K, V, B, H, S, A>
     ///
     /// `n` must be a valid index of a bucket which contains a valid key or the behavior
     /// is undefined.
-    unsafe fn contains_key(&self, n: usize, key: &K) -> bool {
+    unsafe fn contains_key<Q>(&self, n: usize, key: &Q) -> bool
+        where Q: Hash,
+              K: Eq<Q>,
+    {
         let bucket = self.get_bucket(n);
         debug_assert!(bucket.is_set());
         bucket.key() == key
@@ -359,21 +460,6 @@ impl<K, V, B, H, S, A> Table<K, V, B, H, S, A>
     unsafe fn get_mut_bucket(&mut self, n: usize) -> &mut B {
         debug_assert!(n < self.buckets);
         &mut *self.table.add(n)
-    }
-
-    /// Returns a reference to an empty bucket.
-    ///
-    /// [argument, n]
-    /// The index of the bucket to return.
-    ///
-    /// = Remarks
-    ///
-    /// This is unsafe because the validity of `n` and the state of the bucket are not
-    /// checked.
-    unsafe fn get_empty_bucket<'a>(&'a mut self, n: usize) -> EmptyBucket<'a, K, V, B> {
-        debug_assert!(n < self.buckets);
-        debug_assert!(self.is_empty(n));
-        EmptyBucket::from_bucket(self.get_mut_bucket(n))
     }
 
     /// Returns a reference to an non-empty / non-deleted bucket.
@@ -407,138 +493,5 @@ impl<K, V, B, H, S, A> Table<K, V, B, H, S, A>
         debug_assert!(!self.is_empty(n));
         debug_assert!(!self.is_deleted(n));
         MutSetBucket::from_bucket(self.get_mut_bucket(n))
-    }
-}
-
-pub enum Entry<'a, K, V, B>
-    where B: Bucket<K, V> + 'a,
-          K: Eq + Hash,
-{
-    Occupied(OccupiedEntry<'a, K, V, B>),
-    Vacant(VacantEntry<'a, K, V, B>),
-}
-
-impl<'a, K, V, B> Entry<'a, K, V, B>
-    where B: Bucket<K, V> + 'a,
-          K: Eq + Hash,
-{
-    pub fn or_insert(self, key: K, value: V) -> OccupiedEntry<'a, K, V, B> {
-        self.or_insert_with(|| (key, value))
-    }
-
-    pub fn or_insert_with<F>(self, f: F) -> OccupiedEntry<'a, K, V, B>
-        where F: FnOnce() -> (K, V),
-    {
-        match self {
-            Entry::Occupied(e) => e,
-            Entry::Vacant(v) => {
-                let (key, value) = f();
-                v.set(key, value)
-            },
-        }
-    }
-
-}
-
-pub struct VacantEntry<'a, K, V, B>
-    where B: Bucket<K, V> + 'a,
-          K: Eq + Hash,
-{
-    bucket: &'a mut B,
-    was_empty: bool,
-    _marker: PhantomData<(K, V)>,
-}
-
-impl<'a, K, V, B> VacantEntry<'a, K, V, B>
-    where B: Bucket<K, V>,
-          K: Eq + Hash,
-{
-    unsafe fn from_bucket(b: &'a mut B, was_empty: bool) -> VacantEntry<'a, K, V, B> {
-        VacantEntry {
-            bucket: b,
-            was_empty: was_empty,
-            _marker: PhantomData,
-        }
-    }
-
-    pub fn set(self, key: K, value: V) -> OccupiedEntry<'a, K, V, B> {
-        unsafe {
-            assert!(&key == self.bucket.key());
-            mem::unsafe_forget(key);
-            ptr::write(self.bucket.mut_value(), value);
-            let bucket = ptr::read(&self.bucket);
-            mem::unsafe_forget(self);
-            OccupiedEntry::from_bucket(bucket)
-        }
-    }
-}
-
-impl<'a, K, V, B> Drop for VacantEntry<'a, K, V, B>
-    where B: Bucket<K, V>,
-          K: Eq + Hash,
-{
-    fn drop(&mut self) {
-        unsafe {
-            if self.was_empty {
-                self.bucket.set_empty();
-            } else {
-                self.bucket.set_deleted();
-            }
-        }
-    }
-}
-
-pub struct OccupiedEntry<'a, K, V, B>
-    where B: Bucket<K, V> + 'a,
-          K: Eq + Hash,
-{
-    bucket: &'a mut B,
-    _marker: PhantomData<(K, V)>,
-}
-
-impl<'a, K, V, B> OccupiedEntry<'a, K, V, B>
-    where B: Bucket<K, V>,
-          K: Eq + Hash,
-{
-    unsafe fn from_bucket(b: &'a mut B) -> OccupiedEntry<'a, K, V, B> {
-        OccupiedEntry {
-            bucket: b,
-            _marker: PhantomData,
-        }
-    }
-
-    pub fn into_mut(self) -> &'a mut V {
-        unsafe { self.bucket.mut_value() }
-    }
-
-    pub fn remove(self) -> (VacantEntry<'a, K, V, B>, K, V) {
-        unsafe {
-            let key = ptr::read(self.bucket.key());
-            let value = ptr::read(self.bucket.value());
-            let bucket = ptr::read(&self.bucket);
-            // Not actually necessary since there is no Drop implementation.
-            mem::unsafe_forget(self);
-            let entry = VacantEntry::from_bucket(bucket, false);
-            (entry, key, value)
-        }
-    }
-}
-
-impl<'a, K, V, B> Deref for OccupiedEntry<'a, K, V, B>
-    where B: Bucket<K, V>,
-          K: Eq + Hash,
-{
-    type Target = V;
-    fn deref(&self) -> &V {
-        unsafe { self.bucket.value() }
-    }
-}
-
-impl<'a, K, V, B> DerefMut for OccupiedEntry<'a, K, V, B>
-    where B: Bucket<K, V>,
-          K: Eq + Hash,
-{
-    fn deref_mut(&mut self) -> &mut V {
-        unsafe { self.bucket.mut_value() }
     }
 }
