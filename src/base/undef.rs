@@ -5,45 +5,80 @@
 use core::marker::{Sized};
 use core::{mem};
 
-/// Types that can never match certain bit patterns.
+/// Types that are not valid when they contain certain bit patterns.
 ///
 /// = Remarks
 ///
-/// This trait is for types such that valid instances of it can never match certain bit
-/// patterns. For example, since the capacity of vectors is bounded by `isize::max()`, all
-/// bit patterns that have the highest bit in the capacity field set cannot be real
-/// instances of a vector.
+/// This is the opposite of link:lrs::marker::Pod[Pod]. That is, every type is either
+/// `Pod` or `UndefState`. (But note that not all types need to implement either of those
+/// types.)
 ///
-/// This can be used to efficiently store additional state, for example, a hash table can
-/// use this to store the status of unused buckets inline, reducing the memory usage per
-/// bucket by up to eight bytes.
+/// A type that implements this trait has a constant number of so-called undefined states.
 ///
-/// == Invariants
+/// = Examples
 ///
-/// An implementation of this trait must have the following properties:
-///
-/// **
-/// {
-/// For all `n != m < Self::NUM`:
+/// Objects of type `char` cannot contain surrogate code points. Since `char` is just a
+/// wrapper of `u32`, the following implementation is valid and gives us `2048` undefined
+/// states:
 ///
 /// ----
-/// mem::as_bytes(&Self::unused_state(n)) != mem::as_bytes(&Self::unused_state(m))
-/// ----
+/// unsafe impl UndefState for char {
+///     fn num() -> usize { 0xE000 - 0xD800 }
+/// 
+///     unsafe fn set_undef(val: *mut char, n: usize) {
+///         assert!(n < Self::num());
+///         *(val as *mut u32) = n as u32 + 0xE000;
+///     }
+/// 
+///     unsafe fn is_undef(val: *const char, n: usize) -> bool {
+///         assert!(n < Self::num());
+///         *(val as *const u32) == n as u32 + 0xE000
+///     }
 /// }
-/// * `mem::size_of::<Self::Plain>() == mem::size_of::<Self>()`
-/// * If `Self::unused_state` is called with an argument `>= Self::NUM`, the process is
-///   aborted.
+/// ----
 pub unsafe trait UndefState: Sized {
-    /// The number of available unused states.
+    /// The number of available undefined states.
+    ///
+    /// = Remarks
+    ///
+    /// This function must be constant.
     fn num() -> usize;
 
-    /// Returns an unused state.
+    /// Creates an undefined state.
+    ///
+    /// [argument, val]
+    /// A storage location suitable to hold an object of type `Self`.
     ///
     /// [argument, n]
-    /// The id of the unused state. This value must be below `Self::NUM`, otherwise the
-    /// behavior is undefined.
+    /// The id of the undefined state.
+    ///
+    /// = Remarks
+    ///
+    /// This function behaves as follows:
+    ///
+    /// * If `n` is greater than or equal to `Self::num()`, the process is aborted.
+    /// * The implementation does not inspect the object pointed to by `val`.
+    /// * After the function returns, the storage location does not contain an object of
+    ///   type `Self`.
+    /// * After the function returns, the storage location is in the undefined state `n`.
     unsafe fn set_undef(val: *mut Self, n: usize);
 
+    /// Checks if a storage location is in an undefined state.
+    ///
+    /// [argument, val]
+    /// A storage location suitable to hold an object of type `Self`.
+    ///
+    /// [argument, n]
+    /// The id of the undefined state.
+    ///
+    /// = Remarks
+    ///
+    /// This function behaves as follows:
+    ///
+    /// * If `n` is greater than or equal to `Self::num()`, the process is aborted.
+    /// * If the storage location contains an object of type `Self`, `false` is returned.
+    /// * If the storage location is in the undefined state `m != n`, `false` is returned.
+    /// * If the storage location is in the undefined state `n`, `true` is returned.
     unsafe fn is_undef(val: *const Self, n: usize) -> bool;
 }
 
@@ -57,6 +92,7 @@ unsafe impl UndefState for bool {
     }
 
     unsafe fn is_undef(val: *const bool, n: usize) -> bool {
+        assert!(n < Self::num());
         *(val as *const u8) as usize == n + 2
     }
 }
@@ -71,6 +107,7 @@ unsafe impl UndefState for char {
     }
 
     unsafe fn is_undef(val: *const char, n: usize) -> bool {
+        assert!(n < Self::num());
         *(val as *const u32) == n as u32 + 0xE000
     }
 }
@@ -93,6 +130,7 @@ unsafe impl<'a, T> UndefState for &'a T {
     }
 
     unsafe fn is_undef(val: *const &'a T, n: usize) -> bool {
+        assert!(n < Self::num());
         *(val as *const usize) == n
     }
 }
@@ -106,6 +144,7 @@ unsafe impl<'a, T> UndefState for &'a mut T {
     }
 
     unsafe fn is_undef(val: *const &'a mut T, n: usize) -> bool {
+        assert!(n < Self::num());
         *(val as *const usize) == n
     }
 }

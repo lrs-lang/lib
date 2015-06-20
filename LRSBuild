@@ -46,6 +46,7 @@ obj buf_reader core arch_fns base io alloc str_one
 obj rc         core base fmt cell alloc atomic
 
 obj vec        core base str_one io fmt alloc
+obj ringbuf    core base fmt alloc wrapping
 obj hashmap    core base alloc hash fmt
 obj iter       core base vec
 

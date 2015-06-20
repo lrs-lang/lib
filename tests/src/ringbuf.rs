@@ -10,10 +10,19 @@
 mod core { pub use lrs::core::*; }
 #[allow(unused_imports)] #[prelude_import] use lrs::prelude::*;
 
-use lrs::parse::{Parse};
-use lrs::file::{can_access};
+use lrs::ringbuf::{DynRingBuf};
 
 fn main() {
-    assert!(can_access("Makefile", "rw-".parse().unwrap()) == Ok(true));
-    assert!(can_access("Makefile", "--x".parse().unwrap()) == Ok(false));
+    let mut buf: DynRingBuf<_> = DynRingBuf::new();
+    for i in 0..64 {
+        if i % 2 == 0 {
+            buf.push_left(i);
+        } else {
+            buf.push_right(i);
+        }
+    }
+    println!("{:?}", buf);
+    for el in &buf {
+        print!("{:?}, ", el);
+    }
 }

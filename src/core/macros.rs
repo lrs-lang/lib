@@ -44,6 +44,19 @@ macro_rules! try {
 ///
 /// Note that stdout always refers to the file descriptor `1`.
 #[macro_export]
+macro_rules! print {
+    ($fmt:expr) => {
+        write!(::lrs::fd::STDOUT, $fmt)
+    };
+    ($fmt:expr, $($arg:tt)*) => {
+        write!(::lrs::fd::STDOUT, $fmt, $($arg)*)
+    };
+}
+
+/// Prints a value to stdout.
+///
+/// Note that stdout always refers to the file descriptor `1`.
+#[macro_export]
 macro_rules! println {
     ($fmt:expr) => {
         write!(::lrs::fd::STDOUT, concat!($fmt, "\n"))

@@ -11,7 +11,7 @@
 #![no_std]
 
 #[macro_use]
-#[macro_reexport(abort, assert, try, println, errln, vec, format)]
+#[macro_reexport(abort, assert, try, print, println, errln, vec, format)]
 extern crate lrs_core;
 extern crate lrs_alloc;
 extern crate lrs_arch_fns;
@@ -27,6 +27,7 @@ extern crate lrs_box;
 extern crate lrs_dev;
 extern crate lrs_dir;
 extern crate lrs_fd;
+extern crate lrs_hashmap;
 extern crate lrs_wrapping;
 extern crate lrs_event;
 extern crate lrs_inotify;
@@ -47,6 +48,7 @@ extern crate lrs_mem;
 extern crate lrs_poll;
 extern crate lrs_process;
 extern crate lrs_pipe;
+extern crate lrs_ringbuf;
 extern crate lrs_signal;
 extern crate lrs_queue;
 extern crate lrs_rc;
@@ -94,11 +96,13 @@ pub mod parse;
 pub mod poll;
 pub mod process;
 pub mod mem_map;
+pub mod ringbuf;
 pub mod ptr;
 pub mod repr;
 pub mod result;
 pub mod marker;
 pub mod share;
+pub mod hashmap;
 pub mod signal;
 pub mod slice;
 pub mod string;

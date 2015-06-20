@@ -271,6 +271,24 @@ pub trait Hasher: Sized {
     fn hash_isize<S: Into<Self::Seed>>( val: isize, seed: S) -> Self::Digest { Self::hash_bytes(val.as_ref(), seed) }
 }
 
+impl<'a, T: Hash+?Sized> Hash for &'a T {
+    fn stateful_hash<H: Hasher>(&self, h: &mut H) {
+        (**self).stateful_hash(h);
+    }
+    fn hash<H: Hasher, S: Into<H::Seed>>(&self, seed: S) -> H::Digest {
+        H::hash(*self, seed)
+    }
+}
+
+impl<'a, T: Hash+?Sized> Hash for &'a mut T {
+    fn stateful_hash<H: Hasher>(&self, h: &mut H) {
+        (**self).stateful_hash(h);
+    }
+    fn hash<H: Hasher, S: Into<H::Seed>>(&self, seed: S) -> H::Digest {
+        H::hash(*self, seed)
+    }
+}
+
 mod impls {
     mod num;
     mod slice;

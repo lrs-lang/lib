@@ -292,7 +292,10 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator>
     ///
     /// If you don't plan to insert an element, you should use the {get} or {get_mut}
     /// functions instead.
-    pub fn entry<'a>(&'a mut self, key: &Key) -> Result<Entry<'a, Key, Value, Bucket>> {
+    pub fn entry<'a, Q>(&'a mut self, key: &Q) -> Result<Entry<'a, Key, Value, Bucket>>
+        where Q: Hash,
+              Key: Eq<Q>,
+    {
         let hash = Hasher::hash(key, self.seed.clone()).into() as usize;
 
         let (kind, bucket) = unsafe { self.search2(key, hash, true) };
@@ -557,6 +560,33 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator>
     }
 }
 
+impl<Key, Value, Bucket, Hasher, Seed, Allocator>
+    Drop for GenericMap<Key, Value, Bucket, Hasher, Seed, Allocator>
+    where Allocator: alloc::Allocator,
+          Bucket: bucket::Bucket<Key, Value>,
+          Hasher: hash::Hasher,
+          Seed: Into<Hasher::Seed>+Clone,
+          Key: Eq + Hash,
+{
+    fn drop(&mut self) {
+        unsafe {
+            let mut elements = self.elements - self.deleted;
+            let mut bucket = self.table;
+
+            while elements > 0 {
+                if (&*bucket).is_set() {
+                    ptr::drop(bucket);
+                    elements -= 1;
+                }
+                bucket = bucket.add(1);
+            }
+
+            Allocator::free_array(&mut self.pool, self.table, self.buckets);
+        }
+    }
+}
+
+/// A bucket in a hash map.
 pub enum Entry<'a, Key, Value, Bucket>
     where Bucket: bucket::Bucket<Key, Value> + 'a,
           Key: Eq + Hash,
@@ -569,11 +599,29 @@ impl<'a, Key, Value, Bucket> Entry<'a, Key, Value, Bucket>
     where Bucket: bucket::Bucket<Key, Value> + 'a,
           Key: Eq + Hash,
 {
+    /// Returns the occupied entry or inserts a new key.
+    ///
+    /// [argument, key]
+    /// {
+    /// The key that will be inserted.
+    ///
+    /// This key should hash to the same value as the key that was used to retrieve this
+    /// entry. Otherwise it might not be possible to retrieve the stored value until the
+    /// table is resized.
+    ///
+    /// }
+    ///
+    /// [argument, value]
+    /// The value that will be inserted.
     pub fn or_insert(self, key: Key,
                      value: Value) -> OccupiedEntry<'a, Key, Value, Bucket> {
         self.or_insert_with(|| (key, value))
     }
 
+    /// Returns the occupied entry or inserts the result of a function.
+    ///
+    /// [argument, f]
+    /// The function that will be called if the bucket is empty.
     pub fn or_insert_with<F>(self, f: F) -> OccupiedEntry<'a, Key, Value, Bucket>
         where F: FnOnce() -> (Key, Value),
     {
@@ -588,6 +636,7 @@ impl<'a, Key, Value, Bucket> Entry<'a, Key, Value, Bucket>
 
 }
 
+/// An empty bucket in a hash map.
 pub struct VacantEntry<'a, Key, Value, Bucket>
     where Bucket: bucket::Bucket<Key, Value> + 'a,
           Key: Eq + Hash,
@@ -610,6 +659,20 @@ impl<'a, Key, Value, Bucket> VacantEntry<'a, Key, Value, Bucket>
         }
     }
 
+    /// Sets the content of the empty bucket.
+    ///
+    /// [argument, key]
+    /// {
+    /// The key that will be inserted.
+    ///
+    /// This key should hash to the same value as the key that was used to retrieve this
+    /// entry. Otherwise it might not be possible to retrieve the stored value until the
+    /// table is resized.
+    ///
+    /// }
+    ///
+    /// [argument, value]
+    /// The value that will be inserted.
     pub fn set(self, key: Key, value: Value) -> OccupiedEntry<'a, Key, Value, Bucket> {
         unsafe {
             *self.deleted -= 1;
@@ -620,6 +683,7 @@ impl<'a, Key, Value, Bucket> VacantEntry<'a, Key, Value, Bucket>
     }
 }
 
+/// A non-empty bucket.
 pub struct OccupiedEntry<'a, Key, Value, Bucket>
     where Bucket: bucket::Bucket<Key, Value> + 'a,
           Key: Eq + Hash,
@@ -644,10 +708,12 @@ impl<'a, Key, Value, Bucket> OccupiedEntry<'a, Key, Value, Bucket>
         }
     }
 
+    /// Returns the contained mutable reference to the stored value.
     pub fn into_mut(self) -> &'a mut Value {
         unsafe { self.bucket.mut_value() }
     }
 
+    /// Removes the contained value and key.
     pub fn remove(self) -> (VacantEntry<'a, Key, Value, Bucket>, Key, Value) {
         unsafe {
             *self.deleted += 1;

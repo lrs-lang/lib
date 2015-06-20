@@ -6,7 +6,6 @@
 #![crate_type = "lib"]
 #![feature(plugin, no_std, optin_builtin_traits, associated_consts)]
 #![plugin(lrs_core_plugin)]
-#![allow(drop_with_repr_extern)] // Doesn't work when attached to items.
 #![no_std]
 
 #[macro_use]
