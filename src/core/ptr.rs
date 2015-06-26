@@ -4,10 +4,10 @@
 
 use intrinsics::{self};
 use mem::{self};
-use ops::{Eq, PartialOrd, Ordering};
+use ops::{Eq, PartialOrd, Ordering, Deref};
 use cmp::{Ord};
 use option::{Option};
-use marker::{Sized};
+use marker::{Sized, PhantomData, Sync, Send, Copy};
 
 /// Reads a value from a pointer.
 ///
@@ -220,3 +220,83 @@ impl<T> Ord for *mut T {
         (*self as usize).cmp(&(*other as usize))
     }
 }
+
+#[lang = "non_zero"]
+pub struct NonZeroPtr<T: ?Sized>(*const T);
+
+impl<T: ?Sized> Copy for NonZeroPtr<T> { }
+
+impl<T: ?Sized> NonZeroPtr<T> {
+    pub unsafe fn new(ptr: *const T) -> NonZeroPtr<T> {
+        NonZeroPtr(ptr)
+    }
+}
+
+impl<T: ?Sized> Deref for NonZeroPtr<T> {
+    type Target = *const T;
+    fn deref(&self) -> &*const T {
+        &self.0
+    }
+}
+
+impl<T> Eq for NonZeroPtr<T> {
+    fn eq(&self, other: &NonZeroPtr<T>) -> bool {
+        **self == **other
+    }
+}
+
+impl<T> PartialOrd for NonZeroPtr<T> {
+    fn partial_cmp(&self, other: &NonZeroPtr<T>) -> Option<Ordering> {
+        (**self).partial_cmp(&**other)
+    }
+}
+
+impl<T> Ord for NonZeroPtr<T> {
+    fn cmp(&self, other: &NonZeroPtr<T>) -> Ordering {
+        (**self).cmp(&**other)
+    }
+}
+
+pub struct OwnedPtr<T: ?Sized> {
+    ptr: NonZeroPtr<T>,
+    _marker: PhantomData<T>,
+}
+
+impl<T: ?Sized> Copy for OwnedPtr<T> { }
+
+impl<T: ?Sized> OwnedPtr<T> {
+    pub unsafe fn new(ptr: *const T) -> OwnedPtr<T> {
+        OwnedPtr {
+            ptr: NonZeroPtr::new(ptr),
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<T: ?Sized> Deref for OwnedPtr<T> {
+    type Target = *mut T;
+    fn deref(&self) -> &*mut T {
+        unsafe { mem::cast(&*self.ptr) }
+    }
+}
+
+impl<T> Eq for OwnedPtr<T> {
+    fn eq(&self, other: &OwnedPtr<T>) -> bool {
+        **self == **other
+    }
+}
+
+impl<T> PartialOrd for OwnedPtr<T> {
+    fn partial_cmp(&self, other: &OwnedPtr<T>) -> Option<Ordering> {
+        (**self).partial_cmp(&**other)
+    }
+}
+
+impl<T> Ord for OwnedPtr<T> {
+    fn cmp(&self, other: &OwnedPtr<T>) -> Ordering {
+        (**self).cmp(&**other)
+    }
+}
+
+unsafe impl<T: Sync + ?Sized> Sync for OwnedPtr<T> { }
+unsafe impl<T: Send + ?Sized> Send for OwnedPtr<T> { }

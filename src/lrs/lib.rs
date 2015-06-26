@@ -11,7 +11,7 @@
 #![no_std]
 
 #[macro_use]
-#[macro_reexport(abort, assert, try, print, println, errln, vec, format)]
+#[macro_reexport(abort, assert, try, print, println, err, errln, vec, format, matches)]
 extern crate lrs_core;
 extern crate lrs_alloc;
 extern crate lrs_arch_fns;
@@ -53,6 +53,7 @@ extern crate lrs_signal;
 extern crate lrs_queue;
 extern crate lrs_rc;
 extern crate lrs_rmo;
+extern crate lrs_hash;
 extern crate lrs_r_syscall;
 extern crate lrs_rt;
 extern crate lrs_rv;
@@ -146,6 +147,6 @@ pub mod core {
         pub use lrs_core::iter::{Iterator, IntoIterator};
     }
     pub mod intrinsics {
-        pub use lrs_core::intrinsics::{discriminant_value};
+        pub use lrs_core::intrinsics::{discriminant_value, unreachable};
     }
 }

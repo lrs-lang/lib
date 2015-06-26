@@ -5,6 +5,7 @@
 #[prelude_import] use base::prelude::*;
 use core::ops::{Deref};
 use core::{mem, ptr, intrinsics};
+use core::ptr::{OwnedPtr};
 use core::marker::{Leak};
 use base::clone::{Clone};
 use base::default::{Default};
@@ -26,7 +27,7 @@ pub struct ArcBuf<T, Heap = alloc::Heap>
     where Heap: Allocator,
           T: Leak,
 {
-    data: *mut Inner<T, Heap>,
+    data: OwnedPtr<Inner<T, Heap>>,
 }
 
 impl<T, H> ArcBuf<T, H>
@@ -41,7 +42,7 @@ impl<T, H> ArcBuf<T, H>
         unsafe {
             let data = self.data;
             intrinsics::forget(self);
-            ptr::write(&mut (*data).val, val);
+            ptr::write(&mut (**data).val, val);
             Arc { data: data }
         }
     }
@@ -56,8 +57,8 @@ impl<T, H> Drop for ArcBuf<T, H>
 {
     fn drop(&mut self) {
         unsafe {
-            let mut pool = ptr::read(&(*self.data).pool);
-            H::free(&mut pool, self.data);
+            let mut pool = ptr::read(&(**self.data).pool);
+            H::free(&mut pool, *self.data);
         }
     }
 }
@@ -67,7 +68,7 @@ pub struct Arc<T, Heap = alloc::Heap>
     where Heap: Allocator,
           T: Leak,
 {
-    data: *mut Inner<T, Heap>,
+    data: OwnedPtr<Inner<T, Heap>>,
 }
 
 impl<T, H> Arc<T, H>
@@ -94,7 +95,7 @@ impl<T, H> Arc<T, H>
             let data_ptr = try!(H::allocate::<Inner<T, H>>(&mut pool));
             ptr::write(&mut (*data_ptr).pool, pool);
             (*data_ptr).count.store(1);
-            Ok(ArcBuf { data: data_ptr })
+            Ok(ArcBuf { data: OwnedPtr::new(data_ptr) })
         }
     }
 }
@@ -105,7 +106,7 @@ impl<T, H> Arc<T, H>
 {
     /// Returns a mutable reference to the contained data if this is the only reference.
     pub fn as_mut(&mut self) -> Option<&mut T> {
-        let data = unsafe { &mut *self.data };
+        let data = unsafe { &mut **self.data };
         match data.count.load() {
             1 => Some(&mut data.val),
             _ => None,
@@ -115,7 +116,7 @@ impl<T, H> Arc<T, H>
     /// Adds a new reference, returning an `Arc` that points to the same data.
     pub fn add_ref(&self) -> Arc<T, H> {
         unsafe {
-            let data = &mut *self.data;
+            let data = &mut **self.data;
             data.count.add(1);
             Arc { data: self.data }
         }
@@ -126,14 +127,14 @@ unsafe impl<T, H> UndefState for Arc<T, H>
     where H: Allocator,
           T: Leak,
 {
-    fn num() -> usize { <&mut Inner<T, H> as UndefState>::num() }
+    fn num() -> usize { <OwnedPtr<Inner<T, H>> as UndefState>::num() }
 
     unsafe fn set_undef(val: *mut Arc<T, H>, n: usize) {
-        <&mut Inner<T, H> as UndefState>::set_undef(&mut &mut *(*val).data, n);
+        <OwnedPtr<Inner<T, H>> as UndefState>::set_undef(&mut (*val).data, n);
     }
 
     unsafe fn is_undef(val: *const Arc<T, H>, n: usize) -> bool {
-        <&mut Inner<T, H> as UndefState>::is_undef(&&mut *(*val).data, n)
+        <OwnedPtr<Inner<T, H>> as UndefState>::is_undef(&(*val).data, n)
     }
 }
 
@@ -146,13 +147,13 @@ impl<T, H> Drop for Arc<T, H>
 {
     fn drop(&mut self) {
         unsafe {
-            let data = &mut *self.data;
+            let data = &mut **self.data;
             if data.count.sub(1) == 1 {
                 if mem::needs_drop::<T>() {
                     ptr::drop(&mut data.val);
                 }
                 let mut pool = ptr::read(&data.pool);
-                H::free(&mut pool, self.data);
+                H::free(&mut pool, *self.data);
             }
         }
     }
@@ -165,7 +166,7 @@ impl<T, H> Deref for Arc<T, H>
     type Target = T;
 
     fn deref(&self) -> &T {
-        unsafe { &(&*self.data).val }
+        unsafe { &(&**self.data).val }
     }
 }
 

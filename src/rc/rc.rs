@@ -4,6 +4,7 @@
 
 #[prelude_import] use base::prelude::*;
 use core::ops::{Deref};
+use core::ptr::{OwnedPtr};
 use core::marker::{Leak};
 use core::{mem, ptr, intrinsics};
 use base::clone::{Clone};
@@ -26,7 +27,7 @@ pub struct RcBuf<T, Heap = alloc::Heap>
     where Heap: Allocator,
           T: Leak,
 {
-    data: *mut Inner<T, Heap>,
+    data: OwnedPtr<Inner<T, Heap>>,
 }
 
 impl<T, H> RcBuf<T, H>
@@ -41,7 +42,7 @@ impl<T, H> RcBuf<T, H>
         unsafe {
             let data = self.data;
             intrinsics::forget(self);
-            ptr::write(&mut (*data).val, val);
+            ptr::write(&mut (**data).val, val);
             Rc { data: data }
         }
     }
@@ -56,8 +57,8 @@ impl<T, H> Drop for RcBuf<T, H>
 {
     fn drop(&mut self) {
         unsafe {
-            let mut pool = ptr::read(&(*self.data).pool);
-            H::free(&mut pool, self.data);
+            let mut pool = ptr::read(&(**self.data).pool);
+            H::free(&mut pool, *self.data);
         }
     }
 }
@@ -67,7 +68,7 @@ pub struct Rc<T, Heap = alloc::Heap>
     where Heap: Allocator,
           T: Leak,
 {
-    data: *mut Inner<T, Heap>,
+    data: OwnedPtr<Inner<T, Heap>>,
 }
 
 impl<T, H> Rc<T, H>
@@ -94,7 +95,7 @@ impl<T, H> Rc<T, H>
             let data_ptr = try!(H::allocate::<Inner<T, H>>(&mut pool));
             ptr::write(&mut (*data_ptr).pool, pool);
             (*data_ptr).count.set(1);
-            Ok(RcBuf { data: data_ptr })
+            Ok(RcBuf { data: OwnedPtr::new(data_ptr) })
         }
     }
 }
@@ -105,7 +106,7 @@ impl<T, H> Rc<T, H>
 {
     /// Returns a mutable reference to the contained data if this is the only reference.
     pub fn as_mut(&mut self) -> Option<&mut T> {
-        let data = unsafe { &mut *self.data };
+        let data = unsafe { &mut **self.data };
         match data.count.get() {
             1 => Some(&mut data.val),
             _ => None,
@@ -115,7 +116,7 @@ impl<T, H> Rc<T, H>
     /// Adds a new reference, returning an `Rc` that points to the same data.
     pub fn add_ref(&self) -> Rc<T, H> {
         unsafe {
-            let data = &mut *self.data;
+            let data = &mut **self.data;
             data.count.set(data.count.get() + 1);
             Rc { data: self.data }
         }
@@ -126,14 +127,14 @@ unsafe impl<T, H> UndefState for Rc<T, H>
     where H: Allocator,
           T: Leak,
 {
-    fn num() -> usize { <&mut Inner<T, H> as UndefState>::num() }
+    fn num() -> usize { <OwnedPtr<Inner<T, H>> as UndefState>::num() }
 
     unsafe fn set_undef(val: *mut Rc<T, H>, n: usize) {
-        <&mut Inner<T, H> as UndefState>::set_undef(&mut &mut *(*val).data, n);
+        <OwnedPtr<Inner<T, H>> as UndefState>::set_undef(&mut (*val).data, n);
     }
 
     unsafe fn is_undef(val: *const Rc<T, H>, n: usize) -> bool {
-        <&mut Inner<T, H> as UndefState>::is_undef(&&mut *(*val).data, n)
+        <OwnedPtr<Inner<T, H>> as UndefState>::is_undef(&(*val).data, n)
     }
 }
 
@@ -145,7 +146,7 @@ impl<T, H> Drop for Rc<T, H>
 {
     fn drop(&mut self) {
         unsafe {
-            let data = &mut *self.data;
+            let data = &mut **self.data;
             let count = data.count.get();
             data.count.set(count - 1);
             if count == 1 {
@@ -153,7 +154,7 @@ impl<T, H> Drop for Rc<T, H>
                     ptr::drop(&mut data.val);
                 }
                 let mut pool = ptr::read(&data.pool);
-                H::free(&mut pool, self.data);
+                H::free(&mut pool, *self.data);
             }
         }
     }
@@ -166,7 +167,7 @@ impl<T, H> Deref for Rc<T, H>
     type Target = T;
 
     fn deref(&self) -> &T {
-        unsafe { &(&*self.data).val }
+        unsafe { &(&**self.data).val }
     }
 }
 

@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_socket"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, custom_derive, associated_consts)]
+#![feature(plugin, no_std, custom_derive, associated_consts, const_fn)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 #![allow(non_upper_case_globals)] 

@@ -28,7 +28,6 @@ macro_rules! panictry {
 }
 
 pub mod abi          { pub use _syntax::abi::*;          }
-pub mod ast_map      { pub use _syntax::ast_map::*;      }
 pub mod ast          { pub use _syntax::ast::*;          }
 pub mod ast_util     { pub use _syntax::ast_util::*;     }
 pub mod attr         { pub use _syntax::attr::*;         }
@@ -111,6 +110,10 @@ pub fn plugin_registrar(reg: &mut Registry) {
     reg.register_syntax_extension(
         token::intern("derive_Eq"),
         MultiDecorator(Box::new(lrs_ext::derive_eq)));
+
+    reg.register_syntax_extension(
+        token::intern("derive_Debug"),
+        MultiDecorator(Box::new(lrs_ext::derive_debug)));
 
     reg.register_macro(
         "write",

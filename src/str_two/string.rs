@@ -16,6 +16,14 @@ pub struct String<Heap = alloc::Heap>
     data: Vec<u8, Heap>,
 }
 
+impl<H> String<H>
+    where H: Allocator, 
+{
+    pub unsafe fn from_bytes_unchecked(bytes: Vec<u8, H>) -> String<H> {
+        String { data: bytes }
+    }
+}
+
 unsafe impl<H> UndefState for String<H>
     where H: Allocator, 
 {

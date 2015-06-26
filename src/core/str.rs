@@ -6,8 +6,9 @@ use option::{Option};
 use option::Option::{Some, None};
 use repr::{Repr};
 use iter::{Iterator};
-use ops::{Eq};
+use ops::{Eq, Index, Range, RangeTo, RangeFrom, RangeFull};
 use mem::{self};
+use slice::{self};
 
 #[lang = "str"]
 impl str {
@@ -45,6 +46,74 @@ impl str {
     /// Returns an iterator over the contained characters and their UTF-8 lengths.
     pub fn chars_len<'a>(&'a self) -> CharsLen<'a> {
         CharsLen { data: self.as_bytes() }
+    }
+
+    /// Checks whether the string starts with another string.
+    ///
+    /// [argument, other]
+    /// The string that this string should start with.
+    pub fn starts_with(&self, s: &str) -> bool {
+        self.as_bytes().starts_with(s.as_bytes())
+    }
+
+    /// Returns whether an index points to an UTF-8 character boundary.
+    ///
+    /// [argument, idx]
+    /// The index.
+    ///
+    /// [return_value]
+    /// Returns `true` if `idx` is at a character boundary. This includes
+    /// `idx == self.len()`.
+    ///
+    /// = Remarks
+    ///
+    /// If `idx > self.len()`, the process is aborted.
+    pub fn is_char_boundary(&self, idx: usize) -> bool {
+        if idx == self.len() {
+            true
+        } else {
+            let b = self.as_bytes()[idx];
+            b & 0x80 == 0 || b & 0xC0 == 0xC0
+        }
+    }
+}
+
+impl Index<Range<usize>> for str {
+    type Output = str;
+
+    fn index(&self, index: Range<usize>) -> &str {
+        assert!(index.start <= index.end);
+        assert!(self.is_char_boundary(index.start));
+        assert!(self.is_char_boundary(index.end));
+        let len = index.end - index.start;
+        unsafe {
+            let start = self.as_ptr().add(index.start);
+            mem::cast(slice::from_ptr(start, len))
+        }
+    }
+}
+
+impl Index<RangeTo<usize>> for str {
+    type Output = str;
+
+    fn index(&self, index: RangeTo<usize>) -> &str {
+        self.index(0..index.end)
+    }
+}
+
+impl Index<RangeFrom<usize>> for str {
+    type Output = str;
+
+    fn index(&self, index: RangeFrom<usize>) -> &str {
+        self.index(index.start..self.len())
+    }
+}
+
+impl Index<RangeFull> for str {
+    type Output = str;
+
+    fn index(&self, _: RangeFull) -> &str {
+        self
     }
 }
 

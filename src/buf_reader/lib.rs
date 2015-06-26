@@ -17,6 +17,7 @@ extern crate lrs_alloc as alloc;
 
 #[prelude_import] use base::prelude::*;
 use core::{slice, cmp};
+use core::ptr::{OwnedPtr};
 use base::{error};
 use base::default::{Default};
 use alloc::{NoMem, Allocator};
@@ -30,7 +31,7 @@ pub struct BufReader<R, Heap = alloc::Heap>
     where R: Read,
           Heap: Allocator,
 {
-    data: *mut u8,
+    data: OwnedPtr<u8>,
     cap: usize,
     start: usize,
     end: usize,
@@ -61,6 +62,7 @@ impl<R, H> BufReader<R, H>
         };
         let mut pool = H::Pool::default();
         let ptr = unsafe { try!(H::allocate_array(&mut pool, size)) };
+        let ptr = unsafe { OwnedPtr::new(ptr) };
         Ok(BufReader {
             data: ptr,
             cap: size,
@@ -92,7 +94,7 @@ impl<'a, R> BufReader<R, NoMem<'a>>
             n => 1 << (usize::bits() - n.leading_zeros() - 1),
         };
         BufReader {
-            data: buf.as_mut_ptr(),
+            data: unsafe { OwnedPtr::new(buf.as_mut_ptr()) },
             cap: size,
             start: 0,
             end: 0,
@@ -137,7 +139,7 @@ impl<R, H> BufReader<R, H>
                  &[][..]]
             } else {
                 [slice::from_ptr(self.data.add(start), self.cap - start),
-                 slice::from_ptr(self.data, end)]
+                 slice::from_ptr(*self.data, end)]
             }
         };
         (&mut self.start, slices)
@@ -149,7 +151,7 @@ impl<R, H> BufReader<R, H>
         let slices = unsafe {
             if start <= end {
                 [slice::from_ptr(self.data.add(end), self.cap - end),
-                 slice::from_ptr(self.data, start)]
+                 slice::from_ptr(*self.data, start)]
             } else {
                 [slice::from_ptr(self.data.add(end), start - end),
                  &mut [][..]]
@@ -200,7 +202,7 @@ impl<R, H> Drop for BufReader<R, H>
           H: Allocator,
 {
     fn drop(&mut self) {
-        unsafe { H::free_array(&mut self.pool, self.data, self.cap); }
+        unsafe { H::free_array(&mut self.pool, *self.data, self.cap); }
     }
 }
 

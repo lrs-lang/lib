@@ -4,6 +4,8 @@
 
 use core::marker::{Sized};
 use core::{mem};
+use core::repr::{Slice};
+use core::ptr::{OwnedPtr};
 
 /// Types that are not valid when they contain certain bit patterns.
 ///
@@ -112,9 +114,6 @@ unsafe impl UndefState for char {
     }
 }
 
-// NOTE: It is possible for the first page to be mapped but in this case we're already
-// fucked because of the null pointer optimization performed by the compiler.
-
 #[cfg(any(target_arch = "x86",
           target_arch = "x86_64",
           target_arch = "arm",
@@ -149,35 +148,58 @@ unsafe impl<'a, T> UndefState for &'a mut T {
     }
 }
 
-// FIXME: The following implementations conflict with the implementations above for some
-// reason. The compiler is being retarded again. Fork and fix.
+unsafe impl<T> UndefState for OwnedPtr<T> {
+    fn num() -> usize { PAGE_SIZE }
 
-// unsafe impl<'a, T> UnusedState for &'a [T] {
-//     type Plain = [usize; 2];
-//     const NUM: usize = (!0 >> 1) + 1;
-// 
-//     fn unused_state(n: usize) -> [usize; 2] {
-//         assert!(n <= !0 >> 1);
-//         unsafe { mem::cast(slice::from_ptr(0 as *const T, !0 - n)) }
-//     }
-// }
-//
-// unsafe impl<'a, T> UnusedState for &'a mut [T] {
-//     type Plain = [usize; 2];
-//     const NUM: usize = (!0 >> 1) + 1;
-// 
-//     fn unused_state(n: usize) -> [usize; 2] {
-//         assert!(n <= !0 >> 1);
-//         unsafe { mem::cast(slice::from_ptr(0 as *const T, !0 - n)) }
-//     }
-// }
-//
-// unsafe impl<'a> UnusedState for &'a str {
-//     type Plain = [usize; 2];
-//     const NUM: usize = (!0 >> 1) + 1;
-// 
-//     fn unused_state(n: usize) -> [usize; 2] {
-//         assert!(n <= !0 >> 1);
-//         unsafe { mem::cast(slice::from_ptr(0 as *const u8, !0 - n)) }
-//     }
-// }
+    unsafe fn set_undef(val: *mut OwnedPtr<T>, n: usize) {
+        assert!(n < Self::num());
+        *val = OwnedPtr::new(n as *const T);
+    }
+
+    unsafe fn is_undef(val: *const OwnedPtr<T>, n: usize) -> bool {
+        assert!(n < Self::num());
+        **val as usize == n
+    }
+}
+
+unsafe impl<'a, T> UndefState for &'a [T] {
+    fn num() -> usize { PAGE_SIZE }
+
+    unsafe fn set_undef(val: *mut &'a [T], n: usize) {
+        assert!(n < Self::num());
+        (*(val as *mut Slice<T>)).ptr = n as *mut T;
+    }
+
+    unsafe fn is_undef(val: *const &'a [T], n: usize) -> bool {
+        assert!(n < Self::num());
+        (*(val as *mut Slice<T>)).ptr == n as *mut T
+    }
+}
+
+unsafe impl<'a, T> UndefState for &'a mut [T] {
+    fn num() -> usize { PAGE_SIZE }
+
+    unsafe fn set_undef(val: *mut &'a mut [T], n: usize) {
+        assert!(n < Self::num());
+        (*(val as *mut Slice<T>)).ptr = n as *mut T;
+    }
+
+    unsafe fn is_undef(val: *const &'a mut [T], n: usize) -> bool {
+        assert!(n < Self::num());
+        (*(val as *mut Slice<T>)).ptr == n as *mut T
+    }
+}
+
+unsafe impl<'a> UndefState for &'a str {
+    fn num() -> usize { PAGE_SIZE }
+
+    unsafe fn set_undef(val: *mut &'a str, n: usize) {
+        assert!(n < Self::num());
+        (*(val as *mut Slice<u8>)).ptr = n as *mut u8;
+    }
+
+    unsafe fn is_undef(val: *const &'a str, n: usize) -> bool {
+        assert!(n < Self::num());
+        (*(val as *mut Slice<u8>)).ptr == n as *mut u8
+    }
+}

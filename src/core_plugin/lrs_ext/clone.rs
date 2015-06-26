@@ -328,7 +328,17 @@ pub fn derive_clone_for_copy(cx: &mut ExtCtxt, span: Span, _mitem: &MetaItem,
             }
         ).unwrap();
 
-        push(Annotatable::Item(impl_item))
+        push(Annotatable::Item(impl_item));
+
+        let impl_item = quote_item!(cx,
+            impl $lts ::lrs::clone::MaybeClone for $ty $lts {
+                fn maybe_clone(&self) -> ::lrs::result::Result<$ty $lts> {
+                    ::lrs::result::Result::Ok(*self)
+                }
+            }
+        ).unwrap();
+
+        push(Annotatable::Item(impl_item));
     }
 }
 

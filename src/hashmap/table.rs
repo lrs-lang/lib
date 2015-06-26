@@ -3,13 +3,16 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[prelude_import] use base::prelude::*;
-use core::{mem, ptr};
+use core::{mem, ptr, slice};
+use core::ptr::{OwnedPtr};
 use core::ops::{Eq};
+use core::iter::{Iterator, IntoIterator};
 use base::clone::{Clone};
 use base::default::{Default};
 use hash::{self, Hash};
 use alloc::{self};
 use bucket::{self, SetBucket, MutSetBucket};
+use fmt::{Debug, Write};
 
 #[derive(Eq)]
 enum SearchResult {
@@ -29,7 +32,7 @@ pub struct GenericMap<Key, Value, Bucket, Hasher = hash::xx_hash::XxHash32, Seed
           Seed: Into<Hasher::Seed>+Clone,
           Key: Eq + Hash,
 {
-    table: *mut Bucket,
+    table: OwnedPtr<Bucket>,
     /// Invariant: Power of two.
     buckets: usize,
     elements: usize,
@@ -84,7 +87,7 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator>
             for i in 0..buckets {
                 (&mut *table.add(i)).set_empty();
             }
-            table
+            OwnedPtr::new(table)
         };
 
         let map = GenericMap {
@@ -352,11 +355,11 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator>
             let new_table = try!(Allocator::allocate_array(&mut self.pool, new_buckets));
             self.copy_table(new_table, new_buckets);
 
-            let old_table = mem::replace(&mut self.table, new_table);
+            let old_table = mem::replace(&mut self.table, OwnedPtr::new(new_table));
             let old_buckets = mem::replace(&mut self.buckets, new_buckets);
             self.elements -= self.deleted;
             self.deleted = 0;
-            Allocator::free_array(&mut self.pool, old_table, old_buckets);
+            Allocator::free_array(&mut self.pool, *old_table, old_buckets);
         }
 
         Ok(true)
@@ -388,7 +391,7 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator>
         }
 
         let mut elements = self.elements - self.deleted;
-        let mut bucketp = self.table;
+        let mut bucketp = *self.table;
 
         // There will be far fewer elements in the table than there are buckets. We only
         // copy until we've copied all elements.
@@ -571,7 +574,7 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator>
     fn drop(&mut self) {
         unsafe {
             let mut elements = self.elements - self.deleted;
-            let mut bucket = self.table;
+            let mut bucket = *self.table;
 
             while elements > 0 {
                 if (&*bucket).is_set() {
@@ -581,8 +584,71 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator>
                 bucket = bucket.add(1);
             }
 
-            Allocator::free_array(&mut self.pool, self.table, self.buckets);
+            Allocator::free_array(&mut self.pool, *self.table, self.buckets);
         }
+    }
+}
+
+impl<'a, Key, Value, Bucket, Hasher, Seed, Allocator>
+    IntoIterator for &'a GenericMap<Key, Value, Bucket, Hasher, Seed, Allocator>
+    where Allocator: alloc::Allocator,
+          Bucket: bucket::Bucket<Key, Value>,
+          Hasher: hash::Hasher,
+          Seed: Into<Hasher::Seed>+Clone,
+          Key: Eq + Hash,
+{
+    type Item = (&'a Key, &'a Value);
+    type IntoIter = MapIter<'a, Key, Value, Bucket>;
+    fn into_iter(self) -> MapIter<'a, Key, Value, Bucket> {
+        MapIter {
+            table: unsafe { slice::from_ptr(*self.table, self.buckets) },
+            _marker: PhantomData,
+        }
+    }
+}
+
+pub struct MapIter<'a, Key, Value, Bucket>
+    where Bucket: bucket::Bucket<Key, Value> + 'a,
+{
+    table: &'a [Bucket],
+    _marker: PhantomData<(Key, Value)>,
+}
+
+impl<'a, Key, Value, Bucket> Iterator for MapIter<'a, Key, Value, Bucket>
+    where Bucket: bucket::Bucket<Key, Value>,
+{
+    type Item = (&'a Key, &'a Value);
+    fn next(&mut self) -> Option<(&'a Key, &'a Value)> {
+        unsafe {
+            while self.table.len() > 0 && !self.table[0].is_set() {
+                self.table = &self.table[1..];
+            }
+            if self.table.len() == 0 {
+                None
+            } else {
+                let e = &self.table[0];
+                self.table = &self.table[1..];
+                Some((e.key(), e.value()))
+            }
+        }
+    }
+}
+
+impl<Key, Value, Bucket, Hasher, Seed, Allocator>
+    Debug for GenericMap<Key, Value, Bucket, Hasher, Seed, Allocator>
+    where Allocator: alloc::Allocator,
+          Bucket: bucket::Bucket<Key, Value>,
+          Hasher: hash::Hasher,
+          Seed: Into<Hasher::Seed>+Clone,
+          Key: Eq + Hash + Debug,
+          Value: Debug,
+{
+    fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
+        try!(write!(w, "{{ "));
+        for (key, value) in self {
+            try!(write!(w, "{:?}: {:?}, ", key, value));
+        }
+        write!(w, "}}")
     }
 }
 
@@ -676,8 +742,7 @@ impl<'a, Key, Value, Bucket> VacantEntry<'a, Key, Value, Bucket>
     pub fn set(self, key: Key, value: Value) -> OccupiedEntry<'a, Key, Value, Bucket> {
         unsafe {
             *self.deleted -= 1;
-            ptr::write(self.bucket.mut_key(), key);
-            ptr::write(self.bucket.mut_value(), value);
+            self.bucket.set(key, value);
             OccupiedEntry::from_bucket(self.bucket, self.deleted)
         }
     }
@@ -717,8 +782,7 @@ impl<'a, Key, Value, Bucket> OccupiedEntry<'a, Key, Value, Bucket>
     pub fn remove(self) -> (VacantEntry<'a, Key, Value, Bucket>, Key, Value) {
         unsafe {
             *self.deleted += 1;
-            let key = ptr::read(self.bucket.key());
-            let value = ptr::read(self.bucket.value());
+            let (key, value) = self.bucket.remove();
             let entry = VacantEntry::from_bucket(self.bucket, self.deleted);
             (entry, key, value)
         }

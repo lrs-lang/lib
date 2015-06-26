@@ -66,6 +66,17 @@ macro_rules! println {
     };
 }
 
+/// Like `print` but write to stder.
+#[macro_export]
+macro_rules! err {
+    ($fmt:expr) => {
+        write!(::lrs::fd::STDERR, $fmt)
+    };
+    ($fmt:expr, $($arg:tt)*) => {
+        write!(::lrs::fd::STDERR, $fmt, $($arg)*)
+    };
+}
+
 /// Like `println` but write to stder.
 #[macro_export]
 macro_rules! errln {
@@ -87,12 +98,12 @@ macro_rules! format {
     }};
 }
 
-//#[macro_export]
-//macro_rules! matches {
-//    ($pat:pat = $val:expr) => {
-//        match val { $pat => true, _ => false, }
-//    }
-//}
+#[macro_export]
+macro_rules! matches {
+    ($val:expr => $($pat:tt)+) => {
+        match $val { $($pat)+ => true, _ => false, }
+    }
+}
 
 /// Creates a vector out of the arguments.
 #[macro_export]
@@ -106,7 +117,7 @@ macro_rules! vec {
             let mut vec = ::lrs::vec::Vec::with_capacity(base.len()).unwrap();
             unsafe {
                 vec.try_unsafe_push_all(&base[..]).unwrap();
-                ::lrs::mem::forget(base);
+                ::lrs::mem::unsafe_forget(base);
             }
             vec
         }

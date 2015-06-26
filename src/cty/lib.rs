@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_cty"]
 #![crate_type = "lib"]
-#![feature(negate_unsigned, plugin, no_std, custom_derive)]
+#![feature(negate_unsigned, plugin, no_std, custom_derive, const_fn)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 #![allow(non_camel_case_types, raw_pointer_derive, overflowing_literals, non_snake_case,

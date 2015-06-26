@@ -46,6 +46,13 @@ extern "rust-intrinsic" {
     /// * {abt}
     pub fn abort() -> !;
 
+    /// Informs the optimizer that the execution cannot reach this point.
+    ///
+    /// = Remarks
+    ///
+    /// If it can reach this point, the behavior is undefined.
+    pub fn unreachable() -> !;
+
     /// Raises a `SIGTRAP`.
     ///
     /// = Remarks

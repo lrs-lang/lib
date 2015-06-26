@@ -4,4 +4,4 @@
 
 //! General object duplication.
 
-pub use lrs_base::clone::{Clone};
+pub use lrs_base::clone::{Clone, MaybeClone};

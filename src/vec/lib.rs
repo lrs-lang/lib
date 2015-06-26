@@ -23,6 +23,7 @@ pub mod lrs {
 
 #[prelude_import] use base::prelude::*;
 use core::{mem, ptr, cmp, slice};
+use core::ptr::{OwnedPtr};
 use base::clone::{MaybeClone};
 use base::undef::{UndefState};
 use base::default::{Default};
@@ -39,7 +40,7 @@ use str_one::{ByteStr, CStr, AsCStr, AsMutCStr, ToCStr, NoNullStr, AsMutNoNullSt
 pub struct Vec<T, Heap = alloc::Heap>
     where Heap: Allocator,
 {
-    ptr: *mut T,
+    ptr: OwnedPtr<T>,
     len: usize,
     cap: usize,
     pool: Heap::Pool,
@@ -52,12 +53,14 @@ impl<'a, T> Vec<T, alloc::NoMem<'a>> {
     /// The buffer which will be used to store elements it.
     pub fn buffered(buf: &'a mut [u8]) -> Vec<T, alloc::NoMem<'a>> {
         if mem::size_of::<T>() == 0 {
-            return Vec { ptr: empty_ptr(), len: 0, cap: 0, pool: () };
+            let ptr = unsafe { OwnedPtr::new(empty_ptr()) };
+            return Vec { ptr: ptr, len: 0, cap: 0, pool: () };
         }
 
         let buf = mem::align_for_mut::<T>(buf);
         let cap = buf.len() / mem::size_of::<T>();
-        Vec { ptr: buf.as_mut_ptr() as *mut T, len: 0, cap: cap, pool: () }
+        let ptr = unsafe { OwnedPtr::new(buf.as_mut_ptr() as *mut T) };
+        Vec { ptr: ptr, len: 0, cap: cap, pool: () }
     }
 }
 
@@ -68,7 +71,8 @@ impl<T, H> Vec<T, H>
     pub fn new() -> Vec<T, H>
         where H::Pool: Default,
     {
-        Vec { ptr: empty_ptr(), len: 0, cap: 0, pool: H::Pool::default(), }
+        let ptr = unsafe { OwnedPtr::new(empty_ptr()) };
+        Vec { ptr: ptr, len: 0, cap: 0, pool: H::Pool::default(), }
     }
 
     /// Creates a new allocating vector and reserves a certain amount of space for it.
@@ -77,9 +81,11 @@ impl<T, H> Vec<T, H>
     {
         let mut pool = H::Pool::default();
         if cap == 0 || mem::size_of::<T>() == 0 {
-            return Ok(Vec { ptr: empty_ptr(), len: 0, cap: cap, pool: pool });
+            let ptr = unsafe { OwnedPtr::new(empty_ptr()) };
+            return Ok(Vec { ptr: ptr, len: 0, cap: cap, pool: pool });
         }
         let ptr = unsafe { try!(H::allocate_array(&mut pool, cap)) };
+        let ptr = unsafe { OwnedPtr::new(ptr) };
         Ok(Vec { ptr: ptr, len: 0, cap: cap, pool: pool })
     }
 
@@ -88,7 +94,8 @@ impl<T, H> Vec<T, H>
     /// [argument, pool]
     /// The pool to draw memory from.
     pub fn with_pool(pool: H::Pool) -> Vec<T, H> {
-        Vec { ptr: empty_ptr(), len: 0, cap: 0, pool: pool }
+        let ptr = unsafe { OwnedPtr::new(empty_ptr()) };
+        Vec { ptr: ptr, len: 0, cap: 0, pool: pool }
     }
 
     /// Creates a new vector from its raw parts.
@@ -108,7 +115,7 @@ impl<T, H> Vec<T, H>
     pub unsafe fn from_raw_parts(ptr: *mut T, len: usize, cap: usize,
                                  pool: H::Pool) -> Vec<T, H> {
         Vec {
-            ptr: ptr,
+            ptr: OwnedPtr::new(ptr),
             len: len,
             cap: cap,
             pool: pool,
@@ -139,12 +146,12 @@ impl<T, H> Vec<T, H>
         }
 
         let new_cap = self.len + cmp::max(n, self.cap / 2 + 1);
-        let ptr = if self.ptr == empty_ptr() {
+        let ptr = if *self.ptr == empty_ptr() {
             unsafe { H::allocate_array(&mut self.pool, new_cap) }
         } else {
-            unsafe { H::reallocate_array(&mut self.pool, self.ptr, self.cap, new_cap) }
+            unsafe { H::reallocate_array(&mut self.pool, *self.ptr, self.cap, new_cap) }
         };
-        self.ptr = try!(ptr);
+        self.ptr = unsafe { OwnedPtr::new(try!(ptr)) };
         self.cap = new_cap;
         Ok(())
     }
@@ -270,14 +277,14 @@ impl<T, H> Vec<T, H>
 unsafe impl<T, H> UndefState for Vec<T, H>
     where H: Allocator,
 {
-    fn num() -> usize { <&mut T as UndefState>::num() }
+    fn num() -> usize { <OwnedPtr<T> as UndefState>::num() }
 
     unsafe fn set_undef(val: *mut Vec<T, H>, n: usize) {
-        <&mut T as UndefState>::set_undef(&mut &mut *(*val).ptr, n);
+        <OwnedPtr<T> as UndefState>::set_undef(&mut (*val).ptr, n);
     }
 
     unsafe fn is_undef(val: *const Vec<T, H>, n: usize) -> bool {
-        <&mut T as UndefState>::is_undef(&&mut *(*val).ptr, n)
+        <OwnedPtr<T> as UndefState>::is_undef(&(*val).ptr, n)
     }
 }
 
@@ -321,8 +328,8 @@ impl<T, H> Drop for Vec<T, H>
                     ptr::drop(self.ptr.add(i));
                 }
             }
-            if self.ptr != empty_ptr() {
-                H::free_array(&mut self.pool, self.ptr, self.cap);
+            if *self.ptr != empty_ptr() {
+                H::free_array(&mut self.pool, *self.ptr, self.cap);
             }
         }
     }
@@ -358,7 +365,7 @@ impl<T, H> Deref for Vec<T, H>
 {
     type Target = [T];
     fn deref(&self) -> &[T] {
-        unsafe { slice::from_ptr(self.ptr, self.len) }
+        unsafe { slice::from_ptr(*self.ptr, self.len) }
     }
 }
 
@@ -366,7 +373,7 @@ impl<T, H> DerefMut for Vec<T, H>
     where H: Allocator,
 {
     fn deref_mut(&mut self) -> &mut [T] {
-        unsafe { slice::from_ptr(self.ptr, self.len) }
+        unsafe { slice::from_ptr(*self.ptr, self.len) }
     }
 }
 
@@ -399,6 +406,14 @@ impl<'a, T, H> IntoIterator for &'a Vec<T, H>
     type Item = &'a T;
     type IntoIter = slice::Items<'a, T>;
     fn into_iter(self) -> slice::Items<'a, T> { self.iter() }
+}
+
+impl<'a, T, H> IntoIterator for &'a mut Vec<T, H>
+    where H: Allocator,
+{
+    type Item = &'a mut T;
+    type IntoIter = slice::MutItems<'a, T>;
+    fn into_iter(self) -> slice::MutItems<'a, T> { self.iter_mut() }
 }
 
 impl<T, H> AsRef<[T]> for Vec<T, H>

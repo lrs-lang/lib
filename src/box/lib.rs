@@ -17,6 +17,7 @@ extern crate lrs_fmt   as fmt;
 
 #[prelude_import] use base::prelude::*;
 use base::default::{Default};
+use core::ptr::{OwnedPtr};
 use core::{ptr, mem, intrinsics};
 use core::ops::{Deref, DerefMut};
 use fmt::{Debug, Write};
@@ -27,7 +28,7 @@ mod lrs { pub use fmt::lrs::*; }
 pub struct BoxBuf<T, Heap = alloc::Heap>
     where Heap: alloc::Allocator,
 {
-    data: *mut T,
+    data: OwnedPtr<T>,
     pool: Heap::Pool,
 }
 
@@ -43,7 +44,7 @@ impl<T, H> BoxBuf<T, H>
             let data = self.data;
             let pool = ptr::read(&self.pool);
             intrinsics::forget(self);
-            ptr::write(data, val);
+            ptr::write(*data, val);
             Box { data: data, pool: pool }
         }
     }
@@ -53,7 +54,7 @@ impl<T, H> Drop for BoxBuf<T, H>
     where H: alloc::Allocator,
 {
     fn drop(&mut self) {
-        unsafe { H::free(&mut self.pool, self.data); }
+        unsafe { H::free(&mut self.pool, *self.data); }
     }
 }
 
@@ -61,7 +62,7 @@ impl<T, H> Drop for BoxBuf<T, H>
 pub struct Box<T, Heap = alloc::Heap>
     where Heap: alloc::Allocator,
 {
-    data: *mut T,
+    data: OwnedPtr<T>,
     pool: Heap::Pool,
 }
 
@@ -86,7 +87,7 @@ impl<T, H> Box<T, H>
         unsafe {
             let mut pool = H::Pool::default();
             let ptr = try!(H::allocate(&mut pool));
-            Ok(BoxBuf { data: ptr, pool: pool })
+            Ok(BoxBuf { data: OwnedPtr::new(ptr), pool: pool })
         }
     }
 }
@@ -96,7 +97,7 @@ impl<T, H> Deref for Box<T, H>
 {
     type Target = T;
     fn deref(&self) -> &T {
-        unsafe { &*self.data }
+        unsafe { &**self.data }
     }
 }
 
@@ -104,7 +105,7 @@ impl<T, H> DerefMut for Box<T, H>
     where H: alloc::Allocator,
 {
     fn deref_mut(&mut self) -> &mut T {
-        unsafe { &mut *self.data }
+        unsafe { &mut **self.data }
     }
 }
 
@@ -114,9 +115,9 @@ impl<T, H> Drop for Box<T, H>
     fn drop(&mut self) {
         unsafe {
             if mem::needs_drop::<T>() {
-                ptr::drop(self.data);
+                ptr::drop(*self.data);
             }
-            H::free(&mut self.pool, self.data);
+            H::free(&mut self.pool, *self.data);
         }
     }
 }

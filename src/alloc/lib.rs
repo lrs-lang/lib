@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_alloc"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std)]
+#![feature(plugin, no_std, const_fn)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 

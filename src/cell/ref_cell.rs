@@ -7,7 +7,7 @@ use core::ops::{Deref, DerefMut, Drop};
 use cell::{Cell};
 
 /// The status of a `RefCell`.
-#[derive(Copy)]
+#[derive(Copy, Eq)]
 pub enum RefCellStatus {
     /// The cell is not borrowed.
     Free,

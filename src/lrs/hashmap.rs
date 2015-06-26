@@ -3,3 +3,4 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 pub use lrs_hashmap::{CompactMap, HashMap, Entry, VacantEntry, OccupiedEntry};
+pub use lrs_hash::{Hash, Hasher};

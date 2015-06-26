@@ -46,6 +46,17 @@ impl Clone for () {
     fn clone(&self) -> () { () }
 }
 
+impl<T> Clone for Option<T>
+    where T: Clone,
+{
+    fn clone(&self) -> Option<T> {
+        match *self {
+            Some(ref t) => Some(t.clone()),
+            _ => None,
+        }
+    }
+}
+
 impl<T0> Clone for (T0,)
     where T0: Clone,
 {
@@ -73,8 +84,56 @@ pub trait MaybeClone {
     fn maybe_clone(&self) -> Result<Self>;
 }
 
-impl<T: Clone> MaybeClone for T {
-    fn maybe_clone(&self) -> Result<Self> {
-        Ok(self.clone())
+macro_rules! mimp {
+    ($ty:ident) => {
+        impl MaybeClone for $ty {
+            fn maybe_clone(&self) -> Result<$ty> {
+                Ok(*self)
+            }
+        }
+    }
+}
+
+mimp!(u8);
+mimp!(u16);
+mimp!(u32);
+mimp!(u64);
+mimp!(usize);
+mimp!(i8);
+mimp!(i16);
+mimp!(i32);
+mimp!(i64);
+mimp!(isize);
+mimp!(bool);
+
+impl MaybeClone for () {
+    fn maybe_clone(&self) -> Result<()> { Ok(()) }
+}
+
+impl<T> MaybeClone for Option<T>
+    where T: MaybeClone,
+{
+    fn maybe_clone(&self) -> Result<Option<T>> {
+        match *self {
+            Some(ref t) => Ok(Some(try!(t.maybe_clone()))),
+            _ => Ok(None),
+        }
+    }
+}
+
+impl<T0> MaybeClone for (T0,)
+    where T0: MaybeClone,
+{
+    fn maybe_clone(&self) -> Result<(T0,)> {
+        Ok((try!(self.0.maybe_clone()),))
+    }
+}
+
+impl<T0, T1> MaybeClone for (T0,T1)
+    where T0: MaybeClone,
+          T1: MaybeClone,
+{
+    fn maybe_clone(&self) -> Result<(T0,T1)> {
+        Ok((try!(self.0.maybe_clone()), try!(self.1.maybe_clone())))
     }
 }

@@ -4,6 +4,7 @@ pub use self::clone::{
 pub use self::eq::{derive_eq};
 pub use self::copy::{derive_copy, derive_copy_and_clone, derive_pod_copy_and_clone};
 pub use self::format::{expand_format_args};
+pub use self::debug::{derive_debug};
 
 macro_rules! pathvec {
     ($($x:ident)::+) => (
@@ -43,3 +44,4 @@ mod clone;
 mod eq;
 mod copy;
 mod format;
+mod debug;

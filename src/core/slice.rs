@@ -72,6 +72,11 @@ impl<T> [T] {
         Items { slice: self }
     }
 
+    /// Creates a mutable iterator over the elements of the slice.
+    pub fn iter_mut<'a>(&'a mut self) -> MutItems<'a, T> {
+        MutItems { slice: self }
+    }
+
     /// Returns the index of the first element in the slice which satisfies a predicate.
     ///
     /// [argument, f]
@@ -335,6 +340,18 @@ pub struct Items<'a, T: 'a> {
 impl<'a, T> Iterator for Items<'a, T> {
     type Item = &'a T;
     fn next(&mut self) -> Option<&'a T> {
+        self.slice.next()
+    }
+}
+
+/// An iterator over a mutable immutable slice.
+pub struct MutItems<'a, T: 'a> {
+    slice: &'a mut [T],
+}
+
+impl<'a, T> Iterator for MutItems<'a, T> {
+    type Item = &'a mut T;
+    fn next(&mut self) -> Option<&'a mut T> {
         self.slice.next()
     }
 }

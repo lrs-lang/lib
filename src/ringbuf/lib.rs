@@ -19,6 +19,7 @@ mod lrs { pub use fmt::lrs::*; }
 
 #[prelude_import] use base::prelude::*;
 use core::{mem, ptr};
+use core::ptr::{OwnedPtr};
 use wrapping::{Wsize};
 use base::clone::{MaybeClone};
 use base::undef::{UndefState};
@@ -33,7 +34,7 @@ use alloc::{Allocator, empty_ptr};
 pub struct DynRingBuf<T, Heap = alloc::Heap>
     where Heap: Allocator,
 {
-    ptr: *mut T,
+    ptr: OwnedPtr<T>,
     left: Wsize,
     right: Wsize,
     cap: usize,
@@ -48,7 +49,7 @@ impl<'a, T> DynRingBuf<T, alloc::NoMem<'a>> {
     pub fn buffered(buf: &'a mut [u8]) -> Self {
         if mem::size_of::<T>() == 0 {
             return DynRingBuf {
-                ptr: empty_ptr(),
+                ptr: unsafe { OwnedPtr::new(empty_ptr()) },
                 left: Wsize(0),
                 right: Wsize(0),
                 cap: 0,
@@ -67,7 +68,7 @@ impl<'a, T> DynRingBuf<T, alloc::NoMem<'a>> {
             }
         };
         DynRingBuf {
-            ptr: buf.as_mut_ptr() as *mut T,
+            ptr: unsafe { OwnedPtr::new(buf.as_mut_ptr() as *mut T) },
             left: Wsize(0),
             right: Wsize(0),
             cap: cap,
@@ -84,7 +85,7 @@ impl<T, H> DynRingBuf<T, H>
         where H::Pool: Default,
     {
         DynRingBuf {
-            ptr: empty_ptr(),
+            ptr: unsafe { OwnedPtr::new(empty_ptr()) },
             left: Wsize(0),
             right: Wsize(0),
             cap: if mem::size_of::<T>() == 0 { !0 >> 1 } else { 0 },
@@ -100,7 +101,7 @@ impl<T, H> DynRingBuf<T, H>
         let size = mem::size_of::<T>();
         if cap == 0 || size == 0 {
             return Ok(DynRingBuf {
-                ptr: empty_ptr(),
+                ptr: unsafe { OwnedPtr::new(empty_ptr()) },
                 left: Wsize(0),
                 right: Wsize(0),
                 cap: if size == 0 { !0 >> 1 } else { 0 },
@@ -108,7 +109,7 @@ impl<T, H> DynRingBuf<T, H>
             });
         }
         cap = cap.checked_next_power_of_two().unwrap_or(!0);
-        let ptr = unsafe { try!(H::allocate_array(&mut pool, cap)) };
+        let ptr = unsafe { OwnedPtr::new(try!(H::allocate_array(&mut pool, cap))) };
         Ok(DynRingBuf {
             ptr: ptr,
             left: Wsize(0),
@@ -124,7 +125,7 @@ impl<T, H> DynRingBuf<T, H>
     /// The pool to draw memory from.
     pub fn with_pool(pool: H::Pool) -> Self {
         DynRingBuf {
-            ptr: empty_ptr(),
+            ptr: unsafe { OwnedPtr::new(empty_ptr()) },
             left: Wsize(0),
             right: Wsize(0),
             cap: if mem::size_of::<T>() == 0 { !0 >> 1 } else { 0 },
@@ -169,18 +170,18 @@ impl<T, H> DynRingBuf<T, H>
         let new_cap = self.len().checked_add(n).unwrap_or(!0)
                                 .checked_next_power_of_two().unwrap_or(!0);
 
-        let ptr = if self.ptr == empty_ptr() {
+        let ptr = if *self.ptr == empty_ptr() {
             unsafe { H::allocate_array(&mut self.pool, new_cap) }
         } else {
-            unsafe { H::reallocate_array(&mut self.pool, self.ptr, self.cap, new_cap) }
+            unsafe { H::reallocate_array(&mut self.pool, *self.ptr, self.cap, new_cap) }
         };
-        self.ptr = try!(ptr);
+        self.ptr = unsafe { OwnedPtr::new(try!(ptr)) };
 
         let len = self.len();
         self.left = self.left & self.cap_mask();
         self.right = self.right & self.cap_mask();
         if len > 0 && self.right <= self.left {
-            unsafe { ptr::memcpy(self.ptr.add(self.cap), self.ptr, self.right.0); }
+            unsafe { ptr::memcpy(self.ptr.add(self.cap), *self.ptr, self.right.0); }
             self.right = self.right + self.capacity();
         }
 
@@ -279,7 +280,7 @@ impl<T, H> DynRingBuf<T, H>
     /// Creates an iterator over the elements in the ringbuffer.
     pub fn iter<'a>(&'a self) -> RingBufIter<'a, T> {
         RingBufIter {
-            ptr: self.ptr,
+            ptr: *self.ptr,
             cap_mask: self.cap - 1,
             left: self.left,
             right: self.right,
@@ -299,14 +300,14 @@ impl<'a, T, H> IntoIterator for &'a DynRingBuf<T, H>
 unsafe impl<T, H> UndefState for DynRingBuf<T, H>
     where H: Allocator,
 {
-    fn num() -> usize { <&mut T as UndefState>::num() }
+    fn num() -> usize { <OwnedPtr<T> as UndefState>::num() }
 
     unsafe fn set_undef(val: *mut DynRingBuf<T, H>, n: usize) {
-        <&mut T as UndefState>::set_undef(&mut &mut *(*val).ptr, n);
+        <OwnedPtr<T> as UndefState>::set_undef(&mut (*val).ptr, n);
     }
 
     unsafe fn is_undef(val: *const DynRingBuf<T, H>, n: usize) -> bool {
-        <&mut T as UndefState>::is_undef(&&mut *(*val).ptr, n)
+        <OwnedPtr<T> as UndefState>::is_undef(&(*val).ptr, n)
     }
 }
 
@@ -325,8 +326,8 @@ impl<T, H> Drop for DynRingBuf<T, H>
                     i = i + 1;
                 }
             }
-            if self.ptr != empty_ptr() {
-                H::free_array(&mut self.pool, self.ptr, self.cap);
+            if *self.ptr != empty_ptr() {
+                H::free_array(&mut self.pool, *self.ptr, self.cap);
             }
         }
     }

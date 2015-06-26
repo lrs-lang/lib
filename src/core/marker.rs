@@ -10,6 +10,7 @@ use ops::{Eq};
 ///
 /// This includes `&[T]` and `&Trait` but not `[T]` or `Trait`.
 #[lang = "sized"]
+#[fundamental]
 pub trait Sized { }
 
 impl Sized for .. { }
@@ -206,8 +207,8 @@ pub unsafe trait Leak { }
 
 unsafe impl Leak for .. { }
 
-unsafe impl<'a, T> Leak for &'a T { }
-unsafe impl<'a, T> Leak for &'a mut T { }
+unsafe impl<'a, T: ?Sized> Leak for &'a T { }
+unsafe impl<'a, T: ?Sized> Leak for &'a mut T { }
 
 /// A dummy type for unused type parameters.
 ///
@@ -225,8 +226,8 @@ unsafe impl<'a, T> Leak for &'a mut T { }
 #[lang = "phantom_data"]
 pub struct PhantomData<T: ?Sized>;
 
-impl<T> Copy for PhantomData<T> { }
-impl<T> Eq for PhantomData<T> { fn eq(&self, _: &PhantomData<T>) -> bool { true } }
+impl<T: ?Sized> Copy for PhantomData<T> { }
+impl<T: ?Sized> Eq for PhantomData<T> { fn eq(&self, _: &PhantomData<T>) -> bool { true } }
 
 #[lang="unsize"]
 pub trait Unsize<T> { }

@@ -18,6 +18,7 @@ extern crate lrs_lock as lock;
 extern crate lrs_alloc as alloc;
 
 #[prelude_import] use base::prelude::*;
+use core::ptr::{OwnedPtr};
 use base::{error};
 use base::default::{Default};
 use alloc::{Allocator, empty_ptr};
@@ -38,7 +39,7 @@ pub struct Queue<T, Heap = alloc::Heap>
     where Heap: Allocator,
 {
     // The buffer we store the massages in.
-    buf: *mut Cell<T>,
+    buf: OwnedPtr<Cell<T>>,
     // One less than the capacity of the channel. Note that the capacity is a power of
     // two.
     cap_mask: usize,
@@ -92,7 +93,7 @@ impl<T, H> Queue<T, H>
             _ => unsafe { try!(H::allocate_array(&mut pool, cap)) },
         };
         Ok(Queue {
-            buf: buf,
+            buf: unsafe { OwnedPtr::new(buf) },
             cap_mask: cap - 1,
 
             read_start: AtomicUsize::new(0),
@@ -315,7 +316,7 @@ impl<T, H> Drop for Queue<T, H>
             }
 
             if mem::size_of::<T>() > 0 {
-                H::free_array(&mut self.pool, self.buf, self.cap_mask + 1);
+                H::free_array(&mut self.pool, *self.buf, self.cap_mask + 1);
             }
         }
     }
