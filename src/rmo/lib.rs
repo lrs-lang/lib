@@ -8,8 +8,6 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core    as core;
 extern crate lrs_base    as base;
 extern crate lrs_fmt     as fmt;
 extern crate lrs_str_one as str_one;
@@ -17,13 +15,11 @@ extern crate lrs_vec     as vec;
 extern crate lrs_str_two as str_two;
 extern crate lrs_alloc   as alloc;
 
-#[prelude_import] use base::prelude::*;
-use base::rmo::{AsRef, AsMut};
+use base::prelude::*;
 use base::default::{Default};
-use core::ops::{Deref};
 use alloc::{Allocator};
 
-mod lrs { pub use ::fmt::lrs::*; }
+mod std { pub use ::fmt::std::*; }
 
 mod impls {
     mod slice;

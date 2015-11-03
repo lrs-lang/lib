@@ -2,8 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use base::prelude::*;
 use {Hash, Hasher};
-use base::into::{Into};
 
 impl<T: Hash> Hash for [T] {
     fn stateful_hash<H: Hasher>(&self, h: &mut H) {

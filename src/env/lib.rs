@@ -8,8 +8,6 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core      as core;
 extern crate lrs_base      as base;
 extern crate lrs_str_one   as str_one;
 extern crate lrs_str_two   as str_two;
@@ -20,7 +18,7 @@ extern crate lrs_rmo       as rmo;
 extern crate lrs_alloc     as alloc;
 extern crate lrs_syscall   as syscall;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::slice::{Split};
 use core::{mem};
 use str_one::{CStr, NoNullStr};
@@ -32,7 +30,7 @@ use base::{error};
 use cty::{PATH_MAX, PAGE_SIZE};
 use rmo::{Rmo};
 
-mod lrs { pub use base::lrs::*; pub use cty; }
+mod std { pub use base::std::*; pub use cty; }
 
 /// Retrieves the value of an environment variable, if any.
 ///

@@ -2,11 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::{mem, ptr, slice};
 use core::ptr::{OwnedPtr};
 use core::ops::{Eq};
-use core::iter::{Iterator, IntoIterator};
+use core::iter::{IntoIterator};
 use base::clone::{Clone};
 use base::default::{Default};
 use hash::{self, Hash};
@@ -343,9 +343,21 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator>
     pub fn reserve(&mut self, n: usize) -> Result<bool> {
         if self.buckets / 2 - self.elements > n {
             // Don't have to resize.
-            return Ok(false);
+            Ok(false)
+        } else {
+            self.resize(n)
         }
+    }
 
+    pub fn shrink_to_fit(&mut self) -> Result<bool> {
+        if self.buckets / 2 > self.elements - self.deleted + 1 {
+            self.resize(0)
+        } else {
+            Ok(false)
+        }
+    }
+    
+    fn resize(&mut self, n: usize) -> Result<bool> {
         let new_buckets = (self.elements - self.deleted + 1)
                                     .checked_add(n).unwrap_or(!0)
                                     .checked_next_power_of_two().unwrap_or(!0)
@@ -589,7 +601,7 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator>
     }
 }
 
-impl<'a, Key, Value, Bucket, Hasher, Seed, Allocator>
+impl<'a, Key: 'a, Value: 'a, Bucket, Hasher, Seed, Allocator>
     IntoIterator for &'a GenericMap<Key, Value, Bucket, Hasher, Seed, Allocator>
     where Allocator: alloc::Allocator,
           Bucket: bucket::Bucket<Key, Value>,
@@ -614,7 +626,7 @@ pub struct MapIter<'a, Key, Value, Bucket>
     _marker: PhantomData<(Key, Value)>,
 }
 
-impl<'a, Key, Value, Bucket> Iterator for MapIter<'a, Key, Value, Bucket>
+impl<'a, Key: 'a, Value: 'a, Bucket> Iterator for MapIter<'a, Key, Value, Bucket>
     where Bucket: bucket::Bucket<Key, Value>,
 {
     type Item = (&'a Key, &'a Value);

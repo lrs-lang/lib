@@ -10,23 +10,24 @@ use ptr::P;
 
 pub fn derive_debug(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Annotatable,
                     push: &mut FnMut(Annotatable)) {
-    // &mut ::lrs::io::Writer
-    let fmtr = Ptr(Box::new(Literal(path_std!(cx, lrd::io::Writer))),
+    // &mut ::std::io::Write
+    let fmtr = Ptr(Box::new(Literal(path_std!(cx, lrd::io::Write))),
                    Borrowed(None, ast::MutMutable));
 
     let trait_def = TraitDef {
         span: span,
         attributes: Vec::new(),
-        path: path_std!(cx, lrs::fmt::Debug),
+        path: path_std!(cx, std::fmt::Debug),
         additional_bounds: Vec::new(),
         generics: LifetimeBounds::empty(),
+        is_unsafe: false,
         methods: vec![
             MethodDef {
                 name: "fmt",
                 generics: LifetimeBounds::empty(),
                 explicit_self: borrowed_explicit_self(),
                 args: vec!(fmtr),
-                ret_ty: Literal(path_std!(cx, lrs::result::Result)),
+                ret_ty: Literal(path_std!(cx, std::result::Result)),
                 attributes: Vec::new(),
                 is_unsafe: false,
                 combine_substructure: combine_substructure(Box::new(|a, b, c| {
@@ -45,7 +46,7 @@ fn debug_substructure(cx: &mut ExtCtxt, span: Span,
     // build fmt.debug_struct(<name>).field(<fieldname>, &<fieldval>)....build()
     // or fmt.debug_tuple(<name>).field(&<fieldval>)....build()
     // based on the "shape".
-    let name = match *substr.fields {
+    let ident = match *substr.fields {
         Struct(_) => substr.type_ident,
         EnumMatching(_, v, _) => v.node.name,
         EnumNonMatchingCollapsed(..) | StaticStruct(..) | StaticEnum(..) => {
@@ -55,7 +56,7 @@ fn debug_substructure(cx: &mut ExtCtxt, span: Span,
 
     // We want to make sure we have the expn_id set so that we can use unstable methods
     let span = Span { expn_id: cx.backtrace(), .. span };
-    let name = cx.expr_lit(span, ast::Lit_::LitStr(token::get_ident(name),
+    let name = cx.expr_lit(span, ast::Lit_::LitStr(ident.name.as_str(),
                                                    ast::StrStyle::CookedStr));
     let mut expr = substr.nonself_args[0].clone();
 
@@ -88,7 +89,7 @@ fn debug_substructure(cx: &mut ExtCtxt, span: Span,
 
                 for field in fields {
                     let name = cx.expr_lit(field.span, ast::Lit_::LitStr(
-                            token::get_ident(field.name.clone().unwrap()),
+                            field.name.as_ref().unwrap().name.as_str(),
                             ast::StrStyle::CookedStr));
 
                     // Use double indirection to make sure this works for unsized types

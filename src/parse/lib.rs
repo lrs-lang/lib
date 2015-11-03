@@ -4,20 +4,21 @@
 
 #![crate_name = "lrs_parse"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std)]
+#![feature(plugin, no_std, custom_derive)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use base::{error};
 
-pub mod lrs {
-    pub use ::base::lrs::*;
-}
+mod std { pub use base::std::*; }
+
+pub use int::{
+    HexU8, HexU16, HexU32, HexU64, HexUsize, OctU8, OctU16, OctU32, OctU64, OctUsize,
+    BinU8, BinU16, BinU32, BinU64, BinUsize,
+};
 
 mod int;
 

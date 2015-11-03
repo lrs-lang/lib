@@ -8,8 +8,6 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_cty as cty;
 extern crate lrs_fmt as fmt;
@@ -19,7 +17,7 @@ extern crate lrs_rv as rv;
 extern crate lrs_io as io;
 extern crate lrs_saturating as saturating;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use syscall::{
     close, pipe2, read, write, readv, writev, fcntl_setpipe_sz, fcntl_getpipe_sz,
     ioctl_fionread, tee, splice,
@@ -33,7 +31,7 @@ use io::{Read, Write};
 use rv::{retry};
 use saturating::{SaturatingCast};
 
-mod lrs { pub use base::lrs::*; pub use cty; }
+mod std { pub use base::std::*; pub use cty; }
 
 pub mod flags;
 

@@ -4,18 +4,16 @@
 
 #![crate_name = "lrs_base"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, custom_derive)]
+#![feature(plugin, no_std, custom_attribute, custom_derive, prelude_import)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_wrapping as wrapping;
 extern crate lrs_cty_base as cty_base;
 
-pub mod lrs {
-    pub use core::lrs::*;
-    pub use {clone, result, error};
+pub mod std {
+    pub use core::*;
+    pub use {result, clone, error};
 }
 
 pub mod clone;
@@ -27,7 +25,7 @@ pub mod undef;
 pub mod default;
 
 pub mod prelude {
-    pub use core::prelude::*;
+    pub use core::prelude::v1::*;
     pub use core::bool::{BoolExt};
     pub use result::{Result};
     pub use result::Result::{Ok, Err};

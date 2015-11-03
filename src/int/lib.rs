@@ -4,14 +4,10 @@
 
 #![crate_name = "lrs_int"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std)]
+#![feature(plugin, prelude_import, no_std)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
-
-#[prelude_import] use core::prelude::*;
 use core::ops::{Range, RangeTo};
 
 /// Objects that can be interpreted as a bounded range.
@@ -57,7 +53,7 @@ int_impl!(i64);
 int_impl!(isize);
 
 /// Unsigned integers.
-pub trait UnsignedInt : Int {
+pub trait UnsignedInt : Int+Sized {
     /// Calculates the next power of two greater or equal the current value.
     ///
     /// [return_value]

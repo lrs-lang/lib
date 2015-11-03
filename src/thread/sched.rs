@@ -4,7 +4,7 @@
 
 #![allow(non_upper_case_globals)]
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::ops::{BitOr, Not, BitAnd};
 use core::{mem};
 use cty::alias::{ProcessId, UserId};

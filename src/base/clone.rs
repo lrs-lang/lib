@@ -74,12 +74,22 @@ impl<T0, T1> Clone for (T0,T1)
     }
 }
 
+impl<T0, T1, T2> Clone for (T0,T1,T2)
+    where T0: Clone,
+          T1: Clone,
+          T2: Clone,
+{
+    fn clone(&self) -> (T0,T1,T2) {
+        (self.0.clone(),self.1.clone(),self.2.clone())
+    }
+}
+
 /// Objects that can be duplicated.
 ///
 /// = Remarks
 ///
 /// Duplication might not succeed (e.g. out of memory) in which case an error is returned.
-pub trait MaybeClone {
+pub trait MaybeClone: Sized {
     /// Clones the value.
     fn maybe_clone(&self) -> Result<Self>;
 }

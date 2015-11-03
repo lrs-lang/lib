@@ -2,14 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![feature(plugin, no_std)]
-#![plugin(linux_core_plugin)]
-#![no_std]
+#![feature(plugin)]
+#![plugin(lrs_core_plugin)]
 
-#[macro_use] extern crate linux;
-mod core { pub use linux::core::*; }
-
-use linux::thread::{scoped};
+use std::thread::{scoped};
 
 const SIZE: usize = 1_000_000;
 

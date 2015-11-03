@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use cty::{
     NLM_F_REQUEST, NLM_F_MULTI, NLM_F_ACK, NLM_F_ECHO, NLM_F_ROOT, NLM_F_ATOMIC,
     NLM_F_REPLACE, NLM_F_EXCL, NLM_F_CREATE, NLM_F_APPEND, NLM_F_MATCH, NLM_F_DUMP,

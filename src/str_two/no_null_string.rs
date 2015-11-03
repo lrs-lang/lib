@@ -2,8 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import] use base::prelude::*;
-use base::rmo::{AsRef, AsMut};
+use base::prelude::*;
+use arch_fns::{memchr};
 use base::undef::{UndefState};
 use base::default::{Default};
 use core::{mem};
@@ -39,6 +39,14 @@ impl<'a> NoNullString<alloc::NoMem<'a>> {
 impl<H> NoNullString<H>
     where H: Allocator,
 {
+    pub fn from_bytes(bytes: Vec<u8, H>) -> Result<NoNullString<H>, Vec<u8, H>> {
+        if memchr(&bytes, 0).is_some() {
+            Err(bytes)
+        } else {
+            Ok(NoNullString { data: bytes })
+        }
+    }
+
     /// Creates a `NoNullString` by wrapping a vector without checking it for validity.
     ///
     /// [argument, bytes]

@@ -2,10 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use {Hash, Hasher};
 use wrapping::{W8, W16, W32, W64, Wsize};
-use base::into::{Into};
 
 macro_rules! impl_num {
     ($ty:ty, $hfn:ident, $wfn:ident) => {

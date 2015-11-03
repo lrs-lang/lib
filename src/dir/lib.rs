@@ -8,9 +8,7 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
 extern crate lrs_base      as base;
-extern crate lrs_core      as core;
 extern crate lrs_cty       as cty;
 extern crate lrs_str_one   as str_one;
 extern crate lrs_str_two   as str_two;
@@ -23,8 +21,8 @@ extern crate lrs_file      as file;
 extern crate lrs_alloc     as alloc;
 extern crate lrs_vec       as vec;
 
-#[prelude_import] use base::prelude::*;
-mod lrs { pub use fmt::lrs::*; }
+use base::prelude::*;
+mod std { pub use fmt::std::*; }
 
 use cty::{linux_dirent64, MODE_TYPE_SHIFT, umode_t, PATH_MAX};
 use str_one::{CStr, ByteStr};
@@ -34,7 +32,6 @@ use syscall::{getdents};
 use base::error::{Errno};
 use vec::{Vec};
 use fd::{FDContainer};
-use base::rmo::{AsRef};
 use fmt::{Debug, Write};
 use core::{mem};
 use rmo::{Rmo, ToOwned};

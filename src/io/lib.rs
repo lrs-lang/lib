@@ -8,17 +8,15 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_arch_fns as arch_fns;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::{mem, cmp};
 use base::error::{DeviceFull};
 use arch_fns::{memchr};
 
-mod lrs { pub use base::lrs::*; }
+mod std { pub use base::std::*; }
 
 /// Objects that wrap a byte-stream for reading.
 pub trait Read {
@@ -282,8 +280,7 @@ impl<'a> Write for &'a mut [u8] {
         let n = mem::copy(*self, buf);
         unsafe {
             // Compiler bug.
-            let slf: &mut &'static mut [u8] = mem::cast::<&mut &mut [u8], _>(self);
-            *slf = &mut slf[n..];
+            *self = mem::cast::<&mut [u8], &'a mut [u8]>(&mut self[n..]);
         }
         Ok(n)
     }

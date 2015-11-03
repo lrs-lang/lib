@@ -1,4 +1,4 @@
-use ast::{self, MetaItem, Item, Expr};
+use ast::{self, MetaItem, Expr};
 
 use codemap::{Span};
 
@@ -76,9 +76,10 @@ pub fn derive_eq(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Annotata
     let trait_def = TraitDef {
         span: span,
         attributes: Vec::new(),
-        path: path_std!(cx, lrs::ops::Eq),
+        path: path_std!(cx, std::ops::Eq),
         additional_bounds: Vec::new(),
         generics: LifetimeBounds::empty(),
+        is_unsafe: false,
         methods: vec!(
             md!("eq", cs_eq),
             md!("ne", cs_ne)

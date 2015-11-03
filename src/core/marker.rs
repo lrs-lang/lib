@@ -229,5 +229,6 @@ pub struct PhantomData<T: ?Sized>;
 impl<T: ?Sized> Copy for PhantomData<T> { }
 impl<T: ?Sized> Eq for PhantomData<T> { fn eq(&self, _: &PhantomData<T>) -> bool { true } }
 
+/// Objects that can be converted to an unsized type.
 #[lang="unsize"]
-pub trait Unsize<T> { }
+pub trait Unsize<T: ?Sized> { }

@@ -8,8 +8,6 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core       as core;
 extern crate lrs_base       as base;
 extern crate lrs_cty        as cty;
 extern crate lrs_syscall    as syscall;
@@ -19,8 +17,8 @@ extern crate lrs_saturating as saturating;
 extern crate lrs_fmt        as fmt;
 extern crate lrs_time_base  as time_base;
 
-#[prelude_import] use base::prelude::*;
-mod lrs { pub use base::lrs::*; pub use {cty}; }
+use base::prelude::*;
+mod std { pub use base::std::*; pub use {cty}; }
 
 use core::{mem};
 use core::ops::{BitOr, Not, BitAnd};

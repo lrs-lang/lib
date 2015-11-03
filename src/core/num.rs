@@ -4,7 +4,8 @@
 
 use ops::{
     Eq, Add, Sub, Mul, Div, Rem, BitOr, BitAnd, BitXor, Shl, Shr, Range, RangeFrom,
-    RangeTo, Ordering, PartialOrd,
+    AddAssign, SubAssign, MulAssign, DivAssign, RemAssign, BitOrAssign, BitAndAssign,
+    BitXorAssign, ShlAssign, ShrAssign, RangeTo, Ordering, PartialOrd,
 };
 use marker::{Pod};
 use cmp::{Ord};
@@ -449,9 +450,17 @@ macro_rules! int_impls {
             fn add(self, other: $t) -> $t { self + other }
         }
 
+        impl AddAssign for $t {
+            fn add_assign(&mut self, other: $t) { *self += other }
+        }
+
         impl Sub for $t {
             type Output = $t;
             fn sub(self, other: $t) -> $t { self - other }
+        }
+
+        impl SubAssign for $t {
+            fn sub_assign(&mut self, other: $t) { *self -= other }
         }
 
         impl Mul for $t {
@@ -459,9 +468,17 @@ macro_rules! int_impls {
             fn mul(self, other: $t) -> $t { self * other }
         }
 
+        impl MulAssign for $t {
+            fn mul_assign(&mut self, other: $t) { *self *= other }
+        }
+
         impl Div for $t {
             type Output = $t;
             fn div(self, other: $t) -> $t { self / other }
+        }
+
+        impl DivAssign for $t {
+            fn div_assign(&mut self, other: $t) { *self /= other }
         }
 
         impl Rem for $t {
@@ -469,9 +486,17 @@ macro_rules! int_impls {
             fn rem(self, other: $t) -> $t { self % other }
         }
 
+        impl RemAssign for $t {
+            fn rem_assign(&mut self, other: $t) { *self %= other }
+        }
+
         impl BitOr for $t {
             type Output = $t;
             fn bitor(self, other: $t) -> $t { self | other }
+        }
+
+        impl BitOrAssign for $t {
+            fn bitor_assign(&mut self, other: $t) { *self |= other }
         }
 
         impl BitAnd for $t {
@@ -479,9 +504,17 @@ macro_rules! int_impls {
             fn bitand(self, other: $t) -> $t { self & other }
         }
 
+        impl BitAndAssign for $t {
+            fn bitand_assign(&mut self, other: $t) { *self &= other }
+        }
+
         impl BitXor for $t {
             type Output = $t;
             fn bitxor(self, other: $t) -> $t { self ^ other }
+        }
+
+        impl BitXorAssign for $t {
+            fn bitxor_assign(&mut self, other: $t) { *self ^= other }
         }
 
         impl Shl<i8> for $t {
@@ -572,6 +605,78 @@ macro_rules! int_impls {
         impl Shr<usize> for $t {
             type Output = $t;
             fn shr(self, other: usize) -> $t { self >> other }
+        }
+
+        impl ShlAssign<i8> for $t {
+            fn shl_assign(&mut self, other: i8) { *self <<= other }
+        }
+
+        impl ShrAssign<i8> for $t {
+            fn shr_assign(&mut self, other: i8) { *self >>= other }
+        }
+
+        impl ShlAssign<u8> for $t {
+            fn shl_assign(&mut self, other: u8) { *self <<= other }
+        }
+
+        impl ShrAssign<u8> for $t {
+            fn shr_assign(&mut self, other: u8) { *self >>= other }
+        }
+
+        impl ShlAssign<i16> for $t {
+            fn shl_assign(&mut self, other: i16) { *self <<= other }
+        }
+
+        impl ShrAssign<i16> for $t {
+            fn shr_assign(&mut self, other: i16) { *self >>= other }
+        }
+
+        impl ShlAssign<u16> for $t {
+            fn shl_assign(&mut self, other: u16) { *self <<= other }
+        }
+
+        impl ShrAssign<u16> for $t {
+            fn shr_assign(&mut self, other: u16) { *self >>= other }
+        }
+
+        impl ShlAssign<i32> for $t {
+            fn shl_assign(&mut self, other: i32) { *self <<= other }
+        }
+
+        impl ShrAssign<i32> for $t {
+            fn shr_assign(&mut self, other: i32) { *self >>= other }
+        }
+
+        impl ShlAssign<u32> for $t {
+            fn shl_assign(&mut self, other: u32) { *self <<= other }
+        }
+
+        impl ShrAssign<u32> for $t {
+            fn shr_assign(&mut self, other: u32) { *self >>= other }
+        }
+
+        impl ShlAssign<i64> for $t {
+            fn shl_assign(&mut self, other: i64) { *self <<= other }
+        }
+
+        impl ShrAssign<i64> for $t {
+            fn shr_assign(&mut self, other: i64) { *self >>= other }
+        }
+
+        impl ShlAssign<u64> for $t {
+            fn shl_assign(&mut self, other: u64) { *self <<= other }
+        }
+
+        impl ShrAssign<u64> for $t {
+            fn shr_assign(&mut self, other: u64) { *self >>= other }
+        }
+
+        impl ShlAssign<usize> for $t {
+            fn shl_assign(&mut self, other: usize) { *self <<= other }
+        }
+
+        impl ShrAssign<usize> for $t {
+            fn shr_assign(&mut self, other: usize) { *self >>= other }
         }
 
         impl Iterator for Range<$t> {

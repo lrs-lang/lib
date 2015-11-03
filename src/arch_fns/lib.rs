@@ -4,15 +4,11 @@
 
 #![crate_name = "lrs_arch_fns"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, asm, lang_items)]
+#![feature(plugin, no_std, asm, lang_items, prelude_import)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_libc as libc;
-
-#[prelude_import] use core::prelude::*;
 
 /// Returns the first occurrence of a byte in a byte slice if any.
 ///

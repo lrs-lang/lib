@@ -8,8 +8,6 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_cty_base as cty_base;
 extern crate lrs_base as base;
 extern crate lrs_arch_fns as arch_fns;
@@ -20,9 +18,7 @@ pub use byte_str::{ByteStr, AsByteStr, AsMutByteStr};
 pub use no_null_str::{NoNullStr, AsNoNullStr, AsMutNoNullStr};
 pub use c_str::{CStr, AsCStr, AsMutCStr, ToCStr};
 
-pub mod lrs {
-    pub use ::base::lrs::*;
-}
+pub mod std { pub use ::base::std::*; }
 
 pub mod byte_str;
 pub mod no_null_str;

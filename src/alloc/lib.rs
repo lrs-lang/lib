@@ -8,14 +8,12 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_cty as cty;
 extern crate lrs_syscall as syscall;
 extern crate lrs_libc;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::marker::{Leak};
 use core::{mem};
 use base::{error};
@@ -29,7 +27,7 @@ pub use align::{AlignAlloc};
 #[cfg(jemalloc)]
 pub use jemalloc::{JeMalloc};
 
-mod lrs { pub use base::lrs::*; }
+mod std { pub use base::std::*; }
 
 mod libc;
 mod no;
@@ -166,10 +164,14 @@ pub trait Allocator: Leak {
     ///
     /// = Remarks
     ///
-    /// If `T` has size `0`, the behavior is undefined.
+    /// If `T` has size `0`, a call to this function behaves like a call to `empty_ptr`.
     unsafe fn allocate<T>(pool: &mut Self::Pool) -> Result<*mut T> {
-        Self::allocate_raw(pool, mem::size_of::<T>(), mem::align_of::<T>())
-                    .map(|r| r as *mut T)
+        if mem::size_of::<T>() == 0 {
+            Ok(empty_ptr())
+        } else {
+            Self::allocate_raw(pool, mem::size_of::<T>(), mem::align_of::<T>())
+                        .map(|r| r as *mut T)
+        }
     }
 
     /// Allocates an array of the specified type.
@@ -185,12 +187,17 @@ pub trait Allocator: Leak {
     ///
     /// = Remarks
     ///
-    /// If `num` is `0` or `T` has size `0`, the behavior is undefined.
+    /// If `T` has size `0`, a call to this function behaves like a call to `empty_ptr`.
+    /// Otherwise, if `num` is `0`, the behavior is undefined.
     unsafe fn allocate_array<T>(pool: &mut Self::Pool, num: usize) -> Result<*mut T> {
-        match num.checked_mul(mem::size_of::<T>()) {
-            Some(size) => Self::allocate_raw(pool, size, mem::align_of::<T>())
-                                    .map(|r| r as *mut T),
-            _ => Err(error::InvalidArgument),
+        if mem::size_of::<T>() == 0 {
+            Ok(empty_ptr())
+        } else {
+            match num.checked_mul(mem::size_of::<T>()) {
+                Some(size) => Self::allocate_raw(pool, size, mem::align_of::<T>())
+                                        .map(|r| r as *mut T),
+                _ => Err(error::InvalidArgument),
+            }
         }
     }
 
@@ -213,6 +220,9 @@ pub trait Allocator: Leak {
     ///
     /// = Remarks
     ///
+    /// If `T` has size `0`, a call to this function behaves like a call to `empty_ptr`.
+    /// Otherwise:
+    ///
     /// The pointer argument must be a pointer returned by a previous call to
     /// `allocate_array` or `reallocate_array` with the same allocator and pool. The
     /// oldnum argument must be the number of elements pointed to by the pointer argument.
@@ -225,12 +235,16 @@ pub trait Allocator: Leak {
     /// longer be used. Otherwise the old pointer can continued to be used.
     unsafe fn reallocate_array<T>(pool: &mut Self::Pool, ptr: *mut T, oldnum: usize,
                                   newnum: usize) -> Result<*mut T> {
-        match newnum.checked_mul(mem::size_of::<T>()) {
-            Some(size) => Self::reallocate_raw(pool, ptr as *mut u8,
-                                               oldnum * mem::size_of::<T>(), size,
-                                               mem::align_of::<T>())
-                                    .map(|r| r as *mut T),
-            _ => Err(error::InvalidArgument),
+        if mem::size_of::<T>() == 0 {
+            Ok(empty_ptr())
+        } else {
+            match newnum.checked_mul(mem::size_of::<T>()) {
+                Some(size) => Self::reallocate_raw(pool, ptr as *mut u8,
+                                                   oldnum * mem::size_of::<T>(), size,
+                                                   mem::align_of::<T>())
+                                        .map(|r| r as *mut T),
+                _ => Err(error::InvalidArgument),
+            }
         }
     }
 
@@ -244,6 +258,8 @@ pub trait Allocator: Leak {
     ///
     /// = Remarks
     ///
+    /// If `T` has size `0`, this function performs no operation. Otherwise:
+    ///
     /// The pointer argument must be a pointer returned by a previous call to
     /// `allocate_array` or `reallocate_array` with the same allocator. The num argument
     /// must be the number of elements in the array.
@@ -253,8 +269,10 @@ pub trait Allocator: Leak {
     /// After this function returns the pointer argument becomes invalid and must no
     /// longer be used.
     unsafe fn free_array<T>(pool: &mut Self::Pool, ptr: *mut T, num: usize) {
-        Self::free_raw(pool, ptr as *mut u8, num * mem::size_of::<T>(),
-                       mem::align_of::<T>());
+        if mem::size_of::<T>() != 0 {
+            Self::free_raw(pool, ptr as *mut u8, num * mem::size_of::<T>(),
+                           mem::align_of::<T>());
+        }
     }
 
     /// Frees an object.
@@ -267,12 +285,17 @@ pub trait Allocator: Leak {
     ///
     /// = Remarks
     ///
+    /// If `T` has size `0`, this function performs no operation. Otherwise:
+    ///
     /// The pointer argument must be a pointer returned by a previous call to `allocate`
     /// with the same allocator and pool. Otherwise the behavior is undefined.
     ///
     /// After this function returns the pointer argument becomes invalid and must no
     /// longer be used.
     unsafe fn free<T>(pool: &mut Self::Pool, ptr: *mut T) {
-        Self::free_raw(pool, ptr as *mut u8, mem::size_of::<T>(), mem::align_of::<T>());
+        if mem::size_of::<T>() != 0 {
+            Self::free_raw(pool, ptr as *mut u8, mem::size_of::<T>(),
+                           mem::align_of::<T>());
+        }
     }
 }

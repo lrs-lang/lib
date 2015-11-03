@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::{mem};
 use core::ops::{BitOr, Not, BitAnd};
 use cty::{c_int, PATH_MAX, MNT_FORCE, MNT_DETACH, MNT_EXPIRE, UMOUNT_NOFOLLOW};

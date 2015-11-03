@@ -9,17 +9,15 @@
 #![no_std]
 #![allow(non_upper_case_globals)] 
 
-#[macro_use]
-extern crate lrs_core       as core;
 extern crate lrs_base       as base;
 extern crate lrs_cty        as cty;
 extern crate lrs_alloc      as alloc;
 extern crate lrs_vec        as vec;
 extern crate lrs_fmt        as fmt_;
 
-mod lrs { pub use fmt_::lrs::*; pub use cty; }
+mod std { pub use fmt_::std::*; pub use cty; }
 
-#[allow(unused_imports)] #[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use base::{error};
 use core::{mem};
 use cty::{c_int};

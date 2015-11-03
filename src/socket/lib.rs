@@ -9,8 +9,6 @@
 #![no_std]
 #![allow(non_upper_case_globals)] 
 
-#[macro_use]
-extern crate lrs_core       as core;
 extern crate lrs_base       as base;
 extern crate lrs_cty        as cty;
 extern crate lrs_arch_fns   as arch_fns;
@@ -29,7 +27,7 @@ pub use addr::unix::{UnixSockAddr, UnixAddrType};
 pub use addr::ipv4::{Ipv4Addr, Ipv4SockAddr, IPV4_SOCK_ADDR_SIZE};
 pub use addr::ipv6::{Ipv6Addr, Ipv6SockAddr, IPV6_SOCK_ADDR_SIZE, Ipv6Scope};
 
-mod lrs { pub use fmt::lrs::*; pub use cty; }
+mod std { pub use fmt::std::*; pub use cty; }
 
 pub mod cmsg;
 pub mod addr;

@@ -1,4 +1,4 @@
-use ast::{MetaItem, Item};
+use ast::{MetaItem};
 
 use codemap::{Span};
 
@@ -6,11 +6,9 @@ use ext::base::{ExtCtxt, Annotatable};
 use ext::deriving::generic::{TraitDef};
 use ext::deriving::generic::ty::{Path, LifetimeBounds};
 
-use ptr::{P};
-
 pub fn derive_marker(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Annotatable,
                      push: &mut FnMut(Annotatable), name: &str) {
-    let path = Path::new(vec!("lrs", "marker", name));
+    let path = Path::new(vec!("std", "marker", name));
 
     let trait_def = TraitDef {
         span: span,
@@ -18,6 +16,7 @@ pub fn derive_marker(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Anno
         path: path,
         additional_bounds: Vec::new(),
         generics: LifetimeBounds::empty(),
+        is_unsafe: false,
         methods: Vec::new(),
         associated_types: Vec::new(),
     };

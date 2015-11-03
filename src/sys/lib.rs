@@ -8,8 +8,6 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_fmt as fmt;
 extern crate lrs_cty as cty;
@@ -22,11 +20,8 @@ extern crate lrs_iter as iter;
 extern crate lrs_rmo as rmo;
 extern crate lrs_alloc as alloc;
 
-#[prelude_import] use base::prelude::*;
-mod lrs {
-    pub use fmt::lrs::*;
-    pub use {cty};
-}
+use base::prelude::*;
+mod std { pub use fmt::std::*; pub use {cty}; }
 
 use core::{mem};
 use core::ops::{Eq};
@@ -43,7 +38,6 @@ use syscall::{
 };
 use str_one::{AsCStr, ByteStr, CStr, ToCStr};
 use str_three::{ToCString};
-use base::rmo::{AsRef};
 use rv::{retry};
 use rmo::{Rmo};
 use alloc::{FbHeap};

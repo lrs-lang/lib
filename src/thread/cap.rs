@@ -4,7 +4,7 @@
 
 #![allow(non_upper_case_globals, non_camel_case_types)]
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use fmt::{Debug, Write};
 use core::{mem};
 use cty::alias::{ProcessId};

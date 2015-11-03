@@ -12,5 +12,5 @@
 pub use lrs_core::intrinsics::{
     discriminant_value, abort, breakpoint, size_of, move_val_init, min_align_of,
     init_dropped, init, uninit, forget, transmute, needs_drop, offset, copy,
-    copy_nonoverlapping, lrs_abort,
+    copy_nonoverlapping, lrs_abort, unreachable,
 };

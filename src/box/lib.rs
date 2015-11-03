@@ -9,20 +9,17 @@
 #![no_std]
 #![allow(non_upper_case_globals)] 
 
-#[macro_use]
-extern crate lrs_core  as core;
 extern crate lrs_base  as base;
 extern crate lrs_alloc as alloc;
 extern crate lrs_fmt   as fmt;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use base::default::{Default};
 use core::ptr::{OwnedPtr};
 use core::{ptr, mem, intrinsics};
-use core::ops::{Deref, DerefMut};
 use fmt::{Debug, Write};
 
-mod lrs { pub use fmt::lrs::*; }
+mod std { pub use fmt::std::*; }
 
 /// A heap-allocated object.
 pub struct BoxBuf<T, Heap = alloc::Heap>

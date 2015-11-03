@@ -8,8 +8,6 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core      as core;
 extern crate lrs_base      as base;
 extern crate lrs_fmt       as fmt;
 extern crate lrs_str_one   as str_one;
@@ -18,12 +16,11 @@ extern crate lrs_time_base as time_base;
 extern crate lrs_io        as io;
 extern crate lrs_vec       as vec;
 
-#[prelude_import] use base::prelude::*;
-mod lrs { pub use vec::lrs::*; }
+use base::prelude::*;
+mod std { pub use vec::std::*; }
 
 pub use time_base::{Time};
 
-use base::rmo::{AsRef};
 use fmt::{Debug, Write};
 use vec::{Vec};
 use str_one::{AsNoNullStr};

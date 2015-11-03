@@ -8,8 +8,6 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_libc as libc;
 extern crate lrs_syscall as syscall;
@@ -21,9 +19,9 @@ extern crate lrs_iter as iter;
 extern crate lrs_clone as clone;
 extern crate lrs_fd as fd;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::marker::{Leak};
-use core::ops::{Drop, Index};
+use core::ops::{Index};
 use core::{mem, ptr, intrinsics};
 use cty::{c_int};
 use cty::alias::{ProcessId};
@@ -34,7 +32,7 @@ use fmt::{Debug, Write};
 use fd::{FDContainer};
 use clone::flags::{CloneFlags};
 
-mod lrs { pub use fmt::lrs::*; pub use cty; }
+mod std { pub use fmt::std::*; pub use cty; }
 
 pub mod ids;
 pub mod sched;

@@ -2,17 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![feature(plugin, no_std)]
-#![plugin(linux_core_plugin)]
-#![no_std]
+#![feature(plugin)]
+#![plugin(lrs_core_plugin)]
 
-#[macro_use] extern crate linux;
-mod core { pub use linux::core::*; }
-#[prelude_import] use linux::prelude::*;
-
-use linux::string::{CPtrPtr};
-use linux::process::{fork, exec, wait_all, wait_id, WAIT_EXITED, WAIT_DONT_REAP,
-                     WAIT_NON_BLOCKING};
+use std::string::{CPtrPtr};
+use std::process::{fork, exec, wait_all, wait_id, WAIT_EXITED, WAIT_DONT_REAP,
+                     WAIT_DONT_BLOCK};
 
 fn main() {
     let pid = fork(|| {
@@ -28,5 +23,5 @@ fn main() {
     });
     println!("child pid: {:?}", pid);
     println!("wait result: {:?}", wait_id(pid.unwrap(), WAIT_EXITED | WAIT_DONT_REAP));
-    println!("wait result: {:?}", wait_all(WAIT_EXITED | WAIT_NON_BLOCKING));
+    println!("wait result: {:?}", wait_all(WAIT_EXITED | WAIT_DONT_BLOCK));
 }

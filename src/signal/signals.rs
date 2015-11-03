@@ -4,7 +4,7 @@
 
 #![allow(non_upper_case_globals, non_camel_case_types)]
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use cty::{self};
 use fmt::{Debug, Write};
 

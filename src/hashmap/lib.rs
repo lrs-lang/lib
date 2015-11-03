@@ -8,15 +8,13 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_alloc as alloc;
 extern crate lrs_hash as hash;
 extern crate lrs_fmt as fmt;
 extern crate lrs_fd as fd;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::ops::{Eq};
 use base::undef::{UndefState};
 use base::clone::{Clone};
@@ -29,7 +27,7 @@ use table::{GenericMap};
 
 pub use table::{Entry, VacantEntry, OccupiedEntry};
 
-mod lrs { pub use fmt::lrs::*; pub use fd; }
+mod std { pub use fmt::std::*; pub use fd; }
 
 mod bucket;
 mod table;

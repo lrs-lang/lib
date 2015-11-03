@@ -90,6 +90,15 @@ impl char {
             Some(unsafe { mem::cast(val) })
         }
     }
+
+    /// Returns the largest valid character.
+    ///
+    /// = Remarks
+    ///
+    /// In the current implementation, the character is U+10ffff.
+    pub const fn max() -> char {
+        '\u{10ffff}'
+    }
 }
 
 /// = Remarks

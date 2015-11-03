@@ -9,8 +9,6 @@
 #![no_std]
 #![allow(trivial_numeric_casts)]
 
-#[macro_use]
-extern crate lrs_core      as core;
 extern crate lrs_base      as base;
 extern crate lrs_fmt       as fmt;
 extern crate lrs_cty       as cty;
@@ -20,12 +18,9 @@ extern crate lrs_str_three as str_three;
 extern crate lrs_alloc     as alloc;
 extern crate lrs_rmo       as rmo;
 
-mod lrs {
-    pub use fmt::lrs::*;
-    pub use {cty};
-}
+mod std { pub use fmt::std::*; pub use {cty}; }
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::{mem};
 use syscall::{sync, chroot, pivot_root};
 use cty::{PATH_MAX};

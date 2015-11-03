@@ -8,8 +8,6 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_cty as cty;
 extern crate lrs_syscall as syscall;
@@ -17,14 +15,14 @@ extern crate lrs_parse as parse;
 extern crate lrs_atomic as atomic;
 extern crate lrs_arch_fns as arch_fns;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::{mem};
 use base::{error};
 use syscall::{uname};
 use atomic::{AtomicU8, ATOMIC_U8_INIT};
 use parse::{Parsable};
 
-mod lrs { pub use base::lrs::*; }
+mod std { pub use base::std::*; }
 
 static mut MAJOR: u8 = 0;
 static mut MINOR: u8 = 0;

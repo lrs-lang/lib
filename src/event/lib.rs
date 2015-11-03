@@ -8,8 +8,6 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_fd as fd;
 extern crate lrs_io as io;
@@ -17,7 +15,7 @@ extern crate lrs_fmt as fmt;
 extern crate lrs_cty as cty;
 extern crate lrs_syscall as syscall;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use base::undef::{UndefState};
 use cty::{c_int};
 use syscall::{close, eventfd2};
@@ -26,7 +24,7 @@ use fd::{FDContainer};
 use flags::{EventfdFlags};
 use io::{Read, Write};
 
-mod lrs { pub use fmt::lrs::*; pub use cty; }
+mod std { pub use fmt::std::*; pub use cty; }
 
 pub mod flags;
 

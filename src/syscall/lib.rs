@@ -8,15 +8,13 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core       as core;
 extern crate lrs_saturating as saturating;
 extern crate lrs_base    as base;
 extern crate lrs_str_one    as str_one;
 extern crate lrs_cty        as cty;
 extern crate lrs_r_syscall  as r;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::{mem};
 use base::{error};
 use str_one::c_str::{CStr};
@@ -40,7 +38,7 @@ use cty::{
 
 pub use r::{StatType, StatfsType};
 
-mod lrs { pub use base::lrs::*; pub use cty; }
+mod std { pub use base::std::*; pub use cty; }
 
 // XXX: iovec _MUST_ be the same as &mut [u8]
 //

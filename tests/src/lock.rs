@@ -2,15 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![feature(plugin, no_std)]
+#![feature(plugin, const_fn)]
 #![plugin(lrs_core_plugin)]
-#![no_std]
 
-#[macro_use] extern crate lrs;
-mod core { pub use lrs::core::*; }
-#[prelude_import] use lrs::prelude::*;
-
-use lrs::sync::{Lock};
+use std::sync::{Lock};
 
 fn main() {
     static LOCK: Lock = Lock::new();

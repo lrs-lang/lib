@@ -2,27 +2,23 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![feature(plugin, no_std)]
+#![feature(plugin)]
 #![plugin(lrs_core_plugin)]
-#![no_std]
 
-#[macro_use] extern crate lrs;
 extern crate lrs_cty;
-mod core { pub use lrs::core::*; }
-#[prelude_import] use lrs::prelude::*;
 
-use lrs::{mem};
-use lrs::fd::{STDOUT};
-use lrs::socket::{Socket, domain, kind};
-use lrs::socket::flags::{SOCK_NONE};
-use lrs::socket::msg::{MSG_NONE};
+use std::{mem};
+use std::fd::{STDOUT};
+use std::socket::{Socket, domain, kind};
+use std::socket::flags::{SOCK_NONE};
+use std::socket::msg::{MSG_NONE};
 
-use lrs::netlink::proto::{self};
-use lrs::netlink::fmt::{NlBuf};
-use lrs::netlink::flags::{NLF_REQUEST, NLF_CREATE, NLF_EXCL, NLF_ACK};
-use lrs::netlink::route::{self, IfInfoMsg};
-use lrs::netlink::parse::{MsgIter, MsgParser};
-use lrs::netlink::{MsgError};
+use std::netlink::proto::{self};
+use std::netlink::fmt::{NlBuf};
+use std::netlink::flags::{NLF_REQUEST, NLF_CREATE, NLF_EXCL, NLF_ACK};
+use std::netlink::route::{self, IfInfoMsg};
+use std::netlink::parse::{MsgIter, MsgParser};
+use std::netlink::{MsgError};
 
 fn main() {
     let mut buf: NlBuf = NlBuf::new();

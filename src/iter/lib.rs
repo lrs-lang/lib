@@ -8,14 +8,11 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_vec as vec;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::ops::{Add};
-use core::iter::{Iterator};
 use vec::{Vec};
 
 /// Returns an iterator which yields a value indefinitely.

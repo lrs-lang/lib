@@ -9,8 +9,6 @@
 #![no_std]
 #![allow(non_upper_case_globals, non_camel_case_types)]
 
-extern crate lrs_core as core;
-
 pub use arch::{errno, types};
 
 mod gen;

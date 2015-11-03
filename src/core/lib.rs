@@ -4,10 +4,10 @@
 
 #![crate_name = "lrs_core"]
 #![crate_type = "lib"]
-#![feature(no_std, lang_items, intrinsics, asm, plugin, unboxed_closures,
-           optin_builtin_traits, const_fn, fundamental)]
+#![feature(no_core, lang_items, intrinsics, asm, plugin, unboxed_closures,
+           optin_builtin_traits, const_fn, fundamental, associated_type_defaults)]
 #![plugin(lrs_core_plugin)]
-#![no_std]
+#![no_core]
 
 #[macro_use]
 pub mod macros;
@@ -32,7 +32,7 @@ pub mod str;
 
 mod sort;
 
-pub mod lrs {
+pub mod std {
     pub use ::{marker, ops, intrinsics, option, mem};
 }
 
@@ -41,14 +41,16 @@ mod core {
 }
 
 pub mod prelude {
-    pub use marker::{Sized, Copy, Pod, Send, Sync, NoSend, NoSync, PhantomData};
+    pub mod v1 {
+        pub use marker::{Sized, Copy, Pod, Send, Sync, NoSend, NoSync, PhantomData};
 
-    pub use option::{Option};
-    pub use option::Option::{Some, None};
+        pub use option::{Option};
+        pub use option::Option::{Some, None};
 
-    pub use ops::{Fn, FnOnce, FnMut, Drop, Deref, DerefMut};
+        pub use ops::{Fn, FnOnce, FnMut, Drop, Deref, DerefMut};
 
-    pub use mem::{drop};
+        pub use mem::{drop};
 
-    pub use iter::{Iterator};
+        pub use iter::{Iterator};
+    }
 }

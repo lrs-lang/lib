@@ -8,14 +8,12 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_cty_base as cty_base;
 extern crate lrs_base as base;
 extern crate lrs_alloc as alloc;
 extern crate lrs_str_one as str_one;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::ptr::{OwnedPtr};
 use base::{error};
 use base::default::{Default};
@@ -24,7 +22,7 @@ use core::{slice};
 use str_one::{ToCStr};
 use alloc::{Allocator};
 
-mod lrs { pub use base::lrs::*; }
+mod std { pub use base::std::*; }
 
 const USIZE_MASK: usize = usize::bytes() - 1;
 const USIZE_BYTES: usize = usize::bytes();

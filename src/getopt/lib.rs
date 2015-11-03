@@ -8,15 +8,13 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_str_one as str_one;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use str_one::{CStr, NoNullStr};
 
-mod lrs { pub use base::lrs::*; }
+mod std { pub use base::std::*; }
 
 /// A simple argument parser.
 ///

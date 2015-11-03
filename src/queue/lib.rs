@@ -8,8 +8,6 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_cell as cell;
 extern crate lrs_arch_fns as arch_fns;
@@ -17,7 +15,7 @@ extern crate lrs_atomic as atomic;
 extern crate lrs_lock as lock;
 extern crate lrs_alloc as alloc;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::ptr::{OwnedPtr};
 use base::{error};
 use base::default::{Default};
@@ -28,7 +26,7 @@ use cell::cell::{Cell};
 use core::{ptr, mem};
 use lock::{Lock, LockGuard, RawCondvar, LOCK_INIT, RAW_CONDVAR_INIT};
 
-pub mod lrs { pub use base::lrs::*; }
+pub mod std { pub use base::std::*; }
 
 /// A multi-threaded queue.
 ///

@@ -103,7 +103,7 @@ extern "rust-intrinsic" {
     /// = See also
     ///
     /// * {uninit}
-    pub fn move_val_init<T>(dst: &mut T, src: T);
+    pub fn move_val_init<T>(dst: *mut T, src: T);
 
     /// Runs the destructor of an object.
     ///

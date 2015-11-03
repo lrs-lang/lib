@@ -8,8 +8,6 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_fmt as fmt;
 extern crate lrs_cell as cell;
@@ -19,7 +17,7 @@ extern crate lrs_atomic as atomic;
 pub use rc::{Rc, RcBuf};
 pub use arc::{Arc, ArcBuf};
 
-pub mod lrs { pub use ::fmt::lrs::*; }
+pub mod std { pub use ::fmt::std::*; }
 
 pub mod rc;
 pub mod arc;

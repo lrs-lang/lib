@@ -2,19 +2,16 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![feature(plugin, no_std)]
-#![plugin(linux_core_plugin)]
-#![no_std]
+#![feature(plugin)]
+#![plugin(lrs_core_plugin)]
 
-#[macro_use] extern crate linux;
-
-use linux::time::{self, Time};
+use std::time::{self, Time};
 
 fn main() {
-    let timer = time::Real.timer().unwrap();
+    let timer = time::REAL.timer().unwrap();
     timer.interval_in(Time::seconds(1), Time::seconds(5)).unwrap();
 
-    time::Real.sleep_for(Time::seconds(10)).unwrap();
+    time::REAL.sleep_for(Time::seconds(10)).unwrap();
 
     println!("{:?}", timer.ticks().unwrap());
 }

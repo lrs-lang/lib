@@ -2,11 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::ops::{Index, IndexMut, Range, RangeFrom, RangeTo, RangeFull, PartialOrd};
 use core::cmp::{Ord, Ordering};
 use core::{mem, str};
-use base::rmo::{AsRef, AsMut};
 // use base::unused::{UnusedState};
 use fmt::{self, Debug, Display, UpperHex, Write};
 use parse::{Parse, Parsable};

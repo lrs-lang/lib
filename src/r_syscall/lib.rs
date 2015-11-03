@@ -9,7 +9,6 @@
 #![no_std]
 #![allow(dead_code)]
 
-extern crate lrs_core as core;
 extern crate lrs_cty as cty;
 
 pub use ::arch::{

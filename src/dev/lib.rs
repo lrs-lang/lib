@@ -9,14 +9,12 @@
 #![no_std]
 #![allow(trivial_numeric_casts)]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_fmt as fmt;
 extern crate lrs_cty as cty;
 
-#[prelude_import] use base::prelude::*;
-mod lrs { pub use fmt::lrs::*; }
+use base::prelude::*;
+mod std { pub use fmt::std::*; }
 
 // Device Id <-> Device Name mapping
 //
@@ -128,7 +126,7 @@ impl Device {
 
 #[cfg(not(device_paths))]
 mod dfmt {
-    #[prelude_import] use base::prelude::*;
+    use base::prelude::*;
     use super::{Device};
     use fmt::{Write, Debug};
     use base::{error};

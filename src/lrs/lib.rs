@@ -6,9 +6,9 @@
 
 #![crate_name = "lrs"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, macro_reexport)]
+#![feature(plugin, no_core, macro_reexport)]
 #![plugin(lrs_core_plugin)]
-#![no_std]
+#![no_core]
 
 #[macro_use]
 #[macro_reexport(abort, assert, try, print, println, err, errln, vec, format, matches)]
@@ -128,25 +128,14 @@ pub mod bx;
 
 /// The prelude.
 pub mod prelude {
-
-    pub use lrs_core::cmp::{PartialOrd, Ord};
-    pub use lrs_base::prelude::*;
-    pub use lrs_base::clone::{Clone};
-    pub use lrs_parse::{Parse};
-    pub use lrs_vec::{Vec};
-    pub use lrs_rmo::{ToOwned};
-    pub use lrs_io::{Read, Write, BufRead, BufWrite};
-    pub use lrs_fd::{FDContainer};
-}
-
-pub mod core {
-    pub mod option {
-        pub use lrs_core::option::{Option};
-    }
-    pub mod iter {
-        pub use lrs_core::iter::{Iterator, IntoIterator};
-    }
-    pub mod intrinsics {
-        pub use lrs_core::intrinsics::{discriminant_value, unreachable};
+    pub mod v1 {
+        pub use lrs_core::cmp::{PartialOrd, Ord};
+        pub use lrs_base::prelude::*;
+        pub use lrs_base::clone::{Clone};
+        pub use lrs_parse::{Parse};
+        pub use lrs_vec::{Vec};
+        pub use lrs_rmo::{ToOwned};
+        pub use lrs_io::{Read, Write, BufRead, BufWrite};
+        pub use lrs_fd::{FDContainer};
     }
 }

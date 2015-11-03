@@ -4,13 +4,10 @@
 
 #![crate_name = "lrs_libc"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, lang_items)]
-#![plugin(lrs_core_plugin)]
+#![feature(plugin, lang_items, no_std)]
 #![no_std]
+#![plugin(lrs_core_plugin)]
 #![allow(non_camel_case_types)]
-
-#[macro_use]
-extern crate lrs_core as core;
 
 use core::marker::{Pod, Copy};
 pub use arch::{pthread_attr_t, pthread_t};

@@ -8,17 +8,15 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core     as core;
 extern crate lrs_arch_fns as arch_fns;
-extern crate lrs_base  as base;
+extern crate lrs_base     as base;
 extern crate lrs_rmo      as rmo;
 extern crate lrs_str_one  as str_one;
 extern crate lrs_str_two  as str_two;
-extern crate lrs_alloc  as alloc;
+extern crate lrs_alloc    as alloc;
 
 pub use c_string::{ToCString};
 
-mod lrs { pub use base::lrs::*; }
+mod std { pub use base::std::*; }
 
 pub mod c_string;

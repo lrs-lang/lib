@@ -25,6 +25,16 @@ pub trait Add<RHS=Self> {
     fn add(self, rhs: RHS) -> Self::Output;
 }
 
+/// Objects that implement the binary `+=` operator.
+#[lang = "add_assign"]
+pub trait AddAssign<RHS=Self> {
+    /// The method that will be called by the operator.
+    ///
+    /// [argument, rhs]
+    /// The right-hand-side of the operator.
+    fn add_assign(&mut self, rhs: RHS);
+}
+
 /// Objects that implement the binary `-` operator.
 #[lang = "sub"]
 pub trait Sub<RHS=Self> {
@@ -35,6 +45,16 @@ pub trait Sub<RHS=Self> {
     /// [argument, rhs]
     /// The right-hand-side of the operator.
     fn sub(self, rhs: RHS) -> Self::Output;
+}
+
+/// Objects that implement the binary `-=` operator.
+#[lang = "sub_assign"]
+pub trait SubAssign<RHS=Self> {
+    /// The method that will be called by the operator.
+    ///
+    /// [argument, rhs]
+    /// The right-hand-side of the operator.
+    fn sub_assign(&mut self, rhs: RHS);
 }
 
 /// Objects that implement the binary `*` operator.
@@ -49,6 +69,16 @@ pub trait Mul<RHS=Self> {
     fn mul(self, rhs: RHS) -> Self::Output;
 }
 
+/// Objects that implement the binary `*=` operator.
+#[lang = "mul_assign"]
+pub trait MulAssign<RHS=Self> {
+    /// The method that will be called by the operator.
+    ///
+    /// [argument, rhs]
+    /// The right-hand-side of the operator.
+    fn mul_assign(&mut self, rhs: RHS);
+}
+
 /// Objects that implement the binary `/` operator.
 #[lang = "div"]
 pub trait Div<RHS=Self> {
@@ -61,6 +91,16 @@ pub trait Div<RHS=Self> {
     fn div(self, rhs: RHS) -> Self::Output;
 }
 
+/// Objects that implement the binary `/=` operator.
+#[lang = "div_assign"]
+pub trait DivAssign<RHS=Self> {
+    /// The method that will be called by the operator.
+    ///
+    /// [argument, rhs]
+    /// The right-hand-side of the operator.
+    fn div_assign(&mut self, rhs: RHS);
+}
+
 /// Objects that implement the binary `%` operator.
 #[lang = "rem"]
 pub trait Rem<RHS=Self> {
@@ -71,6 +111,16 @@ pub trait Rem<RHS=Self> {
     /// [argument, rhs]
     /// The right-hand-side of the operator.
     fn rem(self, rhs: RHS) -> Self::Output;
+}
+
+/// Objects that implement the binary `%=` operator.
+#[lang = "rem_assign"]
+pub trait RemAssign<Rhs=Self> {
+    /// The method that will be called by the operator.
+    ///
+    /// [argument, rhs]
+    /// The right-hand-side of the operator.
+    fn rem_assign(&mut self, Rhs);
 }
 
 /// Objects that implement the unary `-` operator.
@@ -103,6 +153,16 @@ pub trait BitAnd<RHS = Self> {
     fn bitand(self, rhs: RHS) -> Self::Output;
 }
 
+/// Objects that implement the binary `&=` operator.
+#[lang = "bitand_assign"]
+pub trait BitAndAssign<RHS=Self> {
+    /// The method that will be called by the operator.
+    ///
+    /// [argument, rhs]
+    /// The right-hand-side of the operator.
+    fn bitand_assign(&mut self, rhs: RHS);
+}
+
 /// Objects that implement the binary `|` operator.
 #[lang = "bitor"]
 pub trait BitOr<RHS = Self> {
@@ -113,6 +173,16 @@ pub trait BitOr<RHS = Self> {
     /// [argument, rhs]
     /// The right-hand-side of the operator.
     fn bitor(self, rhs: RHS) -> Self::Output;
+}
+
+/// Objects that implement the binary `|=` operator.
+#[lang = "bitor_assign"]
+pub trait BitOrAssign<RHS=Self> {
+    /// The method that will be called by the operator.
+    ///
+    /// [argument, rhs]
+    /// The right-hand-side of the operator.
+    fn bitor_assign(&mut self, rhs: RHS);
 }
 
 /// Objects that implement the binary `^` operator.
@@ -127,6 +197,15 @@ pub trait BitXor<RHS = Self> {
     fn bitxor(self, rhs: RHS) -> Self::Output;
 }
 
+#[lang = "bitxor_assign"]
+pub trait BitXorAssign<RHS=Self> {
+    /// The method that will be called by the operator.
+    ///
+    /// [argument, rhs]
+    /// The right-hand-side of the operator.
+    fn bitxor_assign(&mut self, rhs: RHS);
+}
+
 /// Objects that implement the binary `<<` operator.
 #[lang = "shl"]
 pub trait Shl<RHS> {
@@ -139,6 +218,16 @@ pub trait Shl<RHS> {
     fn shl(self, rhs: RHS) -> Self::Output;
 }
 
+/// Objects that implement the binary `<<=` operator.
+#[lang = "shl_assign"]
+pub trait ShlAssign<RHS> {
+    /// The method that will be called by the operator.
+    ///
+    /// [argument, rhs]
+    /// The right-hand-side of the operator.
+    fn shl_assign(&mut self, rhs: RHS);
+}
+
 /// Objects that implement the binary `>>` operator.
 #[lang = "shr"]
 pub trait Shr<RHS> {
@@ -149,6 +238,16 @@ pub trait Shr<RHS> {
     /// [argument, rhs]
     /// The right-hand-side of the operator.
     fn shr(self, rhs: RHS) -> Self::Output;
+}
+
+/// Objects that implement the binary `>>=` operator.
+#[lang = "shr_assign"]
+pub trait ShrAssign<RHS> {
+    /// The method that will be called by the operator.
+    ///
+    /// [argument, rhs]
+    /// The right-hand-side of the operator.
+    fn shr_assign(&mut self, rhs: RHS);
 }
 
 /// Objects that implement the immutable subscript operator.

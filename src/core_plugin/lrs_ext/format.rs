@@ -129,7 +129,7 @@ fn parse_args(ecx: &mut ExtCtxt, sp: Span, tts: &[ast::TokenTree])
                     return None;
                 }
             };
-            let interned_name = token::get_ident(ident);
+            let interned_name = ident.to_string();
             let name = &interned_name[..];
 
             panictry!(p.expect(&token::Eq));
@@ -321,7 +321,7 @@ impl<'a, 'b> Context<'a, 'b> {
         // ::fmt::Debug::fmt(arg, writer)
 
         let call = {
-            let path = vec!(self.ecx.ident_of("lrs"),
+            let path = vec!(self.ecx.ident_of("std"),
                             self.ecx.ident_of("fmt"),
                             self.ecx.ident_of("Display"),
                             self.ecx.ident_of("fmt"));
@@ -361,7 +361,7 @@ impl<'a, 'b> Context<'a, 'b> {
         // ::fmt::Debug::fmt(arg, writer)
 
         let call = {
-            let path = vec!(self.ecx.ident_of("lrs"),
+            let path = vec!(self.ecx.ident_of("std"),
                             self.ecx.ident_of("fmt"),
                             self.ecx.ident_of(trait_name),
                             self.ecx.ident_of("fmt"));
@@ -428,7 +428,7 @@ impl<'a, 'b> Context<'a, 'b> {
     /// to
     fn into_expr(self) -> P<ast::Expr> {
         if self.pieces.len() == 0 {
-            let path = vec!(self.ecx.ident_of("lrs"),
+            let path = vec!(self.ecx.ident_of("std"),
                             self.ecx.ident_of("result"),
                             self.ecx.ident_of("Result"),
                             self.ecx.ident_of("Ok"));
@@ -441,7 +441,7 @@ impl<'a, 'b> Context<'a, 'b> {
 
         let let_mut_res = {
             let ident = self.ecx.ident_of("res");
-            self.stmt_let(self.fmtsp, true, Some(ident), None)
+            self.stmt_let(self.fmtsp, self.pieces.len() > 1, Some(ident), None)
         };
 
         // piece1 || piece2 || ...
@@ -523,7 +523,6 @@ impl<'a, 'b> Context<'a, 'b> {
             init: ex,
             id: ast::DUMMY_NODE_ID,
             span: sp,
-            source: ast::LocalLet,
         });
         let decl = respan(sp, ast::DeclLocal(local));
         P(respan(sp, ast::StmtDecl(P(decl), ast::DUMMY_NODE_ID)))
@@ -533,7 +532,6 @@ impl<'a, 'b> Context<'a, 'b> {
 pub fn expand_format_args<'cx>(ecx: &'cx mut ExtCtxt, sp: Span,
                                tts: &[ast::TokenTree])
                                -> Box<base::MacResult+'cx> {
-
     match parse_args(ecx, sp, tts) {
         Some((writer, efmt, args, order, names)) => {
             MacEager::expr(expand_preparsed_format_args(ecx, sp, writer, efmt, args,

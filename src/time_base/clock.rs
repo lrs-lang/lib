@@ -4,7 +4,7 @@
 
 #![allow(non_upper_case_globals)]
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::{mem};
 use cty::{clockid_t, c_int, TIMER_ABSTIME, TFD_NONBLOCK};
 use syscall::{clock_gettime, clock_settime, clock_getres, clock_nanosleep,

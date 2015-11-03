@@ -2,9 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import] use base::prelude::*;
-use core::ops::{Deref};
+use base::prelude::*;
 use core::ptr::{OwnedPtr};
+use core::iter::{IntoIterator};
 use core::marker::{Leak};
 use core::{mem, ptr, intrinsics};
 use base::clone::{Clone};
@@ -48,8 +48,8 @@ impl<T, H> RcBuf<T, H>
     }
 }
 
-unsafe impl<T, H> Send for RcBuf<T, H> where H: Send { }
-unsafe impl<T, H> Sync for RcBuf<T, H> { }
+unsafe impl<T, H> Send for RcBuf<T, H> where T: Leak, H: Send+Allocator { }
+unsafe impl<T, H> Sync for RcBuf<T, H> where T: Leak, H: Allocator { }
 
 impl<T, H> Drop for RcBuf<T, H>
     where H: Allocator,
@@ -121,6 +121,16 @@ impl<T, H> Rc<T, H>
             Rc { data: self.data }
         }
     }
+}
+
+impl<'a, T, H> IntoIterator for &'a Rc<T, H>
+    where &'a T: IntoIterator,
+          H: Allocator,
+          T: Leak,
+{
+    type Item = <&'a T as IntoIterator>::Item;
+    type IntoIter = <&'a T as IntoIterator>::IntoIter;
+    fn into_iter(self) -> Self::IntoIter { (**self).into_iter() }
 }
 
 unsafe impl<T, H> UndefState for Rc<T, H>

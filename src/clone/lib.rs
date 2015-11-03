@@ -8,21 +8,18 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_cty as cty;
 extern crate lrs_syscall as syscall;
 extern crate lrs_fmt as fmt;
 extern crate lrs_libc as libc;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use base::{error};
-use core::ops::{FnOnce};
 use cty::alias::{ProcessId};
 use syscall::{exit_group};
 
-mod lrs { pub use fmt::lrs::*; }
+mod std { pub use fmt::std::*; }
 
 pub mod flags;
 

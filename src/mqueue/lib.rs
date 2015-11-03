@@ -8,8 +8,6 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_cty as cty;
 extern crate lrs_fmt as fmt;
@@ -22,7 +20,7 @@ extern crate lrs_time_base as time_base;
 extern crate lrs_alloc as alloc;
 extern crate lrs_str_three as str_three;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::{mem};
 use base::undef::{UndefState};
 use fd::{FDContainer};
@@ -37,7 +35,7 @@ use syscall::{close, mq_open, mq_timedsend, mq_timedreceive, mq_getsetattr, mq_u
 use time_base::{time_to_timespec, Time};
 use flags::{MqFlags};
 
-mod lrs { pub use fmt::lrs::*; pub use cty; }
+mod std { pub use fmt::std::*; pub use cty; }
 
 pub mod flags;
 

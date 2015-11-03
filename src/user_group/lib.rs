@@ -8,8 +8,6 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core       as core;
 extern crate lrs_base       as base;
 extern crate lrs_arch_fns   as arch_fns;
 extern crate lrs_io         as io;
@@ -25,8 +23,8 @@ extern crate lrs_alloc      as alloc;
 extern crate lrs_rmo        as rmo;
 extern crate lrs_iter       as iter;
 
-#[prelude_import] use base::prelude::*;
-mod lrs { pub use vec::lrs::*; }
+use base::prelude::*;
+mod std { pub use vec::std::*; }
 
 use core::{mem};
 use core::ptr::{memmove};

@@ -2,12 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::{mem};
 use base::clone::{MaybeClone};
 use base::undef::{UndefState};
 use base::default::{Default};
-use base::rmo::{AsRef, AsMut};
 use str_one::{ByteStr, ToCStr, CStr};
 use fmt::{Debug, Display, Write};
 use vec::{Vec};

@@ -8,31 +8,28 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_str_one as str_one;
 extern crate lrs_io as io;
 extern crate lrs_fmt as fmt;
 extern crate lrs_alloc as alloc;
 
-pub mod lrs {
-    pub use fmt::lrs::*;
+pub mod std {
+    pub use fmt::std::*;
     pub mod vec { pub use {Vec}; }
 }
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::{mem, ptr, cmp, slice};
 use core::ptr::{OwnedPtr};
 use base::clone::{MaybeClone};
 use base::undef::{UndefState};
 use base::default::{Default};
-use core::ops::{Eq, Deref, DerefMut};
+use core::ops::{Eq};
 use core::iter::{IntoIterator};
 use io::{Read, Write, BufWrite};
 use fmt::{Debug};
 use alloc::{Allocator, empty_ptr};
-use base::rmo::{AsRef, AsMut};
 use str_one::{ByteStr, CStr, AsCStr, AsMutCStr, ToCStr, NoNullStr, AsMutNoNullStr,
               AsNoNullStr};
 
@@ -153,6 +150,17 @@ impl<T, H> Vec<T, H>
         };
         self.ptr = unsafe { OwnedPtr::new(try!(ptr)) };
         self.cap = new_cap;
+        Ok(())
+    }
+
+    /// Minimizes the amount of used memory.
+    pub fn shrink_to_fit(&mut self) -> Result {
+        if self.len < self.cap {
+            let ptr = unsafe { H::reallocate_array(&mut self.pool, *self.ptr, self.cap,
+                                                   self.len) };
+            self.ptr = unsafe { OwnedPtr::new(try!(ptr)) };
+            self.cap = self.len;
+        }
         Ok(())
     }
 

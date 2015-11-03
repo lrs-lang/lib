@@ -1,4 +1,4 @@
-use ast::{MetaItem, Item, Expr, ExprRet, TokenTree, LifetimeDef};
+use ast::{MetaItem, Expr, ExprRet, TokenTree, LifetimeDef, Ident};
 
 use codemap::{Span};
 
@@ -20,7 +20,7 @@ use parse::token::{InternedString, Eof, Token, BinOpToken};
 
 fn expr_ok(cx: &ExtCtxt, sp: Span, expr: P<Expr>) -> P<Expr> {
     let ok = vec!(
-        cx.ident_of("lrs"),
+        cx.ident_of("std"),
         cx.ident_of("result"),
         cx.ident_of("Result"),
         cx.ident_of("Ok"));
@@ -29,14 +29,14 @@ fn expr_ok(cx: &ExtCtxt, sp: Span, expr: P<Expr>) -> P<Expr> {
 
 fn expr_try(cx: &ExtCtxt, sp: Span, head: P<Expr>) -> P<Expr> {
     let ok = vec!(
-        cx.ident_of("lrs"),
+        cx.ident_of("std"),
         cx.ident_of("result"),
         cx.ident_of("Result"),
         cx.ident_of("Ok")
     );
     let ok_path = cx.path_global(sp, ok);
     let err = vec!(
-        cx.ident_of("lrs"),
+        cx.ident_of("std"),
         cx.ident_of("result"),
         cx.ident_of("Result"),
         cx.ident_of("Err")
@@ -72,14 +72,14 @@ fn cs_maybe_clone(name: &str, cx: &mut ExtCtxt, trait_span: Span,
     let all_fields;
 
     let fn_path = vec!(
-        cx.ident_of("lrs"),
+        cx.ident_of("std"),
         cx.ident_of("clone"),
         cx.ident_of("MaybeClone"),
         cx.ident_of("maybe_clone"),
     );
 
     let subcall = |field: &FieldInfo| {
-        // ::lrs::clone::MaybeClone::maybe_clone(&field)
+        // ::std::clone::MaybeClone::maybe_clone(&field)
         let call = {
             let args = vec![cx.expr_addr_of(field.span, field.self_.clone())];
             cx.expr_call_global(field.span, fn_path.clone(), args)
@@ -144,7 +144,7 @@ pub fn derive_maybe_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem,
     let inline = cx.meta_word(span, InternedString::new("inline"));
     let attrs = vec!(cx.attribute(span, inline));
     let ret_ty = Ty::Literal(Path {
-        path: vec!("lrs", "result", "Result"),
+        path: vec!("std", "result", "Result"),
         lifetime: None,
         params: vec!(box Ty::Self_),
         global: true,
@@ -152,9 +152,10 @@ pub fn derive_maybe_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem,
     let trait_def = TraitDef {
         span: span,
         attributes: Vec::new(),
-        path: path_std!(cx, lrs::clone::MaybeClone),
+        path: path!(std::clone::MaybeClone),
         additional_bounds: Vec::new(),
         generics: LifetimeBounds::empty(),
+        is_unsafe: false,
         methods: vec!(
             MethodDef {
                 name: "maybe_clone",
@@ -181,14 +182,14 @@ fn cs_clone(name: &str, cx: &mut ExtCtxt, trait_span: Span,
     let all_fields;
 
     let fn_path = vec!(
-        cx.ident_of("lrs"),
+        cx.ident_of("std"),
         cx.ident_of("clone"),
         cx.ident_of("Clone"),
         cx.ident_of("clone"),
     );
 
     let subcall = |field: &FieldInfo| {
-        // ::lrs::clone::Clone::clone(&field)
+        // ::std::clone::Clone::clone(&field)
         let args = vec![cx.expr_addr_of(field.span, field.self_.clone())];
         cx.expr_call_global(field.span, fn_path.clone(), args)
     };
@@ -217,8 +218,7 @@ fn cs_clone(name: &str, cx: &mut ExtCtxt, trait_span: Span,
         // enum-like
         let subcalls = all_fields.iter().map(subcall).collect();
         let path = cx.expr_path(ctor_path);
-        let body = cx.expr_call(trait_span, path, subcalls);
-        expr_ok(cx, trait_span, body)
+        cx.expr_call(trait_span, path, subcalls)
     } else {
         // struct-like
         let fields = all_fields.iter().map(|field| {
@@ -233,13 +233,12 @@ fn cs_clone(name: &str, cx: &mut ExtCtxt, trait_span: Span,
             cx.field_imm(field.span, ident, subcall(field))
         }).collect::<Vec<_>>();
 
-        let body = if fields.is_empty() {
+        if fields.is_empty() {
             // no fields, so construct like `None`
             cx.expr_path(ctor_path)
         } else {
             cx.expr_struct(trait_span, ctor_path, fields)
-        };
-        expr_ok(cx, trait_span, body)
+        }
     }
 }
 
@@ -247,18 +246,14 @@ pub fn derive_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem,
                     item: &Annotatable, push: &mut FnMut(Annotatable)) {
     let inline = cx.meta_word(span, InternedString::new("inline"));
     let attrs = vec!(cx.attribute(span, inline));
-    let ret_ty = Ty::Literal(Path {
-        path: vec!("lrs", "result", "Result"),
-        lifetime: None,
-        params: vec!(box Ty::Self_),
-        global: true,
-    });
+    let ret_ty = Ty::Self_;
     let trait_def = TraitDef {
         span: span,
         attributes: Vec::new(),
-        path: path_std!(cx, lrs::clone::Clone),
+        path: path_std!(cx, std::clone::Clone),
         additional_bounds: Vec::new(),
         generics: LifetimeBounds::empty(),
+        is_unsafe: false,
         methods: vec!(
             MethodDef {
                 name: "clone",
@@ -276,7 +271,7 @@ pub fn derive_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem,
         associated_types: Vec::new(),
     };
 
-    trait_def.expand(cx, mitem, item, push)
+    trait_def.expand(cx, mitem, item, push);
 }
 
 pub fn derive_clone_for_copy(cx: &mut ExtCtxt, span: Span, _mitem: &MetaItem,
@@ -300,13 +295,13 @@ pub fn derive_clone_for_copy(cx: &mut ExtCtxt, span: Span, _mitem: &MetaItem,
             let mut vec = Vec::new();
             vec.push(TokenTree::TtToken(self.1, Token::Lt));
             for lt in self.0 {
-                vec.push(TokenTree::TtToken(self.1, Token::Lifetime(lt.lifetime.name.ident())));
+                vec.push(TokenTree::TtToken(self.1, Token::Lifetime(Ident::with_empty_ctxt(lt.lifetime.name))));
                 if lt.bounds.len() > 0 {
                     vec.push(TokenTree::TtToken(self.1, Token::Colon));
-                    vec.push(TokenTree::TtToken(self.1, Token::Lifetime(lt.bounds[0].name.ident())));
+                    vec.push(TokenTree::TtToken(self.1, Token::Lifetime(Ident::with_empty_ctxt(lt.bounds[0].name))));
                     for lt in &lt.bounds[1..] {
                         vec.push(TokenTree::TtToken(self.1, Token::BinOp(BinOpToken::Plus)));
-                        vec.push(TokenTree::TtToken(self.1, Token::Lifetime(lt.name.ident())));
+                        vec.push(TokenTree::TtToken(self.1, Token::Lifetime(Ident::with_empty_ctxt(lt.name))));
                     }
                 }
                 vec.push(TokenTree::TtToken(self.1, Token::Comma));
@@ -321,7 +316,7 @@ pub fn derive_clone_for_copy(cx: &mut ExtCtxt, span: Span, _mitem: &MetaItem,
         let lts = Lts(&generics.lifetimes, span);
 
         let impl_item = quote_item!(cx,
-            impl $lts ::lrs::clone::Clone for $ty $lts {
+            impl $lts ::std::clone::Clone for $ty $lts {
                 fn clone(&self) -> $ty $lts {
                     *self
                 }
@@ -331,9 +326,9 @@ pub fn derive_clone_for_copy(cx: &mut ExtCtxt, span: Span, _mitem: &MetaItem,
         push(Annotatable::Item(impl_item));
 
         let impl_item = quote_item!(cx,
-            impl $lts ::lrs::clone::MaybeClone for $ty $lts {
-                fn maybe_clone(&self) -> ::lrs::result::Result<$ty $lts> {
-                    ::lrs::result::Result::Ok(*self)
+            impl $lts ::std::clone::MaybeClone for $ty $lts {
+                fn maybe_clone(&self) -> ::std::result::Result<$ty $lts> {
+                    ::std::result::Result::Ok(*self)
                 }
             }
         ).unwrap();
@@ -344,7 +339,6 @@ pub fn derive_clone_for_copy(cx: &mut ExtCtxt, span: Span, _mitem: &MetaItem,
 
 pub fn derive_copy_clone_for<'cx>(cx: &'cx mut ExtCtxt, sp: Span,
                                   tts: &[TokenTree]) -> Box<MacResult+'cx> {
-
     let mut p = cx.new_parser_from_tts(tts);
     if p.token == Eof {
         cx.span_err(sp, "requires a target");
@@ -354,7 +348,7 @@ pub fn derive_copy_clone_for<'cx>(cx: &'cx mut ExtCtxt, sp: Span,
     let item = quote_item!(cx,
         #[automatically_derived]
         #[inline(always)]
-        impl ::lrs::clone::Clone for $dest {
+        impl ::std::clone::Clone for $dest {
             fn clone(&self) -> $dest {
                 *self
             }

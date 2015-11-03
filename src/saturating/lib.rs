@@ -8,9 +8,6 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
-
 /// Objects that can be cast to another object in a saturating way.
 ///
 /// = Remarks

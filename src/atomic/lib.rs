@@ -8,19 +8,15 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_cell as cell;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 
 use core::{mem, intrinsics};
 use cell::cell::{Cell};
 
-pub mod lrs {
-    pub use ::base::lrs::*;
-}
+pub mod std { pub use ::base::std::*; }
 
 /// Creates a release fence.
 pub fn fence_release() {

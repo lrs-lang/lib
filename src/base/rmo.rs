@@ -2,7 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import] use core::prelude::*;
 use core::{mem, slice};
 use wrapping::{W8, W16, W32, W64, Wsize};
 

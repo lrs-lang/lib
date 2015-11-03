@@ -8,8 +8,6 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core      as core;
 extern crate lrs_base      as base;
 extern crate lrs_io        as io;
 extern crate lrs_cty       as cty;
@@ -30,13 +28,12 @@ extern crate lrs_dev       as dev;
 extern crate lrs_fs        as fs;
 extern crate lrs_time_base as time_base;
 
-#[prelude_import] use base::prelude::*;
-mod lrs { pub use vec::lrs::*; pub use {cty}; }
+use base::prelude::*;
+mod std { pub use vec::std::*; pub use {cty}; }
 
 use vec::{Vec};
 use core::{mem};
 use io::{Read};
-use base::rmo::{AsRef};
 use base::undef::{UndefState};
 use base::error::{self, Errno};
 use cty::{

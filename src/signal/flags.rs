@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use cty::{ self,
     c_int,
 };

@@ -8,16 +8,14 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_wrapping as wrapping;
 extern crate lrs_fmt as fmt;
 extern crate lrs_alloc as alloc;
 
-mod lrs { pub use fmt::lrs::*; }
+mod std { pub use fmt::std::*; }
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::{mem, ptr};
 use core::ptr::{OwnedPtr};
 use wrapping::{Wsize};
@@ -287,9 +285,21 @@ impl<T, H> DynRingBuf<T, H>
             _marker: PhantomData,
         }
     }
+
+    pub fn clear(&mut self) {
+        if mem::needs_drop::<T>() {
+            let mut i = self.left;
+            while i != self.right {
+                unsafe { ptr::drop(self.ptr.add(i.0 & self.cap_mask())) };
+                i = i + 1;
+            }
+        }
+        self.left.0 = 0;
+        self.right.0 = 0;
+    }
 }
 
-impl<'a, T, H> IntoIterator for &'a DynRingBuf<T, H>
+impl<'a, T: 'a, H> IntoIterator for &'a DynRingBuf<T, H>
     where H: Allocator,
 {
     type Item = &'a T;
@@ -318,14 +328,8 @@ impl<T, H> Drop for DynRingBuf<T, H>
     where H: Allocator,
 {
     fn drop(&mut self) {
+        self.clear();
         unsafe {
-            if mem::needs_drop::<T>() {
-                let mut i = self.left;
-                while i != self.right {
-                    ptr::drop(self.ptr.add(i.0 & self.cap_mask()));
-                    i = i + 1;
-                }
-            }
             if *self.ptr != empty_ptr() {
                 H::free_array(&mut self.pool, *self.ptr, self.cap);
             }
@@ -442,7 +446,7 @@ pub struct RingBufIter<'a, T> {
     _marker: PhantomData<&'a ()>,
 }
 
-impl<'a, T> Iterator for RingBufIter<'a, T> {
+impl<'a, T: 'a> Iterator for RingBufIter<'a, T> {
     type Item = &'a T;
     fn next(&mut self) -> Option<&'a T> {
         if self.left == self.right {

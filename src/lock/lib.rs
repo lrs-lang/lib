@@ -8,8 +8,6 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_io as io;
 extern crate lrs_fmt as fmt;
@@ -23,9 +21,7 @@ pub use lock::{Lock, LockGuard, LOCK_INIT, DUMMY};
 pub use mutex::{Mutex, MutexGuard};
 pub use condvar::{Condvar, CONDVAR_INIT};
 
-mod lrs {
-    pub use fmt::lrs::*;
-}
+mod std { pub use fmt::std::*; }
 
 mod raw_condvar;
 mod condvar;

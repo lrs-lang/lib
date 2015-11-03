@@ -8,8 +8,6 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_cty as cty;
 extern crate lrs_syscall as syscall;
@@ -17,7 +15,7 @@ extern crate lrs_rv as rv;
 extern crate lrs_io as io;
 extern crate lrs_fmt as fmt;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use base::error::{Errno};
 use io::{Write, Read};
 use cty::{c_int, FD_CLOEXEC, O_CLOEXEC};
@@ -28,7 +26,7 @@ use syscall::{
 use rv::{retry};
 use flags::{DescriptionFlags};
 
-mod lrs { pub use base::lrs::*; pub use cty; }
+mod std { pub use base::std::*; pub use cty; }
 
 pub mod flags;
 

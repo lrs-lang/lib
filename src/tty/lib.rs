@@ -8,8 +8,6 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_cty as cty;
 extern crate lrs_syscall as syscall;
@@ -19,7 +17,7 @@ extern crate lrs_fmt as fmt;
 extern crate lrs_signal as signal;
 extern crate lrs_file as file;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::{mem};
 use cty::{
     c_int, winsize, c_ushort, TCIFLUSH, TCOFLUSH, TCOOFF, TCOON, TCIOFF, TCION,
@@ -41,7 +39,7 @@ use signal::signals::{Signal};
 use disc::{LineDiscipline};
 use attr::{TtyAttr};
 
-mod lrs { pub use fmt::lrs::*; pub use cty; }
+mod std { pub use fmt::std::*; pub use cty; }
 
 pub mod disc;
 pub mod attr;

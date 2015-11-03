@@ -2,14 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::{mem};
 use core::ops::{Index, IndexMut, Range, RangeFrom, RangeTo, RangeFull};
-use base::rmo::{AsRef};
 use base::{error};
 // use base::unused::{UnusedState};
 use arch_fns::{memrchr, memchr};
-use fmt::{Debug, Write};
+use fmt::{Debug, Display, Write};
 
 use byte_str::{AsByteStr, ByteStr};
 use c_str::{CStr, ToCStr};
@@ -193,7 +192,13 @@ impl ToCStr for NoNullStr {
 
 impl Debug for NoNullStr {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
-        self.as_byte_str().fmt(w)
+        Debug::fmt(self.as_byte_str(), w)
+    }
+}
+
+impl Display for NoNullStr {
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
+        Display::fmt(self.as_byte_str(), w)
     }
 }
 

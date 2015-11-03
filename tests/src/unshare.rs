@@ -2,18 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![feature(plugin, no_std)]
+#![feature(plugin)]
 #![plugin(lrs_core_plugin)]
-#![no_std]
 
-#[macro_use] extern crate lrs;
-mod core { pub use lrs::core::*; }
-#[prelude_import] use lrs::prelude::*;
-
-use lrs::thread::{unshare, scoped};
-use lrs::process::clone::{CLONE_FS};
-use lrs::env::{set_cwd, get_cwd};
-use lrs::string::{NoNullString};
+use std::thread::{unshare, scoped};
+use std::process::clone::{CLONE_FS};
+use std::env::{set_cwd, get_cwd};
+use std::string::{NoNullString};
 
 fn main() {
     scoped(|| {

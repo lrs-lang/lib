@@ -4,20 +4,17 @@
 
 #![crate_name = "lrs_hash"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, const_fn, custom_derive)]
+#![feature(plugin, const_fn, custom_derive, no_std)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_wrapping as wrapping;
 
-mod lrs { pub use base::lrs::*; }
-
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use base::default::{Default};
-use base::into::{Into};
+
+pub mod std { pub use base::std::*; }
 
 pub mod xx_hash;
 

@@ -10,7 +10,6 @@
 #![allow(non_camel_case_types, raw_pointer_derive, overflowing_literals, non_snake_case,
          non_upper_case_globals, dead_code)]
 
-extern crate lrs_core as core;
 extern crate lrs_cty_base as cty_base;
 extern crate lrs_base as base;
 
@@ -29,7 +28,7 @@ pub mod alias {
     pub type ProcessId = ::pid_t;
 }
 
-mod lrs { pub use ::base::lrs::*; }
+mod std { pub use ::base::std::*; }
 
 mod gen;
 

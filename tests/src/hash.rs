@@ -2,17 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![feature(plugin, no_std, asm)]
+#![feature(plugin, asm)]
 #![plugin(lrs_core_plugin)]
-#![no_std]
 
-#[macro_use] extern crate lrs;
 extern crate lrs_hash as hash;
-mod core { pub use lrs::core::*; }
-#[prelude_import] use lrs::prelude::*;
 
-use lrs::fd::{STDIN};
-use lrs::process::{process_id, exit};
+use std::fd::{STDIN};
+use std::process::{process_id, exit};
 
 fn main() {
     static INPUT: [u8; 100_000_000] = [0; 100_000_000];

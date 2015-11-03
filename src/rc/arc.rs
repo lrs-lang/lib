@@ -2,10 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[prelude_import] use base::prelude::*;
-use core::ops::{Deref};
+use base::prelude::*;
 use core::{mem, ptr, intrinsics};
 use core::ptr::{OwnedPtr};
+use core::iter::{IntoIterator};
 use core::marker::{Leak};
 use base::clone::{Clone};
 use base::default::{Default};
@@ -48,8 +48,8 @@ impl<T, H> ArcBuf<T, H>
     }
 }
 
-unsafe impl<T, H> Send for ArcBuf<T, H> where H: Send { }
-unsafe impl<T, H> Sync for ArcBuf<T, H> { }
+unsafe impl<T, H> Send for ArcBuf<T, H> where T: Leak, H: Send+Allocator { }
+unsafe impl<T, H> Sync for ArcBuf<T, H> where T: Leak, H: Allocator { }
 
 impl<T, H> Drop for ArcBuf<T, H>
     where H: Allocator,
@@ -123,6 +123,16 @@ impl<T, H> Arc<T, H>
     }
 }
 
+impl<'a, T, H> IntoIterator for &'a Arc<T, H>
+    where &'a T: IntoIterator,
+          H: Allocator,
+          T: Leak,
+{
+    type Item = <&'a T as IntoIterator>::Item;
+    type IntoIter = <&'a T as IntoIterator>::IntoIter;
+    fn into_iter(self) -> Self::IntoIter { (**self).into_iter() }
+}
+
 unsafe impl<T, H> UndefState for Arc<T, H>
     where H: Allocator,
           T: Leak,
@@ -138,8 +148,8 @@ unsafe impl<T, H> UndefState for Arc<T, H>
     }
 }
 
-unsafe impl<T, H> Send for Arc<T, H> where T: Sync+Send, H: Send { }
-unsafe impl<T, H> Sync for Arc<T, H> where T: Sync { }
+unsafe impl<T, H> Send for Arc<T, H> where T: Sync+Send+Leak, H: Send+Allocator { }
+unsafe impl<T, H> Sync for Arc<T, H> where T: Sync+Leak, H: Allocator { }
 
 impl<T, H> Drop for Arc<T, H>
     where H: Allocator,

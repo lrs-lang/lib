@@ -60,7 +60,7 @@ pub mod parse {
         new_parser_from_file, new_sub_parser_from_file, filemap_to_parser,
         new_parser_from_tts, filemap_to_tts,
         tts_to_parser, maybe_aborted, char_lit, str_lit, raw_str_lit,
-        float_lit, byte_lit, binary_lit, integer_lit,
+        float_lit, byte_lit, integer_lit,
     };
 }
 

@@ -8,16 +8,13 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_int as int;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
+
 use int::{SignedInt, Int};
 use base::error::{Errno, c_int};
-
-mod lrs { pub use core::lrs::*; }
 
 #[cfg(retry)]
 pub fn retry<T: SignedInt, F: FnMut() -> T>(mut f: F) -> Result<T> {

@@ -2,18 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![feature(plugin, no_std)]
+#![feature(plugin)]
 #![plugin(lrs_core_plugin)]
-#![no_std]
 
-#[macro_use] extern crate lrs;
-mod core { pub use lrs::core::*; }
-#[prelude_import] use lrs::prelude::*;
-
-use lrs::socket::{Socket};
-use lrs::socket::flags::{SOCK_NONE};
-use lrs::file::{File, Mode};
-use lrs::file::flags::{FILE_DONT_BLOCK, FILE_READ_ONLY};
+use std::socket::{Socket};
+use std::socket::flags::{SOCK_NONE};
+use std::file::{File, Mode};
+use std::file::flags::{FILE_DONT_BLOCK, FILE_READ_ONLY};
 
 fn main() {
     let file = File::open_read("/etc/fstab").unwrap();

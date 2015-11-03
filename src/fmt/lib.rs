@@ -8,17 +8,15 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_io as io;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 
 pub use io::{Write};
 
-pub mod lrs {
-    pub use ::base::lrs::*;
+pub mod std {
+    pub use base::std::*;
     pub mod fmt { pub use {LowerHex, UpperHex, Debug, Display}; }
 }
 

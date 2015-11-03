@@ -8,8 +8,6 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core     as core;
 extern crate lrs_arch_fns as arch_fns;
 extern crate lrs_base     as base;
 extern crate lrs_str_one  as str_one;
@@ -22,7 +20,7 @@ pub use no_null_string::{NoNullString};
 pub use c_string::{CString};
 pub use string::{String};
 
-mod lrs { pub use fmt::lrs::*; }
+mod std { pub use fmt::std::*; }
 
 pub mod byte_string;
 pub mod c_string;

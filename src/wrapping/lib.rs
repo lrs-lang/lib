@@ -8,9 +8,6 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
-
 use core::ops::{
     Eq, Add, Sub, Mul, Div, Rem, BitOr, BitAnd, BitXor, Shl, Shr,
     Ordering, PartialOrd, Deref, DerefMut,

@@ -8,20 +8,17 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_cty_base as cty_base;
 extern crate lrs_str_one as str_one;
 extern crate lrs_libc as libc;
 
-#[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::{mem};
-use core::iter::{Iterator};
 use str_one::{CStr};
 use cty_base::types::{c_char};
 
-mod lrs { pub use base::lrs::*; }
+mod std { pub use base::std::*; }
 
 static mut ARGC: isize = 0;
 static mut ARGV: *const *const u8 = 0 as *const *const u8;

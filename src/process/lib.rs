@@ -9,8 +9,6 @@
 #![no_std]
 #![allow(trivial_numeric_casts)]
 
-#[macro_use]
-extern crate lrs_core as core;
 extern crate lrs_base as base;
 extern crate lrs_syscall as syscall;
 extern crate lrs_cty as cty;
@@ -27,12 +25,9 @@ extern crate lrs_rv as rv;
 extern crate lrs_time_base as time_base;
 extern crate lrs_env as env;
 
-mod lrs {
-    pub use fmt::lrs::*;
-    pub use {cty};
-}
+mod std { pub use fmt::std::*; pub use {cty}; }
 
-#[allow(unused_imports)] #[prelude_import] use base::prelude::*;
+use base::prelude::*;
 use core::{mem};
 use syscall::{
     getpid, getppid, exit_group, umask, times, setsid, getsid, setpgid, getpgid,
