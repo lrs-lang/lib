@@ -348,7 +348,19 @@ pub trait Eq<Rhs: ?Sized = Self> {
 }
 
 impl<'a, 'b, U: ?Sized, T: Eq<U>+?Sized> Eq<&'b U> for &'a T {
-    fn eq(&self, other: &&U) -> bool { (*self).eq(*other) }
+    fn eq(&self, other: &&U) -> bool { (**self).eq(*other) }
+}
+
+impl<'a, 'b, U: ?Sized, T: Eq<U>+?Sized> Eq<&'b U> for &'a mut T {
+    fn eq(&self, other: &&U) -> bool { (**self).eq(*other) }
+}
+
+impl<'a, 'b, U: ?Sized, T: Eq<U>+?Sized> Eq<&'b mut U> for &'a T {
+    fn eq(&self, other: &&mut U) -> bool { (**self).eq(*other) }
+}
+
+impl<'a, 'b, U: ?Sized, T: Eq<U>+?Sized> Eq<&'b mut U> for &'a mut T {
+    fn eq(&self, other: &&mut U) -> bool { (**self).eq(*other) }
 }
 
 /// Result of a comparison of two values.

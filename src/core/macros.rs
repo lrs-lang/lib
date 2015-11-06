@@ -11,7 +11,7 @@ macro_rules! abort {
 /// Asserts that a condition is satisfied. Aborts the process otherwise.
 #[macro_export]
 macro_rules! assert {
-    ($pred:expr) => { if !$pred { abort!() } }
+    ($pred:expr) => { if !$pred { ::std::intrinsics::lrs_abort() } }
 }
 
 /// Asserts that a condition is satisfied. Aborts the process otherwise.

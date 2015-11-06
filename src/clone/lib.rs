@@ -37,7 +37,7 @@ pub mod flags;
 /// = Remarks
 ///
 /// The function `f` will only be executed in the child process. When the function
-/// returns, the child process automatically exists with exit code `0`.
+/// returns, the child process automatically exits with exit code `0`.
 ///
 /// = Examples
 ///

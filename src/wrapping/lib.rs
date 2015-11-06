@@ -103,8 +103,8 @@ macro_rules! wint_impls {
             }
 
             /// Counts the unset bits in this integer.
-            pub fn count_zeroes(self) -> usize {
-                self.0.count_zeroes()
+            pub fn count_zeros(self) -> usize {
+                self.0.count_zeros()
             }
 
             /// Returns the length of longest sequence of set bits starting at the most

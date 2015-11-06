@@ -74,6 +74,7 @@ extern crate lrs_c_ptr_ptr;
 
 pub mod atomic;
 pub mod alloc;
+pub mod bool;
 pub mod dir;
 pub mod env;
 pub mod error;

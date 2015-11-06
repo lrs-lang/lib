@@ -46,7 +46,7 @@ impl char {
     /// This function always returns four bytes and the unused bytes contain zeros. Use
     /// the `len` method to see how many bytes are used.
     pub fn to_utf8(self) -> [u8; 4] {
-        let val = self as u32;
+        let mut val = self as u32;
         if val < 128 {
             return [val as u8, 0, 0, 0];
         }
@@ -55,7 +55,7 @@ impl char {
         bytes[0] = !(!0 >> len);
         for i in 0..len {
             bytes[len - i - 1] |= 0b1000_0000 | (val as u8 & 0b11_1111);
-            val >> 6;
+            val >>= 6;
         }
         bytes
     }

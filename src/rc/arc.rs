@@ -7,7 +7,7 @@ use core::{mem, ptr, intrinsics};
 use core::ptr::{OwnedPtr};
 use core::iter::{IntoIterator};
 use core::marker::{Leak};
-use base::clone::{Clone};
+use base::clone::{Clone, MaybeClone};
 use base::default::{Default};
 use base::undef::{UndefState};
 use atomic::{AtomicUsize};
@@ -186,6 +186,15 @@ impl<T, H> Clone for Arc<T, H>
 {
     fn clone(&self) -> Arc<T, H> {
         self.add_ref()
+    }
+}
+
+impl<T, H> MaybeClone for Arc<T, H>
+    where H: Allocator,
+          T: Leak,
+{
+    fn maybe_clone(&self) -> Result<Arc<T, H>> {
+        Ok(self.add_ref())
     }
 }
 

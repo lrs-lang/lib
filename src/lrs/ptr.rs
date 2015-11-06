@@ -5,5 +5,5 @@
 //! Pointer manipulation.
 
 pub use lrs_core::ptr::{
-    read, write, drop, memcpy, memmove,
+    read, write, drop, memcpy, memmove, NonZeroPtr, OwnedPtr,
 };

@@ -227,7 +227,7 @@ macro_rules! int_impls {
             }
 
             /// Counts the unset bits in this integer.
-            pub fn count_zeroes(self) -> usize {
+            pub fn count_zeros(self) -> usize {
                 (!self).count_ones()
             }
 
