@@ -35,6 +35,9 @@
 //! file is dual-licensed under MLP 2.0 and the two clause BSD license.
 //!
 //! [0]: https://github.com/Cyan4973/xxHash
+//!
+//! NOTE: This code has been very carefully optimized to avoid all bounds checks and
+//! produce good assembly on x86_64. DO NOT CHANGE THE CODE IN THIS FILE FOR NOW.
 
 use core::{mem};
 use core::marker::{Pod};
@@ -227,9 +230,9 @@ pub fn u64hash_bytes(input: &[u8], seed: u64) -> u64 {
 // produce the same output as the functions above, just faster.
 
 pub fn u32hash_u8(input: u8, seed: u32) -> u32 {
-    let mut hash = W32(1 + seed);
+    let mut hash = W32(1);
 
-    hash = hash + PRIME32_5;
+    hash = hash + seed + PRIME32_5;
     hash = hash + (W32(input as u32) * PRIME32_5);
     hash = hash.rotate_left(11) * PRIME32_1;
     hash = hash ^ (hash >> 15);
@@ -242,9 +245,9 @@ pub fn u32hash_u8(input: u8, seed: u32) -> u32 {
 }
 
 pub fn u64hash_u8(input: u8, seed: u64) -> u64 {
-    let mut hash = W64(1 + seed);
+    let mut hash = W64(1);
 
-    hash = hash + PRIME64_5;
+    hash = hash + seed + PRIME64_5;
     hash = hash ^ (W64(input as u64) * PRIME64_5);
     hash = hash.rotate_left(11) * PRIME64_1;
     hash = hash ^ (hash >> 33);
@@ -259,7 +262,7 @@ pub fn u64hash_u8(input: u8, seed: u64) -> u64 {
 pub fn u32hash_u16(input: u16, seed: u32) -> u32 {
     let input: [u8; 2] = unsafe { mem::cast(input) };
 
-    let mut hash = W32(2 + seed);
+    let mut hash = W32(2);
 
     hash = hash + seed + PRIME32_5;
     hash = hash + (W32(input[0] as u32) * PRIME32_5);
@@ -295,9 +298,9 @@ pub fn u64hash_u16(input: u16, seed: u64) -> u64 {
 }
 
 pub fn u32hash_u32(input: u32, seed: u32) -> u32 {
-    let mut hash = W32(4 + seed);
+    let mut hash = W32(4);
 
-    hash = hash + PRIME32_5;
+    hash = hash + seed + PRIME32_5;
     hash = hash + (W32(input) * PRIME32_3);
     hash = hash.rotate_left(17) * PRIME32_4;
     hash = hash ^ (hash >> 15);
@@ -310,9 +313,9 @@ pub fn u32hash_u32(input: u32, seed: u32) -> u32 {
 }
 
 pub fn u64hash_u32(input: u32, seed: u64) -> u64 {
-    let mut hash = W64(4 + seed);
+    let mut hash = W64(4);
 
-    hash = hash + PRIME64_5;
+    hash = hash + seed + PRIME64_5;
     hash = hash ^ (W64(input as u64) * PRIME64_1);
     hash = hash.rotate_left(23) * PRIME64_2 + PRIME64_3;
     hash = hash ^ (hash >> 33);
@@ -327,9 +330,9 @@ pub fn u64hash_u32(input: u32, seed: u64) -> u64 {
 pub fn u32hash_u64(input: u64, seed: u32) -> u32 {
     let input: [W32; 2] = unsafe { mem::cast(input) };
 
-    let mut hash = W32(8) + W32(seed);
+    let mut hash = W32(8);
 
-    hash = hash + PRIME32_5;
+    hash = hash + seed + PRIME32_5;
     hash = hash + (input[0] * PRIME32_3);
     hash = hash.rotate_left(17) * PRIME32_4;
     hash = hash + (input[1] * PRIME32_3);
@@ -349,9 +352,9 @@ pub fn u64hash_u64(input: u64, seed: u64) -> u64 {
     k1 = k1.rotate_left(31);
     k1 = k1 * PRIME64_1;
 
-    let mut hash = W64(8) + W64(seed);
+    let mut hash = W64(8);
 
-    hash = hash + PRIME64_5;
+    hash = hash + seed + PRIME64_5;
     hash = hash ^ k1;
     hash = hash.rotate_left(27) * PRIME64_1 + PRIME64_4;
     hash = hash ^ (hash >> 33);
@@ -569,7 +572,7 @@ impl U32Hasher {
 
         hash = hash + if self.total_len >= 16 {
             self.v1.rotate_left(1) + self.v2.rotate_left(7) +
-                self.v3.rotate_left(12) + self.v3.rotate_left(18)
+                self.v3.rotate_left(12) + self.v4.rotate_left(18)
         } else {
             self.seed + PRIME32_5
         };
@@ -683,7 +686,7 @@ impl U64Hasher {
 
         hash = hash + if self.total_len >= 32 {
             let mut hash = self.v1.rotate_left(1) + self.v2.rotate_left(7) +
-                            self.v3.rotate_left(12) + self.v3.rotate_left(18);
+                            self.v3.rotate_left(12) + self.v4.rotate_left(18);
 
             macro_rules! r {
                 ($var:ident) => {{

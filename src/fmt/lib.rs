@@ -73,16 +73,24 @@ mod fmt {
     pub use {Debug, Display};
 }
 
-impl<T: Debug> Debug for [T] {
-    fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
-        try!(write!(w, "["));
-        if self.len() > 0 {
-            for el in &self[..self.len() - 1] {
-                try!(write!(w, "{:?}, ", el));
+macro_rules! impl_slice {
+    ($name:ident, $fmt:expr) => {
+        impl<T: $name> $name for [T] {
+            fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
+                try!(write!(w, "["));
+                if self.len() > 0 {
+                    for el in &self[..self.len() - 1] {
+                        try!(write!(w, concat!($fmt, ", "), el));
+                    }
+                    try!(write!(w, $fmt, &self[self.len() - 1]));
+                }
+                write!(w, "]");
+                Ok(())
             }
-            try!(write!(w, "{:?}", &self[self.len() - 1]));
         }
-        write!(w, "]");
-        Ok(())
     }
 }
+
+impl_slice!(Debug, "{:?}");
+impl_slice!(LowerHex, "{:x}");
+impl_slice!(UpperHex, "{:X}");

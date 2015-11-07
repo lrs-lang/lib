@@ -3,9 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #[test]
-fn eq() {
-    test!([0] == [0]);
-    test!([0, 1] == [0, 1]);
-    test!([0, 1, 2] == [0, 1, 2]);
-    test!([0, 1, 2, 3] != [0, 1, 2, 4]);
+fn debug() {
+    let mut buf = [0; 20];
+    let mut buf = Vec::buffered(&mut buf);
+    write!(&mut buf, "{:?}", (1, 1));
+    test!(&*buf == "(1, 1)");
 }

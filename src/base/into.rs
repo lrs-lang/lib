@@ -72,6 +72,9 @@ as_into!(i16 as isize);
 as_into!(i32 as i64);
 as_into!(i32 as isize);
 
+// NOTE: No u64->usize on 64-bit because we want the definitions to exist on all
+// platforms.
+
 macro_rules! zero {
     ($ty:ty) => {
         impl Into<$ty> for () {

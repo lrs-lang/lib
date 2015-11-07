@@ -4,7 +4,7 @@
 
 use base::prelude::*;
 use io::{Write};
-use {Debug, Display};
+use {LowerHex, Debug, Display};
 
 fn debug_char_no_quotes<W: Write>(c: char, w: &mut W, esc_double: bool,
                                          esc_single: bool) -> Result {
@@ -19,7 +19,7 @@ fn debug_char_no_quotes<W: Write>(c: char, w: &mut W, esc_double: bool,
         try!(w.write_all(&[val as u8]));
     } else {
         try!(w.write_all(b"\\u{"));
-        try!(Debug::fmt(&val, w));
+        try!(LowerHex::fmt(&val, w));
         try!(w.write_all(b"}"));
     }
     Ok(())

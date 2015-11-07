@@ -2,10 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use std::share::{CopyCell};
+
 #[test]
-fn eq() {
-    test!([0] == [0]);
-    test!([0, 1] == [0, 1]);
-    test!([0, 1, 2] == [0, 1, 2]);
-    test!([0, 1, 2, 3] != [0, 1, 2, 4]);
+fn test() {
+    let cell = CopyCell::new(1);
+    test!(cell.get() == 1);
+    cell.set(2);
+    test!(cell.get() == 2);
 }

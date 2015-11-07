@@ -46,7 +46,7 @@ fn signed(bytes: &[u8], min: i64, max: i64) -> Result<(i64, usize)> {
     if bytes.len() == 0 { return Ok((0, 0)); }
     match bytes[0] {
         b'+' => unsigned(&bytes[1..], max as u64).map(|(val, len)| (val as i64, len + 1)),
-        b'-' => unsigned(&bytes[1..], (-min) as u64).map(|(val, len)| (-(val as i64), len + 1)),
+        b'-' => unsigned(&bytes[1..], 0i64.wrapping_sub(min) as u64).map(|(val, len)| (-(val as i64), len + 1)),
         _    => unsigned(bytes, max as u64).map(|(val, len)| (val as i64, len)),
     }
 }

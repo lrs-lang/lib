@@ -6,13 +6,13 @@ use std::bool::{BoolExt};
 
 #[test]
 fn map() {
-    assert!(true.map(|| 1u8) == Some(1));
-    assert!(false.map(|| 1u8) == None);
+    test!(true.map(|| 1u8) == Some(1));
+    test!(false.map(|| 1u8) == None);
 }
 
 #[test]
 fn eq() {
-    assert!(true == true);
-    assert!(false == false);
-    assert!(false != true);
+    test!(true == true);
+    test!(false == false);
+    test!(false != true);
 }

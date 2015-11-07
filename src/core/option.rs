@@ -18,6 +18,19 @@ pub enum Option<T> {
     Some(T),
 }
 
+// The code below is interesting but forces the user to add more type annotations.
+// impl<T, U> Eq<Option<U>> for Option<T>
+//     where T: Eq<U>
+// {
+//     fn eq(&self, other: &Option<U>) -> bool {
+//         match (self, other) {
+//             (&Some(ref s), &Some(ref o)) => s.eq(o),
+//             (&None, &None) => true,
+//             _ => false,
+//         }
+//     }
+// }
+
 impl<T> Option<T> {
     /// Replaces the value by `None` and returns the original.
     ///

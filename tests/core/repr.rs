@@ -8,6 +8,6 @@ use std::repr::{Repr};
 fn slice() {
     let x: &[u8] = &[1, 2];
     let y = x.repr();
-    assert!(y.len == 2);
-    assert!(y.ptr == &x[0]);
+    test!(y.len == 2);
+    test!(y.ptr == &x[0]);
 }

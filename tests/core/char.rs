@@ -4,9 +4,9 @@
 
 #[test]
 fn len() {
-    assert!('a'.len() == 1);
-    assert!('ä'.len() == 2);
-    assert!('ᄌ'.len() == 3);
+    test!('a'.len() == 1);
+    test!('ä'.len() == 2);
+    test!('ᄌ'.len() == 3);
 }
 
 #[test]
@@ -14,7 +14,7 @@ fn to_utf8() {
     fn inner(c: char, s: &str) {
         let bytes = c.to_utf8();
         let len = c.len();
-        assert!(&bytes[..len] == s);
+        test!(&bytes[..len] == s);
     }
     inner('a', "a");
     inner('ä', "ä");
@@ -23,25 +23,25 @@ fn to_utf8() {
 
 #[test]
 fn from_u32() {
-    assert!(char::from_u32('a' as u32) == Some('a'));
-    assert!(char::from_u32('ä' as u32) == Some('ä'));
-    assert!(char::from_u32(0x110000) == None);
-    assert!(char::from_u32(0xd800) == None);
+    test!(char::from_u32('a' as u32) == Some('a'));
+    test!(char::from_u32('ä' as u32) == Some('ä'));
+    test!(char::from_u32(0x110000) == None);
+    test!(char::from_u32(0xd800) == None);
 }
 
 #[test]
 fn max() {
-    assert!(char::max() == '\u{10ffff}');
+    test!(char::max() == '\u{10ffff}');
 }
 
 #[test]
 fn eq() {
-    assert!('a' == 'a');
-    assert!('a' != 'b');
+    test!('a' == 'a');
+    test!('a' != 'b');
 }
 
 #[test]
 fn ord() {
-    assert!('a' < 'b');
-    assert!('a' < 'ä');
+    test!('a' < 'b');
+    test!('a' < 'ä');
 }

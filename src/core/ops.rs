@@ -274,10 +274,12 @@ pub trait IndexMut<Idx: ?Sized>: Index<Idx> {
 
 /// The type representing the unbounded `..` syntax.
 #[lang = "range_full"]
+#[derive(Eq)]
 pub struct RangeFull;
 
 /// The type representing the bounded `M..N` syntax.
 #[lang = "range"]
+#[derive(Eq)]
 pub struct Range<Idx> {
     /// The left-hand-side of the operator.
     pub start: Idx,
@@ -287,6 +289,7 @@ pub struct Range<Idx> {
 
 /// The type representing the half-bounded `M..` syntax.
 #[lang = "range_from"]
+#[derive(Eq)]
 pub struct RangeFrom<Idx> {
     /// The left-hand-side of the operator.
     pub start: Idx,
@@ -294,6 +297,7 @@ pub struct RangeFrom<Idx> {
 
 /// The type representing the half-bounded `..N` syntax.
 #[lang = "range_to"]
+#[derive(Eq)]
 pub struct RangeTo<Idx> {
     /// The right-hand-side of the operator.
     pub end: Idx,

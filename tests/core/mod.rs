@@ -13,3 +13,4 @@ mod option;
 mod ptr;
 mod repr;
 mod slice;
+mod str;

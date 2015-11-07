@@ -6,6 +6,13 @@
 #![crate_name = "tests"]
 #![feature(custom_derive)]
 
+macro_rules! test {
+    ($e:expr) => {
+        // if !$e { ::std::process::exit(1); }
+        assert!($e);
+    }
+}
+
 mod core;
 mod libc;
 mod int;

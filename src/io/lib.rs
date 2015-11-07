@@ -254,18 +254,21 @@ impl<'a> Read for &'a [u8] {
 }
 
 impl<'a> BufRead for &'a [u8] {
-    fn copy_until<W: Write>(&mut self, dst: &mut W, b: u8) -> Result<usize> {
+    fn copy_until<W: Write+?Sized>(&mut self, dst: &mut W, b: u8) -> Result<usize> {
         let mut len = match memchr(self, b) {
             Some(pos) => pos + 1,
             _ => self.len(),
         };
         let total = len;
         while len > 0 {
-            let consumed = try!(dst.write(&self[..len]));
+            let consumed = match try!(dst.write(&self[..len])) {
+                0 => break,
+                n => n,
+            };
             len -= consumed;
             self.consume(consumed);
         }
-        Ok(total)
+        Ok(total - len)
     }
 
     fn consume(&mut self, num: usize) -> usize {

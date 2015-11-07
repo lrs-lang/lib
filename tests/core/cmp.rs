@@ -6,36 +6,36 @@ use std::{cmp};
 
 #[test]
 fn min() {
-    assert!(cmp::min(0, 1) == 0);
-    assert!(cmp::min(0, 0) == 0);
+    test!(cmp::min(0, 1) == 0);
+    test!(cmp::min(0, 0) == 0);
 }
 
 #[test]
 fn min_ref() {
-    assert!(cmp::min_ref(&0, &1) == &0);
-    assert!(cmp::min_ref(&0, &0) == &0);
+    test!(cmp::min_ref(&0, &1) == &0);
+    test!(cmp::min_ref(&0, &0) == &0);
 }
 
 #[test]
 fn min_mut() {
-    assert!(cmp::min_mut(&mut 0, &mut 1) == &mut 0);
-    assert!(cmp::min_mut(&mut 0, &mut 0) == &mut 0);
+    test!(cmp::min_mut(&mut 0, &mut 1) == &mut 0);
+    test!(cmp::min_mut(&mut 0, &mut 0) == &mut 0);
 }
 
 #[test]
 fn max() {
-    assert!(cmp::max(0, 1) == 1);
-    assert!(cmp::max(0, 0) == 0);
+    test!(cmp::max(0, 1) == 1);
+    test!(cmp::max(0, 0) == 0);
 }
 
 #[test]
 fn max_ref() {
-    assert!(cmp::max_ref(&0, &1) == &1);
-    assert!(cmp::max_ref(&0, &0) == &0);
+    test!(cmp::max_ref(&0, &1) == &1);
+    test!(cmp::max_ref(&0, &0) == &0);
 }
 
 #[test]
 fn max_mut() {
-    assert!(cmp::max_mut(&mut 0, &mut 1) == &mut 1);
-    assert!(cmp::max_mut(&mut 0, &mut 0) == &mut 0);
+    test!(cmp::max_mut(&mut 0, &mut 1) == &mut 1);
+    test!(cmp::max_mut(&mut 0, &mut 0) == &mut 0);
 }

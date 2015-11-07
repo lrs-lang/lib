@@ -35,7 +35,7 @@ impl str {
     /// [return_varue]
     /// Returns the slice transmuted to a string slice if it contains valid UTF-8.
     pub fn from_bytes(b: &[u8]) -> Option<&str> {
-        let longest = longest_sequence(b);
+        let longest = str::longest_sequence(b);
         if longest.len() == b.len() {
             Some(longest)
         } else {
@@ -75,6 +75,38 @@ impl str {
             let b = self.as_bytes()[idx];
             b & 0x80 == 0 || b & 0xC0 == 0xC0
         }
+    }
+
+    /// Returns the longest initial sequence of valid UTF-8 in a byte slice.
+    ///
+    /// [argument, b]
+    /// The byte slice.
+    pub fn longest_sequence(b: &[u8]) -> &str {
+        let mut idx = 0;
+        while idx < b.len() {
+            let len = UTF8_CHAR_LEN[b[idx] as usize] as usize;
+            if len == 1 { idx += 1; continue; }
+            if len == 0 || idx + len > b.len() { break; }
+            if len == 2 && b[idx+1].leading_ones() != 1 { break; }
+            if len == 3 {
+                match (b[idx], b[idx+1], b[idx+2]) {
+                    (0xE0,        0xA0...0xBF, 0x80...0xBF) => { },
+                    (0xE1...0xEC, 0x80...0xBF, 0x80...0xBF) => { },
+                    (0xED,        0x80...0x9F, 0x80...0xBF) => { },
+                    _ => break,
+                }
+            }
+            if len == 4 {
+                match (b[idx], b[idx+1], b[idx+2], b[idx+3]) {
+                    (0xF0,        0x90...0xBF, 0x80...0xBF, 0x80...0xBF) => { },
+                    (0xF1...0xF3, 0x80...0xBF, 0x80...0xBF, 0x80...0xBF) => { },
+                    (0xF4,        0x80...0x8F, 0x80...0xBF, 0x80...0xBF) => { },
+                    _ => break,
+                }
+            }
+            idx += len;
+        }
+        unsafe { mem::cast(&b[..idx]) }
     }
 }
 
@@ -183,35 +215,4 @@ unsafe fn bytes_to_char(b: &[u8]) -> char {
         val = (val << 6) | (byte & 0b0011_1111) as u32;
     }
     mem::cast(val)
-}
-
-/// Returns the longest initial sequence of valid UTF-8 in a byte slice.
-///
-/// [argument, b]
-/// The byte slice.
-pub fn longest_sequence(b: &[u8]) -> &str {
-    let mut idx = 0;
-    while idx < b.len() {
-        let len = UTF8_CHAR_LEN[b[idx] as usize] as usize;
-        if len == 1 { idx += 1; continue; }
-        if len == 0 || idx + len > b.len() { break; }
-        if len == 3 {
-            match (b[idx], b[idx+1], b[idx+2]) {
-                (0xE0,        0xA0...0xBF, 0x80...0xBF) => { },
-                (0xE1...0xEC, 0x80...0xBF, 0x80...0xBF) => { },
-                (0xED,        0x80...0x9F, 0x80...0xBF) => { },
-                _ => break,
-            }
-        }
-        if len == 4 {
-            match (b[idx], b[idx+1], b[idx+2], b[idx+3]) {
-                (0xF0,        0x90...0xBF, 0x80...0xBF, 0x80...0xBF) => { },
-                (0xF1...0xF3, 0x80...0xBF, 0x80...0xBF, 0x80...0xBF) => { },
-                (0xF4,        0x80...0x8F, 0x80...0xBF, 0x80...0xBF) => { },
-                _ => break,
-            }
-        }
-        idx += len;
-    }
-    unsafe { mem::cast(&b[..idx]) }
 }
