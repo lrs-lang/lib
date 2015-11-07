@@ -10,10 +10,10 @@ all: $(bins)
 
 bin/%: src/%.rs ../obj/liblrs.rlib Makefile
 	@mkdir -p "$(@D)"
-	@# lrsc -O -C lto $(ops) -C link-args="-nostdlib $(musl)/lib/crt1.o -L $(musl)/lib -static -l c" "$<" -o "$@"
+	lrsc -O -C lto $(ops) -C link-args="-nostdlib $(musl)/lib/crt1.o -L $(musl)/lib -static -l c" "$<" -o "$@"
 	@# lrsc -O -C lto $(ops) "$<" -o "$@"
 	@# lrsc -O -C lto $(ops) "$<" --emit=llvm-ir
-	lrsc -g $(ops) "$<" -o "$@"
+	@# lrsc -g $(ops) "$<" -o "$@"
 
 clean:
 	rm bin/*

@@ -4,38 +4,88 @@
 
 image::{logo}[logo,float="left"]
 
-Welcome to the home of *lrs*, a new Rust standard library to power a new
-generation of Linux-based devices. *lrs* is lightweight, fast, simple, free, and
-provides the full safety of the Rust programming language.
-
-== Acknowledgements
-
-:musl_home: http://www.musl-libc.org/ 
-
-Our gratitude goes to the {musl_home}[musl libc] developers who not only came up
-with the excellent introduction you can read above but whose open-source library
-also provides a clean documentation of the Linux kernel API.
+lrs is a highly experimental, linux-only standard library for the rustc
+compiler. It does not use any parts of the standard library that is part of the
+rust distribution.
 
 == Features
 
+Since lrs is based on the rust compiler, it shares many features with rust
+(e.g., lifetimes, borrow checking, integer overflow checking, etc.) But rustc
+allows us to make significant chages to the language as long as we don't use
+Mozilla's standard library. This section lists some of the differences between
+rust and lrs and other features of lrs.
+
+NOTE: In this section we'll compare programs compiled against lrs and programs
+compiled against the "standard" standard library that comes with the rust
+distribution. To make things simpler, we will call programs that use lrs "lrs
+programs" and programs that use Mozilla's standard library "rust programs". It
+should be clear from the context what is meant.
+
 === No unwinding
 
-*lrs* guarantees that a sequence of function calls
+Unwinding and the `panic` macro have been removed from lrs. This means that
+error handling works via return values or--in the case of unrecoverable
+errors--process termination. This has the following advantages:
 
+Potentially better performance:: Consider the following function:
++
 ----
-{
-    f();
+fn f(a: &mut u8, b: &mut u8, g: fn()) {
+    mem::swap(a, b);
     g();
-    h();
+    mem::swap(a, b);
 }
 ----
++
+If `g` cannot unwind, then this function can be optimized by removing both
+`swap` calls. But if `g` can unwind, then the `swap` calls must stay in place
+since destructors called during unwinding might access `a` and `b`.
 
-executes in this order before and if the flow of control returns to the
-surrounding block. This makes it much easier to reason about unsafe code and
-allows us to write clearer and faster programs. In particular, it fixes the
-inversion of safety that existed between C and unsafe Rust code.
+No exception unsafety:: Consider the following (incorrect) rust code:
++
+----
+fn push(a: &mut Vec<T>, g: fn() -> T) {
+    unsafe {
+        assert!(a.capacity() > a.len());
+        let len = a.len();
+        a.set_len(len + 1); // <-- BUG
+        ptr::write(a.as_mut_ptr().offset(len as isize), g());
+    }
+}
+----
++
+This is a naive implementation of a non-allocating `push` method on `Vec<T>`.
+The code is incorrect because the length of the vector is increased before the
+return value of `g` has been written to it. If `g` unwinds, the destructor of
+`Vec<T>` will access the invalid value at `a[len]`, which is likely undefined
+behavior. This problem does not exist in lrs. See
+https://github.com/rust-lang/rfcs/pull/1236[this] (long) thread for a discussion
+of exception safety in rust.
 
-The presence 
+=== Small executables
+
+:calc_url: http://is.gd/Ep2KIi
+
+|===
+|Name |lrs + glibc |lrs + musl |C |rust
+
+|Hello World |7.0KB |4.0KB |6.5KB |436KB
+
+|http://pubs.opengroup.org/onlinepubs/9699919799/utilities/test.html[test(1)]footnote:[Note
+that the different implementations do not necessarily implement the same
+features.]
+|18KB
+|21KB
+|35KB
+|462KB
+
+|{calc_url}[calc]
+|9.2KB
+|5.8KB
+|n/a
+|437KB
+|===
 
 === glibc, musl, or no libc at all
 
@@ -45,11 +95,6 @@ to use to support the libc runtime, is so small that it is almost trivial to
 port it to different libc implementations.
 
 For the same reason it is feasible to use *lrs* without any libc at all.
-
-=== Small executables
-
-Compiling a "Hello World" statically against *lrs* and musl libc creates a
-*4.5 KB* binary with no dynamic dependencies.
 
 === Portable
 
