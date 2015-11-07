@@ -7,7 +7,7 @@ use core::ops::{Index, IndexMut, Range, RangeFrom, RangeTo, RangeFull, PartialOr
 use core::cmp::{Ord, Ordering};
 use core::{mem, str};
 // use base::unused::{UnusedState};
-use fmt::{self, Debug, Display, UpperHex, Write};
+use fmt::{self, Debug, Display, LowerHex, Write};
 use parse::{Parse, Parsable};
 
 use c_str::{CStr, ToCStr};
@@ -227,7 +227,7 @@ impl Debug for ByteStr {
             bytes = &bytes[remove..];
             if bytes.len() > 0 {
                 try!(w.write_all(b"\\x"));
-                try!(UpperHex::fmt(&bytes[0], w));
+                try!(LowerHex::fmt(&bytes[0], w));
                 bytes = &bytes[1..];
             }
         }
