@@ -6,6 +6,11 @@ include::../../VERSION.adoc[]
 This document describes how to build and use lrs. This process is only partially
 automated so that you can easily adapt the process to your needs.
 
+NOTE: Since github does not support the `include` statement in its markup
+renderers, the `{X86_64_NIGHTLY}`, `{I686_NIGHTLY}`, and `{VERSION}` variables
+below will not be replaced correctly. Please click on the `VERSION.adoc` link
+above to get the correct values.
+
 toc::[]
 
 == Install the correct rust version
@@ -105,7 +110,7 @@ compile with `--test`.
 == Build the build system
 
 While you could continue to compile lrs with the `make_lrs.sh` script, this
-would be highly unergonomic as it recompiles every library when it's invoked.
+would be highly inefficient as it recompiles every library when it's invoked.
 It's much better to use the build system--lrs_build--that was written
 specifically to compile lrs.
 
