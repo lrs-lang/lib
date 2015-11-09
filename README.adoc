@@ -77,15 +77,16 @@ of equivalent C programs. Note in particular that the *lrs + musl* programs
 below have no dynamic dependencies.
 
 |===
-|Name |lrs + glibc |lrs + musl |C |rust
+|Name |lrs + glibc |lrs + musl |lrs - libc |C |rust
 
-|Hello World |7.0KB |4.0KB |6.5KB |436KB
+|Hello World |7.0KB |4.0KB |636B |6.5KB |436KB
 
 |http://pubs.opengroup.org/onlinepubs/9699919799/utilities/test.html[test(1)]footnote:[Note
 that the different implementations do not necessarily implement the same
 features.]
 |18KB
 |21KB
+|n/a
 |35KB
 |462KB
 
@@ -93,10 +94,12 @@ features.]
 |9.2KB
 |5.8KB
 |n/a
+|n/a
 |437KB
 |===
 
-NOTE: All programs were compiled with the `-O -C lto` flags.
+NOTE: All programs were compiled with the `-O -C lto` flags. The *Hello World*
+`lrs - libc` example was stripped.
 
 === Direct system calls
 

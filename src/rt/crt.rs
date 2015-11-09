@@ -5,6 +5,10 @@
 use cty_base::types::{c_char, c_int};
 use syscall::{self};
 
+#[cfg(no_libc)]
+#[link(name = "lrs_crt")]
+extern { }
+
 #[no_mangle]
 pub unsafe extern fn __lrs_start_main(argc: c_int, argv: *const *const c_char) {
     extern {
