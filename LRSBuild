@@ -15,9 +15,7 @@ obj fmt        core base io
 
 obj cell       core base
 obj str_one    core cty_base base arch_fns fmt parse
-
 obj getopt     core base str_one
-obj rt         core libc base str_one
 
 obj atomic     core base cell
 obj cty        core base cty_base
@@ -25,6 +23,7 @@ obj r_syscall  core cty
 obj syscall    core saturating base str_one cty r_syscall
 
 obj kernel     core base atomic cty syscall parse arch_fns
+obj rt         core libc base str_one libc syscall
 
 obj clone      core libc base cty syscall fmt
 obj fd         core base rv io cty syscall fmt

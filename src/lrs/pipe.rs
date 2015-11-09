@@ -5,11 +5,12 @@
 //! Kernel pipes.
 
 pub use lrs_pipe::{Pipe};
-pub use lrs_pipe::flags::{PipeFlags};
+pub use lrs_pipe::flags::{PipeFlags, TeeFlags, SpliceFlags};
 
 pub mod flags {
     pub use lrs_pipe::flags::{
         PIPE_NONE, PIPE_CLOSE_ON_EXEC, PIPE_DONT_BLOCK, PIPE_PACKETS,
         TEE_NONE, TEE_DONT_BLOCK,
+        SPLICE_NONE, SPLICE_DONT_BLOCK, SPLICE_MORE,
     };
 }

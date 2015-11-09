@@ -1,10 +1,10 @@
 #!/bin/sh
 
 function build {
-    rustc --emit=link --out-dir=obj -L obj src/$1/lib.rs
+    lrsc --out-dir=obj -L obj src/$1/lib.rs
 }
 
-OBJS="arch core sys dev fs time_base process poll file time_ext dir user_group linux"
+OBJS="$(cat LRSBuild | grep '^obj ' | cut '-d ' -f 2) lrs"
 
 mkdir -p obj
 

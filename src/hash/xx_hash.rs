@@ -68,7 +68,7 @@ unsafe fn read_u32(input: &[u8]) -> W32 {
         any(target_arch = "arm", target_arch = "aarch64"),
         not(unaligned_access)))]
 unsafe fn read_u32(input: &[u8]) -> W32 {
-    W32(ptr::read(input.as_ptr() as *const u32))
+    W32(::core::ptr::read(input.as_ptr() as *const u32))
 }
 
 /// Loads an u32 and advances the input slice by 4 bytes. UB if input is shorter.
@@ -87,7 +87,7 @@ unsafe fn read_u64(input: &[u8]) -> W64 {
         any(target_arch = "arm", target_arch = "aarch64"),
         not(unaligned_access)))]
 unsafe fn read_u64(input: &[u8]) -> W64 {
-    W64(ptr::read(input.as_ptr() as *const u64))
+    W64(::core::ptr::read(input.as_ptr() as *const u64))
 }
 
 /// Loads an u64 and advances the input slice by 8 bytes. UB if input is shorter.

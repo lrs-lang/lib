@@ -331,8 +331,6 @@ pub struct bpf_insn {
     pub code: __u8,
     // __u8 dst_reg:4;  /* dest register */
     // __u8 src_reg:4;  /* source register */
-    //
-    // "systems language"
     reg:  __u8,
     pub off:  __s16,
     pub imm:  __s32,
@@ -354,7 +352,6 @@ pub const BPF_NOEXIST : c_int = 1;
 pub const BPF_EXIST   : c_int = 2;
 
 // XXX(WRONG) this needs an ((aligned(8))) attribute
-// "systems language"
 #[repr(C)]
 #[derive(Pod, Eq)]
 pub struct bpf_attr {

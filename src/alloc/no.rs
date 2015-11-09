@@ -10,7 +10,7 @@ use {Allocator};
 ///
 /// = Remarks
 ///
-/// This allocator does not inspect the argumnets passed to it and always returns that no
+/// This allocator does not inspect the arguments passed to it and always returns that no
 /// memory is available.
 pub struct NoMem<'a>(PhantomData<&'a ()>);
 

@@ -1,4 +1,5 @@
 = *lrs*
+:toc: macro
 
 :logo: assets/logo.png
 
@@ -7,6 +8,10 @@ image::{logo}[logo,float="left"]
 lrs is a highly experimental, linux-only standard library for the rustc
 compiler. It does not use any parts of the standard library that is part of the
 rust distribution.
+
+'''
+
+toc::[]
 
 == Features
 
@@ -67,6 +72,10 @@ of exception safety in rust.
 
 :calc_url: http://is.gd/Ep2KIi
 
+lrs programs usually compile down to executable with a size comparable to that
+of equivalent C programs. Note in particular that the *lrs + musl* programs
+below have no dynamic dependencies.
+
 |===
 |Name |lrs + glibc |lrs + musl |C |rust
 
@@ -87,74 +96,113 @@ features.]
 |437KB
 |===
 
-=== glibc, musl, or no libc at all
+NOTE: All programs were compiled with the `-O -C lto` flags.
 
-*lrs* is written directly against the Linux kernel API, meaning that it does
-most of its syscalls from Rust code. The remaining libc interface, which we have
-to use to support the libc runtime, is so small that it is almost trivial to
-port it to different libc implementations.
+=== Direct system calls
 
-For the same reason it is feasible to use *lrs* without any libc at all.
+lrs interact with the kernel directly through system calls. That is, lrs does
+not depend on a libc for 99% of the work. This allows us to use kernel features
+that do not (yet) have an equivalent libc function and removes an unnecessary
+layer of abstraction.
+
+Even though lrs still uses a small number of libc functions (namely those that
+manage libc state such as TLS, malloc locks, etc,) it is feasible for lrs to
+become completely libc-independent in the near future.
+
+=== glibc and musl support
+
+Due to what was discussed in the previous section, the lrs-libc interface is so
+small that it's almost trivial to make lrs work with different libc versions.
+Currently, lrs is known to work with glibc and musl.
 
 === Portable
 
-The platform-dependent part of *lrs* mirrors the *asm* and *asm-generic*
-directories in the Linux kernel tree which makes it easy to port it to new
-platforms. *lrs* is already available on *x86_64*, *x32*, *arm*, and *arm64*.
+Even though lrs avoids the libc abstraction layer, porting lrs to new linux
+platforms is easy. This is due to the way the platform dependent parts of lrs
+mirror the equivalent parts in the linux kernel source code. lrs has already
+been ported to *x86_64*, *x32*, *i686*, *arm*, and *arm64*.
 
-=== Custom allocators
+WARNING: lrs has only been tested on *x86_64*.
 
-Every allocating structure in *lrs* comes with an optional allocator argument.
-The following allocators are currently available:
+=== Per-object allocators
 
-*Libc*:: Calls `malloc` and friends from the libc.
-*JeMalloc*:: Calls *jemalloc*'s non-standard API with sized allocations and
+Many allocating structures in lrs (such as vectors, strings, hashmaps) come
+with an optional allocator argument. The following allocators are part of lrs:
+
+Libc:: Uses `malloc` and friends from the libc.
+JeMalloc:: Uses jemalloc's non-standard API with sized allocations and
 deallocations for higher efficiency.
-*NoMem*:: This dummy-allocator always reports an out-of-memory condition.
-*Bda*:: The *brain-dead allocator* only allocates in multiples of the page size.
-This is very useful for applications that have few allocations but whose size is
+NoMem:: This dummy-allocator always reports an out-of-memory condition.
+Bda:: The *brain-dead allocator* only allocates in multiples of the page size.
+This is very useful for applications that have few allocations whose size is
 unknown at compile time and can rapidly increase.
 
-To ease notation, all structures default to the *Heap* allocator which is an
-alias for one of the allocators and can be set at compile-time. That is,
-`Vec<T>` is equivalent to `Vec<T, Heap>`.
-
-The *NoMem* allocator is used to represent the state where allocating structures
-are not backed by dynamic allocations but by a borrowed chunk of memory:
-
+Careful note should be taken of the *NoMem* allocator. Consider the following
+code:
 ----
-let mut buffer = [0u8; 200];
-let mut vec: Vec<u16, NoMem> = Vec::borrowed(&mut buf);
+let mut buf = [0; 20];
+let mut vec = Vec::buffered(&mut buf);
+write!(&mut vec, "Hello World {}", 10).unwrap();
+assert!(&*vec == "Hello World 10");
 ----
+The vector is backed by the *NoMem* allocator and the buffer declared in the
+first line. It will never dynamically allocate any memory. If we were to write
+more bytes than can be stored in the buffer, `write!` would return that the
+vector is out of memory. Using this feature, lrs often allows the user to avoid
+allocations in cases where doing so would be rather inconvenient in rust.
 
-Such a vector can be use normally but when the buffer is exhausted it will
-report this condition back to the user:
-
-----
-println!("{:?}", vec.reserve(101));
-// Err(NoMemory)
-----
+Nevertheless, using lrs collections is still easy in the common case where the
+user does not care about dynamic allocations. This is because all collections
+declare a default allocator so that `Vec<T>` is the same as `Vec<T, Heap>`. This
+default allocator can be chosen at compile time.
 
 === No allocations in the 99.9% case
 
 All APIs are designed to not allocate memory in the common case. For example,
 `File::open` will only allocate memory if the requested path is longer than
 `PATH_MAX`. In those cases the API uses the *FbHeap*, the *fallback allocator*.
-If you don't want it to allocate in those exceptional situations, set *FbHeap*
-to *NoMem* at compile time.
+If the user does not want memory to be allocated in those exceptional
+situations, he can set *FbHeap* to *NoMem* at compile time.
 
-=== Accessible development
+=== Fast compilation
 
-*lrs* split into many small crates and provides the best version of incremental
-compilation known to Rust developers. Compiling a single crate during
-development usually takes less than a second. To this end, *lrs* comes with its
-own built-system, *lrs_build*, which ensures that only the minimal amount of
-work is done by the compiler.
+lrs split into many small crates and provides incremental compilation
+independent of the rustc compiler. Compiling a single crate during development
+often takes less than a second. To this end, lrs comes with its own
+build system--lrs_build, discussed below--which ensures that only the minimal
+amount of work is done by the compiler.
+
+Furthermore, even complete builds do not take very long. On this (old) machine,
+a complete build takes 28 seconds without optimization and 41 seconds with
+optimization.
 
 === Extensive Linux API coverage
 
-The goal of *lrs* is nothing less than to provide the best and safest way to
-program against the Linux kernel API.
+lrs already wraps many of the commonly used linux system calls.
+
+NOTE: Some system calls (such as `vmsplice`) are fundamentally unsafe so that
+lrs will likely never provide safe wrappers for them.
+
+=== Easy to use
+
+Even though lrs programs don't use the standard library that comes with the
+compiler, the user doesn't have to bother with annoying annotations. For
+example, the following lrs program can be compiled as written:
+
+----
+use std::tty::{is_a_tty};
+
+fn main() {
+    if is_a_tty(&1) {
+        println!("stdout is a tty");
+    } else {
+        println!("stdout is not a tty");
+    }
+}
+----
+
+This is because lrs comes with its own compiler driver that takes care of
+injecting lrs instead of rust.
 
 === Permissive licensing
 
@@ -166,10 +214,10 @@ file-by-file basis: Changes to files licensed under the *MPL 2.0* have to be
 distributed under the same license. It also allows the code to be freely used
 under several (L)GPL licenses.
 
-=== Concise documentation
+Some other parts--such as the compiler plugin and the compiler driver--are
+licensed under the MIT license.
 
-[quote, Gary Bernhardt]
-We need docs in proportion to design flaws.
+=== Concise documentation
 
 *lrs* docs do not try to be a Rust tutorial and are kept short and to the point,
 with the expectation that most APIs are designed well enough to be understood
@@ -177,9 +225,80 @@ without any help. When appropriate, we reference Linux manual pages. On the
 other hand, unsafe APIs and those that are used in unsafe code are explained in
 great detail.
 
-== Building
+== Todo
 
-== Using
+There are still many things to do
+
+== Building and Using
+
+=== Install the correct rust version
+
+Since lrs uses many unstable rustc features, you first have to install the
+correct rust version. Note that, in particular, the compiler plugin that comes
+with lrs will likely not work with an incorrect rust version.
+
+:x86_64: http://static.rust-lang.org/dist/2015-10-30/rust-nightly-x86_64-unknown-linux-gnu.tar.gz
+:i686: http://static.rust-lang.org/dist/2015-10-30/rust-nightly-i686-unknown-linux-gnu.tar.gz
+
+You can get precompiled nightlies for {x86_64}[`x86_64`] and {i686}[`i686`]. If
+you're using another system, you have to compile rust at the commit *2e07996a9*.
+
+=== Set the `LRS_OBJ_PATH` environment variable
+
+In the next step we'll build the lrs compiler driver. First we have to set the
+`LRS_OBJ_PATH` variable so that the driver knows where to look for the lrs
+libraries. Let's assume that you've cloned this repository into
+
+----
+/home/daniel/lrs/lib
+----
+
+Then you should add
+
+----
+export LRS_OBJ_PATH="/home/daniel/lrs/lib/obj"
+----
+
+to your `.bashrc` or your `.zshrc` and restart your terminal.
+
+=== Build the lrs driver
+
+As described above, lrs comes with its own compiler driver--lrsc. Please follow
+the instructions in the {driver}[driver] repository to compile the driver. Once
+you have the `lrsc` binary, copy it into the same folder your `rustc` binary is
+located in.
+
+NOTE: It is important that you actually copy the binary. Creating a symbolic
+link is not sufficient because `rustc` looks for the `compiler-rt` library in a
+directory relative to the binary.
+
+=== Build the compiler plugin
+
+In order to use syntax extensions such as `write!` or `println!`, lrs comes with
+a syntax extension. To build it simply run the `build_plugin.sh` shell script.
+
+=== Build lrs for the first time
+
+lrs is normally built with its own build system. Since this build system is
+itself written against lrs, we'll first have to compile lrs on our own. To do
+this, simply run the provided `build_all.sh` shell script.
+
+=== Build the assembly files
+
+In order to handle signals, lrs has several routines written directly in
+assembly. To build these files, it should be sufficient to run the
+`build_asm.sh` script.
+
+=== Build the test library
+
+In order to run tests, we have to compile our own test library. Do this by
+running `make_libtest.sh`.
+
+=== Build the build system
+
+
+
+
 
 == Logo
 
@@ -187,7 +306,7 @@ great detail.
 :dablim: http://dablim.deviantart.com/
 :ccby: http://creativecommons.org/licenses/by-sa/4.0/
 
-The link:{logo}[logo] shows a penguin in a sprocket.
+The lrs link:{logo}[logo] shows a penguin in a sprocket.
 
 It is based on {simple-linux-logo}[Simple Linux Logo] by {dablim}[Dablim] and is
 licensed under {ccby}[CC BY-SA 4.0].

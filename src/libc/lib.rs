@@ -41,11 +41,11 @@ impl Copy for pthread_t { }
 impl Pod for pthread_attr_t { }
 impl Copy for pthread_attr_t { }
 
-#[cfg(not(no_link_args))]
+#[cfg(not(any(no_link_args, no_libc)))]
 #[link(name = "c")]
 extern { }
 
-#[cfg(not(no_link_args))]
+#[cfg(not(any(no_link_args, no_libc)))]
 #[link(name = "pthread")]
 extern { }
 

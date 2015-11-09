@@ -41,6 +41,7 @@ pub use r::{StatType, StatfsType};
 mod std { pub use base::std::*; pub use cty; }
 
 // XXX: iovec _MUST_ be the same as &mut [u8]
+//      We now have a test for that.
 //
 // TODO: Audit ioctl
 

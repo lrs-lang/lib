@@ -10,7 +10,9 @@ all: $(bins)
 
 bin/%: src/%.rs ../obj/liblrs.rlib Makefile
 	@mkdir -p "$(@D)"
-	lrsc -O -C lto $(ops) -C link-args="-nostdlib $(musl)/lib/crt1.o -L $(musl)/lib -static -l c" "$<" -o "$@"
+	@# lrsc -O -C lto $(ops) -C link-args="-nostdlib $(musl)/lib/crt1.o -L $(musl)/lib -static -l c" "$<" -o "$@"
+	@# lrsc --target=i686-unknown-linux-gnu $(ops) -C link-args="-nostdlib $(musl)/lib/crt1.o -L $(musl)/lib -static -l c" "$<" -o "$@"
+	lrsc -O -C lto $(ops) "$<" -o "$@"
 	@# lrsc -O -C lto $(ops) "$<" -o "$@"
 	@# lrsc -O -C lto $(ops) "$<" --emit=llvm-ir
 	@# lrsc -g $(ops) "$<" -o "$@"

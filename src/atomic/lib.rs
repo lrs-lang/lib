@@ -11,8 +11,6 @@
 extern crate lrs_base as base;
 extern crate lrs_cell as cell;
 
-#[cfg(test)] mod tests;
-
 use base::prelude::*;
 
 use core::{mem, intrinsics};

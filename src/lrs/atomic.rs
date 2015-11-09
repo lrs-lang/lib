@@ -42,7 +42,8 @@
 //!
 //! * `unordered`: No ordering guarantees but races with this mode are not undefined \
 //!                behavior.
-//! * `weak`: Relaxed in C++11.
+//! * `weak`: Relaxed in C++11. Note that this is called `weak` instead of `relaxed` to \
+//!           make it visually easier to distinguish from `release`.
 //! * `release`, `acquire`, `acquire_release`: As in C++11.
 //!
 //! See the C++11 standard for a concise description of these orderings.
@@ -54,7 +55,7 @@ pub use lrs_atomic::{
     ATOMIC_I32_INIT, AtomicIsize, ATOMIC_ISIZE_INIT, AtomicCInt, ATOMIC_CINT_INIT,
 };
 
-#[cfg(target_arch = "x86_64")]
+#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 pub use lrs_atomic::{
     AtomicU64, ATOMIC_U64_INIT, AtomicI64, ATOMIC_I64_INIT,
 };

@@ -227,7 +227,7 @@ impl<'a, I> Iterator for Getopt<'a, I>
                     } else if optional {
                         None
                     } else {
-                        self.args.next()
+                        self.args.next().map(|s| { self.num += 1; s })
                     };
                     self.cur = CStr::empty();
                     return Some((arg, opt));
@@ -260,7 +260,7 @@ impl<'a, I> Iterator for Getopt<'a, I>
                             return Some((&arg[..long.len()], Some(&arg[long.len()+1..])));
                         }
                     } else if long.len() == arg.len() {
-                        return Some((arg.as_ref(), self.args.next()));
+                        return Some((arg.as_ref(), self.args.next().map(|s| { self.num += 1; s })));
                     } else if arg[long.len()] == b'=' {
                         return Some((&arg[..long.len()], Some(&arg[long.len()+1..])));
                     }

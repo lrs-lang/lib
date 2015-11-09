@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_rt"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, lang_items)]
+#![feature(plugin, no_std, lang_items, link_args)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
@@ -12,6 +12,7 @@ extern crate lrs_base as base;
 extern crate lrs_cty_base as cty_base;
 extern crate lrs_str_one as str_one;
 extern crate lrs_libc as libc;
+extern crate lrs_syscall as syscall;
 
 use base::prelude::*;
 use core::{mem};
@@ -19,6 +20,7 @@ use str_one::{CStr};
 use cty_base::types::{c_char};
 
 mod std { pub use base::std::*; }
+#[cfg(no_libc)] pub mod crt;
 
 static mut ARGC: isize = 0;
 static mut ARGV: *const *const u8 = 0 as *const *const u8;
