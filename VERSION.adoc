@@ -1,0 +1,3 @@
+:VERSION: 2e07996a9
+:X86_64_NIGHTLY: http://static.rust-lang.org/dist/2015-10-30/rust-nightly-x86_64-unknown-linux-gnu.tar.gz
+:I686_NIGHTLY: http://static.rust-lang.org/dist/2015-10-30/rust-nightly-i686-unknown-linux-gnu.tar.gz
