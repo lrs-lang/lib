@@ -121,7 +121,11 @@ from a file.
 
 *tee*:: Copies data from a file descriptor to a kernel buffer.
 
-*vmsplice*:: Copies user memory to a kernel buffer.
+*vmsplice*:: According to the manpage, this syscall copies user memory to a
+kernel buffer (pipe). However, this is not correct. If the passed pipe file
+descriptor refers to the read-end of a pipe, then the content of the pipe will
+be copied into user memory. This means that it is impossible to use this syscall
+safely.
 
 *sync_file_range*:: Flushes parts of a kernel buffered file to disk.
 

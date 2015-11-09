@@ -1,6 +1,7 @@
 = *lrs*
 :toc: macro
-
+ifdef::env-github[:build_link: Documentation/adoc/building_and_using.adoc]
+ifndef::env-github[:build_link: Documentation/html/building_and_using.html]
 :logo: assets/logo.png
 
 image::{logo}[logo,float="left"]
@@ -221,8 +222,7 @@ There are still many things to do
 
 == Building and Using
 
-
-
+Please see the detailed {build_link}[Building and Using] guide.
 
 == License
 
