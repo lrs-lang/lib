@@ -1,5 +1,5 @@
 = lrs Documentation
 ifdef::env-github[:outfilesuffix:.adoc]
 
-<<intro,Intro>>:: An introduction to linux-rs.
+<<intro#,Intro>>:: An introduction to linux-rs.
 link:syscalls.html[Syscalls]:: A description of Linux syscalls.
