@@ -1,7 +1,7 @@
 = *lrs*
 :toc: macro
-ifdef::env-github[:build_link: Documentation/adoc/building_and_using.adoc]
-ifndef::env-github[:build_link: Documentation/html/building_and_using.html]
+ifdef::env-github[:build_link: link:Documentation/adoc/building_and_using.adoc]
+ifndef::env-github[:build_link: link:Documentation/html/building_and_using.html]
 :logo: assets/logo.png
 
 image::{logo}[logo,float="left"]
