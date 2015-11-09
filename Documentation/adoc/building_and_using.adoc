@@ -1,0 +1,134 @@
+= Building and Using lrs
+:toc:
+
+include::../../VERSION.adoc[]
+
+This document describes how to build and use lrs. This process is only partially
+automated so that you can easily adapt the process to your needs.
+
+== Install the correct rust version
+
+Since lrs uses many unstable rustc features, you first have to install the
+correct rust version. Note that, in particular, the compiler plugin that comes
+with lrs will likely not work with an incorrect rustc version.
+
+:x86_64: {X86_64_NIGHTLY}
+:i686: {I686_NIGHTLY}
+
+You can get precompiled nightlies for {x86_64}[`x86_64`] and {i686}[`i686`]. If
+you're using another system, you have to compile rust at the commit *{VERSION}*.
+
+NOTE: The compiler can be used as a cross-compiler. As long as you are running
+the compiler on an x86_64 or i686 machine, you don't have to build a new
+compiler in order to build arm or aarch64 binaries.
+
+== Set the `LRS_OBJ_PATH` environment variable
+
+In the next step we'll build the lrs compiler driver--lrsc. First we have to set
+the `LRS_OBJ_PATH` variable so that the driver knows where to look for the lrs
+libraries. Let's assume that you've cloned this repository into
+
+----
+/home/daniel/lrs/lib
+----
+
+Then you should add
+
+----
+export LRS_OBJ_PATH="/home/daniel/lrs/lib/obj"
+----
+
+to your `.bashrc` or your `.zshrc` and restart your terminal.
+
+NOTE: The `LRS_OBJ_PATH` is not hard-coded into the binary. It is looked up at
+invocation time and can be changed without recompiling lrsc.
+
+== Build the lrs driver
+
+:driver: https://github.com/lrs-lang/driver
+
+lrs comes with its own compiler driver--lrsc--which is necessary for using lrs.
+Please clone the {driver}[driver] repository and compile lrsc with the provided
+makefile. Once you have the `lrsc` binary, copy it into the same folder your
+`rustc` binary is located in. See the {driver}[driver] repository for a detailed
+description of the differences between lrsc and rustc.
+
+WARNING: It is important that you actually copy the binary. Creating a symbolic
+link is not sufficient because `rustc` looks for the `compiler-rt` library in a
+directory relative to the binary.
+
+== Build the compiler plugin and assembly files
+
+In order to use syntax extensions such as `write!` or `println!`, lrs comes with
+a compiler plugin. To build it, simply run the `make_plugin.sh` shell script.
+
+Certain low-level program details cannot be handled by rust. For this reason,
+lrs comes with a number of hand-coded assembly routines that need to be
+assembled before you can build lrs programs. It should be sufficient to run the
+`make_asm.sh` shell script to do this.
+
+== Build lrs for the first time
+
+lrs is normally built with its own build system. Since this build system is
+itself written against lrs, we'll first have to compile lrs on our own. To do
+this, simply run the provided `make_lrs.sh` shell script.
+
+== Use lrs
+
+At this point it should be possible to use lrs. To test this, create the file
+`helloworld.rs` with the following content:
+
+----
+fn main() {
+    println!("Hello World");
+}
+----
+
+and try to compile and run it with `lrsc helloworld.rs && ./helloworld`. If this
+works, you've successfully built lrs.
+
+== Build the test library
+
+In order to use the testing framework that is built into the
+compiler--via `#[test]` attributes--we have to replace the testing library that
+comes with rustc with our own library. Do this by running `make_libtest.sh`.
+
+NOTE: While the previous paragraph says "replace", this only affects programs
+compiled with lrsc. rustc will still use its own library.
+
+WARNING: You will have to repeat this process every time you rebuild lrs.
+Otherwise the compiler will complain that `test` is outdated when you try to
+compile with `--test`.
+
+== Build the build system
+
+While you could continue to compile lrs with the `make_lrs.sh` script, this
+would be highly unergonomic as it recompiles every library when it's invoked.
+It's much better to use the build system--lrs_build--that was written
+specifically to compile lrs.
+
+:lrs_build: https://github.com/lrs-lang/build
+
+You can get it via the {lrs_build}[build] repository. See the description in
+said repository for how to build and use lrs_build.
+
+TIP: Since you will be invoking lrs_build frequently, it might be useful to
+rename the binary to `lb`.
+
+== Run the tests
+
+To ensure that the lrs code is correct, lrs comes with several (but not nearly
+enough) tests. To build and run said tests, go to the `tests` folder and run
+`lrsc --test lib.rs && ./tests`. Successful tests look like this:
+
+----
+testing hash::xx_hash::u64hash ... ok
+----
+
+Failed tests look like this:
+
+----
+testing hash::xx_hash::u64hash ... FAILURE (Exited(1))
+----
+
+TIP: Grep for `FAILURE` to only see the failed tests.

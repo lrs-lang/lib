@@ -1,4 +1,5 @@
-= linux-rs
+= lrs Documentation
+ifdef::env-github[:outfilesuffix:.adoc]
 
-link:intro.html[Intro]:: An introduction to linux-rs.
+<<intro,Intro>>:: An introduction to linux-rs.
 link:syscalls.html[Syscalls]:: A description of Linux syscalls.

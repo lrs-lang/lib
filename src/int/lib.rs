@@ -10,8 +10,6 @@
 
 use core::ops::{Range, RangeTo};
 
-#[cfg(test)] mod tests;
-
 mod std { pub use ::core::std::*; }
 
 /// Objects that can be interpreted as a bounded range.

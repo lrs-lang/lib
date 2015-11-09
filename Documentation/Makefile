@@ -5,9 +5,11 @@ htmls := $(patsubst adoc/%.adoc, html/%.html, $(adocs))
 
 all: $(htmls)
 
-html/%.html: adoc/%.adoc
-	@mkdir -p "$(@D)"
-	asciidoctor -a stylesheet! "$<" -o "$@"
+html:
+	mkdir html
+
+html/%.html: adoc/%.adoc | html
+	asciidoctor "$<" -o "$@"
 
 clean:
-	rm html/*
+	rm -r html

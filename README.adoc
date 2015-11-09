@@ -73,15 +73,17 @@ of exception safety in rust.
 :calc_url: http://is.gd/Ep2KIi
 
 lrs programs usually compile down to executable with a size comparable to that
-of equivalent C programs. Note in particular that the *lrs + musl* programs
-below have no dynamic dependencies.
+of equivalent C programs.
+
+In the table below, `lrs + musl` denotes programs that were statically compiled
+against musl, and `lrs - libc` denotes programs that don't depend on a libc.
 
 |===
-|Name |lrs + glibc |lrs + musl |lrs - libc |C |rust
+|Name |lrs + glibc |lrs + musl |lrs - libc |C (glibc) |rust
 
-|Hello World |7.0KB |4.0KB |636B |6.5KB |436KB
+|Hello World |7.0KB |4.0KB |1.3KB |6.5KB |436KB
 
-|http://pubs.opengroup.org/onlinepubs/9699919799/utilities/test.html[test(1)]footnote:[Note
+|http://pubs.opengroup.org/onlinepubs/9699919799/utilities/test.html[test]footnote:[Note
 that the different implementations do not necessarily implement the same
 features.]
 |18KB
@@ -90,7 +92,7 @@ features.]
 |35KB
 |462KB
 
-|{calc_url}[calc]
+|{calc_url}[A calculator]
 |9.2KB
 |5.8KB
 |n/a
@@ -98,8 +100,7 @@ features.]
 |437KB
 |===
 
-NOTE: All programs were compiled with the `-O -C lto` flags. The *Hello World*
-`lrs - libc` example was stripped.
+NOTE: All programs were compiled with the `-O -C lto` flags.
 
 === Direct system calls
 
@@ -108,13 +109,12 @@ not depend on a libc for 99% of the work. This allows us to use kernel features
 that do not (yet) have an equivalent libc function and removes an unnecessary
 layer of abstraction.
 
-Even though lrs still uses a small number of libc functions (namely those that
-manage libc state such as TLS, malloc locks, etc,) it is feasible for lrs to
-become completely libc-independent in the near future.
+It is, in fact, possible to use lrs without a libc. However, this mode is not
+yet fully developed and mostly useful for testing cross-compilation.
 
 === glibc and musl support
 
-Due to what was discussed in the previous section, the lrs-libc interface is so
+Due to what was discussed in the previous section, the lrs/libc interface is so
 small that it's almost trivial to make lrs work with different libc versions.
 Currently, lrs is known to work with glibc and musl.
 
@@ -154,18 +154,18 @@ more bytes than can be stored in the buffer, `write!` would return that the
 vector is out of memory. Using this feature, lrs often allows the user to avoid
 allocations in cases where doing so would be rather inconvenient in rust.
 
-Nevertheless, using lrs collections is still easy in the common case where the
-user does not care about dynamic allocations. This is because all collections
-declare a default allocator so that `Vec<T>` is the same as `Vec<T, Heap>`. This
-default allocator can be chosen at compile time.
+Nevertheless, it's easy to use lrs collections in the common case where the user
+does not care about dynamic allocations. This is because all collections declare
+a default allocator so that `Vec<T>` is the same as `Vec<T, Heap>`. This default
+allocator can be chosen at compile time.
 
 === No allocations in the 99.9% case
 
 All APIs are designed to not allocate memory in the common case. For example,
 `File::open` will only allocate memory if the requested path is longer than
-`PATH_MAX`. In those cases the API uses the *FbHeap*, the *fallback allocator*.
-If the user does not want memory to be allocated in those exceptional
-situations, he can set *FbHeap* to *NoMem* at compile time.
+`PATH_MAX`. In those cases the API uses the so called fallback allocator.  If
+the user does not want memory to be allocated in those exceptional situations,
+he can disable said allocator at compile time.
 
 === Fast compilation
 
@@ -207,19 +207,6 @@ fn main() {
 This is because lrs comes with its own compiler driver that takes care of
 injecting lrs instead of rust.
 
-=== Permissive licensing
-
-:license: link:LICENSE
-
-The whole library is licensed under the {license}[*MPL 2.0*] license which
-allows static linking into proprietary programs. It is copy-left on a
-file-by-file basis: Changes to files licensed under the *MPL 2.0* have to be
-distributed under the same license. It also allows the code to be freely used
-under several (L)GPL licenses.
-
-Some other parts--such as the compiler plugin and the compiler driver--are
-licensed under the MIT license.
-
 === Concise documentation
 
 *lrs* docs do not try to be a Rust tutorial and are kept short and to the point,
@@ -234,74 +221,21 @@ There are still many things to do
 
 == Building and Using
 
-=== Install the correct rust version
-
-Since lrs uses many unstable rustc features, you first have to install the
-correct rust version. Note that, in particular, the compiler plugin that comes
-with lrs will likely not work with an incorrect rust version.
-
-:x86_64: http://static.rust-lang.org/dist/2015-10-30/rust-nightly-x86_64-unknown-linux-gnu.tar.gz
-:i686: http://static.rust-lang.org/dist/2015-10-30/rust-nightly-i686-unknown-linux-gnu.tar.gz
-
-You can get precompiled nightlies for {x86_64}[`x86_64`] and {i686}[`i686`]. If
-you're using another system, you have to compile rust at the commit *2e07996a9*.
-
-=== Set the `LRS_OBJ_PATH` environment variable
-
-In the next step we'll build the lrs compiler driver. First we have to set the
-`LRS_OBJ_PATH` variable so that the driver knows where to look for the lrs
-libraries. Let's assume that you've cloned this repository into
-
-----
-/home/daniel/lrs/lib
-----
-
-Then you should add
-
-----
-export LRS_OBJ_PATH="/home/daniel/lrs/lib/obj"
-----
-
-to your `.bashrc` or your `.zshrc` and restart your terminal.
-
-=== Build the lrs driver
-
-As described above, lrs comes with its own compiler driver--lrsc. Please follow
-the instructions in the {driver}[driver] repository to compile the driver. Once
-you have the `lrsc` binary, copy it into the same folder your `rustc` binary is
-located in.
-
-NOTE: It is important that you actually copy the binary. Creating a symbolic
-link is not sufficient because `rustc` looks for the `compiler-rt` library in a
-directory relative to the binary.
-
-=== Build the compiler plugin
-
-In order to use syntax extensions such as `write!` or `println!`, lrs comes with
-a syntax extension. To build it simply run the `build_plugin.sh` shell script.
-
-=== Build lrs for the first time
-
-lrs is normally built with its own build system. Since this build system is
-itself written against lrs, we'll first have to compile lrs on our own. To do
-this, simply run the provided `build_all.sh` shell script.
-
-=== Build the assembly files
-
-In order to handle signals, lrs has several routines written directly in
-assembly. To build these files, it should be sufficient to run the
-`build_asm.sh` script.
-
-=== Build the test library
-
-In order to run tests, we have to compile our own test library. Do this by
-running `make_libtest.sh`.
-
-=== Build the build system
 
 
 
+== License
 
+:license: link:LICENSE
+
+The whole library is licensed under the {license}[*MPL 2.0*] license which
+allows static linking into proprietary programs. It is copy-left on a
+file-by-file basis: Changes to files licensed under the *MPL 2.0* have to be
+distributed under the same license. It also allows the code to be freely used
+under several (L)GPL licenses.
+
+Some other parts--such as the compiler plugin and the compiler driver--are
+licensed under the MIT license.
 
 == Logo
 
