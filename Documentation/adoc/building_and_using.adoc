@@ -1,10 +1,12 @@
 = Building and Using lrs
-:toc:
+:toc: macro
 
 include::../../VERSION.adoc[]
 
 This document describes how to build and use lrs. This process is only partially
 automated so that you can easily adapt the process to your needs.
+
+toc::[]
 
 == Install the correct rust version
 
