@@ -10,4 +10,4 @@ running the provided makefile. Note that you first have to install the
 :manual: http://asciidoctor.org/docs/user-manual/
 
 This documentation is written in the Asciidoctor dialect of Asciidoc. See the
-:manual:[] if you want to edit the documentation or add new documentation.
+{manual}[] if you want to edit the documentation or add new documentation.
