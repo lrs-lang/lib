@@ -146,12 +146,15 @@ unknown at compile time and can rapidly increase.
 
 Careful note should be taken of the *NoMem* allocator. Consider the following
 code:
+
+[source]
 ----
 let mut buf = [0; 20];
 let mut vec = Vec::buffered(&mut buf);
 write!(&mut vec, "Hello World {}", 10).unwrap();
 assert!(&*vec == "Hello World 10");
 ----
+
 The vector is backed by the *NoMem* allocator and the buffer declared in the
 first line. It will never dynamically allocate any memory. If we were to write
 more bytes than can be stored in the buffer, `write!` would return that the
