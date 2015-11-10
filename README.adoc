@@ -37,7 +37,7 @@ errors--process termination. This has the following advantages:
 
 Potentially better performance:: Consider the following function:
 +
-[source,rust]
+[source]
 ----
 fn f(a: &mut u8, b: &mut u8, g: fn()) {
     mem::swap(a, b);
@@ -52,6 +52,7 @@ since destructors called during unwinding might access `a` and `b`.
 
 No exception unsafety:: Consider the following (incorrect) rust code:
 +
+[source]
 ----
 fn push(a: &mut Vec<T>, g: fn() -> T) {
     unsafe {
@@ -195,6 +196,7 @@ Even though lrs programs don't use the standard library that comes with the
 compiler, the user doesn't have to bother with annoying annotations. For
 example, the following lrs program can be compiled as written:
 
+[source]
 ----
 use std::tty::{is_a_tty};
 
