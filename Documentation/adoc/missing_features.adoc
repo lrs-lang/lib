@@ -1,0 +1,107 @@
+= Missing compiler features
+
+*Better support for `Pod`*::
+We define `Pod` (plain old data) as the set of objects that can safely be used
+(in safe code) when they contain arbitrary bytes. A (possibly incomplete) list
+of `Pod` objects:
++
+--
+* Integers
+* Floats
+* Raw pointers
+* Arrays of `Pod` objects
+* Structures with `Pod` fields
+--
++
+We cannot add a default implementation for `Pod` because enums containing `Pod`
+are not `Pod`. `Pod` will have to be a built-in type (see below.)
+
+
+*Default types in function calls*::
+We want to write
++
+----
+    {
+        let x = Vec::new();
+        x.push(1);
+    }
+----
++
+This is currently not possible because the compiler can't infer the allocator of
+the vector so we have to write
++
+----
+    {
+        let x: Vec<_> = Vec::new();
+        x.push(1);
+    }
+----
++
+We still don't have to specify the allocator because `Vec` has a default type
+argument for the allocator. This should also work in function calls: If a type
+with a default value cannot be inferred, then the compiler should use the
+default value.
+
+
+*Default lifetimes*::
+In structures etc. we have to write
++
+----
+    struct X {
+        x: Vec<'static, T>,
+    }
+----
++
+because `Vec` has a lifetime argument. Currently we work around this by defining
++
+----
+    type SVec<T, H = alloc::Heap> = Vec<'static, T, H>;
+----
++
+which can then be used like this:
++
+----
+    struct X {
+        x: SVec<T>,
+    }
+----
++
+We have to do this for every type with an allocator argument which is annoying.
+Instead we want to be able to define
++
+----
+    struct Vec<'a = 'static, T, H = alloc::Heap>
+----
+
+
+*Untagged unions*::
+In general, C-style unions are unsafe to use. But this is not true for `Pod`
+types as described above. Such types can safely be used in untagged unions:
++
+----
+    union X {
+        x: i32,
+        y: f32,
+    }
+----
++
+This is needed for C compatibility.
+
+
+*Arbitrary alignment*::
+We want to define the alignment of types, struct fields, and variables.
+
+
+*Bitfields*::
+For C compatibility, we have to be able to define bitfields in some way.
+
+
+*Safer FFI*::
+There are currently some serious problems with FFI safety:
++
+--
+* `Drop` plus `repr\(C)` causes the struct to not have C representation because
+  it has a drop flag.
+* One can pass arrays to C functions which is probably undefined behavior.
+* Bindings have to be written manually.
+--

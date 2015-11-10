@@ -1,5 +1,3 @@
-cc ?= clang
-
 asm_files := restore.o
 asm_paths := $(patsubst %, target/obj/%, $(asm_files))
 
@@ -14,7 +12,7 @@ target/obj:
 	mkdir target/obj
 
 target/obj/%.o: target/src/%.s | target/obj
-	$(cc) $(CFLAGS) -c -o "$@" "$<"
+	$(CC) $(CFLAGS) -c -o "$@" "$<"
 
 target/obj/liblrs_asm.a: $(asm_paths)
 	ar rcs target/obj/liblrs_asm.a $(asm_paths)

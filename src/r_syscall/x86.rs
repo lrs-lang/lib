@@ -56,7 +56,7 @@ pub type SCT = c_long;
 
 #[inline(always)]
 pub unsafe fn syscall0(n: SCT) -> SCT {
-    let mut ret: SCT;
+    let ret: SCT;
     asm!("int $$0x80" : "={eax}"(ret)
                       : "{eax}"(n)
                       : "memory", "cc"
@@ -66,7 +66,7 @@ pub unsafe fn syscall0(n: SCT) -> SCT {
 
 #[inline(always)]
 pub unsafe fn syscall1(n: SCT, a1: SCT) -> SCT {
-    let mut ret: SCT;
+    let ret: SCT;
     asm!("int $$0x80" : "={eax}"(ret)
                       : "{eax}"(n), "{ebx}"(a1)
                       : "memory", "cc"
@@ -76,7 +76,7 @@ pub unsafe fn syscall1(n: SCT, a1: SCT) -> SCT {
 
 #[inline(always)]
 pub unsafe fn syscall2(n: SCT, a1: SCT, a2: SCT) -> SCT {
-    let mut ret: SCT;
+    let ret: SCT;
     asm!("int $$0x80" : "={eax}"(ret)
                       : "{eax}"(n), "{ebx}"(a1), "{ecx}"(a2)
                       : "memory", "cc"
@@ -86,7 +86,7 @@ pub unsafe fn syscall2(n: SCT, a1: SCT, a2: SCT) -> SCT {
 
 #[inline(always)]
 pub unsafe fn syscall3(n: SCT, a1: SCT, a2: SCT, a3: SCT) -> SCT {
-    let mut ret: SCT;
+    let ret: SCT;
     asm!("int $$0x80" : "={eax}"(ret)
                       : "{eax}"(n), "{ebx}"(a1), "{ecx}"(a2), "{edx}"(a3)
                       : "memory", "cc"
@@ -96,7 +96,7 @@ pub unsafe fn syscall3(n: SCT, a1: SCT, a2: SCT, a3: SCT) -> SCT {
 
 #[inline(always)]
 pub unsafe fn syscall4(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT) -> SCT {
-    let mut ret: SCT;
+    let ret: SCT;
     asm!("int $$0x80" : "={eax}"(ret)
                       : "{eax}"(n), "{ebx}"(a1), "{ecx}"(a2), "{edx}"(a3), "{esi}"(a4)
                       : "memory", "cc"
@@ -106,7 +106,7 @@ pub unsafe fn syscall4(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT) -> SCT {
 
 #[inline(always)]
 pub unsafe fn syscall5(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT, a5: SCT) -> SCT {
-    let mut ret: SCT;
+    let ret: SCT;
     asm!("int $$0x80" : "={eax}"(ret)
                       : "{eax}"(n), "{ebx}"(a1), "{ecx}"(a2), "{edx}"(a3), "{esi}"(a4),
                         "{edi}"(a5)
@@ -118,7 +118,7 @@ pub unsafe fn syscall5(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT, a5: SCT) -> S
 #[inline(always)]
 pub unsafe fn syscall6(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT, a5: SCT,
                        a6: SCT) -> SCT {
-    let mut ret: SCT;
+    let ret: SCT;
     asm!("int $$0x80" : "={eax}"(ret)
                       : "{eax}"(n), "{ebx}"(a1), "{ecx}"(a2), "{edx}"(a3), "{esi}"(a4),
                         "{edi}"(a5), "{ebp}"(a6)

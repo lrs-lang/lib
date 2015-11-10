@@ -54,6 +54,7 @@ extern {
     pub static mut environ: *const *const u8;
 
     pub fn memchr(s: *const u8, c: i32, n: usize) -> *const u8;
+    pub fn memset(s: *const u8, c: i32, n: usize) -> *const u8;
     pub fn memrchr(s: *const u8, c: i32, n: usize) -> *const u8;
     pub fn memcmp(s1: *const u8, s2: *const u8, n: usize) -> i32;
     pub fn fork() -> i32;

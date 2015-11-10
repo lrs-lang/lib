@@ -4,7 +4,7 @@ obj int        core
 obj saturating core
 obj wrapping   core
 obj cty_base   core
-obj arch_fns   core libc
+obj arch_fns   core libc cty_base
 obj base       core cty_base wrapping
 
 obj hash       core base wrapping

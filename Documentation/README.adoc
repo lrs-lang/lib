@@ -1,0 +1,13 @@
+= Documentation
+
+This directory contains general documentation surrounding lrs.
+
+If you're reading this on github, you can go to link:adoc/index.adoc[] to see
+the index. But you can also generate a much more beautiful html version by
+running the provided makefile. Note that you first have to install the
+`asciidoctor` program.
+
+:manual: http://asciidoctor.org/docs/user-manual/
+
+This documentation is written in the Asciidoctor dialect of Asciidoc. See the
+:manual:[] if you want to edit the documentation or add new documentation.

@@ -1,0 +1,250 @@
+= Cross compiling
+ifdef::env-github[:outfilesuffix: .adoc]
+include::../../VERSION.adoc[]
+:toc: macro
+
+This document explains how to cross-compile lrs-libc and lrs+musl programs.
+
+toc::[]
+
+== lrs-libc
+
+Cross compiling lrs programs that don't depend on a libc is quite easy because
+we don't have to cross-compile a libc.
+
+=== Compiling the asm files
+
+First we have to compile the platform dependent assembly files for our target.
+To this end it is necessary that you have a cross-assembler installed. The
+easiest way to get one is to install clang. Assuming that you have clang
+installed, go to the `asm` directory in the lrs directory. In there you should
+find the following directories:
+
+* arm,
+* arm64,
+* i686, and
+* x86_64.
+
+Let's assume that you want to cross-compile for i686. We'll have to create a
+symlink `target` to this directory. If you already have such a symlink, delete
+it first.
+
+----
+ln -s i686 target
+----
+
+Now we invoke the makefile with the correct arguments:
+
+----
+CC=clang CFLAGS="--target=i686-unknown-linux-gnu" make
+----
+
+`CC=clang` tells the makefile to use clang as the assembler, the `CFLAGS`
+argument tells clang that it should use the i686 assembler.
+
+=== Compiling lrs
+
+Now we'll have to compile lrs for i686 and in the no_libc mode. To do this,
+execute the lrs build system with the following command:
+
+----
+lb -r -- --target=i686-unknown-linux-gnu --cfg no_libc
+----
+
+NOTE: Here we use the convention that `lb` is an alias for `lrs_build`.
+
+We pass the `-r` flag to tell lrs_build to discard all existing objects and
+to rebuild lrs from scratch. Then we pass the following two arguments directly
+to lrsc:
+
+`--target=i686-unknown-linux-gnu`:: This tells the compiler to generate code for
+the i686 target. Note that, while the target string here agrees with the target
+string used for clang, this is not the case is general. This is because the
+targets accepted by rustc and by clang are not exactly the same. See the
+documentation of clang and rustc to find out the exact form of the target
+strings.
+
+`--cfg no_libc`:: This flag ensures that we don't accidentally link against a
+libc later and that the compiled code contains the necessary functions to work
+without a libc.
+
+=== Installing `compiler-rt`
+
+In order to build programs we'll have to download an additional dependency,
+namely the `compiler-rt` library for our target. The `compiler-rt` version for
+your system has already been installed with your rust distribution, but you
+probably don't have the version for `i686` yet.
+
+:dir: link:http://static.rust-lang.org/dist/{DATE}
+
+The easiest way to get it is to extract it from a pre-built nightly. Go to
+{dir}[] and download the correct `rust-std-nightly` archive. For `i686` it is
+`rust-std-nightly-i686-unknown-linux-gnu.tar.gz`. Once you've extracted this
+archive, look for the `libcompiler-rt.a` file which is in the innermost `lib`
+directory. Where you have to copy it depends on where you've installed rustc.
+For example, if
+
+----
+$ which rustc
+/usr/local/bin/rustc
+----
+
+then you should copy the file into
+
+----
+/usr/local/lib/rustlib/i686-unknown-linux-gnu/lib
+----
+
+=== Compiling a program
+
+Create a file `helloworld.rs` with the following content:
+
+----
+fn main() {
+    println!("Hello World");
+}
+----
+
+and compile it with the following command:
+
+
+----
+lrsc helloworld.rs -C link-args="-nostdlib -static" --target=i686-unknown-linux-gnu
+----
+
+`-nostdlib` tells the linker not to link certain glibc files. `-static` tells
+it not to generate a dynamic executable.
+
+We can now execute the program and check that it's a 32 bit binary:
+
+----
+$ ./helloworld 
+Hello World
+$ file helloworld
+helloworld: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), statically linked, BuildID[sha1]=a683434e73a10a729023501e5e394238eaf638c4, not stripped
+----
+
+== lrs+musl
+
+Cross compiling lrs+musl is a little bit more complicated because we also have
+to cross-compile musl itself. This section assumes that you've already read the
+<<using_musl# ,Using musl>> guide.
+
+=== Building musl
+
+To cross compile musl, we'll again use clang. Use the following `configure`
+invocation:
+
+----
+CC=clang CFLAGS="--target=i686-unknown-linux-gnu" ./configure --disable-shared --target=i686
+----
+
+The last argument tells the musl build system to compile the i686-specific
+files.
+
+NOTE: For more exotic targets, such as arm, it is important that you pass the
+`--disable-shared` argument. Otherwise the build system will invoke a linker at
+some point and this linker will likely not be able to link arm objects.
+
+Now you can build musl with `make`.
+
+=== Building asm files and lrs
+
+Building the asm files works as in the previous section.
+
+In order to build lrs, use the following command:
+
+----
+lb -r -- --target=i686-unknown-linux-gnu
+----
+
+This is almost the same as in the previous section, but this time we omit the
+`--cfg no_libc` argument.
+
+=== Building a program
+
+Now we can compile the helloworld program against musl:
+
+----
+lrsc helloworld.rs -C link-args="$HOME/c/musl/lib/crt1.o -nostdlib -static -L $HOME/c/musl/lib -lc -lpthread" --target=i686-unknown-linux-gnu
+----
+
+This is almost the same as in the <<using_musl# ,Using Musl>> tutorial but with
+an additional `--target=i686-unknown-linux-gnu` argument.
+
+----
+$ ./helloworld 
+Hello World
+$ file helloworld
+helloworld: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), statically linked, BuildID[sha1]=6b39b12fd2acb0c82744211adc46021413b82685, not stripped
+----
+
+== Linking exotic targets with `ld.gold`.
+
+In the previous examples we compiled for an i686 target. This worked nicely
+because an x86_64 gcc can link i686 objects by default. If we were to go through
+the steps above with an arm target, the very last step would fail because the
+linker cannot link arm objects.
+
+Let's assume that we've built musl, the assembly files, and lrs for the arm
+target. When we now try to compile our helloworld, we get the following output:
+
+----
+$ lrsc helloworld.rs -C link-args="$HOME/c/musl/lib/crt1.o -nostdlib -static -L $HOME/c/musl/lib -lc -lpthread" --target=arm-unknown-linux-gnueabi
+error: linking with `cc` failed: exit code: 1
+note: "cc" "-Wl,--as-needed" [snip]
+note: /usr/bin/ld: helloworld.0.o: Relocations in generic ELF (EM: 40)
+[snip]
+----
+
+As you can see, lrsc invoked `/usr/bin/ld` which cannot link arm objects.
+Instead, we have to convince gcc to use `/usr/bin/ld.gold` (which you might
+have to install). To do this, use the following command
+
+----
+$ lrsc helloworld.rs -C link-args="-fuse-ld=gold $HOME/c/musl/lib/crt1.o -nostdlib -static -L $HOME/c/musl/lib -lc -lpthread" --target=arm-unknown-linux-gnueabi
+----
+
+The difference is that we've added `-fuse-ld=gold` to the `link-args` string.
+Now we get new errors:
+
+----
+note: helloworld.0.o(.ARM.exidx.text._ZN4main20h8a1f0664cb65c8d0eaaE+0x0):
+error: undefined reference to '__aeabi_unwind_cpp_pr0'
+[snip]
+----
+
+The simplest way to fix this is to create dummy functions with these names that
+don't do anything and add them to the linker invocation. Create a file
+`arm_dummy.c` with the following content:
+
+----
+void __aeabi_unwind_cpp_pr0() { }
+void __aeabi_unwind_cpp_pr1() { }
+----
+
+and compile it as follows:
+
+----
+$ clang --target=armv6-unknown-linux-gnueabi -c arm_dummy.c
+----
+
+Finally, let's invoke the linker again:
+
+----
+$ lrsc helloworld.rs -C link-args="-fuse-ld=gold arm_dummy.o
+$HOME/c/musl/lib/crt1.o -nostdlib -static -L $HOME/c/musl/lib -lc -lpthread"
+--target=arm-unknown-linux-gnueabi
+----
+
+Note the added `arm_dummy.o` argument. This time the compilation succeeds.
+
+----
+$ qemu-arm helloworld
+Hello World
+$ file helloworld
+helloworld: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), statically
+linked, BuildID[sha1]=2671b7ce5341028aa8649f2769947b77bf146ab6, not stripped
+----
+
+Here we used `qemu-arm` to run an arm program on x86_64.

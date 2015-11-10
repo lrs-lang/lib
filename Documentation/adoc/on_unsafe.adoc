@@ -1,0 +1,187 @@
+= On `unsafe`
+:toc: macro
+:source-language: rust
+
+There has been some confusion regarding the `unsafe` keyword in the past. This
+document tries to explain what `unsafe` means in the context of lrs.
+
+toc::[]
+
+== What `unsafe` is
+
+This section discusses the `unsafe` keyword in the following two contexts:
+
+* As a block delimiter: `unsafe { /* ... */ }`
+* As a function attribute: `unsafe fn f() { /* ... */ }`
+
+There are other places in which the keyword can appear, but we will not discuss
+them here.
+
+=== `unsafe` as a block delimiter
+
+In ordinary lrs code, the compiler is tasked to ensure that the execution of the
+compiled code is not undefined behavior. If the compiler is unable to make this
+guarantee, the compilation will fail. In this case, the user is able to override
+the compiler's decision by using the `unsafe` keyword on a block of code.
+Consider the following example:
+
+----
+pub struct X(*const u8);
+
+impl X {
+    pub fn f(&self) -> u8 {
+        *self.0
+    }
+}
+----
+
+The compiler does not know whether dereferencing the pointer is undefined
+behavior. And indeed, if `self.0` is a null pointer, the behavior is undefined.
+For this reason, the user has to wrap the offending section in an `unsafe` block
+to get it to compile:
+
+----
+    pub fn f(&self) -> u8 {
+        unsafe {
+            *self.0
+        }
+    }
+----
+
+=== `unsafe` as a function attribute
+
+If the `unsafe` keyword is applied to a function, calls to said function must be
+wrapped in an `unsafe` block. This is enforced by the compiler.
+
+In the example above, `X::f` does not have the unsafe attribute. Since the
+`self.0` field of `X` objects is private, it is possible for the developer to
+ensure that dereferencing `self.0` is never undefined behavior. Hence, `X::f`
+need not be marked unsafe. But consider the following function:
+
+----
+pub unsafe fn g(x: *const u8) -> u8 {
+    unsafe {
+        *x
+    }
+}
+----
+
+In this case the user can pass arbitrary pointers to `g` and the developer
+has added the `unsafe` keyword to the function to shift the task of ensuring the
+absence of undefined behavior to the user of the function.
+
+On can imagine the dereference operator as a function--denoted by the `*`
+symbol--that has been marked unsafe by the compiler itself.
+
+=== Examples of undefined behavior
+
+We've seen above that the compiler cannot check whether dereferencing a pointer
+in undefined behavior. Other examples of undefined behavior are
+
+* Data races
+* Reading uninitialized memory (in certain cases)
+* Breaking certain pointer aliasing rules
+* Mutating data through immutable references (in most cases)
+* Using compiler intrinsics incorrectly
+* Storing invalid data in primitive objects (such as objects of type `bool`)
+
+Note furthermore that the following behavior is considered undefined in lrs:
+
+* Creating references to memory in the first page (usually addresses in the
+  range `[0, 4096)`)
+* Not running the destructors of objects marked `!Leak` at the end of their
+  lifetime
+
+== What `unsafe` is not
+
+`unsafe` is not used to denote unsafe code unless it falls the in category
+above. In particular, code not marked `unsafe` can contain bugs.
+
+NOTE: Note that the second use of the word unsafe above is quite different from
+the first one. Since the word unsafe is already lost--that is, it means one
+thing to one person and another thing to another, even in the context of
+lrs--we'll always typeset it `unsafe` when we're talking about the concept
+explained in the previous section.
+
+=== Why using file descriptors cannot be `unsafe`
+
+To the user, a file descriptor is an integer. In the kernel, file descriptors
+are more complex objects that can be identified by said numbers. Hence, one
+might imagine the integers as an index into an array managed by the kernel.
+
+File descriptors themselves are reference counted references to objects called
+file descriptions. One can obtain a new reference via various system calls such
+as `dup(2)`, `fcntl(2)`, or `fork(2)`. All these copies will reference the same
+file description. Once the last reference has been destroyed (often via
+`close(2)`,) the file description itself will be destroyed.
+
+Working with integers is always safe. Hence, the only way anything unsafe can
+happen is when we use said integers in system calls where they are used to index
+the kernel array mentioned above. Clearly the kernel will never allow you to use
+integers that are invalid indices--it will return the error `EBADF` instead.
+
+Let's assume that the incorrect use consists of the file descriptor having been
+accidentally replaced by another descriptor. For example, the file descriptor
+was closed and another file was opened so that the integer now refers to another
+file description. This can cause the behavior to be unsafe in the sense that
+the user's credit card information is written to the wrong file.
+
+:fromrawfd: https://github.com/rust-lang/rust/pull/24251
+
+In {fromrawfd}[rust/#24251] the decision was made that wrapping an arbitrary
+integer into a standard library structure is `unsafe`. We'll now explain why
+this decision was incorrect.
+
+The reasoning is as follows:
+
+[quote]
+This function is also unsafe as the primitives currently returned have the
+contract that they are the sole owner of the file descriptor they are wrapping.
+Usage of this function could accidentally allow violating this contract which
+can cause memory unsafety in code that relies on it being true.
+
+The problem is supposed to be that, at some point, standard library code might
+rely on file descriptors having certain properties. So much that this not being
+true might cause `unsafe` behavior.
+
+Now let us assume that someone writes a library that contains safe wrappers of
+the `dup(2)`, `open(2)`, and `close(2)` system calls which accept arbitrary
+integers. If this library is used, then the user is able to modify the state of
+the wrapped file descriptors without `unsafe` code. He simply has to guess the
+numerical identifier and call the safe `dup(2)` or `close(2)` functions. Given
+the reasoning above, this can cause memory unsafety in the standard library.
+
+Who is at fault in this case? Clearly not the library that provides the safe
+wrappers. None of what it does violates the official `unsafe` definition
+presented in the first section of this document.  Hence it is the standard
+library which incorrectly relied on numerical file descriptors referring to
+certain kernel structures.
+
+We've thus shown that code relying on file descriptors having any properties is
+incorrect. Thus, any code that uses system calls with file descriptors will have
+to ensure that it is not `unsafe` to use it with arbitrary file descriptors.
+
+And therefore, using correct code with arbitrary file descriptors is never
+`unsafe` as long as there is a single file descriptor for which using said code
+is not `unsafe`.
+
+=== Why using `fork(2)` cannot be `unsafe`
+
+A call to `fork(2)` creates a new process that is identical to the parent
+process except that all other threads have been killed.footnote:[This is not
+quite true. See the manpage for the real story.] It has been said that a
+`fork(2)` wrapper would have to be marked `unsafe` because killing all other
+threads can cause `unsafe` behavior.
+
+This is incorrect as we'll now show.
+
+*Assumption:* A correct program does not rely on other threads making progress.
+
+*Claim:* A correct program cannot become incorrect by inserting arbitrary
+`fork(2)` calls.
+
+*Proof:* The behavior in the child after `fork(2)` is as if all other threads
+stopped making progress forever.
+
+:cpp_progress: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3209.htm
+See {cpp_progress}[this document] for some justifications of the assumption.

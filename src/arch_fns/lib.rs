@@ -9,6 +9,10 @@
 #![no_std]
 
 extern crate lrs_libc as libc;
+extern crate lrs_cty_base as cty_base;
+
+#[cfg(not(no_libc))] #[path = "libc.rs"] mod imp;
+#[cfg(no_libc)] #[path = "no_libc.rs"] pub mod imp;
 
 /// Returns the first occurrence of a byte in a byte slice if any.
 ///
@@ -21,7 +25,7 @@ extern crate lrs_libc as libc;
 /// [return_value]
 /// Returns the first occurrence of the byte in the slice.
 pub fn memchr(s: &[u8], c: u8) -> Option<usize> {
-    match unsafe { libc::memchr(s.as_ptr(), c as i32, s.len()) as usize } {
+    match unsafe { imp::memchr(s.as_ptr(), c as i32, s.len()) as usize } {
         0 => None,
         n => Some(n - s.as_ptr() as usize),
     }
@@ -38,7 +42,7 @@ pub fn memchr(s: &[u8], c: u8) -> Option<usize> {
 /// [return_value]
 /// Returns the last occurrence of the byte in the slice.
 pub fn memrchr(s: &[u8], c: u8) -> Option<usize> {
-    match unsafe { libc::memrchr(s.as_ptr(), c as i32, s.len()) as usize } {
+    match unsafe { imp::memrchr(s.as_ptr(), c as i32, s.len()) as usize } {
         0 => None,
         n => Some(n - s.as_ptr() as usize),
     }
@@ -61,7 +65,7 @@ pub fn equal(one: &[u8], two: &[u8]) -> bool {
     if one.addr() == two.addr() {
         return true;
     }
-    unsafe { libc::memcmp(one.as_ptr(), two.as_ptr(), one.len()) == 0 }
+    unsafe { imp::memcmp(one.as_ptr(), two.as_ptr(), one.len()) == 0 }
 }
 
 /// Returns whether all bytes in a byte slice have a specified value.
@@ -97,7 +101,7 @@ pub fn all_bytes(buf: &[u8], val: u8) -> bool {
 ///
 /// If the argument does not point to a null terminated string, the behavior is undefined.
 pub unsafe fn strlen(ptr: *const u8) -> usize {
-    libc::strlen(ptr)
+    imp::strlen(ptr)
 }
 
 /// Returns whether two strings are equal.

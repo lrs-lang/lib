@@ -3,5 +3,6 @@ ifdef::env-github[:outfilesuffix: .adoc]
 
 <<building_and_using# ,Building and Using lrs>>:: Explains in detail how to
 build and use lrs.
+<<on_unsafe# ,On `unsafe`>>:: A brief discussion of the `unsafe` keyword
 <<intro# ,Intro>>:: An introduction to linux-rs.
 link:syscalls.html[Syscalls]:: A description of Linux syscalls.

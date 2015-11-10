@@ -1,0 +1,59 @@
+= Using lrs + musl
+
+This document describes how to use musl to create statically linked lrs
+binaries.
+
+== Clone and compile musl
+
+Let's assume that we want to put musl in the `~/c/musl` directory.
+
+----
+~/c$ git clone --depth 1 git://git.musl-libc.org/musl
+~/c$ cd musl 
+~/c/musl$ ./configure --disable-shared
+~/c/musl$ make
+----
+
+This builds the static musl libc and puts it into `~/c/musl/lib`.
+
+== Compiling lrs programs against musl
+
+You have to do nothing in particular when compiling lrs in order to prepare it
+for usage with musl. However, actually compiling a program against musl is not
+trivial. Let's say we create a file `helloworld.rs` with the following content:
+
+----
+fn main() {
+    println!("Hello World");
+}
+----
+
+In order to compile it against musl, use the following lrsc invocation:
+
+----
+lrsc helloworld.rs -C link-args="$HOME/c/musl/lib/crt1.o -nostdlib -static -L
+$HOME/c/musl/lib -lc -lpthread"
+----
+
+The first part is clear, but we have to pass additional arguments to the linker
+so that it doesn't link glibc and finds musl.
+
+`$HOME/c/musl/lib/crt1.o`:: This is an additional object that we have to link
+into the program. It contains the `_start` symbol which is the first thing to be
+invoked when the program starts. If you omit this part, the compilation will
+still succeed, but the generated binary will be completely empty. (This is
+because the linker removes all function that are never called, and without
+`_start` no function is ever called.)
+
+`-nostdlib`:: This tells the linker to ignore the standard library search paths.
+In our case these paths contain glibc because the compiler invokes gcc to link
+the program.
+
+`-static`:: Instructs the linker not to create a dynamic executable.
+
+`-L $HOME/c/musl/lib`:: Adds the path to the library search path.
+
+`-lc -lpthread`:: Tells the linker to link `libc.a` and `libpthread.a`.
+
+Note that these commands are only correct because gcc is used as the linker.
+Another linker might use different commands.
