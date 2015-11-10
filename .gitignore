@@ -1,8 +1,9 @@
 doc
 obj
+tests/tests
+doc.json
 target
 dragons
 .*
 *.html
-Cargo.lock
 !.gitignore

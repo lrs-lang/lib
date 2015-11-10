@@ -42,38 +42,6 @@ argument for the allocator. This should also work in function calls: If a type
 with a default value cannot be inferred, then the compiler should use the
 default value.
 
-
-*Default lifetimes*::
-In structures etc. we have to write
-+
-----
-    struct X {
-        x: Vec<'static, T>,
-    }
-----
-+
-because `Vec` has a lifetime argument. Currently we work around this by defining
-+
-----
-    type SVec<T, H = alloc::Heap> = Vec<'static, T, H>;
-----
-+
-which can then be used like this:
-+
-----
-    struct X {
-        x: SVec<T>,
-    }
-----
-+
-We have to do this for every type with an allocator argument which is annoying.
-Instead we want to be able to define
-+
-----
-    struct Vec<'a = 'static, T, H = alloc::Heap>
-----
-
-
 *Untagged unions*::
 In general, C-style unions are unsafe to use. But this is not true for `Pod`
 types as described above. Such types can safely be used in untagged unions:

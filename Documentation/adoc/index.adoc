@@ -3,6 +3,10 @@ ifdef::env-github[:outfilesuffix: .adoc]
 
 <<building_and_using# ,Building and Using lrs>>:: Explains in detail how to
 build and use lrs.
-<<on_unsafe# ,On `unsafe`>>:: A brief discussion of the `unsafe` keyword
-<<intro# ,Intro>>:: An introduction to linux-rs.
-link:syscalls.html[Syscalls]:: A description of Linux syscalls.
+<<using_musl# ,Using lrs + musl>>:: Explains how to compile lrs+musl programs.
+<<cross_compiling# ,Cross Compiling>>:: Explains how to cross-compile lrs
+programs.
+<<morkup# ,The lrs markup language>>:: Describes the markup language used in lrs
+documentation.
+<<on_unsafe# ,On `unsafe`>>:: A brief discussion of the `unsafe` keyword.
+<<syscalls# ,Syscalls>>:: Very short descriptions of Linux syscalls.

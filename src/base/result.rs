@@ -20,7 +20,6 @@ pub enum Result<T=(), E=Errno> {
     Err(E),
 }
 
-impl<T: Pod,  E: Pod>  Pod  for Result<T, E> { }
 impl<T: Copy, E: Copy> Copy for Result<T, E> { }
 
 impl<T, E> Result<T, E> {

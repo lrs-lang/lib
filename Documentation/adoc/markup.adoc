@@ -1,0 +1,507 @@
+= The lrs markup language
+:toc: macro
+:toclevels: 4
+
+This document describes the markup language used in the lrs inline
+documentation.
+
+toc::[]
+
+== Introduction
+
+Rust comes with built-in documentation generation that is based on markdown.
+Unfortunately this was found not to be sufficient for lrs documentation. In
+particular, the following requirements were not satisfied:
+
+* Being able to document individual function arguments and return values in a
+  tabular manner.
+* Being able to put every method documentation on its own page.
+* Being able to cross-reference other parts of the documentation.
+
+Hence we decided to create a new documentation system which post-processes the
+json output of rustdoc. In this document we will describe the markup language
+that was developed to handle this task. It is strongly inspired by AsciiDoc but
+some changes have been made to make parsing easier and allow new constructs that
+are not possible in AsciiDoc.
+
+== Parsing
+
+NOTE: In the following we'll use the name *lrsm* to refer to our markup
+language, however, this is not its official name.
+
+lrsm is a line-based markup language and every document is a valid lrsm
+document, that is, parsing lrsm always succeeds. It requires a single line of
+lookahead. A line that ends in a `\` is concatenated with the following before
+the parsing starts.
+
+At the topmost level, lrsm documents are structured into *Section Headers*,
+*Variable Definitions*, and *Blocks*. These elements can be separated by an
+arbitrary number of empty lines.
+
+----
+$ <- '\n'
+Document <- ($* (SectionHeader / VarDef / Block))*
+----
+
+:peg: https://en.wikipedia.org/wiki/Parsing_expression_grammar
+
+NOTE: We use a {peg}[parsing expression grammar] to describe the lrsm syntax.
+For example, the above code says that a `$` symbol can be parsed by parsing a
+newline, that is, `$` is used as the shortcut for a newline in our grammar.
+
+=== Section Headers
+
+Section headers consist of a number of `=` symbols, followed by a space,
+followed by the header. For example,
+
+----
+= Header
+== Sub-header
+=== Sub-sub-header
+----
+
+creates three headers of depth 1, 2, and 3. The exact syntax is as follows:
+
+----
+SectionHeader <- '='+ ' ' .* $
+----
+
+Note in particular that there must be no space before the first `=` and that
+there must be a single space after the last `=`.
+
+NOTE: The `.\*` stands for an arbitrary number of arbitrary symbols. However,
+this class does *not* include the newline character.
+
+=== Variable definitions
+
+Variables can be used to refer to the same string in multiple parts of the
+document. For example,
+
+----
+:version: 0.12
+----
+
+defines the variable `version` that can later be referenced in other parts of
+the document. The syntax is as follows:
+
+----
+VarName <- [a-zA-Z_]+
+VarDef  <- ':' VarName ': ' .* $
+----
+
+Note that variable names must consist of only the characters a-z, A-Z, and the
+underscore. Also note that the second `:` must be followed by a single space.
+
+=== Blocks
+
+There are five types of blocks: *Grouped Blocks*, *Code Blocks*, *Table Blocks*,
+*List Blocks*, and *Text Blocks*. Every block can be preceded by an arbitrary
+number of attributes:
+
+----
+Block <- Attribute* (GroupedBlock / CodeBlock / TableBlock / ListBlock / TextBlock)
+----
+
+==== Attributes
+
+Attributes are used to modify the behavior of a block. Attributes always begin
+with a `[` and end with a `]`. Currently known attributes are
+
+`[hidden]`:: When applied to a block, this block will not be shown in the
+output.
+
+`[argument, name]`:: When applied to a block, this block will be used as the
+description of the argument named `name` in a function.
+
+`[return_value]`:: When applied to a block, this block will be used as the
+description of the return value of a function.
+
+`[field, n]`:: When applied to a block, this block will be used as the
+description of the `nth` field (starting at 1) of an enum variant.
+
+`[quote]`:: When applied to a block, this block will be typeset in a way that
+makes it look like a quotation.
+
+For example, the following text can be found in the lrs implementation:
+
+----
+    /// Unwraps the value or returns another one.
+    ///
+    /// [argument, val]
+    /// The object that will be returned if the value is not present.
+    ///
+    /// [return_value]
+    /// Returns the contained value or `val` if the value is not present.
+    pub fn unwrap_or(self, val: T) -> T {
+----
+
+The syntax is as follows:
+
+----
+Attribute <- '[' .* ']' $
+----
+
+Note in particular that there must be no spaces before the `[` or after the `]`.
+
+==== Grouped Blocks
+
+Grouped blocks can be used to apply attributes to multiple blocks. Grouped
+blocks start with a line containing a single `{` and end with a line containing
+a single `}`. For example,
+
+----
+[quote]
+{
+This is a quote
+
+that spans two paragraphs.
+
+}
+----
+
+The syntax is as follows
+
+----
+GroupStart   <- '{' $ 
+GroupEnd     <- '}' $
+GroupedBlock <- GroupStart ($* !GroupEnd Block)* $* GroupEnd?
+----
+
+==== Code Blocks
+
+Code blocks are used to typeset code that will be output as is in the generated
+document. They start and end with a line containing `----`. For example:
+
+```
+There are, however, some data structures for which this is not easy. For example, the
+destructor of `Rc` looks like this:
+
+----
+fn drop(&mut self) {
+    self.number_of_references -= 1;
+    if self.number_of_references == 0 {
+        // Call the destructor of the contained object
+    }
+}
+----
+```
+
+The syntax is as follows:
+
+----
+CodeDelim <- '----' $
+CodeBlock <- CodeDelim (!CodeDelim .* $)* CodeDelim?
+----
+
+==== Table Blocks
+
+Table blocks translate to tables. A table block starts and ends with a line
+containing `|===`. For example
+
+----
+|===
+| Row 1 Column 1 | Row 1 Column 2 | Row 1 Column 3
+
+| Row 2 Column 1 | Row 2 Column 2
+| Row 2 Column 3
+
+|===
+----
+
+The `|` starts a new column. Rows are separated by empty lines. Inside those
+columns, the `\\` and `\|` escape sequences are recognized. The rows shown above
+are so-called *Simple Rows* because they only contain single lines of text in
+their cells. In order to put an arbitrary block into a table cell, one has to
+start a line with a symbol other than a `|`:
+
+```
+|===
+| Row 1 Column 1
+----
+Row 1 Column 2
+----
+[quote]
+Row 1 Column 3
+
+
+{
+|===
+| Row | 2
+
+|===
+
+Column 1
+
+}
+| Row 2 Column 2 | Row 2 Column 3
+
+|===
+```
+
+This complicated table will be typeset as follows:
+
+* Row 1 Column 1 will be typeset as before.
+* Row 1 Column 2 is typeset as a code block.
+* Row 1 Column 3 is typeset as a quote.
+* Row 2 Column 1 contais a table followed by a text block.
+* Row 2 Column 2 and Column 3 are typeset as before.
+
+As you can see, tables can contain arbitrarily complicated constructs.
+
+Several things should be noted:
+
+* Rows must end in an empty line. If there is no empty line before the closing
+  `|===`, it will be interpreted as a nested table.
+* Some other things, such as text blocks, are also terminated by an empty line.
+  In this case you need an additional empty line to end the row. (See the
+  previous example.)
+
+The syntax is as follows:
+
+----
+TableDelim  <- '|===' $
+ColumnText  <- (!'|' ('\\\\' / '\\|' / .))*
+SimpleRow   <- ('|' ColumnText)+ $
+Row         <- (SimpleRow / (!$ Block))* $
+TableBlock  <- TableDelim ($* !TableDelim Row)* $* TableDelim?
+----
+
+==== List Blocks
+
+List blocks translate to lists. A list block consists of lines starting with a
+`*` symbol:
+
+----
+* This
+* Is
+* A
+* List
+----
+
+If the line after a list element starts with two spaces, it's concatenated with
+the previous line:
+
+----
+* This is an element
+  that spans multiple lines.
+* Another element
+----
+
+In order to add complex blocks as elements, we use the syntax with two `**`:
+
+```
+* This is an element
+**
+----
+This is an element
+----
+* This is an element
+```
+
+The syntax is as follows:
+
+----
+SimpleListEl <- '* ' .* $ ('  ' .* $)*
+BlockListEl  <- '**' $ Block
+ListEl       <- SimpleListEl / BlockListEl
+ListBlock    <- ListEl+
+----
+
+==== Text blocks
+
+Text blocks are the fallback block type. Anything that's not a Section Header,
+Variable Definition, Grouped Block, Code Block, Table Block, or List Block is a
+Text block. Text block parsing is extremely simple and greedy; the syntax is as
+follows:
+
+----
+TextBlock <- (.+ $)* $?
+----
+
+That is, a text block consumes all lines until it encounters an empty line.
+In particular, this causes the following, often unintended, behavior:
+
+----
+[quote]
+{
+A quote that spans
+
+multiple paragraphs.
+}
+
+Still part of the quote.
+----
+
+The problem here is that
+
+----
+multiple paragraphs.
+}
+----
+
+is parsed as a single block. The correct fix is to add a single empty line
+before the `}`. Note the following example:
+
+----
+|===
+| Column 1
+Column 2
+| Column 3
+
+|===
+----
+
+This will produce a table with two columns, `Column 1` and `Column 2 | Column
+3`. Add an empty line after `Column 2` to fix this and note that this empty line
+only terminates the text block and not the table row.
+
+== Text processing
+
+Up to this point we have explained how lrsm documents are parsed into blocks. In
+this section we'll explain how the text in said blocks is processed. This
+processing happens in every block except code blocks.
+
+Text consists of bytes that are processed individually. They are parsed into
+*Escape Sequences*, *Bold Text*, *Raw Text*, *Links*, and plain text.
+
+----
+Text <- (EscapeSequenc / Bold / Raw / Link / .)*
+----
+
+=== Escape Sequences
+
+Escape sequences start with a `\` and continue with a known, escapable
+string. Those string are `\`, ```, `*`, `{`, `]`, and `link:`.
+
+The syntax is as follows:
+
+----
+EscapeSequence <- '\\' ('\\' / RawDelim / BoldDelim / SubstStart / LinkEnd /
+                        LinkStart)
+----
+
+They change the escaped string to have no special meaning. Those special
+meanings will be explained in the next sections.
+
+=== Bold Text
+
+Bold text is delimited by `*` and does itself only contain plain text. The
+syntax is as follows:
+
+----
+BoldDelim <- '*'
+Bold <- BoldDelim (!'*' ('\\*' / '\\\\' / .))* BoldDelim?
+----
+
+Inside, the escape sequences `\*` and `\\` are recognized.
+
+=== Raw Text
+
+Raw text will be typeset like a code block but inside a line. It's delimited by
+ ```.
+
+----
+RawDelim <- '`'
+Raw      <- RawDelim (!'`' ('\\`' / '\\\\' / .))* RawDelim?
+----
+
+=== Links
+
+Links start with a `link:` string followed by the link url and an optional link
+name. For example:
+
+----
+link:google.com[Google]
+----
+
+The link url is terminated either by a space or the `[` symbol. Inside the link
+name, the `\]` escape sequence is recognized. The syntax is as follows:
+
+----
+UnnamedLink <- 'link:' (!' ' !'[' .)+
+LinkText    <- (!']' ('\\]' / .))*
+NamedLink   <- UnnamedLink '[' LinkText ']'
+Link        <- NamedLink / UnnamedLink
+----
+
+How the link is processed is dependent on the backend. For example, the html
+backend turns links that start with `man:` into links to to manual pages. For
+example:
+
+----
+link:man:fork(2)
+----
+
+will be turned into a link to http://man7.org/linux/man-pages/man2/fork.2.html.
+
+Links that start with `lrs` can be used to cross-reference other parts of the
+documentation:
+
+----
+link:lrs::pipe::Pipe::gather_write
+----
+
+will be turned into a link to the correct documentation page.
+
+== The full syntax
+
+=== Document structure
+
+----
+$             <- '\n'
+
+SimpleListEl  <- '* ' .* $ ('  ' .* $)*
+BlockListEl   <- '**' $ Block
+ListEl        <- SimpleListEl / BlockListEl
+ListBlock     <- ListEl+
+
+TableDelim    <- '|===' $
+ColumnText    <- (!'|' ('\\\\' / '\\|' / .))*
+SimpleRow     <- ('|' ColumnText)+ $
+Row           <- (SimpleRow / (!$ Block))* $
+TableBlock    <- TableDelim ($* !TableDelim Row)* $* TableDelim?
+
+TextBlock     <- (.+ $)* $?
+
+CodeDelim     <- '----' $
+CodeBlock     <- CodeDelim (!CodeDelim .* $)* CodeDelim?
+
+GroupStart    <- '{' $ 
+GroupEnd      <- '}' $
+GroupedBlock  <- GroupStart ($* !GroupEnd Block)* $* GroupEnd?
+
+Attribute     <- '[' .* ']' $
+Block         <- Attribute* (GroupedBlock / CodeBlock / TableBlock / ListBlock /
+                             TextBlock)
+
+SectionHeader <- '='+ ' ' .* $
+
+VarName       <- [a-zA-Z_]+
+VarDef        <- ':' VarName ': ' .* $
+
+Document      <- ($* (SectionHeader / VarDef / Block))*
+----
+
+=== Text structure
+
+----
+RawDelim       <- '`'
+BoldDelim      <- '*'
+SubstStart     <- '{'
+SubstEnd       <- '}'
+LinkEnd        <- ']'
+LinkStart      <- 'link:'
+
+EscapeSequence <- '\\' ('\\' / RawDelim / BoldDelim / SubstStart / LinkEnd /
+                        LinkStart)
+
+UnnamedLink    <- 'link:' (!' ' !'[' .)+
+LinkText       <- (!']' ('\\]' / .))*
+NamedLink      <- UnnamedLink '[' LinkText ']'
+Link           <- NamedLink / UnnamedLink
+
+Raw            <- RawDelim (!'`' ('\\`' / '\\\\' / .))* RawDelim?
+Bold           <- BoldDelim (!'*' ('\\*' / '\\\\' / .))* BoldDelim?
+
+Text           <- (EscapeSequenc / Bold / Raw / Link / .)*
+----
