@@ -3,6 +3,7 @@
 ifdef::env-github[:build_link: link:Documentation/adoc/building_and_using.adoc]
 ifndef::env-github[:build_link: link:Documentation/html/building_and_using.html]
 :logo: assets/logo.png
+:source-language: rust
 
 image::{logo}[logo,float="left"]
 
