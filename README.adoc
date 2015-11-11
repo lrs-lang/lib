@@ -240,6 +240,7 @@ licensed under the MIT license.
 
 :simple-linux-logo: http://dablim.deviantart.com/art/Simple-Linux-Logo-336131202
 :dablim: http://dablim.deviantart.com/
+
 :ccby: http://creativecommons.org/licenses/by-sa/4.0/
 
 The lrs link:{logo}[logo] shows a penguin in a sprocket.
