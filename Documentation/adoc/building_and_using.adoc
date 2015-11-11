@@ -139,3 +139,16 @@ testing hash::xx_hash::u64hash ... FAILURE (Exited(1))
 ----
 
 TIP: Grep for `FAILURE` to only see the failed tests.
+
+== Generate the library documentation
+
+:doc: https://github.com/lrs-lang/doc
+
+In order to build the library documentation, you have to build {doc}[lrs_doc].
+Once you've done this, you have to put the executable somewhere in your path.
+Afterwards you can generate the documentation by running `make_docs.sh`. The
+documentation will be stored in the `doc` directory. Note that you have to build
+lrs before you can generate the documentation.
+
+WARNING: Building the documentation can take more than 30 seconds if you're
+using an unoptimized lrs_doc build.

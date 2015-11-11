@@ -221,6 +221,17 @@ There are still many things to do
 
 Please see the detailed {build_link}[Building and Using] guide.
 
+== Documentation
+
+:doc: https://github.com/lrs-lang/doc
+:docs: http://lrs-lang.github.io/pages/doc/lrs.html
+
+Documentation regarding lrs in general can be found in the link:Documentation[]
+directory.
+
+Documentation of the library is generated via {doc}[lrs_doc]. An outdated
+version of said documentation can be found {docs}[here].
+
 == License
 
 :license: link:LICENSE

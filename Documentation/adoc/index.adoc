@@ -6,7 +6,7 @@ build and use lrs.
 <<using_musl# ,Using lrs + musl>>:: Explains how to compile lrs+musl programs.
 <<cross_compiling# ,Cross Compiling>>:: Explains how to cross-compile lrs
 programs.
-<<morkup# ,The lrs markup language>>:: Describes the markup language used in lrs
+<<markup# ,The lrs markup language>>:: Describes the markup language used in lrs
 documentation.
 <<on_unsafe# ,On `unsafe`>>:: A brief discussion of the `unsafe` keyword.
 <<syscalls# ,Syscalls>>:: Very short descriptions of Linux syscalls.
