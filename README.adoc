@@ -87,9 +87,7 @@ against musl, and `lrs - libc` denotes programs that don't depend on a libc.
 
 |Hello World |7.0KB |4.0KB |1.3KB |6.5KB |436KB
 
-|http://pubs.opengroup.org/onlinepubs/9699919799/utilities/test.html[test]footnote:[Note
-that the different implementations do not necessarily implement the same
-features.]
+|http://pubs.opengroup.org/onlinepubs/9699919799/utilities/test.html[test]
 |18KB
 |21KB
 |n/a
@@ -240,7 +238,6 @@ licensed under the MIT license.
 
 :simple-linux-logo: http://dablim.deviantart.com/art/Simple-Linux-Logo-336131202
 :dablim: http://dablim.deviantart.com/
-
 :ccby: http://creativecommons.org/licenses/by-sa/4.0/
 
 The lrs link:{logo}[logo] shows a penguin in a sprocket.
