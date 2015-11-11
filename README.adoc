@@ -108,7 +108,7 @@ NOTE: All programs were compiled with the `-O -C lto` flags.
 
 === Direct system calls
 
-lrs interact with the kernel directly through system calls. That is, lrs does
+lrs interacts with the kernel directly through system calls. That is, lrs does
 not depend on a libc for 99% of the work. This allows us to use kernel features
 that do not (yet) have an equivalent libc function and removes an unnecessary
 layer of abstraction.
@@ -176,7 +176,7 @@ he can disable said allocator at compile time.
 
 === Fast compilation
 
-lrs split into many small crates and provides incremental compilation
+lrs is split into many small crates and provides incremental compilation
 independent of the rustc compiler. Compiling a single crate during development
 often takes less than a second. To this end, lrs comes with its own
 build system--lrs_build, discussed below--which ensures that only the minimal
@@ -214,14 +214,6 @@ fn main() {
 
 This is because lrs comes with its own compiler driver that takes care of
 injecting lrs instead of rust.
-
-=== Concise documentation
-
-*lrs* docs do not try to be a Rust tutorial and are kept short and to the point,
-with the expectation that most APIs are designed well enough to be understood
-without any help. When appropriate, we reference Linux manual pages. On the
-other hand, unsafe APIs and those that are used in unsafe code are explained in
-great detail.
 
 == Todo
 
