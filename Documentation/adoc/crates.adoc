@@ -1,0 +1,66 @@
+= lrs crates
+
+This document contains short descriptions of the lrs crates.
+
+core:: Contains mostly essential items such as lang_items.
+libc:: Exports the few libc items we're using.
+int:: Some extensions for integer.
+saturating:: The SaturatingCast trait.
+wrapping:: The wrapping integers.
+cty_base:: Some cty elements that are needed at an early stage before cty is
+available.
+arch_fns:: Some architecture-dependent functions.
+base:: Extends core by several well known constructs such as Result.
+hash:: The hash trait and implementations.
+rv:: The retry function that handles EINTR.
+parse:: Parsing related traits and implementations.
+io:: Read, Write traits and implementations.
+fmt:: Formatting traits and implementations.
+cell:: Cell, RefCell, etc.
+str_one:: Borrowed string types such as CStr, ByteStr, etc.
+getopt:: The Getopt implementation.
+atomic:: Atomic integers.
+cty:: C constants and types.
+r_syscall:: The raw syscall interfaces exported by the kernel.
+syscall:: Safe wrappers of the raw syscall interfaces.
+kernel:: Kernel capabilities querying.
+rt:: The runtime.
+clone:: The Clone and MaybeClone traits and implementations.
+fd:: Raw file descriptor handling.
+mem:: Wraps memory maps and other syscalls related to memory.
+lock:: Mutex and condition variable implementations.
+time_base:: The elementary Time type, timers, and the kernels clock interface.
+event:: An eventfd wrapper.
+signal:: Everything related to signal handling.
+pipe:: Everything related to kernel pipes.
+alloc:: The Allocator trait and various implementations.
+queue:: A channel implementation.
+box:: The Box struct.
+c_ptr_ptr:: A struct for constructing `char\**`.
+buf_reader:: The BufReader struct.
+rc:: Rc and Arc implementations.
+vec:: The Vector struct.
+ringbuf:: A ringbuffer implementation.
+hashmap:: A hashmap.
+iter:: Extension traits for iterators.
+str_two:: Owning strings such as CString, ByteString, String, etc.
+rmo:: A container for objects that can be either immutably borrowed, mutably
+borrowed, or owned.
+str_three:: Currently this contains the ToCString trait.
+swap:: Everything related to swapping.
+inotify:: An inotify wrapper.
+env:: Handling of environment variables and the current working directory.
+fs:: File system actions such as mounting.
+socket:: Most socket related things.
+netlink:: netlink sockets.
+sys:: Operations related to the whole system and also random number querying.
+poll:: An epoll wrapper.
+dev:: /dev/ handling.
+file:: Everything related to files.
+mqueue:: An mqueue wrapper.
+tty:: Tty handling.
+thread:: Everything related to threads.
+process:: Everything related to processes.
+time_ext:: Transformations between integers and human readable dates.
+dir:: Iterating over the contents of directories.
+user_group:: Querying and modifying the users and groups of the system.

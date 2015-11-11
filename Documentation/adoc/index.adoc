@@ -9,4 +9,5 @@ programs.
 <<markup# ,The lrs markup language>>:: Describes the markup language used in lrs
 documentation.
 <<on_unsafe# ,On `unsafe`>>:: A brief discussion of the `unsafe` keyword.
+<<crates# ,lrs crates>>:: Very short descriptions of the lrs crates.
 <<syscalls# ,Syscalls>>:: Very short descriptions of Linux syscalls.

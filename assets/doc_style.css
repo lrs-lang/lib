@@ -29,15 +29,15 @@ th, td {
 }
 
 body > h1:first-child {
-    -webkit-margin-before: 0em;
+    margin-top: 0em;
 }
 
 td > p:first-child {
-    -webkit-margin-before: 0em;
+    margin-top: 0em;
 }
 
 td > p:last-child {
-    -webkit-margin-after: 0em;
+    margin-bottom: 0em;
 }
 
 th {

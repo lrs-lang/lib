@@ -213,10 +213,6 @@ fn main() {
 This is because lrs comes with its own compiler driver that takes care of
 injecting lrs instead of rust.
 
-== Todo
-
-There are still many things to do
-
 == Building and Using
 
 Please see the detailed {build_link}[Building and Using] guide.
