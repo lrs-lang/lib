@@ -7,6 +7,32 @@ document tries to explain what `unsafe` means in the context of lrs.
 
 toc::[]
 
+== Preface: On undefined behavior and operations
+
+The C++11 standard defines undefined behavior as
+
+[quote]
+behavior for which this International Standard imposes no requirements +
+[ __Note__: Undefined behavior may be expected when this International Standard
+omits any explicit definition of behavior or when a program uses an erroneous
+construct or erroneous data. [...] -- end note ]
+
+And furthermore it says with regards to the execution of programs containing
+undefined operations:
+
+[quote]
+[This] International Standard places no requirement on the implementation
+executing that program [...] (not even with regard to operations preceding the
+first undefined operation).
+
+Hence, the behavior of programs that execute undefined operations at any point
+is undefined at every point.
+
+One of the goals of rust is to ensure programmatically that, if a piece of code
+compiles, then it contains no undefined operations. But since there are many
+valid programs for which the compiler is unable to verify this, rust contains
+the `unsafe` keyword.
+
 == What `unsafe` is
 
 This section discusses the `unsafe` keyword in the following two contexts:
@@ -19,12 +45,13 @@ them here.
 
 === `unsafe` as a block delimiter
 
-In ordinary lrs code, the compiler is tasked to ensure that the execution of the
-compiled code is not undefined behavior. If the compiler is unable to make this
-guarantee, the compilation will fail. In this case, the user is able to override
-the compiler's decision by using the `unsafe` keyword on a block of code.
-Consider the following example:
+In ordinary lrs code, the compiler is tasked to ensure that every operation is
+defined, independently of the input. If the compiler is unable to make this
+guarantee, the compilation will fail. In some of these cases, the user is able
+to override the compiler's decision by using the `unsafe` keyword on a block of
+code. Consider the following example:
 
+[source]
 ----
 pub struct X(*const u8);
 
@@ -35,11 +62,12 @@ impl X {
 }
 ----
 
-The compiler does not know whether dereferencing the pointer is undefined
-behavior. And indeed, if `self.0` is a null pointer, the behavior is undefined.
+The compiler does not know whether dereferencing the pointer is a defined
+operation. And indeed, if `self.0` is a null pointer, the behavior is undefined.
 For this reason, the user has to wrap the offending section in an `unsafe` block
 to get it to compile:
 
+[source]
 ----
     pub fn f(&self) -> u8 {
         unsafe {
@@ -55,9 +83,10 @@ wrapped in an `unsafe` block. This is enforced by the compiler.
 
 In the example above, `X::f` does not have the unsafe attribute. Since the
 `self.0` field of `X` objects is private, it is possible for the developer to
-ensure that dereferencing `self.0` is never undefined behavior. Hence, `X::f`
+ensure that dereferencing `self.0` is a defined operation. Hence, `X::f`
 need not be marked unsafe. But consider the following function:
 
+[source]
 ----
 pub unsafe fn g(x: *const u8) -> u8 {
     unsafe {
@@ -66,31 +95,21 @@ pub unsafe fn g(x: *const u8) -> u8 {
 }
 ----
 
-In this case the user can pass arbitrary pointers to `g` and the developer
+In this case the user can pass arbitrary pointers to `g`, and the developer
 has added the `unsafe` keyword to the function to shift the task of ensuring the
-absence of undefined behavior to the user of the function.
+absence of undefined operations to the user of the function.
 
 On can imagine the dereference operator as a function--denoted by the `*`
 symbol--that has been marked unsafe by the compiler itself.
 
-=== Examples of undefined behavior
+=== Examples of undefined operations
 
 We've seen above that the compiler cannot check whether dereferencing a pointer
-in undefined behavior. Other examples of undefined behavior are
+in a undefined operation. Other examples of undefined operations are
 
 * Data races
-* Reading uninitialized memory (in certain cases)
 * Breaking certain pointer aliasing rules
 * Mutating data through immutable references (in most cases)
-* Using compiler intrinsics incorrectly
-* Storing invalid data in primitive objects (such as objects of type `bool`)
-
-Note furthermore that the following behavior is considered undefined in lrs:
-
-* Creating references to memory in the first page (usually addresses in the
-  range `[0, 4096)`)
-* Not running the destructors of objects marked `!Leak` at the end of their
-  lifetime
 
 == What `unsafe` is not
 
