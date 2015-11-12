@@ -1,0 +1,43 @@
+= Undefined Operations in lrs
+
+This document contains an incomplete list of operations that are undefined in
+lrs programs.
+
+If an lrs program contains an undefined operation, the behavior of the abstract
+machine executing said program is undefined.  Note that, as long as you're not
+using the `unsafe` keyword, you're not at fault if your program contains an
+undefined operation.
+
+:llvm_par: http://llvm.org/docs/LangRef.html#pointer-aliasing-rules
+:llvm_noalias: http://llvm.org/docs/LangRef.html#noalias
+
+Data races::
++
+[quote, The C++11 Standard]
+The execution of a program contains a *data race* if it contains two conflicting
+actions in different threads, at least one of which is not atomic, and neither
+happens before the other.
+Memory access that violates LLVM's pointer aliasing rules:: These
+{llvm_par}[rules] forbid, in particular, null pointer access.
+Creating invalid (mutable) references:: This includes:
++
+--
+* References that violate LLVM's {llvm_noalias}[noalias] model.
+* References with addresses smaller than 4096.
+* References that don't point to objects of the specified type.
+--
+Storing invalid values in objects of primitive type:: This includes:
++
+--
+* Values other than `true` and `false` in `bool`.
+* Enumerations with undefined discriminant values.
+* Values outside the valid unicode range in `char`.
+* Non-UTF-8 sequences in `str`.
+--
+Not running the destructors of objects at the end of their lifetime:: Unless
+said objects implement the `Leak` trait.
+
+Note that, while the rustc manual describes access of uninitialized memory as
+an undefined operation, this is not the case in general. However, when used as
+input to safe functions, the values read from uninitialized memory can cause
+those functions to perform undefined operations.

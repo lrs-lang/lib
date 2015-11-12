@@ -99,13 +99,13 @@ In this case the user can pass arbitrary pointers to `g`, and the developer
 has added the `unsafe` keyword to the function to shift the task of ensuring the
 absence of undefined operations to the user of the function.
 
-On can imagine the dereference operator as a function--denoted by the `*`
+One can imagine the dereference operator as a function--denoted by the `*`
 symbol--that has been marked unsafe by the compiler itself.
 
 === Examples of undefined operations
 
 We've seen above that the compiler cannot check whether dereferencing a pointer
-in a undefined operation. Other examples of undefined operations are
+is an undefined operation. Other examples of undefined operations are
 
 * Data races
 * Breaking certain pointer aliasing rules
@@ -210,7 +210,7 @@ See {cpp_progress}[this document] for some justifications of the assumption.
 We've seen above that the `unsafe` keyword must be placed on functions for which
 there are inputs for which the behavior is undefined.
 
-We've also seen that the keyword *must not* be placed on other functions lest
+We've also seen that the keyword *must not* be placed on other functions, lest
 their programmers expect inexistent guarantees. If libraries start making up
 their own rules for what should be `unsafe`, this will inevitably lead to
 situations where the conflicting expectations cause the behavior to be truly

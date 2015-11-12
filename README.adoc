@@ -177,8 +177,8 @@ he can disable said allocator at compile time.
 lrs is split into many small crates and provides incremental compilation
 independent of the rustc compiler. Compiling a single crate during development
 often takes less than a second. To this end, lrs comes with its own
-build system--lrs_build, discussed below--which ensures that only the minimal
-amount of work is done by the compiler.
+build system--lrs_build--which ensures that only the minimal amount of work is
+done by the compiler.
 
 Furthermore, even complete builds do not take very long. On this (old) machine,
 a complete build takes 28 seconds without optimization and 41 seconds with

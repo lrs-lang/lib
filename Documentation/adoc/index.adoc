@@ -11,3 +11,5 @@ documentation.
 <<on_unsafe# ,On `unsafe`>>:: A brief discussion of the `unsafe` keyword.
 <<crates# ,lrs crates>>:: Very short descriptions of the lrs crates.
 <<syscalls# ,Syscalls>>:: Very short descriptions of Linux syscalls.
+<<undefined_operations# ,Undefined Operations in lrs>>:: An incomplete list of
+undefined operations in lrs.
