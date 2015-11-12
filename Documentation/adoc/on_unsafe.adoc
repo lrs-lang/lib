@@ -204,3 +204,14 @@ stopped making progress forever.
 
 :cpp_progress: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3209.htm
 See {cpp_progress}[this document] for some justifications of the assumption.
+
+== Concluding remarks
+
+We've seen above that the `unsafe` keyword must be placed on functions for which
+there are inputs for which the behavior is undefined.
+
+We've also seen that the keyword *must not* be placed on other functions lest
+their programmers expect inexistent guarantees. If libraries start making up
+their own rules for what should be `unsafe`, this will inevitably lead to
+situations where the conflicting expectations cause the behavior to be truly
+undefined.
