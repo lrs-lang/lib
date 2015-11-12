@@ -19,7 +19,7 @@ toc::[]
 
 Since lrs is based on the rust compiler, it shares many features with rust
 (e.g., lifetimes, borrow checking, integer overflow checking, etc.) But rustc
-allows us to make significant chages to the language as long as we don't use
+allows us to make significant changes to the language as long as we don't use
 Mozilla's standard library. This section lists some of the differences between
 rust and lrs and other features of lrs.
 
