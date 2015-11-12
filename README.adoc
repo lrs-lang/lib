@@ -187,11 +187,14 @@ optimization.
 === Extensive Linux API coverage
 
 :syscalls: http://lrs-lang.github.io/pages/doc/lrs::syscall.html
+:file: http://lrs-lang.github.io/pages/doc/lrs::file::File.html
 
 lrs already wraps many of the commonly used linux system calls. See
 {syscalls}[this] page of the lrs documentation for a list of mostly safe system
 call wrappers. But note that most of these functions have much nicer wrappers in
 other parts of the library.
+
+For example, the {file}[File] struct exposes many syscalls that modify files.
 
 === Easy to use
 
