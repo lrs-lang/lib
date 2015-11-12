@@ -186,10 +186,12 @@ optimization.
 
 === Extensive Linux API coverage
 
-lrs already wraps many of the commonly used linux system calls.
+:syscalls: http://lrs-lang.github.io/pages/doc/lrs::syscall.html
 
-NOTE: Some system calls (such as `vmsplice`) are fundamentally unsafe so that
-lrs will likely never provide safe wrappers for them.
+lrs already wraps many of the commonly used linux system calls. See
+{syscalls}[this] page of the lrs documentation for a list of mostly safe system
+call wrappers. But note that most of these functions have much nicer wrappers in
+other parts of the library.
 
 === Easy to use
 
@@ -217,6 +219,15 @@ injecting lrs instead of rust.
 
 Please see the detailed {build_link}[Building and Using] guide.
 
+== Examples
+
+:lrs_build: https://github.com/lrs-lang/build
+:examples: https://github.com/lrs-lang/examples
+
+See {lrs_build}[lrs_build] for an example of an lrs program. Many more examples
+can be found in the {examples}[examples] repo. But note that those examples have
+not yet been organized and documented properly.
+
 == Documentation
 
 :doc: https://github.com/lrs-lang/doc
@@ -232,9 +243,9 @@ version of said documentation can be found {docs}[here].
 
 :license: link:LICENSE
 
-The whole library is licensed under the {license}[*MPL 2.0*] license which
+The whole library is licensed under the {license}[MPL 2.0] license which
 allows static linking into proprietary programs. It is copy-left on a
-file-by-file basis: Changes to files licensed under the *MPL 2.0* have to be
+file-by-file basis: Changes to files licensed under the MPL 2.0 have to be
 distributed under the same license. It also allows the code to be freely used
 under several (L)GPL licenses.
 
