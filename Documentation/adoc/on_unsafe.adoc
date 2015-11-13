@@ -194,7 +194,11 @@ threads can cause `unsafe` behavior.
 
 This is incorrect as we'll now show.
 
-*Assumption:* A correct program does not rely on other threads making progress.
+*Definition:* A correct program is a program that doesn't execute undefined
+operations.
+
+*Assumption:* A correct program does not rely on other threads making progress
+for correctness.
 
 *Claim:* A correct program cannot become incorrect by inserting arbitrary
 `fork(2)` calls.

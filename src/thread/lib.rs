@@ -202,6 +202,10 @@ pub fn thread_id() -> ProcessId {
 /// = Remarks
 ///
 /// This is unsafe because `!Leak` data will not be destroyed.
+///
+/// XXX: This is not actually unsafe unless libc does some weird thing that makes the
+/// thread being dead observable. Otherwise this is equivalent to the thread not making
+/// any progress as the memory stays in place.
 pub unsafe fn exit(code: c_int) -> ! {
     syscall::exit(code)
 }
