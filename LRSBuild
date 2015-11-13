@@ -1,4 +1,5 @@
 obj core
+obj cfg        core
 obj libc       core
 obj int        core
 obj saturating core
