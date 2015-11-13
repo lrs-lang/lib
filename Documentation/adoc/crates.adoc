@@ -3,6 +3,7 @@
 This document contains short descriptions of the lrs crates.
 
 core:: Contains mostly essential items such as lang_items.
+libc:: Gives access to lrs's compile time flags.
 libc:: Exports the few libc items we're using.
 int:: Some extensions for integer.
 saturating:: The SaturatingCast trait.
