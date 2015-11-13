@@ -29,6 +29,7 @@ pub mod impls {
     pub mod errno;
     pub mod unit;
     pub mod tuple;
+    pub mod range;
 }
 
 macro_rules! fmt_var {

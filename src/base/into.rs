@@ -18,6 +18,12 @@ impl<T> Into<T> for T {
     }
 }
 
+impl<T> Into<Range<Option<T>>> for Range<T> {
+    fn into(self) -> Range<Option<T>> {
+        Range { start: Some(self.start), end: Some(self.end) }
+    }
+}
+
 impl<T> Into<Range<Option<T>>> for RangeTo<T> {
     fn into(self) -> Range<Option<T>> {
         Range { start: None, end: Some(self.end) }
