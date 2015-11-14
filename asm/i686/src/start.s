@@ -8,4 +8,4 @@ _start:
 	push %eax
 	push %eax
 	push %eax
-	call __lrs_start_main
+	call lrs_start_main

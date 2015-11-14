@@ -10,7 +10,7 @@ use syscall::{self};
 extern { }
 
 #[no_mangle]
-pub unsafe extern fn __lrs_start_main(stack: *const usize) {
+pub unsafe extern fn lrs_start_main(stack: *const usize) {
     extern {
         fn main(argc: c_int, argv: *const *const c_char);
     }

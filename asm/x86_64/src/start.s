@@ -3,4 +3,4 @@
 _start:
 	xor %rbp,%rbp
 	mov %rsp,%rdi
-	call __lrs_start_main
+	call lrs_start_main
