@@ -1009,3 +1009,14 @@ pub const __NR_getrandom              : usize = 384;
 pub const __NR_memfd_create           : usize = 385;
 pub const __NR_bpf                    : usize = 386;
 pub const __NR_execveat               : usize = 387;
+
+/////////////////////////////////////
+// arch/arm/include/uapi/asm/unistd.h
+/////////////////////////////////////
+
+pub const __ARM_NR_BASE       : usize = 0x0f0000;
+pub const __ARM_NR_breakpoint : usize = __ARM_NR_BASE + 1;
+pub const __ARM_NR_cacheflush : usize = __ARM_NR_BASE + 2;
+pub const __ARM_NR_usr26      : usize = __ARM_NR_BASE + 3;
+pub const __ARM_NR_usr32      : usize = __ARM_NR_BASE + 4;
+pub const __ARM_NR_set_tls    : usize = __ARM_NR_BASE + 5;

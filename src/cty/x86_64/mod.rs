@@ -922,3 +922,12 @@ impl user_desc {
     pub fn set_useable         (&mut self, val: bool) { self.__bitfield_one = bf32_set(self.__bitfield_one, 6, 1, val as c_uint) }
     pub fn set_lm              (&mut self, val: bool) { self.__bitfield_one = bf32_set(self.__bitfield_one, 7, 1, val as c_uint) }
 }
+
+////////////////////////////////////
+// arch/x86/include/uapi/asm/prctl.h
+////////////////////////////////////
+
+pub const ARCH_SET_GS: c_int = 0x1001;
+pub const ARCH_SET_FS: c_int = 0x1002;
+pub const ARCH_GET_FS: c_int = 0x1003;
+pub const ARCH_GET_GS: c_int = 0x1004;

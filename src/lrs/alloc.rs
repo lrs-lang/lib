@@ -51,10 +51,9 @@
 //! ----
 
 pub use lrs_alloc::{
-    MAX_SIZE, empty_ptr, Allocator, Heap, FbHeap, Libc, NoMem, Bda, TaAlloc, TaPool,
+    MAX_SIZE, empty_ptr, Allocator, Heap, FbHeap, NoMem, Bda, TaAlloc, TaPool,
 };
 
-#[cfg(jemalloc)]
-pub use lrs_alloc::{
-    JeMalloc,
-};
+#[cfg(not(no_libc))] pub use lrs_alloc::{Libc};
+
+#[cfg(jemalloc)] pub use lrs_alloc::{JeMalloc};

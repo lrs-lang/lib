@@ -4,23 +4,27 @@
 
 #![crate_name = "lrs_rt"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, lang_items, link_args)]
+#![feature(plugin, no_std, lang_items, link_args, asm)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
 extern crate lrs_base as base;
 extern crate lrs_cty_base as cty_base;
+extern crate lrs_cty as cty;
 extern crate lrs_str_one as str_one;
 extern crate lrs_libc as libc;
 extern crate lrs_syscall as syscall;
+extern crate lrs_r_syscall as r_syscall;
 
 use base::prelude::*;
 use core::{mem};
 use str_one::{CStr};
 use cty_base::types::{c_char};
 
-mod std { pub use base::std::*; }
-#[cfg(no_libc)] pub mod crt;
+mod std { pub use base::std::*; pub use cty; }
+
+#[cfg(no_libc)] #[path = "no_libc/mod.rs"] pub mod imp;
+#[cfg(not(no_libc))] #[path = "libc/mod.rs"]  pub mod imp;
 
 static mut ARGC: isize = 0;
 static mut ARGV: *const *const u8 = 0 as *const *const u8;
@@ -66,12 +70,12 @@ impl Iterator for ArgsIter {
 }
 
 pub fn raw_env() -> *const *const c_char {
-    unsafe { libc::environ as *const _ }
+    imp::raw_env()
 }
 
 /// Returns an iterator over the environment variables.
 pub fn env() -> EnvIter {
-    unsafe { ArgsIter { argv: libc::environ } }
+    ArgsIter { argv: raw_env() as *const _ }
 }
 
 pub type EnvIter = ArgsIter;

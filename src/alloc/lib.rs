@@ -18,7 +18,7 @@ use core::marker::{Leak};
 use core::{mem};
 use base::{error};
 
-pub use libc::{Libc};
+#[cfg(not(no_libc))] pub use libc::{Libc};
 pub use no::{NoMem};
 pub use ta::{TaAlloc, TaPool};
 pub use bda::{Bda};
@@ -29,7 +29,7 @@ pub use jemalloc::{JeMalloc};
 
 mod std { pub use base::std::*; }
 
-mod libc;
+#[cfg(not(no_libc))] mod libc;
 mod no;
 mod bda;
 mod align;
@@ -39,7 +39,10 @@ mod ta;
 mod jemalloc;
 
 /// The default allocator
-pub type Heap = Libc;
+#[cfg(not(no_libc))] pub type Heap = Libc;
+
+/// The default allocator
+#[cfg(no_libc)] pub type Heap = Bda;
 
 pub type FbHeap = Heap;
 

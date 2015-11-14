@@ -46,16 +46,16 @@ pub use ::common::{
 use cty::{
     self,
     k_int, k_long, k_ulong, c_char, k_uint, linux_dirent64, loff_t,
-    new_utsname, pid_t, rlimit64, size_t, ssize_t, stat,
+    new_utsname, pid_t, rlimit64, size_t, ssize_t, stat, c_int,
 
-    __NR_mmap,
+    __NR_mmap, __NR_clone,
 };
 
 pub type SCT = k_long;
 
 #[inline(always)]
 pub unsafe fn syscall0(n: SCT) -> SCT {
-    let mut ret: SCT;
+    let ret: SCT;
     asm!("svc 0" : "={x0}"(ret)
                  : "{x8}"(n)
                  : "memory", "cc"
@@ -65,7 +65,7 @@ pub unsafe fn syscall0(n: SCT) -> SCT {
 
 #[inline(always)]
 pub unsafe fn syscall1(n: SCT, a1: SCT) -> SCT {
-    let mut ret: SCT;
+    let ret: SCT;
     asm!("svc 0" : "={x0}"(ret)
                  : "{x8}"(n), "{x0}"(a1)
                  : "memory", "cc"
@@ -75,7 +75,7 @@ pub unsafe fn syscall1(n: SCT, a1: SCT) -> SCT {
 
 #[inline(always)]
 pub unsafe fn syscall2(n: SCT, a1: SCT, a2: SCT) -> SCT {
-    let mut ret: SCT;
+    let ret: SCT;
     asm!("svc 0" : "={x0}"(ret)
                  : "{x8}"(n), "{x0}"(a1), "{x1}"(a2)
                  : "memory", "cc"
@@ -85,7 +85,7 @@ pub unsafe fn syscall2(n: SCT, a1: SCT, a2: SCT) -> SCT {
 
 #[inline(always)]
 pub unsafe fn syscall3(n: SCT, a1: SCT, a2: SCT, a3: SCT) -> SCT {
-    let mut ret: SCT;
+    let ret: SCT;
     asm!("svc 0" : "={x0}"(ret)
                  : "{x8}"(n), "{x0}"(a1), "{x1}"(a2), "{x2}"(a3)
                  : "memory", "cc"
@@ -95,7 +95,7 @@ pub unsafe fn syscall3(n: SCT, a1: SCT, a2: SCT, a3: SCT) -> SCT {
 
 #[inline(always)]
 pub unsafe fn syscall4(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT) -> SCT {
-    let mut ret: SCT;
+    let ret: SCT;
     asm!("svc 0" : "={x0}"(ret)
                  : "{x8}"(n), "{x0}"(a1), "{x1}"(a2), "{x2}"(a3), "{x3}"(a4)
                  : "memory", "cc"
@@ -105,7 +105,7 @@ pub unsafe fn syscall4(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT) -> SCT {
 
 #[inline(always)]
 pub unsafe fn syscall5(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT, a5: SCT) -> SCT {
-    let mut ret: SCT;
+    let ret: SCT;
     asm!("svc 0" : "={x0}"(ret)
                  : "{x8}"(n), "{x0}"(a1), "{x1}"(a2), "{x2}"(a3), "{x3}"(a4), "{x4}"(a5)
                  : "memory", "cc"
@@ -116,7 +116,7 @@ pub unsafe fn syscall5(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT, a5: SCT) -> S
 #[inline(always)]
 pub unsafe fn syscall6(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT, a5: SCT,
                        a6: SCT) -> SCT {
-    let mut ret: SCT;
+    let ret: SCT;
     asm!("svc 0" : "={x0}"(ret)
                  : "{x8}"(n), "{x0}"(a1), "{x1}"(a2), "{x2}"(a3), "{x3}"(a4),
                    "{x4}"(a5), "{x5}"(a6)
@@ -128,7 +128,7 @@ pub unsafe fn syscall6(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT, a5: SCT,
 #[inline(always)]
 pub unsafe fn syscall7(n: SCT, a1: SCT, a2: SCT, a3: SCT, a4: SCT, a5: SCT, a6: SCT,
                        a7: SCT) -> SCT {
-    let mut ret: SCT;
+    let ret: SCT;
     asm!("svc 0" : "={x0}"(ret)
                  : "{x8}"(n), "{x0}"(a1), "{x1}"(a2), "{x2}"(a3), "{x3}"(a4),
                    "{x4}"(a5), "{x5}"(a6), "{x6}"(a7)
@@ -179,4 +179,9 @@ pub unsafe fn prlimit(pid: pid_t, resource: k_uint, new_rlim: *const rlimit64,
 pub unsafe fn mmap(addr: k_ulong, len: k_ulong, prot: k_ulong, flags: k_ulong,
                    fd: k_ulong, off: k_ulong) -> k_long {
     call!(__NR_mmap, addr, len, prot, flags, fd, off) as k_long
+}
+
+pub unsafe fn clone(flags: k_ulong, newsp: *mut u8, parent_tidptr: *mut c_int,
+                    child_tidptr: *mut c_int, tls: *mut u8) -> k_long {
+    call!(__NR_clone, flags, newsp, parent_tidptr, tls, child_tidptr) as k_long
 }

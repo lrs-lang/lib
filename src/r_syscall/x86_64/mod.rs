@@ -50,9 +50,9 @@ pub use ::common::{
 use cty::{
     self,
     c_uint, k_int, k_long, k_ulong, c_char, k_uint, linux_dirent64, loff_t,
-    new_utsname, pid_t, rlimit64, size_t, ssize_t, stat,
+    new_utsname, pid_t, rlimit64, size_t, ssize_t, stat, c_int,
 
-    __NR_iopl, __NR_mmap,
+    __NR_iopl, __NR_mmap, __NR_arch_prctl, __NR_clone,
 };
 
 #[cfg(target_pointer_width = "32")]
@@ -192,4 +192,13 @@ pub unsafe fn iopl(level: c_uint) -> k_int {
 pub unsafe fn mmap(addr: k_ulong, len: k_ulong, prot: k_ulong, flags: k_ulong,
                    fd: k_ulong, off: k_ulong) -> k_long {
     call!(__NR_mmap, addr, len, prot, flags, fd, off) as k_long
+}
+
+pub unsafe fn clone(flags: k_ulong, newsp: *mut u8, parent_tidptr: *mut c_int,
+                    child_tidptr: *mut c_int, tls: *mut u8) -> k_long {
+    call!(__NR_clone, flags, newsp, parent_tidptr, child_tidptr, tls) as k_long
+}
+
+pub unsafe fn arch_prctl(code: c_int, addr: k_ulong) -> c_int {
+    call!(__NR_arch_prctl, code, addr) as c_int
 }

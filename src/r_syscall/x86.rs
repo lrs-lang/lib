@@ -49,7 +49,7 @@ use cty::{
     self,
     c_uint, k_int, k_long, k_ulong, user_desc, c_char, k_uint, linux_dirent64, loff_t,
     new_utsname, pid_t, rlimit64, size_t, ssize_t, statfs64, stat64, EINVAL, c_long,
-    __u64,
+    __u64, __NR_clone, c_int,
 };
 
 pub type SCT = c_long;
@@ -262,4 +262,9 @@ pub unsafe fn mmap(addr: k_ulong, len: k_ulong, prot: k_ulong, flags: k_ulong,
         return -EINVAL;
     }
     call!(cty::__NR_mmap_pgoff, addr, len, prot, flags, fd, off >> 12) as k_long
+}
+
+pub unsafe fn clone(flags: k_ulong, newsp: *mut u8, parent_tidptr: *mut c_int,
+                    child_tidptr: *mut c_int, tls: *mut u8) -> k_long {
+    call!(__NR_clone, flags, newsp, parent_tidptr, tls, child_tidptr) as k_long
 }

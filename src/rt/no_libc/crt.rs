@@ -14,6 +14,9 @@ pub unsafe extern fn __lrs_start_main(argc: c_int, argv: *const *const c_char) {
     extern {
         fn main(argc: c_int, argv: *const *const c_char);
     }
+
+    super::ENVP = argv.add(argc as usize + 1);
+
     main(argc, argv);
     syscall::exit(0);
 }

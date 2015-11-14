@@ -14,7 +14,7 @@ extern crate lrs_cty as cty;
 pub use ::arch::{
     accept, accept4, acct, add_key, adjtimex, bind, bpf, brk, capget,
     capset, chdir, chroot, clock_adjtime, clock_getres, clock_gettime,
-    clock_nanosleep, clock_settime, close, connect, delete_module, dup, dup3,
+    clock_nanosleep, clock_settime, clone, close, connect, delete_module, dup, dup3,
     epoll_create1, epoll_ctl, epoll_pwait, eventfd2,
     execve, execveat, exit, exit_group, faccessat, fadvise, fallocate, fanotify_init,
     fanotify_mark, fchdir, fchmod, fchmodat, fchown, fchownat, fcntl, fdatasync,
@@ -93,16 +93,16 @@ mod common;
 
 #[cfg(target_arch = "x86_64")]
 #[path = "x86_64/mod.rs"]
-mod arch;
+pub mod arch;
 
 #[cfg(target_arch = "x86")]
 #[path = "x86.rs"]
-mod arch;
+pub mod arch;
 
 #[cfg(target_arch = "arm")]
 #[path = "arm.rs"]
-mod arch;
+pub mod arch;
 
 #[cfg(target_arch = "aarch64")]
 #[path = "aarch64.rs"]
-mod arch;
+pub mod arch;
