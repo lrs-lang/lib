@@ -10,13 +10,16 @@ use syscall::{self};
 extern { }
 
 #[no_mangle]
-pub unsafe extern fn __lrs_start_main(argc: c_int, argv: *const *const c_char) {
+pub unsafe extern fn __lrs_start_main(stack: *const usize) {
     extern {
         fn main(argc: c_int, argv: *const *const c_char);
     }
 
-    super::ENVP = argv.add(argc as usize + 1);
+    let argc = *stack;
+    let argv = stack.add(1);
+    super::ENVP = argv.add(argc + 1) as *const _;
 
-    main(argc, argv);
+    main(argc as c_int, argv as *const _);
+
     syscall::exit(0);
 }

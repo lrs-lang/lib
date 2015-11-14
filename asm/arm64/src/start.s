@@ -3,6 +3,5 @@
 _start:
     mov x29,#0
     mov x30,#0
-    ldr x0,[sp,#0]
-    add x1,sp,#8
+    mov x0,sp
     bl __lrs_start_main

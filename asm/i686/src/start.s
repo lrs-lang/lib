@@ -2,12 +2,10 @@
 .text
 _start:
 	xor %ebp,%ebp
-	pop %ecx
 	mov %esp,%eax
-	and $-16,%esp
-	push %esp
-	push %esp
+	and $-16,%esp ; GCC ABI requires 16 bytes alignment before the call instruction
 	push %eax
-	push %ecx
+	push %eax
+	push %eax
+	push %eax
 	call __lrs_start_main
-1:	jmp 1b
