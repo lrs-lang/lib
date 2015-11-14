@@ -621,7 +621,9 @@ impl<'a, T> Drop for Drainer<'a, T> {
                         self.cur = self.cur.add(1);
                     }
                 } else {
-                    drop(mem::unsafe_zeroed::<T>())
+                    for _ in 0..(self.end as usize - self.cur as usize) {
+                        drop(mem::unsafe_zeroed::<T>());
+                    }
                 }
             }
         }
