@@ -5,7 +5,6 @@
 use core::{mem};
 use r_syscall::arch::{set_tls};
 use base::prelude::*;
-use cty::{tls_index};
 use super::{Private};
 
 pub use self::var::{mem_size};
@@ -17,12 +16,10 @@ pub const DTVR_SIZE: usize = 8;
 
 #[repr(C)]
 pub struct ArchPrivate {
-    static_block: *mut u8,
 }
 
-pub unsafe fn place_tls(mut mem: *mut u8) -> (*mut Private, *mut u8) {
-    let (private, tp, static_block) = var::place_tls(mem);
-    (*private).arch.static_block = static_block;
+pub unsafe fn place_tls(mem: *mut u8) -> (*mut Private, *mut u8) {
+    let (private, tp, _) = var::place_tls(mem);
     (private, tp)
 }
 
@@ -38,13 +35,11 @@ pub unsafe fn set_tp(tls: *mut u8) -> Result {
 
 pub unsafe fn get_tp() -> *mut u8 {
     // Documentation/arm/kernel_user_helpers.txt in the linux source tree.
-    let kuser_get_tls = mem::cast::<_, extern fn() -> *mut u8>(0xffff0fe0);
+    let kuser_get_tls = mem::cast::<usize, extern fn() -> *mut u8>(0xffff0fe0);
     kuser_get_tls()
 }
 
 #[no_mangle]
-pub unsafe extern fn __aeabi_read_tp(ti: *const tls_index) -> *mut u8 {
-    let tp = get_tp();
-    let private = var::get_private(tp);
-    (*private).arch.static_block.add((*ti).ti_offset)
+pub unsafe extern fn __aeabi_read_tp() -> *mut u8 {
+    get_tp()
 }
