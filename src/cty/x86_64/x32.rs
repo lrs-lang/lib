@@ -63,3 +63,16 @@ pub type __ARCH_SI_CLOCK_T = [u32; 2];
 pub use ::gen::{
     __ARCH_SI_PREAMBLE_SIZE,
 };
+
+///////////////////////////
+// include/uapi/linux/elf.h
+///////////////////////////
+
+pub type ElfDyn  = ::Elf64_Dyn;
+pub type ElfRel  = ::Elf64_Rel;
+pub type ElfRela = ::Elf64_Rela;
+pub type ElfSym  = ::Elf64_Sym;
+pub type ElfEhdr = ::Elf64_Ehdr;
+pub type ElfPhdr = ::Elf64_Phdr;
+pub type ElfShdr = ::Elf64_Shdr;
+pub type ElfNhdr = ::Elf64_Nhdr;

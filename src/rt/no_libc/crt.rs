@@ -17,8 +17,6 @@ pub unsafe extern fn lrs_start_main(stack: *const usize) {
 
     let argc = *stack;
     let argv = stack.add(1);
-    super::ENVP = argv.add(argc + 1) as *const _;
-
     main(argc as c_int, argv as *const _);
 
     syscall::exit(0);

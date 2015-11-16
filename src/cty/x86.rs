@@ -958,3 +958,26 @@ impl user_desc {
     pub fn set_seg_not_present (&mut self, val: bool) { self.__bitfield_one = bf32_set(self.__bitfield_one, 5, 1, val as c_uint) }
     pub fn set_useable         (&mut self, val: bool) { self.__bitfield_one = bf32_set(self.__bitfield_one, 6, 1, val as c_uint) }
 }
+
+/////////////////////////////////////
+// arch/x86/include/uapi/asm/auxvec.h
+/////////////////////////////////////
+
+pub const AT_SYSINFO      : usize = 32;
+pub const AT_SYSINFO_EHDR : usize = 33;
+
+/// The largest AT_* value plus one.
+pub const AUX_CNT : usize = 34;
+
+///////////////////////////
+// include/uapi/linux/elf.h
+///////////////////////////
+
+pub type ElfDyn  = ::Elf32_Dyn;
+pub type ElfRel  = ::Elf32_Rel;
+pub type ElfRela = ::Elf32_Rela;
+pub type ElfSym  = ::Elf32_Sym;
+pub type ElfEhdr = ::Elf32_Ehdr;
+pub type ElfPhdr = ::Elf32_Phdr;
+pub type ElfShdr = ::Elf32_Shdr;
+pub type ElfNhdr = ::Elf32_Nhdr;

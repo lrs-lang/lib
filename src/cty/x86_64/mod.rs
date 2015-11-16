@@ -931,3 +931,18 @@ pub const ARCH_SET_GS: c_int = 0x1001;
 pub const ARCH_SET_FS: c_int = 0x1002;
 pub const ARCH_GET_FS: c_int = 0x1003;
 pub const ARCH_GET_GS: c_int = 0x1004;
+
+/////////////////////////////////////
+// arch/x86/include/uapi/asm/auxvec.h
+/////////////////////////////////////
+
+pub const AT_SYSINFO_EHDR : usize = 33;
+
+/// The largest AT_* value plus one.
+pub const AUX_CNT : usize = 34;
+
+///////////////////////////
+// include/uapi/linux/elf.h
+///////////////////////////
+
+pub use self::abi::{ElfDyn, ElfRel, ElfRela, ElfSym, ElfEhdr, ElfPhdr, ElfShdr, ElfNhdr};

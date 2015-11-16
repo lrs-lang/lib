@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_rt"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, lang_items, link_args, asm)]
+#![feature(plugin, no_std, lang_items, link_args, asm, braced_empty_structs)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
@@ -22,21 +22,40 @@ use str_one::{CStr};
 use cty_base::types::{c_char};
 
 mod std { pub use base::std::*; pub use cty; }
-
+pub mod aux;
 #[cfg(no_libc)] #[path = "no_libc/mod.rs"] pub mod imp;
 #[cfg(not(no_libc))] #[path = "libc/mod.rs"]  pub mod imp;
 
 static mut ARGC: isize = 0;
 static mut ARGV: *const *const u8 = 0 as *const *const u8;
+static mut ENVP: *const *const u8 = 0 as *const *const u8;
 
 #[lang = "start"]
 fn lang_start(main: *const u8, argc: isize, argv: *const *const u8) -> isize {
     unsafe {
-        ARGC = argc;
-        ARGV = argv;
+        init_rt(argc, argv);
         mem::cast::<_, fn()>(main)();
+        0
     }
-    0
+}
+
+/// Initializes the runtime.
+///
+/// [argument, argc]
+/// The argc passed by the OS.
+///
+/// [argument, argv]
+/// The argv passed by the OS.
+///
+/// = Remarks
+///
+/// NOTE: This code is unsafe if argv is not the argv passed by the OS.
+unsafe fn init_rt(argc: isize, argv: *const *const u8) {
+    ARGC = argc;
+    ARGV = argv;
+    ENVP = argv.offset(argc + 1);
+    aux::init(ENVP as *const _);
+    imp::init_tls();
 }
 
 /// Returns the number of command line arguments.
@@ -70,7 +89,7 @@ impl Iterator for ArgsIter {
 }
 
 pub fn raw_env() -> *const *const c_char {
-    imp::raw_env()
+    unsafe { ENVP as *const _ }
 }
 
 /// Returns an iterator over the environment variables.

@@ -3,7 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use option::{Option};
+use option::Option::{Some, None};
 use marker::{Sized, PhantomData};
+use ops::{FnMut};
 
 /// Objects that can be iterated over.
 #[lang = "iterator"]
@@ -16,6 +18,46 @@ pub trait Iterator {
     /// [return_value]
     /// Returns the next value or `None` if no more values are available.
     fn next(&mut self) -> Option<Self::Item>;
+
+    /// Yields the first value that satisfies a predicate.
+    ///
+    /// [argument, pred]
+    /// The predicate which returns `true` iff it is satisfied by a value.
+    ///
+    /// [return_value]
+    /// The first value that satisfies the predicate.
+    ///
+    /// = Remarks
+    ///
+    /// The values that don't satisfy the predicate are lost.
+    fn find<P>(&mut self, mut pred: P) -> Option<Self::Item>
+        where P: FnMut(&mut Self::Item) -> bool,
+    {
+        while let Some(mut i) = self.next() {
+            if pred(&mut i) {
+                return Some(i);
+            }
+        }
+        None
+    }
+    /// Yields the first value that satisfies a predicate.
+    ///
+    /// [argument, pred]
+    /// The predicate which returns the value it is satisfied with.
+    ///
+    /// [return_value]
+    /// The first value that satisfies the predicate.
+    fn find_move<P>(&mut self, mut pred: P) -> Option<Self::Item>
+        where P: FnMut(Self::Item) -> Option<Self::Item>,
+    {
+        while let Some(i) = self.next() {
+            let rv = pred(i);
+            if rv.is_some() {
+                return rv;
+            }
+        }
+        None
+    }
 }
 
 impl<'a, T: Iterator+?Sized> Iterator for &'a mut T {

@@ -4,6 +4,13 @@
 
 #![allow(non_camel_case_types, raw_pointer_derive)]
 
+#[repr(C)]
+#[derive(Copy, Eq)]
+pub struct tls_index {
+    pub ti_module: usize,
+    pub ti_offset: usize,
+}
+
 #[repr(u8)]
 #[derive(Copy, Eq)]
 pub enum c_void {
@@ -1020,3 +1027,23 @@ pub const __ARM_NR_cacheflush : usize = __ARM_NR_BASE + 2;
 pub const __ARM_NR_usr26      : usize = __ARM_NR_BASE + 3;
 pub const __ARM_NR_usr32      : usize = __ARM_NR_BASE + 4;
 pub const __ARM_NR_set_tls    : usize = __ARM_NR_BASE + 5;
+
+/////////////////////////////////////
+// arch/arm/include/uapi/asm/auxvec.h
+/////////////////////////////////////
+
+/// The largest AT_* value plus one.
+pub const AUX_CNT : usize = 32;
+
+///////////////////////////
+// include/uapi/linux/elf.h
+///////////////////////////
+
+pub type ElfDyn  = ::Elf32_Dyn;
+pub type ElfRel  = ::Elf32_Rel;
+pub type ElfRela = ::Elf32_Rela;
+pub type ElfSym  = ::Elf32_Sym;
+pub type ElfEhdr = ::Elf32_Ehdr;
+pub type ElfPhdr = ::Elf32_Phdr;
+pub type ElfShdr = ::Elf32_Shdr;
+pub type ElfNhdr = ::Elf32_Nhdr;

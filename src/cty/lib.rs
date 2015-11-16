@@ -5113,3 +5113,490 @@ pub const SWAP_FLAG_PRIO_SHIFT    : c_int = 0;
 pub const SWAP_FLAG_DISCARD       : c_int = 0x10000;
 pub const SWAP_FLAG_DISCARD_ONCE  : c_int = 0x20000;
 pub const SWAP_FLAG_DISCARD_PAGES : c_int = 0x40000;
+
+//////////////////////////////
+// include/linux/uapi/auxvec.h
+//////////////////////////////
+
+pub const AT_NULL          : usize = 0;
+pub const AT_IGNORE        : usize = 1;
+pub const AT_EXECFD        : usize = 2;
+pub const AT_PHDR          : usize = 3;
+pub const AT_PHENT         : usize = 4;
+pub const AT_PHNUM         : usize = 5;
+pub const AT_PAGESZ        : usize = 6;
+pub const AT_BASE          : usize = 7;
+pub const AT_FLAGS         : usize = 8;
+pub const AT_ENTRY         : usize = 9;
+pub const AT_NOTELF        : usize = 10;
+pub const AT_UID           : usize = 11;
+pub const AT_EUID          : usize = 12;
+pub const AT_GID           : usize = 13;
+pub const AT_EGID          : usize = 14;
+pub const AT_PLATFORM      : usize = 15;
+pub const AT_HWCAP         : usize = 16;
+pub const AT_CLKTCK        : usize = 17;
+pub const AT_SECURE        : usize = 23;
+pub const AT_BASE_PLATFORM : usize = 24;
+pub const AT_RANDOM        : usize = 25;
+pub const AT_HWCAP2        : usize = 26;
+pub const AT_EXECFN        : usize = 31;
+
+//////////////////////////////
+// include/uapi/linux/elf-em.h
+//////////////////////////////
+
+pub const EM_NONE           : u16 = 0;
+pub const EM_M32            : u16 = 1;
+pub const EM_SPARC          : u16 = 2;
+pub const EM_386            : u16 = 3;
+pub const EM_68K            : u16 = 4;
+pub const EM_88K            : u16 = 5;
+pub const EM_486            : u16 = 6;
+pub const EM_860            : u16 = 7;
+pub const EM_MIPS           : u16 = 8;
+pub const EM_MIPS_RS3_LE    : u16 = 10;
+pub const EM_MIPS_RS4_BE    : u16 = 10;
+pub const EM_PARISC         : u16 = 15;
+pub const EM_SPARC32PLUS    : u16 = 18;
+pub const EM_PPC            : u16 = 20;
+pub const EM_PPC64          : u16 = 21;
+pub const EM_SPU            : u16 = 23;
+pub const EM_ARM            : u16 = 40;
+pub const EM_SH             : u16 = 42;
+pub const EM_SPARCV9        : u16 = 43;
+pub const EM_IA_64          : u16 = 50;
+pub const EM_X86_64         : u16 = 62;
+pub const EM_S390           : u16 = 22;
+pub const EM_CRIS           : u16 = 76;
+pub const EM_V850           : u16 = 87;
+pub const EM_M32R           : u16 = 88;
+pub const EM_MN10300        : u16 = 89;
+pub const EM_OPENRISC       : u16 = 92;
+pub const EM_BLACKFIN       : u16 = 106;
+pub const EM_ALTERA_NIOS2   : u16 = 113;
+pub const EM_TI_C6000       : u16 = 140;
+pub const EM_AARCH64        : u16 = 183;
+pub const EM_FRV            : u16 = 0x5441;
+pub const EM_AVR32          : u16 = 0x18ad;
+pub const EM_ALPHA          : u16 = 0x9026;
+pub const EM_CYGNUS_V850    : u16 = 0x9080;
+pub const EM_CYGNUS_M32R    : u16 = 0x9041;
+pub const EM_S390_OLD       : u16 = 0xA390;
+pub const EM_CYGNUS_MN10300 : u16 = 0xbeef;
+
+///////////////////////////
+// include/uapi/linux/elf.h
+///////////////////////////
+
+pub type Elf32_Addr   = u32;
+pub type Elf32_Half   = u16;
+pub type Elf32_Off    = u32;
+pub type Elf32_Sword  = i32;
+pub type Elf32_Word   = u32;
+
+pub type Elf64_Addr   = u64;
+pub type Elf64_Half   = u16;
+pub type Elf64_SHalf  = i16;
+pub type Elf64_Off    = u64;
+pub type Elf64_Sword  = i32;
+pub type Elf64_Word   = u32;
+pub type Elf64_Xword  = u64;
+pub type Elf64_Sxword = i64;
+
+pub const PT_NULL         : u32 = 0;
+pub const PT_LOAD         : u32 = 1;
+pub const PT_DYNAMIC      : u32 = 2;
+pub const PT_INTERP       : u32 = 3;
+pub const PT_NOTE         : u32 = 4;
+pub const PT_SHLIB        : u32 = 5;
+pub const PT_PHDR         : u32 = 6;
+pub const PT_TLS          : u32 = 7;
+pub const PT_LOOS         : u32 = 0x60000000;
+pub const PT_HIOS         : u32 = 0x6fffffff;
+pub const PT_LOPROC       : u32 = 0x70000000;
+pub const PT_HIPROC       : u32 = 0x7fffffff;
+pub const PT_GNU_EH_FRAME : u32 = 0x6474e550;
+pub const PT_GNU_STACK    : u32 = PT_LOOS + 0x474e551;
+
+pub const PN_XNUM : u16 = 0xffff;
+
+pub const ET_NONE   : u16 = 0;
+pub const ET_REL    : u16 = 1;
+pub const ET_EXEC   : u16 = 2;
+pub const ET_DYN    : u16 = 3;
+pub const ET_CORE   : u16 = 4;
+pub const ET_LOPROC : u16 = 0xff00;
+pub const ET_HIPROC : u16 = 0xffff;
+
+pub const DT_NULL       : u32 = 0;
+pub const DT_NEEDED     : u32 = 1;
+pub const DT_PLTRELSZ   : u32 = 2;
+pub const DT_PLTGOT     : u32 = 3;
+pub const DT_HASH       : u32 = 4;
+pub const DT_STRTAB     : u32 = 5;
+pub const DT_SYMTAB     : u32 = 6;
+pub const DT_RELA       : u32 = 7;
+pub const DT_RELASZ     : u32 = 8;
+pub const DT_RELAENT    : u32 = 9;
+pub const DT_STRSZ      : u32 = 10;
+pub const DT_SYMENT     : u32 = 11;
+pub const DT_INIT       : u32 = 12;
+pub const DT_FINI       : u32 = 13;
+pub const DT_SONAME     : u32 = 14;
+pub const DT_RPATH      : u32 = 15;
+pub const DT_SYMBOLIC   : u32 = 16;
+pub const DT_REL        : u32 = 17;
+pub const DT_RELSZ      : u32 = 18;
+pub const DT_RELENT     : u32 = 19;
+pub const DT_PLTREL     : u32 = 20;
+pub const DT_DEBUG      : u32 = 21;
+pub const DT_TEXTREL    : u32 = 22;
+pub const DT_JMPREL     : u32 = 23;
+pub const DT_ENCODING   : u32 = 32;
+pub const OLD_DT_LOOS   : u32 = 0x60000000;
+pub const DT_LOOS       : u32 = 0x6000000d;
+pub const DT_HIOS       : u32 = 0x6ffff000;
+pub const DT_VALRNGLO   : u32 = 0x6ffffd00;
+pub const DT_VALRNGHI   : u32 = 0x6ffffdff;
+pub const DT_ADDRRNGLO  : u32 = 0x6ffffe00;
+pub const DT_ADDRRNGHI  : u32 = 0x6ffffeff;
+pub const DT_VERSYM     : u32 = 0x6ffffff0;
+pub const DT_RELACOUNT  : u32 = 0x6ffffff9;
+pub const DT_RELCOUNT   : u32 = 0x6ffffffa;
+pub const DT_FLAGS_1    : u32 = 0x6ffffffb;
+pub const DT_VERDEF     : u32 = 0x6ffffffc;
+pub const DT_VERDEFNUM  : u32 = 0x6ffffffd;
+pub const DT_VERNEED    : u32 = 0x6ffffffe;
+pub const DT_VERNEEDNUM : u32 = 0x6fffffff;
+pub const OLD_DT_HIOS   : u32 = 0x6fffffff;
+pub const DT_LOPROC     : u32 = 0x70000000;
+pub const DT_HIPROC     : u32 = 0x7fffffff;
+
+pub const STB_LOCAL  : u16 = 0;
+pub const STB_GLOBAL : u16 = 1;
+pub const STB_WEAK   : u16 = 2;
+
+pub const STT_NOTYPE  : u32 = 0;
+pub const STT_OBJECT  : u32 = 1;
+pub const STT_FUNC    : u32 = 2;
+pub const STT_SECTION : u32 = 3;
+pub const STT_FILE    : u32 = 4;
+pub const STT_COMMON  : u32 = 5;
+pub const STT_TLS     : u32 = 6;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct Elf32_Dyn {
+    pub d_tag: Elf32_Sword,
+    pub d_val: Elf32_Sword,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct Elf64_Dyn {
+    pub d_tag: Elf64_Sxword,
+    pub d_val: Elf64_Xword,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct Elf32_Rel {
+    pub r_offset: Elf32_Addr,
+    pub r_info:   Elf32_Word,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct Elf64_Rel {
+    pub r_offset: Elf64_Addr,
+    pub r_info:   Elf64_Xword,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct Elf32_Rela {
+    pub r_offset: Elf32_Addr,
+    pub r_info:   Elf32_Word,
+    pub r_addend: Elf32_Sword,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct Elf64_Rela {
+    pub r_offset: Elf64_Addr,
+    pub r_info:   Elf64_Xword,
+    pub r_addend: Elf64_Sxword,
+}
+
+macro_rules! impl_elf_rel {
+    ($name:ident, $shift:expr, $mask:expr) => {
+        impl $name {
+            pub fn r_sym(&self) -> u32 {
+                (self.r_info >> $shift) as u32
+            }
+
+            pub fn r_type(&self) -> u32 {
+                (self.r_info & $mask) as u32
+            }
+        }
+    }
+}
+
+impl_elf_rel!(Elf32_Rel, 8, 0xff);
+impl_elf_rel!(Elf32_Rela, 8, 0xff);
+impl_elf_rel!(Elf64_Rel, 32, 0xffffffff);
+impl_elf_rel!(Elf64_Rela, 32, 0xffffffff);
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct Elf32_Sym {
+    pub st_name:  Elf32_Word,
+    pub st_value: Elf32_Addr,
+    pub st_size:  Elf32_Word,
+    pub st_info:  u8,
+    pub st_other: u8,
+    pub st_shndx: Elf32_Half,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct Elf64_Sym {
+    pub st_name:  Elf64_Word,
+    pub st_info:  u8,
+    pub st_other: u8,
+    pub st_shndx: Elf64_Half,
+    pub st_value: Elf64_Addr,
+    pub st_size:  Elf64_Xword,
+}
+
+macro_rules! impl_elf_sym {
+    ($name:ident) => {
+        impl $name {
+            pub fn st_bind(&self) -> u8 {
+                self.st_info >> 4
+            }
+
+            pub fn st_type(&self) -> u8 {
+                self.st_info & 0xf
+            }
+        }
+    }
+}
+
+impl_elf_sym!(Elf32_Sym);
+impl_elf_sym!(Elf64_Sym);
+
+pub const EI_NIDENT : usize = 16;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct Elf32_Ehdr {
+    pub e_ident:     [u8; EI_NIDENT],
+    pub e_type:      Elf32_Half,
+    pub e_machine:   Elf32_Half,
+    pub e_version:   Elf32_Word,
+    pub e_entry:     Elf32_Addr,
+    pub e_phoff:     Elf32_Off,
+    pub e_shoff:     Elf32_Off,
+    pub e_flags:     Elf32_Word,
+    pub e_ehsize:    Elf32_Half,
+    pub e_phentsize: Elf32_Half,
+    pub e_phnum:     Elf32_Half,
+    pub e_shentsize: Elf32_Half,
+    pub e_shnum:     Elf32_Half,
+    pub e_shstrndx:  Elf32_Half,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct Elf64_Ehdr {
+    pub e_ident:     [u8; EI_NIDENT],
+    pub e_type:      Elf64_Half,
+    pub e_machine:   Elf64_Half,
+    pub e_version:   Elf64_Word,
+    pub e_entry:     Elf64_Addr,
+    pub e_phoff:     Elf64_Off,
+    pub e_shoff:     Elf64_Off,
+    pub e_flags:     Elf64_Word,
+    pub e_ehsize:    Elf64_Half,
+    pub e_phentsize: Elf64_Half,
+    pub e_phnum:     Elf64_Half,
+    pub e_shentsize: Elf64_Half,
+    pub e_shnum:     Elf64_Half,
+    pub e_shstrndx:  Elf64_Half,
+}
+
+pub const PF_R : u32 = 0x4;
+pub const PF_W : u32 = 0x2;
+pub const PF_X : u32 = 0x1;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct Elf32_Phdr{
+    pub p_type:   Elf32_Word,
+    pub p_offset: Elf32_Off,
+    pub p_vaddr:  Elf32_Addr,
+    pub p_paddr:  Elf32_Addr,
+    pub p_filesz: Elf32_Word,
+    pub p_memsz:  Elf32_Word,
+    pub p_flags:  Elf32_Word,
+    pub p_align:  Elf32_Word,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct Elf64_Phdr {
+    pub p_type:   Elf64_Word,
+    pub p_flags:  Elf64_Word,
+    pub p_offset: Elf64_Off,
+    pub p_vaddr:  Elf64_Addr,
+    pub p_paddr:  Elf64_Addr,
+    pub p_filesz: Elf64_Xword,
+    pub p_memsz:  Elf64_Xword,
+    pub p_align:  Elf64_Xword,
+}
+
+pub const SHT_NULL     : u32 = 0;
+pub const SHT_PROGBITS : u32 = 1;
+pub const SHT_SYMTAB   : u32 = 2;
+pub const SHT_STRTAB   : u32 = 3;
+pub const SHT_RELA     : u32 = 4;
+pub const SHT_HASH     : u32 = 5;
+pub const SHT_DYNAMIC  : u32 = 6;
+pub const SHT_NOTE     : u32 = 7;
+pub const SHT_NOBITS   : u32 = 8;
+pub const SHT_REL      : u32 = 9;
+pub const SHT_SHLIB    : u32 = 10;
+pub const SHT_DYNSYM   : u32 = 11;
+pub const SHT_NUM      : u32 = 12;
+pub const SHT_LOPROC   : u32 = 0x70000000;
+pub const SHT_HIPROC   : u32 = 0x7fffffff;
+pub const SHT_LOUSER   : u32 = 0x80000000;
+pub const SHT_HIUSER   : u32 = 0xffffffff;
+
+pub const SHF_WRITE     : u32 = 0x1;
+pub const SHF_ALLOC     : u32 = 0x2;
+pub const SHF_EXECINSTR : u32 = 0x4;
+pub const SHF_MASKPROC  : u32 = 0xf0000000;
+
+pub const SHN_UNDEF     : u32 = 0;
+pub const SHN_LORESERVE : u32 = 0xff00;
+pub const SHN_LOPROC    : u32 = 0xff00;
+pub const SHN_HIPROC    : u32 = 0xff1f;
+pub const SHN_ABS       : u32 = 0xfff1;
+pub const SHN_COMMON    : u32 = 0xfff2;
+pub const SHN_HIRESERVE : u32 = 0xffff;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct Elf32_Shdr {
+    pub sh_name:      Elf32_Word,
+    pub sh_type:      Elf32_Word,
+    pub sh_flags:     Elf32_Word,
+    pub sh_addr:      Elf32_Addr,
+    pub sh_offset:    Elf32_Off,
+    pub sh_size:      Elf32_Word,
+    pub sh_link:      Elf32_Word,
+    pub sh_info:      Elf32_Word,
+    pub sh_addralign: Elf32_Word,
+    pub sh_entsize:   Elf32_Word,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct Elf64_Shdr {
+    pub sh_name:      Elf64_Word,
+    pub sh_type:      Elf64_Word,
+    pub sh_flags:     Elf64_Xword,
+    pub sh_addr:      Elf64_Addr,
+    pub sh_offset:    Elf64_Off,
+    pub sh_size:      Elf64_Xword,
+    pub sh_link:      Elf64_Word,
+    pub sh_info:      Elf64_Word,
+    pub sh_addralign: Elf64_Xword,
+    pub sh_entsize:   Elf64_Xword,
+}
+
+pub const EI_MAG0    : usize = 0;
+pub const EI_MAG1    : usize = 1;
+pub const EI_MAG2    : usize = 2;
+pub const EI_MAG3    : usize = 3;
+pub const EI_CLASS   : usize = 4;
+pub const EI_DATA    : usize = 5;
+pub const EI_VERSION : usize = 6;
+pub const EI_OSABI   : usize = 7;
+pub const EI_PAD     : usize = 8;
+
+pub const ELFMAG0 : u8 = 0x7f;
+pub const ELFMAG1 : u8 = b'E';
+pub const ELFMAG2 : u8 = b'L';
+pub const ELFMAG3 : u8 = b'F';
+pub const ELFMAG : [u8; 4] = *b"\x7fELF";
+pub const SELFMAG : usize = 4;
+
+pub const ELFCLASSNONE : u8 = 0;
+pub const ELFCLASS32   : u8 = 1;
+pub const ELFCLASS64   : u8 = 2;
+pub const ELFCLASSNUM  : u8 = 3;
+
+pub const ELFDATANONE : u8 = 0;
+pub const ELFDATA2LSB : u8 = 1;
+pub const ELFDATA2MSB : u8 = 2;
+
+pub const EV_NONE    : u8 = 0;
+pub const EV_CURRENT : u8 = 1;
+pub const EV_NUM     : u8 = 2;
+
+pub const ELFOSABI_NONE  : u8 = 0;
+pub const ELFOSABI_LINUX : u8 = 3;
+
+pub const NT_PRSTATUS         : u32 = 1;
+pub const NT_PRFPREG          : u32 = 2;
+pub const NT_PRPSINFO         : u32 = 3;
+pub const NT_TASKSTRUCT       : u32 = 4;
+pub const NT_AUXV             : u32 = 6;
+pub const NT_SIGINFO          : u32 = 0x53494749;
+pub const NT_FILE             : u32 = 0x46494c45;
+pub const NT_PRXFPREG         : u32 = 0x46e62b7f;
+pub const NT_PPC_VMX          : u32 = 0x100;
+pub const NT_PPC_SPE          : u32 = 0x101;
+pub const NT_PPC_VSX          : u32 = 0x102;
+pub const NT_386_TLS          : u32 = 0x200;
+pub const NT_386_IOPERM       : u32 = 0x201;
+pub const NT_X86_XSTATE       : u32 = 0x202;
+pub const NT_S390_HIGH_GPRS   : u32 = 0x300;
+pub const NT_S390_TIMER       : u32 = 0x301;
+pub const NT_S390_TODCMP      : u32 = 0x302;
+pub const NT_S390_TODPREG     : u32 = 0x303;
+pub const NT_S390_CTRS        : u32 = 0x304;
+pub const NT_S390_PREFIX      : u32 = 0x305;
+pub const NT_S390_LAST_BREAK  : u32 = 0x306;
+pub const NT_S390_SYSTEM_CALL : u32 = 0x307;
+pub const NT_S390_TDB         : u32 = 0x308;
+pub const NT_S390_VXRS_LOW    : u32 = 0x309;
+pub const NT_S390_VXRS_HIGH   : u32 = 0x30a;
+pub const NT_ARM_VFP          : u32 = 0x400;
+pub const NT_ARM_TLS          : u32 = 0x401;
+pub const NT_ARM_HW_BREAK     : u32 = 0x402;
+pub const NT_ARM_HW_WATCH     : u32 = 0x403;
+pub const NT_ARM_SYSTEM_CALL  : u32 = 0x404;
+pub const NT_METAG_CBUF       : u32 = 0x500;
+pub const NT_METAG_RPIPE      : u32 = 0x501;
+pub const NT_METAG_TLS        : u32 = 0x502;
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct Elf32_Nhdr {
+    pub n_namesz: Elf32_Word,
+    pub n_descsz: Elf32_Word,
+    pub n_type:   Elf32_Word,
+}
+
+#[repr(C)]
+#[derive(Pod, Eq)]
+pub struct Elf64_Nhdr {
+    pub n_namesz: Elf64_Word,
+    pub n_descsz: Elf64_Word,
+    pub n_type:   Elf64_Word,
+}

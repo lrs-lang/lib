@@ -785,3 +785,25 @@ pub const __NR_getrandom              : usize = 278;
 pub const __NR_memfd_create           : usize = 279;
 pub const __NR_bpf                    : usize = 280;
 pub const __NR_execveat               : usize = 281;
+
+///////////////////////////////////////
+// arch/arm64/include/uapi/asm/auxvec.h
+///////////////////////////////////////
+
+pub const AT_SYSINFO_EHDR : usize = 33;
+
+/// The largest AT_* value plus one.
+pub const AUX_CNT : usize = 34;
+
+///////////////////////////
+// include/uapi/linux/elf.h
+///////////////////////////
+
+pub type ElfDyn  = ::Elf64_Dyn;
+pub type ElfRel  = ::Elf64_Rel;
+pub type ElfRela = ::Elf64_Rela;
+pub type ElfSym  = ::Elf64_Sym;
+pub type ElfEhdr = ::Elf64_Ehdr;
+pub type ElfPhdr = ::Elf64_Phdr;
+pub type ElfShdr = ::Elf64_Shdr;
+pub type ElfNhdr = ::Elf64_Nhdr;
