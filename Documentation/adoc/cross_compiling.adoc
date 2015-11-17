@@ -12,61 +12,22 @@ toc::[]
 Cross compiling lrs programs that don't depend on a libc is quite easy because
 we don't have to cross-compile a libc.
 
-=== Compiling the asm files
-
-First we have to compile the platform dependent assembly files for our target.
-To this end it is necessary that you have a cross-assembler installed. The
-easiest way to get one is to install clang. Assuming that you have clang
-installed, go to the `asm` directory in the lrs directory. In there you should
-find the following directories:
-
-* arm,
-* arm64,
-* i686, and
-* x86_64.
-
-Let's assume that you want to cross-compile for i686. We'll have to create a
-symlink `target` to this directory. If you already have such a symlink, delete
-it first.
-
-----
-ln -s i686 target
-----
-
-Now we invoke the makefile with the correct arguments:
-
-----
-CC=clang CFLAGS="--target=i686-unknown-linux-gnu" make
-----
-
-`CC=clang` tells the makefile to use clang as the assembler, the `CFLAGS`
-argument tells clang that it should use the i686 assembler.
-
 === Compiling lrs
 
 Now we'll have to compile lrs for i686 and in the no_libc mode. To do this,
 execute the lrs build system with the following command:
 
 ----
-lb -r -- --target=i686-unknown-linux-gnu --cfg no_libc
+lb -t i686 -- --cfg no_libc
 ----
 
 NOTE: Here we use the convention that `lb` is an alias for `lrs_build`.
 
-We pass the `-r` flag to tell lrs_build to discard all existing objects and
-to rebuild lrs from scratch. Then we pass the following two arguments directly
-to lrsc:
-
-`--target=i686-unknown-linux-gnu`:: This tells the compiler to generate code for
-the i686 target. Note that, while the target string here agrees with the target
-string used for clang, this is not the case is general. This is because the
-targets accepted by rustc and by clang are not exactly the same. See the
-documentation of clang and rustc to find out the exact form of the target
-strings.
-
-`--cfg no_libc`:: This flag ensures that we don't accidentally link against a
-libc later and that the compiled code contains the necessary functions to work
-without a libc.
+We pass the `-t i686` argument to tell lrs_build to place the compiled crates in
+the `obj/i686-unknown-linux-gnu` directory and to tell lrsc to compile for this
+target. Then we pass `--cfg no_libc` directly to lrsc. This flag ensures that we
+don't accidentally link against a libc later and that the compiled code contains
+the necessary functions to work without a libc.
 
 === Installing `compiler-rt`
 
@@ -115,6 +76,9 @@ lrsc helloworld.rs -C link-args="-nostdlib -static" --target=i686-unknown-linux-
 `-nostdlib` tells the linker not to link certain glibc files. `-static` tells
 it not to generate a dynamic executable.
 
+DANGER: It's important to pass the `-static` flag. If you don't do this,
+compiled programs will likely crash.
+
 We can now execute the program and check that it's a 32 bit binary:
 
 ----
@@ -148,18 +112,19 @@ some point and this linker will likely not be able to link arm objects.
 
 Now you can build musl with `make`.
 
-=== Building asm files and lrs
-
-Building the asm files works as in the previous section.
+=== Building lrs
 
 In order to build lrs, use the following command:
 
 ----
-lb -r -- --target=i686-unknown-linux-gnu
+lb -r -t i686
 ----
 
 This is almost the same as in the previous section, but this time we omit the
-`--cfg no_libc` argument.
+`--cfg no_libc` argument and add the `-r` flag. This flag tells lrs_build to
+discard the previously compiled crates and to rebuild everything from scratch.
+It is necessary to rebuild everything because an lrs compiled with the `no_libc`
+flag cannot be used with musl.
 
 === Building a program
 
@@ -186,8 +151,8 @@ because an x86_64 gcc can link i686 objects by default. If we were to go through
 the steps above with an arm target, the very last step would fail because the
 linker cannot link arm objects.
 
-Let's assume that we've built musl, the assembly files, and lrs for the arm
-target. When we now try to compile our helloworld, we get the following output:
+Let's assume that we've built musl and lrs for the arm target. When we now try
+to compile our helloworld, we get the following output:
 
 ----
 $ lrsc helloworld.rs -C link-args="$HOME/c/musl/lib/crt1.o -nostdlib -static -L $HOME/c/musl/lib -lc -lpthread" --target=arm-unknown-linux-gnueabi

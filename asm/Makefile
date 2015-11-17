@@ -1,6 +1,8 @@
 asm_files := restore.o
 crt_files := start.o
 
+cc ?= clang
+
 .PHONY: all clean
 
 define GEN
@@ -14,7 +16,7 @@ $(1)/obj:
 	mkdir $(1)/obj
 
 $(1)/obj/%.o: $(1)/src/%.s | $(1)/obj
-	clang --target=$(1) -c -o "$$@" "$$<"
+	$(cc) --target=$(1) -c -o "$$@" "$$<"
 
 $(1)/obj/liblrs_asm.a: $$($(1)_asm_paths)
 	ar rcs $(1)/obj/liblrs_asm.a $$($(1)_asm_paths)

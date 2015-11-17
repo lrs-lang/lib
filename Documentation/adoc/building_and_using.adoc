@@ -74,6 +74,10 @@ lrs comes with a number of hand-coded assembly routines that need to be
 assembled before you can build lrs programs. It should be sufficient to run the
 `make_asm.sh` shell script to do this.
 
+`clang` is hard-coded as the assembler in this step. You can overwrite this by
+typing `cc=gcc ./make_asm.sh` or similar. But note that, unlike clang, gcc
+is not a cross-platform assembler and this step will likely fail if you use gcc.
+
 == Build lrs for the first time
 
 lrs is normally built with its own build system. Since this build system is
