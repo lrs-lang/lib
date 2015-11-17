@@ -13,6 +13,7 @@ pub use self::var::{mem_size};
 
 #[repr(C)]
 pub struct ArchPrivate {
+    /// Points to itself. Required by the ABI.
     tp: *mut u8,
 }
 

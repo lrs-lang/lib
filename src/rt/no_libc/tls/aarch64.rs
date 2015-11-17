@@ -17,8 +17,7 @@ pub struct ArchPrivate {
 }
 
 pub unsafe fn place_tls(mem: *mut u8) -> (*mut Private, *mut u8) {
-    let (private, tp, _) = var::place_tls(mem);
-    (private, tp)
+    var::place_tls(mem)
 }
 
 pub unsafe fn set_tp(tls: *mut u8) -> Result {
