@@ -1,24 +1,37 @@
 asm_files := restore.o
-asm_paths := $(patsubst %, target/obj/%, $(asm_files))
-
 crt_files := start.o
-crt_paths := $(patsubst %, target/obj/%, $(crt_files))
 
 .PHONY: all clean
 
-all: target/obj/liblrs_asm.a target/obj/liblrs_crt.a
+define GEN
 
-target/obj:
-	mkdir target/obj
+all: $(1)/obj/liblrs_asm.a $(1)/obj/liblrs_crt.a
 
-target/obj/%.o: target/src/%.s | target/obj
-	$(CC) $(CFLAGS) -c -o "$@" "$<"
+$(1)_asm_paths := $$(patsubst %, $(1)/obj/%, $(asm_files))
+$(1)_crt_paths := $$(patsubst %, $(1)/obj/%, $(crt_files))
 
-target/obj/liblrs_asm.a: $(asm_paths)
-	ar rcs target/obj/liblrs_asm.a $(asm_paths)
+$(1)/obj:
+	mkdir $(1)/obj
 
-target/obj/liblrs_crt.a: $(crt_paths)
-	ar rcs target/obj/liblrs_crt.a $(crt_paths)
+$(1)/obj/%.o: $(1)/src/%.s | $(1)/obj
+	clang --target=$(1) -c -o "$$@" "$$<"
 
-clean:
-	rm -rf target/obj
+$(1)/obj/liblrs_asm.a: $$($(1)_asm_paths)
+	ar rcs $(1)/obj/liblrs_asm.a $$($(1)_asm_paths)
+
+$(1)/obj/liblrs_crt.a: $$($(1)_crt_paths)
+	ar rcs $(1)/obj/liblrs_crt.a $$($(1)_crt_paths)
+
+clean: $(1)_clean
+
+.PHONY: $(1)_clean
+
+$(1)_clean:
+	rm -r $(1)/obj
+
+endef
+
+$(eval $(call GEN,x86_64-unknown-linux-gnu))
+$(eval $(call GEN,i686-unknown-linux-gnu))
+$(eval $(call GEN,aarch64-unknown-linux-gnu))
+$(eval $(call GEN,armv6-unknown-linux-gnueabi))
