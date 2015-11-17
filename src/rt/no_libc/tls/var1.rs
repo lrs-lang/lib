@@ -114,5 +114,5 @@ pub unsafe fn place_tls(mut mem: *mut u8) -> (*mut Private, *mut u8) {
 /// [return_value]
 /// A pointer to the private area.
 pub unsafe fn get_private(tp: *mut u8) -> *mut Private {
-    mem.sub(mem::size_of::<Private>()) as *mut Private
+    tp.sub(mem::size_of::<Private>()) as *mut Private
 }
