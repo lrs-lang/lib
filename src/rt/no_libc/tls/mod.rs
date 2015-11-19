@@ -4,25 +4,7 @@
 
 use {aux, cty};
 use base::prelude::*;
-
-macro_rules! align {
-    // Rounds $val up so that align_up!($val, [%] $to) has $to alignment. The rv is in the
-    // range [$val, $val+$to).
-    ($val:expr, [%] $to:expr) => {{
-        let val = $val;
-        let mask = $to - 1;
-        (val + mask) & !mask
-    }};
-    // Rounds $val up so that align_up!($val, [+] $with, [%] $to) + $with has $to
-    // alignment. The rv is in the range [$val, $val+$to).
-    ($val:expr, [+] $with:expr, [%] $to:expr) => {{
-        let val = $val;
-        let with = $with;
-        let to = $to;
-        let mask = to - 1;
-        align!(val + (with & mask), [%] to) - (with & mask)
-    }}
-}
+use atomic::{AtomicCInt, AtomicU8};
 
 #[cfg(target_arch = "x86_64")] #[path = "x86_64.rs"] pub mod arch;
 #[cfg(target_arch = "x86")] #[path = "x86.rs"] pub mod arch;
@@ -42,12 +24,23 @@ pub struct TlsImage {
 
 #[repr(C)]
 pub struct Private {
-    arch: arch::ArchPrivate,
+    /// Architecture-specific elements. NOTE: This MUST be the first element.
+    pub arch: arch::ArchPrivate,
+
+    pub thread_id: AtomicCInt,
+    pub mem_base: *mut u8,
+    pub mem_size: usize,
+
+    /// Values defined in the thread crate.
+    pub status: AtomicU8,
 }
+
+impl !Send for Private { }
+impl !Sync for Private { }
 
 pub static mut STATIC_IMAGE: Option<TlsImage> = None;
 
-pub unsafe fn init_tls() {
+pub unsafe fn init() {
     let phdrs = aux::program_header_table().unwrap();
 
     if let Some(tls) = phdrs.iter().find(|h| h.p_type == cty::PT_TLS) {
@@ -72,5 +65,18 @@ pub unsafe fn set_static_image() {
     let mem = mmap(0, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1,
                    0) as *mut u8;
     let (_, tp) = arch::place_tls(mem);
+
     arch::set_tp(tp).unwrap();
+}
+
+pub fn size() -> usize {
+    arch::mem_size()
+}
+
+pub unsafe fn place(mem: *mut u8) -> (*mut Private, *mut u8) {
+    arch::place_tls(mem)
+}
+
+pub unsafe fn private() -> &'static Private {
+    &*arch::get_private()
 }

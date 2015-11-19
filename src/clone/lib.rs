@@ -16,16 +16,14 @@ extern crate lrs_r_syscall as r_syscall;
 extern crate lrs_libc as libc;
 
 use base::prelude::*;
-use base::{error};
 use cty::alias::{ProcessId};
-use syscall::{exit_group};
 
 mod std { pub use fmt::std::*; }
 
-pub mod flags;
+#[cfg(not(no_libc))] #[path = "libc/mod.rs"] mod imp;
+#[cfg(no_libc)] #[path = "no_libc/mod.rs"] mod imp;
 
-// TODO: Libc-free version. There are some interesting posibilities with clone(2) that are
-// not available via libc but we can only use clone(2) directly if we don't use libc.
+pub mod flags;
 
 /// Forks the process and executes a function in the child process.
 ///
@@ -56,42 +54,7 @@ pub mod flags;
 pub fn fork<F>(f: F) -> Result<ProcessId>
     where F: FnOnce()
 {
-    _fork(f)
-}
-
-#[cfg(not(no_libc))]
-fn _fork<F>(f: F) -> Result<ProcessId>
-    where F: FnOnce()
-{
-    match unsafe { libc::fork() as ProcessId } {
-        -1 => {
-            let error = unsafe { *libc::__errno_location() };
-            Err(error::Errno(error))
-        },
-        0 => {
-            f();
-            exit_group(0);
-        },
-        n => Ok(n),
-    }
-}
-
-#[cfg(no_libc)]
-fn _fork<F>(f: F) -> Result<ProcessId>
-    where F: FnOnce()
-{
-    let rv = unsafe {
-        r_syscall::clone(cty::SIGCHLD as cty::k_ulong, 0 as *mut _, 0 as *mut _,
-                         0 as *mut _, 0 as *mut _)
-    };
-    match rv {
-        e if e < 0 => Err(error::Errno(-e as cty::c_int)),
-        0 => {
-            f();
-            exit_group(0);
-        },
-        n => Ok(n as ProcessId),
-    }
+    imp::fork(f)
 }
 
 /// Forks the process.
@@ -103,30 +66,5 @@ fn _fork<F>(f: F) -> Result<ProcessId>
 ///
 /// * link:man:fork(2)
 pub fn fork_continue() -> Result<Option<ProcessId>> {
-    _fork_continue()
-}
-
-#[cfg(not(no_libc))]
-fn _fork_continue() -> Result<Option<ProcessId>> {
-    match unsafe { libc::fork() as ProcessId } {
-        -1 => {
-            let error = unsafe { *libc::__errno_location() };
-            Err(error::Errno(error))
-        },
-        0 => Ok(None),
-        n => Ok(Some(n)),
-    }
-}
-
-#[cfg(no_libc)]
-fn _fork_continue() -> Result<Option<ProcessId>> {
-    let rv = unsafe {
-        r_syscall::clone(cty::SIGCHLD as cty::k_ulong, 0 as *mut _, 0 as *mut _,
-                         0 as *mut _, 0 as *mut _)
-    };
-    match rv {
-        e if e < 0 => Err(error::Errno(-e as cty::c_int)),
-        0 => Ok(None),
-        n => Ok(Some(n as ProcessId)),
-    }
+    imp::fork_continue()
 }

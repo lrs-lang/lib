@@ -121,7 +121,7 @@ impl RawCondvar {
         drop(user_guard);
 
         while node.lock.load() == WAITING {
-            futex_wait(node.lock.unwrap(), WAITING, None);
+            futex_wait(&node.lock, WAITING, None);
         }
 
         let user_guard = user_lock.lock();
@@ -129,7 +129,7 @@ impl RawCondvar {
         if !node.right.is_null() {
             let next = &mut *node.right;
             next.lock.store(SIGNALED);
-            futex_wake(next.lock.unwrap(), 1);
+            futex_wake(&next.lock, 1);
         }
 
         user_guard
@@ -178,6 +178,6 @@ impl RawCondvar {
         inner.left_end = end;
 
         start.lock.store(SIGNALED);
-        futex_wake(start.lock.unwrap(), 1);
+        futex_wake(&start.lock, 1);
     }
 }

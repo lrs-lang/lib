@@ -57,6 +57,10 @@ impl<'a> Lock {
         LockGuard { lock: self }
     }
 
+    pub unsafe fn unwrap(&self) -> &AtomicCInt {
+        &self.val
+    }
+
     /// Returns the status of the lock.
     pub fn status(&self) -> LockStatus {
         match self.val.load_unordered() {
@@ -90,7 +94,7 @@ impl<'a> Lock {
         loop {
             if status == WAITING ||
                         self.val.compare_exchange(LOCKED, WAITING) != UNLOCKED {
-                unsafe { futex_wait(self.val.unwrap(), WAITING, None); }
+                futex_wait(&self.val, WAITING, None);
             }
             status = self.val.compare_exchange(UNLOCKED, WAITING);
             if status == UNLOCKED {
@@ -140,7 +144,7 @@ impl<'a> Drop for LockGuard<'a> {
     fn drop(&mut self) {
         if self.lock.val.sub(1) != LOCKED {
             self.lock.val.store(UNLOCKED);
-            unsafe { futex_wake(self.lock.val.unwrap(), 1); }
+            futex_wake(&self.lock.val, 1);
         }
     }
 }

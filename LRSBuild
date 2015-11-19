@@ -21,16 +21,16 @@ obj getopt     core base str_one
 obj atomic     core base cell
 obj cty        core base cty_base
 obj r_syscall  core cty
-obj syscall    core saturating base str_one cty r_syscall
+obj syscall    core saturating base str_one cty r_syscall atomic
 
+obj lock       core base cell io fmt atomic syscall cty
 obj kernel     core base atomic cty syscall parse arch_fns
-obj rt         core libc base str_one libc r_syscall syscall cty
+obj rt         core libc base str_one libc r_syscall syscall cty atomic
 
-obj clone      core libc base cty syscall fmt
+obj clone      core libc base cty syscall fmt r_syscall
 obj fd         core base rv io cty syscall fmt
 obj mem        core base cty fmt syscall fd
 
-obj lock       core base cell io fmt atomic syscall cty
 obj time_base  core base cty syscall fmt fd rv
 
 obj event      core base cty fmt syscall fd io
@@ -70,7 +70,7 @@ obj file       core base io cty fmt int syscall str_one str_two str_three arch_f
 
 obj mqueue     core base cty fmt syscall fd file str_three rmo alloc time_base rv
 obj tty        core base syscall cty fd file signal dev fmt
-obj thread     core base syscall cty libc lock fmt time_base iter clone fd
+obj thread     core base syscall cty libc lock fmt time_base iter clone fd rt mem atomic
 obj process    core base syscall cty fmt str_one str_two str_three c_ptr_ptr alloc rt env file rmo rv time_base
 obj time_ext   core base fmt str_one file time_base io vec
 

@@ -9,9 +9,10 @@
 #![no_std]
 
 extern crate lrs_saturating as saturating;
-extern crate lrs_base    as base;
+extern crate lrs_base       as base;
 extern crate lrs_str_one    as str_one;
 extern crate lrs_cty        as cty;
+extern crate lrs_atomic     as atomic;
 extern crate lrs_r_syscall  as r;
 
 use base::prelude::*;
@@ -19,6 +20,7 @@ use core::{mem};
 use base::{error};
 use str_one::c_str::{CStr};
 use saturating::{SaturatingCast};
+use atomic::{AtomicCInt};
 use cty::{
     c_int, ssize_t, rlimit64, pid_t, uid_t, gid_t, c_char, size_t,
     timespec, dev_t, c_void, clockid_t, itimerspec, epoll_event, sigset_t, new_utsname,
@@ -2217,11 +2219,11 @@ pub fn getsockopt(sockfd: c_int, level: c_int, optname: c_int, optval: &mut [u8]
 /// = See also
 ///
 /// * link:man:futex(2) and FUTEX_WAIT therein
-pub fn futex_wait(addr: &mut c_int, val: c_int, timeout: Option<&timespec>) -> c_int {
+pub fn futex_wait(addr: &AtomicCInt, val: c_int, timeout: Option<&timespec>) -> c_int {
     let timeout = timeout.map(|t| t as *const _ as *mut _).unwrap_or(0 as *mut _);
     unsafe {
-        r::futex(addr as *mut _ as *mut c_uint, FUTEX_WAIT, val as c_uint, timeout,
-                 0 as *mut _, 0)
+        r::futex(addr.unwrap() as *mut _, FUTEX_WAIT, val as c_uint, timeout, 0 as *mut _,
+                 0)
     }
 }
 
@@ -2239,10 +2241,10 @@ pub fn futex_wait(addr: &mut c_int, val: c_int, timeout: Option<&timespec>) -> c
 /// = See also
 ///
 /// * link:man:futex(2) and FUTEX_WAKE therein
-pub fn futex_wake(addr: &mut c_int, num: usize) -> c_int {
+pub fn futex_wake(addr: &AtomicCInt, num: usize) -> c_int {
     let num: c_int = num.saturating_cast();
     unsafe {
-        r::futex(addr as *mut _ as *mut c_uint, FUTEX_WAKE, num as c_uint, 0 as *mut _,
+        r::futex(addr.unwrap() as *mut _, FUTEX_WAKE, num as c_uint, 0 as *mut _,
                  0 as *mut _, 0)
     }
 }
@@ -4081,4 +4083,27 @@ pub fn chroot(path: &CStr) -> c_int {
 /// * link:man:pivot_root(2)
 pub fn pivot_root(new: &CStr, old: &CStr) -> c_int {
     unsafe { r::pivot_root(new.as_ptr(), old.as_ptr()) }
+}
+
+/// Sets the address on which the kernel will perform a futex_wake operation upon thread
+/// exit.
+///
+/// [argument, tidptr]
+/// The address or `None` to disable this feature.
+///
+/// [return_value]
+/// Returns the callers thread id.
+///
+/// = Remarks
+///
+/// The kernel will first write `0` to this address and then perform a futex_wake.
+///
+/// This is unsafe because the address might no longer be valid when the thread exits.
+///
+/// = See also
+///
+/// * link:man:set_tid_address(2)
+pub unsafe fn set_tid_address(tidptr: Option<&AtomicCInt>) -> c_int {
+    let addr = tidptr.map(|t| t.unwrap()).unwrap_or(0 as *mut _);
+    r::set_tid_address(addr) as c_int
 }

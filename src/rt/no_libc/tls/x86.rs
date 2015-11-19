@@ -22,8 +22,9 @@ pub unsafe fn place_tls(mem: *mut u8) -> (*mut Private, *mut u8) {
     (private, tp)
 }
 
+static mut ID: i32 = -1;
+
 pub unsafe fn set_tp(tls: *mut u8) -> Result {
-    static mut ID: i32 = -1;
 
     // The set_thread_area syscall is a bit too powerful for our needs but all that exists
     // on x86. The argument is actually a struct but that struct has a bitfield so it's
@@ -51,7 +52,7 @@ pub unsafe fn set_tp(tls: *mut u8) -> Result {
     //
     // Afterwards we set the %gs register to access our segment.
 
-    let mut user_desc = [ID, tls as usize as i32, 0xfffff, 0x51];
+    let mut user_desc = magic_array(tls);
     match rv!(set_thread_area(user_desc.as_mut_ptr() as *mut _)) {
         Ok(()) => {
             ID = user_desc[0];
@@ -60,4 +61,16 @@ pub unsafe fn set_tp(tls: *mut u8) -> Result {
         },
         e => e,
     }
+}
+
+pub fn magic_array(tp: *mut u8) -> [i32; 4] {
+    unsafe {
+        [ID, tp as usize as i32, 0xfffff, 0x51]
+    }
+}
+
+pub unsafe fn get_private() -> *mut Private {
+    let addr;
+    asm!("mov %gs:0,$0" : "=r"(addr));
+    var::get_private(addr)
 }

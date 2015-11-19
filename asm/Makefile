@@ -1,5 +1,5 @@
 asm_files := restore.o
-crt_files := start.o
+crt_files := start.o start_thread.o stop_thread.o
 
 cc ?= clang
 

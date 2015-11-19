@@ -219,8 +219,18 @@ pub fn size_of<T>() -> usize {
     unsafe { intrinsics::size_of::<T>() }
 }
 
+/// Returns the size of an object.
+pub fn size_of_val<T>(_: &T) -> usize {
+    unsafe { intrinsics::size_of::<T>() }
+}
+
 /// Returns the alignment required for a type.
 pub fn align_of<T>() -> usize {
+    unsafe { intrinsics::min_align_of::<T>() }
+}
+
+/// Returns the alignment required for a type.
+pub fn align_of_val<T>(_: &T) -> usize {
     unsafe { intrinsics::min_align_of::<T>() }
 }
 

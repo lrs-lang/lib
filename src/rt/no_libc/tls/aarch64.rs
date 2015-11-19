@@ -26,3 +26,9 @@ pub unsafe fn set_tp(tls: *mut u8) -> Result {
     asm!("msr tpidr_el0,$0" : : "r"(tls) : : "volatile");
     Ok(())
 }
+
+pub unsafe fn get_private() -> *mut Private {
+    let addr;
+    asm!("mrs $0,tpidr_el0" : "=r"(addr));
+    var::get_private(addr)
+}

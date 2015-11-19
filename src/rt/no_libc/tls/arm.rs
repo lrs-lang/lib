@@ -40,3 +40,7 @@ pub unsafe extern fn __aeabi_read_tp() -> *mut u8 {
     let kuser_get_tls = mem::cast::<usize, extern fn() -> *mut u8>(0xffff0fe0);
     kuser_get_tls()
 }
+
+pub unsafe fn get_private() -> *mut Private {
+    var::get_private(get_tp())
+}

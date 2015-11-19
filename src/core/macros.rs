@@ -144,3 +144,23 @@ macro_rules! rv {
         }
     }};
 }
+
+#[macro_export]
+macro_rules! align {
+    // Rounds $val up so that align_up!($val, [%] $to) has $to alignment. The rv is in the
+    // range [$val, $val+$to).
+    ($val:expr, [%] $to:expr) => {{
+        let val = $val;
+        let mask = $to - 1;
+        (val + mask) & !mask
+    }};
+    // Rounds $val up so that align_up!($val, [+] $with, [%] $to) + $with has $to
+    // alignment. The rv is in the range [$val, $val+$to).
+    ($val:expr, [+] $with:expr, [%] $to:expr) => {{
+        let val = $val;
+        let with = $with;
+        let to = $to;
+        let mask = to - 1;
+        align!(val + (with & mask), [%] to) - (with & mask)
+    }}
+}

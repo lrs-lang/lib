@@ -26,3 +26,9 @@ pub unsafe fn place_tls(mem: *mut u8) -> (*mut Private, *mut u8) {
 pub unsafe fn set_tp(tls: *mut u8) -> Result {
     rv!(arch_prctl(ARCH_SET_FS, tls as k_ulong))
 }
+
+pub unsafe fn get_private() -> *mut Private {
+    let addr;
+    asm!("mov %fs:0,$0" : "=r"(addr));
+    var::get_private(addr)
+}

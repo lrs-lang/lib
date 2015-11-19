@@ -61,12 +61,12 @@ macro_rules! impl_atomic {
                 $name { val: Cell { data: val } }
             }
 
-            pub unsafe fn wrap(val: &mut $raw) -> &$name {
+            pub unsafe fn wrap(val: *mut $raw) -> &'static $name {
                 mem::cast(val)
             }
 
-            pub unsafe fn unwrap(&self) -> &mut $raw {
-                &mut *self.val.ptr()
+            pub unsafe fn unwrap(&self) -> *mut $raw {
+                self.val.ptr()
             }
 
             /// Loads the value of the atomic integer without ordering guarantees.

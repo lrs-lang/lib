@@ -157,7 +157,7 @@ impl MemMap {
         match range {
             Range { start: None, end: None } => Range { start: 0, end: self.len },
             Range { start: None, end: Some(e) } => Range { start: 0, end: e },
-            Range { start: Some(s), end: None } => Range { start: s, end: 0 },
+            Range { start: Some(s), end: None } => Range { start: s, end: self.len },
             Range { start: Some(s), end: Some(e) } => Range { start: s, end: e },
         }
     }
@@ -228,10 +228,11 @@ impl MemMap {
         where R: Into<Range<Option<usize>>>,
     {
         let range = self.to_range(range.into());
-        if range.start > range.end {
+        if range.start > range.end || range.end > self.len {
             return Err(error::InvalidArgument);
         }
-        rv!(mprotect(range.start, range.end - range.start, protection.0))
+        rv!(mprotect(self.ptr as usize + range.start, range.end - range.start,
+                     protection.0))
     }
 }
 

@@ -4,7 +4,8 @@
 
 #![crate_name = "lrs_rt"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, lang_items, link_args, asm, braced_empty_structs)]
+#![feature(plugin, no_std, lang_items, link_args, asm, braced_empty_structs,
+           optin_builtin_traits)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
@@ -15,6 +16,7 @@ extern crate lrs_str_one as str_one;
 extern crate lrs_libc as libc;
 extern crate lrs_syscall as syscall;
 extern crate lrs_r_syscall as r_syscall;
+extern crate lrs_atomic as atomic;
 
 use base::prelude::*;
 use core::{mem};
@@ -55,7 +57,7 @@ unsafe fn init_rt(argc: isize, argv: *const *const u8) {
     ARGV = argv;
     ENVP = argv.offset(argc + 1);
     aux::init(ENVP as *const _);
-    imp::init_tls();
+    imp::tls::init();
 }
 
 /// Returns the number of command line arguments.
