@@ -64,6 +64,23 @@ pub unsafe extern fn memcpy(mut dst: *mut u8, mut src: *const u8,
 }
 
 #[no_mangle]
+pub unsafe extern fn memmove(mut dst: *mut u8, mut src: *const u8,
+                             n: usize) -> *const u8 {
+    if src as usize <= dst as usize {
+        // memcpy copies from the tail
+        return memcpy(dst, src, n);
+    }
+
+    let dst_end = dst.add(n);
+    while dst != dst_end {
+        *dst = *src;
+        dst = dst.add(1);
+        src = src.add(1);
+    }
+    dst.sub(n)
+}
+
+#[no_mangle]
 pub unsafe extern fn strlen(mut s: *const u8) -> usize {
     let mut num = 0;
     while *s != 0 {

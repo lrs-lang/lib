@@ -86,7 +86,7 @@ fn size_of() {
 
 #[test]
 fn align_of() {
-    test!(mem::align_of::<u64>() == 8);
+    test!(mem::align_of::<u32>() == 4);
 }
 
 #[test]

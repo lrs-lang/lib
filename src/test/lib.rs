@@ -5,6 +5,7 @@ use std::process::{fork, wait_id, ChildStatus, WAIT_EXITED, set_resource_limit, 
 use std::process::resource::{CoreDumpSize};
 use std::signal::{signals, SigHandler, Sigset, Signal, SigInfo, set_handler};
 use std::signal::flags::{SA_NONE};
+use std::iter::{IteratorExt};
 
 pub struct StaticTestName(pub &'static str);
 
@@ -41,6 +42,19 @@ pub fn test_main_static(tests: &[TestDescAndFn]) {
     set_resource_limit(0, CoreDumpSize, 0, 0).unwrap();
 
     for t in tests {
+        if std::env::arg_count() > 1 {
+            let mut found = false;
+            for arg in std::env::args().consume(1) {
+                if t.desc.name.0.as_bytes().starts_with(arg.as_ref()) {
+                    found = true;
+                    break;
+                }
+            }
+            if !found {
+                continue;
+            }
+        }
+
         print!("testing {} ... ", t.desc.name.0);
 
         let id = match fork(|| {
