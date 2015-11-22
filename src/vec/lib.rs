@@ -61,7 +61,7 @@ impl<'a, T> Vec<T, alloc::NoMem<'a>> {
     }
 }
 
-impl<T, H> Vec<T, H>
+impl<T, H = alloc::Heap> Vec<T, H>
     where H: Allocator,
 {
     /// Creates a new allocating vector.
@@ -589,6 +589,8 @@ pub struct Drainer<'a, T> {
     vec_end: *const T,
     _data: PhantomData<(&'a (), T)>,
 }
+
+impl<'a, T> !core::marker::Leak for Drainer<'a, T> { }
 
 impl<'a, T> Iterator for Drainer<'a, T> {
     type Item = T;

@@ -7,6 +7,8 @@ use core::{ptr, cmp, mem, slice};
 use base::{error};
 use {Allocator};
 
+// NOTE: If you add implementations for the other methods, don't forget to add tests.
+
 /// Throw-away allocator.
 ///
 /// = Remarks
@@ -62,18 +64,11 @@ impl<'a> Allocator for TaAlloc<'a> {
     }
 }
 
-// Not super sure about aliasing here. There are several things: We have the original
-// `&mut` that is passed to `new`. Then we have all those copies of `TaPool` that have
-// their own `&mut` behind a `*mut`. Are there any aliasing guarantees wrt `*mut`
-// pointers? Is the mutable borrowing in `new` enough to inform the compiler that all
-// `TaPool` copies can modify the `&mut`? Maybe we should write `*mut Cell<&'a mut [u8]>`
-// here.
-
-
-/// The memory pool of TaAllo.
+/// The memory pool of TaAlloc.
 #[derive(Copy)]
 pub struct TaPool<'a> {
-    pool: *mut &'a mut [u8],
+    pool: *mut *mut [u8],
+    _data: PhantomData<&'a ()>,
 }
 
 impl<'a> TaPool<'a> {
@@ -81,11 +76,17 @@ impl<'a> TaPool<'a> {
     ///
     /// [argument, pool]
     /// A reference to the slice that will be used for allocation.
-    pub fn new(pool: &'a mut &'a mut [u8]) -> TaPool<'a> {
-        TaPool { pool: pool }
+    pub fn new(pool: &'a mut &mut [u8]) -> TaPool<'a> {
+        TaPool {
+            pool: unsafe { mem::cast(pool) },
+            _data: PhantomData,
+        }
     }
 
-    unsafe fn get(&mut self) -> &'a mut &'a mut [u8] {
-        &mut *self.pool
+    // It would be better if the return value here were *mut *mut, but this is a bit more
+    // convenient. Just remember that you cannot move a slice into here whose lifetime is
+    // shorter than the lifetime of the original slice.
+    unsafe fn get(&mut self) -> &mut &mut [u8] {
+        mem::cast(self.pool)
     }
 }

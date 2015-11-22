@@ -44,6 +44,9 @@ fn openat() {
         test!(fd_flags & cty::FD_CLOEXEC == cty::FD_CLOEXEC);
     }
     let fs_flags = rv!(syscall::fcntl_getfl(file));
+
+    // XXX: This fails in qemu-arm. fs_flags is null. but we can see in strace that the
+    // syscall does return O_LARGEFILE. probably a qemu bug.
     test!(fs_flags & cty::O_LARGEFILE == cty::O_LARGEFILE);
 }
 

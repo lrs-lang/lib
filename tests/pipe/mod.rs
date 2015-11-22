@@ -23,6 +23,9 @@ fn read_write() {
 #[test]
 fn capacity() {
     let (write, read) = Pipe::new(PIPE_NONE).unwrap();
+
+    // XXX: fails with invalid argument in qemu-arm. however, we can see in strace that
+    // qemu-arm never performs a syscall. probably a bug in qemu-arm.
     write.set_capacity(1000).unwrap();
     test!(read.capacity().unwrap() >= 1000);
 }

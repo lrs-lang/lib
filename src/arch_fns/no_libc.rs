@@ -100,3 +100,62 @@ pub unsafe extern fn memset(mut s: *mut u8, c: c_int, n: usize) -> *mut u8 {
     }
     end.sub(n)
 }
+
+#[cfg(target_arch = "arm")]
+pub mod arch {
+    use cty_base::types::{c_int};
+
+    macro_rules! memclr {
+        ($name:ident) => {
+            #[no_mangle]
+            pub unsafe extern fn $name(dst: *mut u8, n: usize) {
+                super::memset(dst, 0, n);
+            }
+        }
+    }
+    memclr!(__aeabi_memclr);
+    memclr!(__aeabi_memclr4);
+    memclr!(__aeabi_memclr8);
+
+
+    macro_rules! memcpy {
+        ($name:ident) => {
+            #[no_mangle]
+            pub unsafe extern fn $name(dst: *mut u8, src: *const u8, n: usize) {
+                super::memcpy(dst, src, n);
+            }
+        }
+    }
+    memcpy!(__aeabi_memcpy);
+    memcpy!(__aeabi_memcpy4);
+    memcpy!(__aeabi_memcpy8);
+
+
+    macro_rules! memmove {
+        ($name:ident) => {
+            #[no_mangle]
+            pub unsafe extern fn $name(dst: *mut u8, src: *const u8, n: usize) {
+                super::memmove(dst, src, n);
+            }
+        }
+    }
+    memmove!(__aeabi_memmove);
+    memmove!(__aeabi_memmove4);
+    memmove!(__aeabi_memmove8);
+
+
+    macro_rules! memset {
+        ($name:ident) => {
+            #[no_mangle]
+            pub unsafe extern fn $name(dst: *mut u8, n: usize, val: c_int) {
+                super::memset(dst, val, n);
+            }
+        }
+    }
+    memset!(__aeabi_memset);
+    memset!(__aeabi_memset4);
+    memset!(__aeabi_memset8);
+
+    #[no_mangle] pub fn __aeabi_unwind_cpp_pr1() { }
+    #[no_mangle] pub fn __aeabi_unwind_cpp_pr0() { }
+}

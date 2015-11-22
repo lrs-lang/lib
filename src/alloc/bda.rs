@@ -35,7 +35,7 @@ impl Allocator for Bda {
         }
         let ptr = mmap(0, size, PROT_READ | PROT_WRITE,
                        MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-        if ptr < 0 {
+        if ptr < 0 && -ptr < 4096 {
             Err(Errno(-ptr as c_int))
         } else {
             Ok(ptr as usize as *mut u8)
@@ -54,7 +54,7 @@ impl Allocator for Bda {
             return Err(error::InvalidArgument);
         }
         let new_ptr = mremap(old_ptr as usize, oldsize, newsize, MREMAP_MAYMOVE, 0);
-        if new_ptr < 0 {
+        if new_ptr < 0 && -new_ptr < 4096 {
             Err(Errno(-new_ptr as c_int))
         } else {
             Ok(new_ptr as usize as *mut u8)

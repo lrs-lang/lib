@@ -52,6 +52,7 @@
 
 pub use lrs_alloc::{
     MAX_SIZE, empty_ptr, Allocator, Heap, FbHeap, NoMem, Bda, TaAlloc, TaPool,
+    AlignAlloc,
 };
 
 #[cfg(not(no_libc))] pub use lrs_alloc::{Libc};

@@ -64,6 +64,10 @@ pub fn test_main_static(tests: &[TestDescAndFn]) {
 
             set_handler(signals::Illegal, Sigset::new(), SigHandler::Func(abort_handler),
                         SA_NONE);
+            set_handler(signals::Breakpoint, Sigset::new(),
+                        SigHandler::Func(abort_handler), SA_NONE);
+            set_handler(signals::InvalidAddress, Sigset::new(),
+                        SigHandler::Func(abort_handler), SA_NONE);
 
             t.testfn.0()
         }) {

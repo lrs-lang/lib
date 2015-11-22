@@ -14,16 +14,7 @@ function trans {
 }
 
 function native {
-    case "$(uname -m)" in
-        i386 | i486 | i686 | x86) trans i686 ;;
-        x86_64 | x86-64 | amd64) trans x86_64 ;;
-        arm64 | aarch64) trans aarch64 ;;
-        arm) trans arm ;;
-        *)
-            echo "unknown target"
-            exit 1
-            ;;
-    esac
+    rustc -V -v | grep "^host" | cut -d' ' -f 2
 }
 
 function all {
