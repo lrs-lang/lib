@@ -5,13 +5,14 @@
 #![crate_name = "lrs_rt"]
 #![crate_type = "lib"]
 #![feature(plugin, no_std, lang_items, link_args, asm, braced_empty_structs,
-           optin_builtin_traits)]
+           optin_builtin_traits, thread_local, const_fn)]
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
 extern crate lrs_base as base;
 extern crate lrs_cty_base as cty_base;
 extern crate lrs_cty as cty;
+extern crate lrs_lock as lock;
 extern crate lrs_str_one as str_one;
 extern crate lrs_libc as libc;
 extern crate lrs_syscall as syscall;
@@ -22,6 +23,7 @@ use base::prelude::*;
 use core::{mem};
 use str_one::{CStr};
 use cty_base::types::{c_char};
+use lock::{StMutex};
 
 mod std { pub use base::std::*; pub use cty; }
 pub mod aux;
@@ -39,6 +41,28 @@ fn lang_start(main: *const u8, argc: isize, argv: *const *const u8) -> isize {
         mem::cast::<_, fn()>(main)();
         0
     }
+}
+
+pub struct AtExit {
+    pub ptr: *mut u8,
+    pub len: usize,
+    pub cap: usize,
+}
+
+unsafe impl Send for AtExit { }
+
+impl AtExit {
+    const fn new() -> AtExit {
+        AtExit {
+            ptr: 0 as *mut u8,
+            len: 0,
+            cap: 0,
+        }
+    }
+}
+
+pub fn at_exit() -> &'static StMutex<AtExit> {
+    imp::tls::at_exit()
 }
 
 /// Initializes the runtime.

@@ -15,7 +15,7 @@ impl<T: Copy> CopyCell<T> {
     ///
     /// [argument, data]
     /// The initial datum stored in the cell.
-    pub fn new(data: T) -> CopyCell<T> {
+    pub const fn new(data: T) -> CopyCell<T> {
         CopyCell { data: Cell { data: data } }
     }
 

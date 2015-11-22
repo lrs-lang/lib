@@ -2,9 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use {aux, cty};
+use {aux, cty, AtExit};
+use core::{ptr};
 use base::prelude::*;
 use atomic::{AtomicCInt, AtomicU8};
+use lock::{StMutex};
 
 #[cfg(target_arch = "x86_64")] #[path = "x86_64.rs"] pub mod arch;
 #[cfg(target_arch = "x86")] #[path = "x86.rs"] pub mod arch;
@@ -33,6 +35,8 @@ pub struct Private {
 
     /// Values defined in the thread crate.
     pub status: AtomicU8,
+
+    pub at_exit: StMutex<AtExit>,
 }
 
 impl !Send for Private { }
@@ -64,7 +68,8 @@ pub unsafe fn set_static_image() {
     let size = align!(arch::mem_size(), [%] aux::page_size().unwrap());
     let mem = mmap(0, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1,
                    0) as *mut u8;
-    let (_, tp) = arch::place_tls(mem);
+    let (private, tp) = arch::place_tls(mem);
+    ptr::write(&mut (*private).at_exit, StMutex::new(AtExit::new()));
 
     arch::set_tp(tp).unwrap();
 }
@@ -79,4 +84,8 @@ pub unsafe fn place(mem: *mut u8) -> (*mut Private, *mut u8) {
 
 pub unsafe fn private() -> &'static Private {
     &*arch::get_private()
+}
+
+pub fn at_exit() -> &'static StMutex<AtExit> {
+    unsafe { &(*arch::get_private()).at_exit }
 }

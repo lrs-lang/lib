@@ -12,3 +12,7 @@
 pub use lrs_cell::{
     Cell, RefCellStatus, RefCell, RefCellBorrow, RefCellBorrowMut, CopyCell,
 };
+
+pub use lrs_lock::{
+    StLock, StMutex,
+};

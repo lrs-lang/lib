@@ -6,7 +6,7 @@
 
 pub use lrs_lock::{
     RawCondvar, RAW_CONDVAR_INIT, Lock, LockGuard, LOCK_INIT, DUMMY, Mutex,
-    MutexGuard, Condvar, CONDVAR_INIT,
+    MutexGuard, Condvar, CONDVAR_INIT, LockStatus, Once,
 };
 pub use lrs_queue::{
     Queue,

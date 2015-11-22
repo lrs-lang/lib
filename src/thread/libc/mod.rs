@@ -3,34 +3,11 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use base::prelude::*;
-use libc::{self, pthread_t, pthread_attr_t, PTHREAD_CREATE_DETACHED};
+use libc::{self, pthread_t, pthread_attr_t, pthread_key_t, PTHREAD_CREATE_DETACHED};
 use core::{mem, ptr, intrinsics};
 use core::marker::{Leak};
-use lock::{LockGuard, LOCK_INIT};
-
-/// Spawns a new thread.
-///
-/// [argument, f]
-/// The closure that will be run in the new thread.
-pub fn spawn<F>(f: F) -> Result
-    where F: FnOnce() + Send + 'static
-{
-    Builder::new().chain(|b| b.spawn(f))
-}
-
-/// Spawns a new scoped thread.
-///
-/// [argument, f]
-/// The closure that will be run in the new thread.
-///
-/// = Remarks
-///
-/// The thread will automatically be joined when the guard's destructor runs.
-pub fn scoped<'a, F>(f: F) -> Result<JoinGuard<'a>>
-    where F: FnOnce() + Send + 'a
-{
-    Builder::new().chain(|b| b.scoped(f))
-}
+use lock::{LockGuard, LOCK_INIT, Once, StMutex};
+use {at_exit_};
 
 /// A join-guard
 ///
@@ -201,4 +178,33 @@ unsafe extern fn start<'a, F>(data: *mut Payload<'a, F>) -> *mut u8
     drop(guard);
     f();
     0 as *mut u8
+}
+
+pub fn at_exit<F>(f: F) -> Result
+    where F: FnOnce() + 'static,
+{
+    prepare_at_exit();
+    at_exit_::at_exit(f)
+}
+
+fn prepare_at_exit() {
+    static ONCE: Once = Once::new();
+    #[thread_local]
+    static THREAD_ONCE: StMutex<bool> = StMutex::new(false);
+    static mut KEY: pthread_key_t = pthread_key_t::new();
+
+    ONCE.once(|| unsafe {
+        libc::pthread_key_create(&mut KEY, run_at_exit);
+    });
+    match THREAD_ONCE.try_lock() {
+        Some(ref mut g) if **g == false => {
+            **g = true;
+            unsafe { libc::pthread_setspecific(KEY, 1 as *mut u8); }
+        },
+        _ => { },
+    }
+}
+
+extern fn run_at_exit(_: *mut u8) {
+    unsafe { at_exit_::run(); }
 }

@@ -2,34 +2,35 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// XXX: This is literally a copy of Mutex with St prefixes added everywhere. Can't make it
+// generic over `MutexGuard<'a>`.
+
 use base::prelude::*;
 use io::{Write};
 use fmt::{Debug};
-use cell::cell::{Cell};
-use lock::{Lock, LockGuard};
-// use lock::{Lock, LockGuard};
+use cell::{Cell};
+use stlock::{StLock, StLockGuard};
 
 /// A mutex protecting some data.
-pub struct Mutex<T>
-{
-    lock: Lock,
+pub struct StMutex<T> {
+    lock: StLock,
     data: Cell<T>,
 }
 
-impl<T> Mutex<T> {
+impl<T> StMutex<T> {
     /// Creates a new mutex.
     ///
     /// [argument, data]
     /// The data to be protected by the mutex.
-    pub fn new(data: T) -> Mutex<T> {
-        Mutex {
-            lock: Lock::new(),
+    pub const fn new(data: T) -> StMutex<T> {
+        StMutex {
+            lock: StLock::new(),
             data: Cell { data: data },
         }
     }
 
-    fn guard<'a>(&'a self, guard: LockGuard<'a>) -> MutexGuard<'a, T> {
-        MutexGuard {
+    fn guard<'a>(&'a self, guard: StLockGuard<'a>) -> StMutexGuard<'a, T> {
+        StMutexGuard {
             guard: guard,
             mutex: self,
             _marker: (NoSend, NoSync),
@@ -37,7 +38,7 @@ impl<T> Mutex<T> {
     }
 
     /// Returns the underlying lock of this mutex.
-    pub fn as_lock(&self) -> &Lock {
+    pub fn as_lock(&self) -> &StLock {
         &self.lock
     }
 
@@ -45,7 +46,7 @@ impl<T> Mutex<T> {
     ///
     /// [return_value]
     /// Returns a guard if the operation succeeded.
-    pub fn try_lock<'a>(&'a self) -> Option<MutexGuard<'a, T>> {
+    pub fn try_lock<'a>(&'a self) -> Option<StMutexGuard<'a, T>> {
         self.lock.try_lock().map(|g| self.guard(g))
     }
 
@@ -53,7 +54,7 @@ impl<T> Mutex<T> {
     ///
     /// [return_value]
     /// Returns a mutex-guard.
-    pub fn lock<'a>(&'a self) -> MutexGuard<'a, T> {
+    pub fn lock<'a>(&'a self) -> StMutexGuard<'a, T> {
         self.guard(self.lock.lock())
     }
 
@@ -69,7 +70,7 @@ impl<T> Mutex<T> {
     ///
     /// The provided lock-guard must be a lock-guard of the underlying lock or the process
     /// is aborted.
-    pub fn existing_lock<'a>(&'a self, guard: LockGuard<'a>) -> MutexGuard<'a, T> {
+    pub fn existing_lock<'a>(&'a self, guard: StLockGuard<'a>) -> StMutexGuard<'a, T> {
         assert!(&self.lock == guard.as_lock());
         self.guard(guard)
     }
@@ -86,59 +87,60 @@ impl<T> Mutex<T> {
     }
 }
 
-unsafe impl<T> Sync for Mutex<T> where T: Send { }
-unsafe impl<T> Send for Mutex<T> where T: Send { }
+// XXX: Should be ThreadLocal and not Sync.
+unsafe impl<T> Sync for StMutex<T> where T: Send { }
+unsafe impl<T> Send for StMutex<T> where T: Send { }
 
 /// A mutex-guard.
 ///
 /// = Remarks
 ///
 /// This guard automatically unlocks the mutex when it goes out of scope.
-pub struct MutexGuard<'a, T: 'a> {
-    guard: LockGuard<'a>,
-    mutex: &'a Mutex<T>,
+pub struct StMutexGuard<'a, T: 'a> {
+    guard: StLockGuard<'a>,
+    mutex: &'a StMutex<T>,
     _marker: (NoSend, NoSync),
 }
 
-impl<'a, T> MutexGuard<'a, T> {
+impl<'a, T> StMutexGuard<'a, T> {
     /// Returns a reference to the underlying lock-guard.
-    pub fn as_lock_guard(&self) -> &LockGuard<'a> {
+    pub fn as_lock_guard(&self) -> &StLockGuard<'a> {
         &self.guard
     }
 
     /// Turns the mutex-guard into the underlying lock-guard.
-    pub fn into_lock_guard(self) -> LockGuard<'a> {
+    pub fn into_lock_guard(self) -> StLockGuard<'a> {
         self.guard
     }
 
     /// Returns a reference to the underlying mutex.
-    pub fn as_mutex(&self) -> &'a Mutex<T> {
+    pub fn as_mutex(&self) -> &'a StMutex<T> {
         self.mutex
     }
 
     /// Unlocks the mutex and returns a reference to it.
-    pub fn unlock(self) -> &'a Mutex<T> {
+    pub fn unlock(self) -> &'a StMutex<T> {
         self.mutex
     }
 }
 
-unsafe impl<'a, T> Sync for MutexGuard<'a, T> where T: Sync { }
-unsafe impl<'a, T> Send for MutexGuard<'a, T> where T: Send { }
+unsafe impl<'a, T> Sync for StMutexGuard<'a, T> where T: Sync { }
+unsafe impl<'a, T> Send for StMutexGuard<'a, T> where T: Send { }
 
-impl<'a, T> Deref for MutexGuard<'a, T> {
+impl<'a, T> Deref for StMutexGuard<'a, T> {
     type Target = T;
     fn deref(&self) -> &T {
         unsafe { &*self.mutex.data.ptr() }
     }
 }
 
-impl<'a, T> DerefMut for MutexGuard<'a, T> {
+impl<'a, T> DerefMut for StMutexGuard<'a, T> {
     fn deref_mut(&mut self) -> &mut T {
         unsafe { &mut *self.mutex.data.ptr() }
     }
 }
 
-impl<'a, T: Debug> Debug for MutexGuard<'a, T> {
+impl<'a, T: Debug> Debug for StMutexGuard<'a, T> {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
         self.deref().fmt(w)
     }

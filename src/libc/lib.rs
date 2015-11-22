@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_libc"]
 #![crate_type = "lib"]
-#![feature(plugin, lang_items, no_std)]
+#![feature(plugin, lang_items, no_std, const_fn)]
 #![no_std]
 #![plugin(lrs_core_plugin)]
 #![allow(non_camel_case_types)]
@@ -34,6 +34,22 @@ mod arch;
 
 pub const PTHREAD_CREATE_JOINABLE: i32 = 0;
 pub const PTHREAD_CREATE_DETACHED: i32 = 1;
+
+#[repr(C)]
+pub struct pthread_key_t {
+    data: u32,
+}
+
+impl pthread_key_t {
+    pub const fn new() -> pthread_key_t {
+        pthread_key_t {
+            data: 0,
+        }
+    }
+}
+
+impl Pod for pthread_key_t { }
+impl Copy for pthread_key_t { }
 
 impl Pod for pthread_t { }
 impl Copy for pthread_t { }
@@ -67,6 +83,9 @@ extern {
                           start: unsafe extern fn(*mut u8) -> *mut u8,
                           arg: *mut u8) -> i32;
     pub fn pthread_join(thread: pthread_t, retval: *mut *mut u8) -> i32;
+    pub fn pthread_key_create(key: *mut pthread_key_t, dest: extern fn(*mut u8)) -> i32;
+    pub fn pthread_setspecific(key: pthread_key_t, val: *mut u8) -> i32;
+    pub fn pthread_getspecific(key: pthread_key_t) -> *mut u8;
     pub fn pthread_attr_init(attr: *mut pthread_attr_t) -> i32;
     pub fn pthread_attr_destroy(attr: *mut pthread_attr_t) -> i32;
     pub fn pthread_attr_setdetachstate(attr: *mut pthread_attr_t, state: i32) -> i32;

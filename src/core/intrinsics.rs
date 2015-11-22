@@ -455,6 +455,11 @@ extern "rust-intrinsic" {
     pub fn atomic_fence_acq();
     pub fn atomic_fence_rel();
     pub fn atomic_fence_acqrel();
+
+    pub fn atomic_singlethreadfence();
+    pub fn atomic_singlethreadfence_acq();
+    pub fn atomic_singlethreadfence_rel();
+    pub fn atomic_singlethreadfence_acqrel();
 }
 
 pub unsafe fn bswap8(x: u8) -> u8 { x }

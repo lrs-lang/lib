@@ -270,6 +270,41 @@ pub fn set_blocked_signals(set: Sigset) -> Result<Sigset> {
     block_common(SIG_SETMASK, &set)
 }
 
+/// Blocks all signals from this thread.
+///
+/// [return_value]
+/// Returns of signals that were blocked before the call.
+///
+/// = See also
+///
+/// * link:man:sigprocmask(2)
+pub fn block_all() -> Result<Sigset> {
+    let mut set = Sigset::new();
+    set.fill();
+    block_common(SIG_SETMASK, &set)
+}
+
+/// Runs a closure with all signals blocked.
+///
+/// [argument, f]
+/// The closure to run.
+///
+/// [return_value]
+/// Returns the return value of the closure or an error that occurred during signal
+/// blocking.
+///
+/// = Remarks
+///
+/// The function resets the mask of blocked signals to the original set before it returns.
+pub fn uninterrupted<T, F>(f: F) -> Result<T>
+    where F: FnOnce() -> T,
+{
+    let set = try!(block_all());
+    let res = f();
+    try!(block_common(SIG_SETMASK, &set));
+    Ok(res)
+}
+
 /// Returns the set of blocked signals that are currently blocked from this thread.
 ///
 /// = See also

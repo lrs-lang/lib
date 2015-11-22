@@ -56,7 +56,7 @@
 pub use lrs_signal::{
     Sigset, blocked_signals, block_signal, unblock_signal, block_signals, unblock_signals,
     set_blocked_signals, pending_signals, SigInfo, wait, wait_timeout,
-    SigHandler, set_handler, suspend_with, send, send_to_thread,
+    SigHandler, set_handler, suspend_with, send, send_to_thread, block_all, uninterrupted,
 };
 pub use lrs_signal::signals::{Signal};
 pub use lrs_signal::sigfd::{Sigfd, SigfdInfo};

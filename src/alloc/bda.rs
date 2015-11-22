@@ -17,7 +17,7 @@ use {Allocator, MAX_SIZE};
 /// :mmap: link:man:mmap(2)
 ///
 /// This allocator has no state and always uses {mmap} to allocate in multiples of the
-/// page size.
+/// page size. The alignment argument is ignored.
 ///
 /// = See also
 ///

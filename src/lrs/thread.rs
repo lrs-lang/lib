@@ -28,6 +28,7 @@
 pub use lrs_thread::{
     Builder, spawn, scoped, JoinGuard, cpu_count, CpuMask, cpus, set_cpus, unshare,
     current_cpu, join_namespace, thread_id, exit, deschedule, enter_strict_mode,
+    at_exit,
 };
 pub use lrs_thread::ids::{
     UserIds, GroupIds, drop_user_privileges, drop_group_privileges, set_effective_user_id,

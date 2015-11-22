@@ -17,9 +17,12 @@ extern crate lrs_cty as cty;
 extern crate lrs_syscall as syscall;
 
 pub use raw_condvar::{RawCondvar, RAW_CONDVAR_INIT};
-pub use lock::{Lock, LockGuard, LOCK_INIT, DUMMY};
-pub use mutex::{Mutex, MutexGuard};
 pub use condvar::{Condvar, CONDVAR_INIT};
+pub use lock::{Lock, LockGuard, LOCK_INIT, DUMMY, LockStatus};
+pub use mutex::{Mutex, MutexGuard};
+pub use stlock::{StLock, StLockGuard};
+pub use stmutex::{StMutex, StMutexGuard};
+pub use once::{Once, OnceStatus};
 
 mod std { pub use fmt::std::*; }
 
@@ -27,3 +30,6 @@ mod raw_condvar;
 mod condvar;
 mod lock;
 mod mutex;
+mod stlock;
+mod stmutex;
+mod once;

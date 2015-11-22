@@ -4,7 +4,8 @@
 
 #![crate_name = "lrs_thread"]
 #![crate_type = "lib"]
-#![feature(no_std, optin_builtin_traits, custom_derive, negate_unsigned)]
+#![feature(no_std, optin_builtin_traits, custom_derive, negate_unsigned, const_fn,
+           thread_local)]
 #![no_std]
 
 extern crate lrs_base as base;
@@ -20,6 +21,8 @@ extern crate lrs_fd as fd;
 extern crate lrs_mem as mmem;
 extern crate lrs_rt as rt;
 extern crate lrs_atomic as atomic;
+extern crate lrs_alloc as alloc;
+extern crate lrs_signal as signal;
 
 use base::prelude::*;
 use core::ops::{Index};
@@ -33,14 +36,59 @@ use clone::flags::{CloneFlags};
 
 mod std { pub use fmt::std::*; pub use cty; pub use fd; }
 
-#[cfg(not(no_libc))] #[path = "libc/mod.rs"] pub mod imp;
+#[cfg(not(no_libc))] #[path = "libc/mod.rs"] mod imp;
 #[cfg(no_libc)] #[path = "no_libc/mod.rs"] mod imp;
 
-pub use imp::*;
+pub use imp::{Builder, JoinGuard};
 
 pub mod ids;
 pub mod sched;
 pub mod cap;
+pub mod at_exit_;
+
+/// Spawns a new thread.
+///
+/// [argument, f]
+/// The closure that will be run in the new thread.
+pub fn spawn<F>(f: F) -> Result
+    where F: FnOnce() + Send + 'static
+{
+    imp::Builder::new().chain(|b| b.spawn(f))
+}
+
+/// Spawns a new scoped thread.
+///
+/// [argument, f]
+/// The closure that will be run in the new thread.
+///
+/// = Remarks
+///
+/// The thread will automatically be joined when the guard's destructor runs.
+pub fn scoped<'a, F>(f: F) -> Result<JoinGuard<'a>>
+    where F: FnOnce() + Send + 'a
+{
+    imp::Builder::new().chain(|b| b.scoped(f))
+}
+
+/// Adds a closure to be run when the thread exits.
+///
+/// [argument, f]
+/// The closure that will be run.
+///
+/// [return_value]
+/// Returns whether the operation succeeded.
+///
+/// = Remarks
+///
+/// This function should not be called from signal handlers but can be called during the
+/// execution of a registered function. If this function is called in a signal handler
+/// that was invoked during an invocation of this function, the `ResourceBusy` error is
+/// returned.
+pub fn at_exit<F>(f: F) -> Result
+    where F: FnOnce() + 'static,
+{
+    imp::at_exit(f)
+}
 
 /// Returns the number of CPUs available to this thread.
 ///

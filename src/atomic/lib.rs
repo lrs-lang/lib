@@ -38,6 +38,26 @@ pub fn fence() {
     unsafe { intrinsics::atomic_fence(); }
 }
 
+/// Creates a release fence.
+pub fn single_thread_fence_release() {
+    unsafe { intrinsics::atomic_singlethreadfence_rel(); }
+}
+
+/// Creates an acquire fence.
+pub fn single_thread_fence_acquire() {
+    unsafe { intrinsics::atomic_singlethreadfence_acq(); }
+}
+
+/// Creates an acquire-release fence.
+pub fn single_thread_fence_acquire_release() {
+    unsafe { intrinsics::atomic_singlethreadfence_acqrel(); }
+}
+
+/// Creates a sequentially consistent fence.
+pub fn single_thread_fence() {
+    unsafe { intrinsics::atomic_singlethreadfence(); }
+}
+
 macro_rules! impl_atomic {
     ($name:ident, $init:ident, $raw:ident, $signed:expr) => {
         /// An atomic integer wrapper.

@@ -12,6 +12,8 @@ use lock::{Lock, LockGuard, LOCK_INIT};
 use rt::imp::tls::{self, Private};
 use rt::{aux};
 use syscall::{self};
+use signal::{self, Sigset};
+use {at_exit_};
 
 #[cfg(target_arch = "x86_64")] #[path = "x86_64.rs"] mod arch;
 #[cfg(target_arch = "x86")] #[path = "x86.rs"] mod arch;
@@ -26,30 +28,6 @@ const EXITING: u8 = 1;
 
 /// Thread has been detached.
 const DETACHED: u8 = 2;
-
-/// Spawns a new thread.
-///
-/// [argument, f]
-/// The closure that will be run in the new thread.
-pub fn spawn<F>(f: F) -> Result
-    where F: FnOnce() + Send + 'static
-{
-    Builder::new().chain(|b| b.spawn(f))
-}
-
-/// Spawns a new scoped thread.
-///
-/// [argument, f]
-/// The closure that will be run in the new thread.
-///
-/// = Remarks
-///
-/// The thread will automatically be joined when the guard's destructor runs.
-pub fn scoped<'a, F>(f: F) -> Result<JoinGuard<'a>>
-    where F: FnOnce() + Send + 'a
-{
-    Builder::new().chain(|b| b.scoped(f))
-}
 
 /// A join-guard
 ///
@@ -216,12 +194,22 @@ impl Builder {
         (*private).mem_size = map_size;
         (*private).status.store(NOTHING);
 
+        // We have to block all signals so that the cloned thread doesn't get interrupted
+        // before it had time to set up its stack.
+        let set = signal::block_all().unwrap();
+
         let lock = LOCK_INIT;
         let guard = lock.lock();
-        let mut payload = Payload { guard: guard, f: f };
+        let mut payload = Payload {
+            guard: guard,
+            f: f,
+            sigs: set,
+        };
 
         try!(start_thread(stack, &mut payload, tp, private));
         lock.lock();
+
+        signal::set_blocked_signals(set);
 
         mem::forget(payload.guard);
         mem::forget(map);
@@ -236,6 +224,7 @@ struct Payload<'a, F>
 {
     guard: LockGuard<'a>,
     f: *const F,
+    sigs: Sigset,
 }
 
 /// The function that will be called by start_thread. The function takes ownership of the
@@ -243,10 +232,13 @@ struct Payload<'a, F>
 unsafe extern fn start<'a, F>(data: *mut Payload<'a, F>) -> !
     where F: FnOnce() + Send,
 {
-    let Payload { guard, f } = ptr::read(data);
+    let Payload { guard, f, sigs } = ptr::read(data);
     let f = ptr::read(f);
     drop(guard);
+    signal::set_blocked_signals(sigs);
     f();
+
+    at_exit_::run();
 
     let private = tls::private();
 
@@ -267,6 +259,10 @@ unsafe extern fn start<'a, F>(data: *mut Payload<'a, F>) -> !
         // address to the address of the lock. Since `0` means unlocked, this will unlock
         // the lock for us.
         syscall::set_tid_address(Some(LOCK.unwrap()));
+
+        // Block all signals so that we don't get interrupted after we've destroyed our
+        // stack.
+        signal::block_all().unwrap();
 
         stop_thread(private.mem_base, private.mem_size,
                     STACK.as_mut_ptr().add(mem::size_of_val(&STACK)))
@@ -320,4 +316,10 @@ unsafe fn start_thread<F>(stack: *mut u8, payload: &mut Payload<F>, tp: *mut u8,
 /// A temporary stack that we can use after unmapping our stack.
 unsafe fn stop_thread(stack_base: *mut u8, stack_size: usize, tmp_stack: *mut u8) -> ! {
     arch::stop_thread(stack_base, stack_size, tmp_stack)
+}
+
+pub fn at_exit<F>(f: F) -> Result
+    where F: FnOnce() + 'static,
+{
+    at_exit_::at_exit(f)
 }
