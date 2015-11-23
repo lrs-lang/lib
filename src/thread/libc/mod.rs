@@ -197,11 +197,17 @@ fn prepare_at_exit() {
         libc::pthread_key_create(&mut KEY, run_at_exit);
     });
     match THREAD_ONCE.try_lock() {
-        Some(ref mut g) if **g == false => {
-            **g = true;
-            unsafe { libc::pthread_setspecific(KEY, 1 as *mut u8); }
+        Some(mut g) => {
+            if *g == false {
+                *g = true;
+                unsafe { libc::pthread_setspecific(KEY, 1 as *mut u8); }
+            }
         },
-        _ => { },
+        None => {
+            // We're in a signal handler and the interrupted context is already executing
+            // the THREAD_ONCE. The thread will not exit before the interrupted context
+            // exits so it's fine if we wait for it to set it.
+        },
     }
 }
 

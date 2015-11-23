@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use {atomic};
-use core::{mem};
+use core::{mem, marker};
 use core::ops::{Eq};
 use cell::{CopyCell};
 
@@ -59,10 +59,9 @@ impl StLock {
     /// Returns a guard that will unlock the lock or `None` if the lock is already
     /// locked.
     pub fn try_lock<'a>(&'a self) -> Option<StLockGuard<'a>> {
-        atomic::single_thread_fence_acquire();
         if !self.locked.get() {
             self.locked.set(true);
-            atomic::single_thread_fence_acquire_release();
+            atomic::single_thread_fence();
             Some(StLockGuard {
                 lock: &self
             })
@@ -81,6 +80,8 @@ pub struct StLockGuard<'a> {
     lock: &'a StLock,
 }
 
+impl<'a> !marker::Leak for StLockGuard<'a> { }
+
 impl<'a> StLockGuard<'a> {
     /// Returns the lock guarded by this guard.
     pub fn as_lock(&self) -> &'a StLock {
@@ -95,7 +96,7 @@ impl<'a> StLockGuard<'a> {
 
 impl<'a> Drop for StLockGuard<'a> {
     fn drop(&mut self) {
+        atomic::single_thread_fence();
         self.lock.locked.set(false);
-        atomic::single_thread_fence_release();
     }
 }
