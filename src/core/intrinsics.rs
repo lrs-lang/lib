@@ -289,6 +289,7 @@ extern "rust-intrinsic" {
 
     pub fn volatile_load<T>(src: *const T) -> T;
     pub fn volatile_store<T>(dst: *mut T, val: T);
+    pub fn assume(b: bool);
 
     pub fn sqrtf32(x: f32) -> f32;
     pub fn sqrtf64(x: f64) -> f64;

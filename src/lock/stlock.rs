@@ -63,19 +63,18 @@ impl SingleThreadLock {
     /// Returns a guard that will unlock the lock or `None` if the lock is already
     /// locked.
     pub fn try_lock<'a>(&'a self) -> Option<SingleThreadLockGuard<'a>> {
-        if !self.locked1.get() {
-            self.locked1.set(true);
-            atomic::single_thread_fence_acquire_release();
-            if !self.locked2.get() {
-                self.locked2.set(true);
-                Some(SingleThreadLockGuard {
-                    lock: &self
-                })
-            } else {
-                None
-            }
-        } else {
+        let locked = self.locked1.get();
+        self.locked1.set(true);
+
+        atomic::single_thread_fence_acquire_release();
+
+        if locked | self.locked2.get() {
             None
+        } else {
+            self.locked2.set(true);
+            Some(SingleThreadLockGuard {
+                lock: &self
+            })
         }
     }
 }

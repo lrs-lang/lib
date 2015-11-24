@@ -3,6 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use core::marker::{Sync};
+use core::{ptr};
 
 /// A container with interior mutability.
 ///
@@ -65,5 +66,13 @@ impl<T: Copy> Cell<T> {
     /// The new value.
     pub fn set(&self, data: T) {
         unsafe { *self.ptr() = data; }
+    }
+
+    /// Modifies the contained data.
+    ///
+    /// [argument, data]
+    /// The new value.
+    pub fn volatile_set(&self, data: T) {
+        unsafe { ptr::volatile_store(self.ptr(), data); }
     }
 }
