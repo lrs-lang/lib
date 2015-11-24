@@ -6,12 +6,13 @@
 
 #![crate_name = "lrs"]
 #![crate_type = "lib"]
-#![feature(plugin, no_core, macro_reexport)]
+#![feature(plugin, no_core, macro_reexport, allow_internal_unstable)]
 #![plugin(lrs_core_plugin)]
 #![no_core]
 
 #[macro_use]
-#[macro_reexport(abort, assert, try, print, println, err, errln, vec, format, matches)]
+#[macro_reexport(abort, assert, try, print, println, err, errln, vec, format, matches,
+                 thread_local)]
 extern crate lrs_core;
 extern crate lrs_alloc;
 extern crate lrs_arch_fns;

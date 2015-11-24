@@ -14,6 +14,9 @@ extern crate lrs_cty_base as cty_base;
 pub mod std {
     pub use core::*;
     pub use {result, clone, error};
+    pub mod share {
+        pub use core::thread_local::*;
+    }
 }
 
 pub mod clone;

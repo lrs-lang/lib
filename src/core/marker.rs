@@ -39,7 +39,8 @@ pub trait Copy { }
 ///
 /// For example, `RefCell` is `!Sync`.
 #[lang = "sync"]
-pub unsafe trait Sync { }
+#[rustc_on_unimplemented = "`{Self}` cannot be shared safely between threads"]
+pub unsafe trait Sync: Interrupt { }
 
 unsafe impl Sync for .. { }
 
@@ -54,6 +55,30 @@ impl<T> !Sync for *mut T { }
 pub struct NoSync;
 
 impl !Sync for NoSync { }
+
+/// Objects that allow immutable access from signal handlers.
+///
+/// = Remarks
+///
+/// For example, `RefCell` is `!Interrupt`.
+#[rustc_on_unimplemented = "`{Self}` cannot be used safely in signal handlers"]
+pub unsafe trait Interrupt { }
+
+unsafe impl Interrupt for .. { }
+unsafe impl<T: Sync> Interrupt for T { }
+
+impl<T> !Interrupt for *const T { }
+impl<T> !Interrupt for *mut T { }
+
+/// A dummy object that is `!Interrupt`.
+///
+/// = Remarks
+///
+/// This can be embedded in other objects to make them `!Interrupt`.
+pub struct NoInterrupt;
+
+impl !Interrupt for NoInterrupt { }
+impl !Sync for NoInterrupt { }
 
 /// Objects whose ownership can be moved from one thread to another.
 ///

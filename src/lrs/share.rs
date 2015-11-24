@@ -9,10 +9,10 @@
 //! This module provides structures that allow data-modification through immutable
 //! references. None of the objects are safe to use from multiple threads.
 
+pub use lrs_core::thread_local::{__ThreadLocal};
 pub use lrs_cell::{
     Cell, RefCellStatus, RefCell, RefCellBorrow, RefCellBorrowMut,
 };
-
 pub use lrs_lock::{
     SingleThreadLock, SingleThreadMutex,
 };

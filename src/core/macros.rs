@@ -172,3 +172,20 @@ macro_rules! offset_of {
         &x$(.$field)+ as *const _ as usize - &x as *const _ as usize
     }}
 }
+
+#[macro_export]
+#[allow_internal_unstable]
+macro_rules! thread_local {
+    ($(static $name:ident: $t:ty = $init:expr;)+) => {
+        $(
+            #[thread_local] static $name: ::std::share::__ThreadLocal<$t> =
+                ::std::share::__ThreadLocal::new($init);
+        )+
+    };
+    ($(pub static $name:ident: $t:ty = $init:expr;)+) => {
+        $(
+            #[thread_local] pub static $name: ::std::share::__ThreadLocal<$t> =
+                ::std::share::__ThreadLocal::new($init);
+        )+
+    }
+}

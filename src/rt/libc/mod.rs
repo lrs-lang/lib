@@ -10,8 +10,9 @@ pub mod tls {
         // Managed by libc
     }
 
-    #[thread_local]
-    static AT_EXIT: SingleThreadMutex<AtExit> = SingleThreadMutex::new(AtExit::new());
+    thread_local! {
+        static AT_EXIT: SingleThreadMutex<AtExit> = SingleThreadMutex::new(AtExit::new());
+    }
 
     pub fn at_exit() -> &'static SingleThreadMutex<AtExit> {
         &AT_EXIT

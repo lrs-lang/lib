@@ -34,7 +34,7 @@ impl<T> SingleThreadMutex<T> {
         SingleThreadMutexGuard {
             guard: guard,
             mutex: self,
-            _marker: (NoSend, NoSync),
+            _marker: (NoSend, NoInterrupt),
         }
     }
 
@@ -92,8 +92,7 @@ impl<T> SingleThreadMutex<T> {
     }
 }
 
-// XXX: Should be ThreadLocal and not Sync.
-unsafe impl<T> Sync for SingleThreadMutex<T> where T: Send { }
+unsafe impl<T> Interrupt for SingleThreadMutex<T> { }
 unsafe impl<T> Send for SingleThreadMutex<T> where T: Send { }
 
 /// A mutex-guard.
@@ -104,7 +103,7 @@ unsafe impl<T> Send for SingleThreadMutex<T> where T: Send { }
 pub struct SingleThreadMutexGuard<'a, T: 'a> {
     guard: SingleThreadLockGuard<'a>,
     mutex: &'a SingleThreadMutex<T>,
-    _marker: (NoSend, NoSync),
+    _marker: (NoSend, NoInterrupt),
 }
 
 impl<'a, T> SingleThreadMutexGuard<'a, T> {
@@ -130,7 +129,6 @@ impl<'a, T> SingleThreadMutexGuard<'a, T> {
 }
 
 unsafe impl<'a, T> Sync for SingleThreadMutexGuard<'a, T> where T: Sync { }
-unsafe impl<'a, T> Send for SingleThreadMutexGuard<'a, T> where T: Send { }
 
 impl<'a, T> Deref for SingleThreadMutexGuard<'a, T> {
     type Target = T;

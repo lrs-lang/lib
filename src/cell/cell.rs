@@ -35,6 +35,7 @@ pub struct Cell<T> {
     data: T,
 }
 
+impl<T> !Interrupt for Cell<T> { }
 impl<T> !Sync for Cell<T> { }
 
 impl<T> Cell<T> {

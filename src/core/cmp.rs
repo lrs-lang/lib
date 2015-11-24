@@ -5,8 +5,7 @@
 use marker::{Sized};
 use ops::Ordering::{Less, Equal, Greater};
 
-pub use ops::{PartialOrd};
-pub use ops::{Ordering};
+pub use ops::{PartialOrd, Eq, Ordering};
 
 /// Objects that are part of a total order.
 ///

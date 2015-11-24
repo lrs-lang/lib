@@ -5,7 +5,8 @@
 #![crate_name = "lrs_core"]
 #![crate_type = "lib"]
 #![feature(no_core, lang_items, intrinsics, asm, plugin, unboxed_closures,
-           optin_builtin_traits, const_fn, fundamental, associated_type_defaults)]
+           optin_builtin_traits, const_fn, fundamental, associated_type_defaults,
+           allow_internal_unstable, on_unimplemented)]
 #![plugin(lrs_core_plugin)]
 #![no_core]
 
@@ -29,6 +30,7 @@ pub mod ptr;
 pub mod repr;
 pub mod slice;
 pub mod str;
+pub mod thread_local;
 
 mod sort;
 
@@ -42,7 +44,10 @@ mod core {
 
 pub mod prelude {
     pub mod v1 {
-        pub use marker::{Sized, Copy, Pod, Send, Sync, NoSend, NoSync, PhantomData};
+        pub use marker::{
+            Sized, Copy, Pod, Send, Sync, NoSend, NoSync, Interrupt, NoInterrupt,
+            PhantomData,
+        };
 
         pub use option::{Option};
         pub use option::Option::{Some, None};

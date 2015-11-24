@@ -6,7 +6,7 @@ use base::prelude::*;
 use libc::{self, pthread_t, pthread_attr_t, pthread_key_t, PTHREAD_CREATE_DETACHED};
 use core::{mem, ptr, intrinsics};
 use core::marker::{Leak};
-use lock::{LockGuard, LOCK_INIT, Once, StMutex};
+use lock::{LockGuard, LOCK_INIT, Once, SingleThreadMutex};
 use {at_exit_};
 
 /// A join-guard
@@ -189,8 +189,9 @@ pub fn at_exit<F>(f: F) -> Result
 
 fn prepare_at_exit() {
     static ONCE: Once = Once::new();
-    #[thread_local]
-    static THREAD_ONCE: StMutex<bool> = StMutex::new(false);
+    thread_local! {
+        static THREAD_ONCE: SingleThreadMutex<bool> = SingleThreadMutex::new(false);
+    }
     static mut KEY: pthread_key_t = pthread_key_t::new();
 
     ONCE.once(|| unsafe {

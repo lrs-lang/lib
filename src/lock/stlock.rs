@@ -27,7 +27,8 @@ impl Eq for SingleThreadLock {
     }
 }
 
-unsafe impl Sync for SingleThreadLock { } // XXX: Should be ThreadLocal and not Sync.
+impl !Sync for SingleThreadLock { }
+unsafe impl Interrupt for SingleThreadLock { }
 unsafe impl Send for SingleThreadLock { }
 
 impl SingleThreadLock {
