@@ -4,16 +4,16 @@
 
 pub mod tls {
     use {AtExit};
-    use lock::{StMutex};
+    use lock::{SingleThreadMutex};
 
     pub unsafe fn init() {
         // Managed by libc
     }
 
     #[thread_local]
-    static AT_EXIT: StMutex<AtExit> = StMutex::new(AtExit::new());
+    static AT_EXIT: SingleThreadMutex<AtExit> = SingleThreadMutex::new(AtExit::new());
 
-    pub fn at_exit() -> &'static StMutex<AtExit> {
+    pub fn at_exit() -> &'static SingleThreadMutex<AtExit> {
         &AT_EXIT
     }
 }

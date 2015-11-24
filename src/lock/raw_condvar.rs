@@ -28,13 +28,11 @@ struct Inner {
 /// An initializer for static condition variables.
 pub const RAW_CONDVAR_INIT: RawCondvar = RawCondvar {
     lock: LOCK_INIT,
-    inner: Cell {
-        data: Inner {
-            left_end: 0 as *mut Node,
-            right_end: 0 as *mut Node,
-            user_lock: None,
-        }
-    },
+    inner: Cell::new(Inner {
+        left_end: 0 as *mut Node,
+        right_end: 0 as *mut Node,
+        user_lock: None,
+    }),
 };
 
 /// A condition variable to wait on locks.

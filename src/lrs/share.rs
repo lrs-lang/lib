@@ -10,9 +10,9 @@
 //! references. None of the objects are safe to use from multiple threads.
 
 pub use lrs_cell::{
-    Cell, RefCellStatus, RefCell, RefCellBorrow, RefCellBorrowMut, CopyCell,
+    Cell, RefCellStatus, RefCell, RefCellBorrow, RefCellBorrowMut,
 };
 
 pub use lrs_lock::{
-    StLock, StMutex,
+    SingleThreadLock, SingleThreadMutex,
 };

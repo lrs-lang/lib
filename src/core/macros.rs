@@ -164,3 +164,11 @@ macro_rules! align {
         align!(val + (with & mask), [%] to) - (with & mask)
     }}
 }
+
+#[macro_export]
+macro_rules! offset_of {
+    ($t:ty, $($field:ident).+) => {{
+        let x: $t = unsafe { std::mem::uninitialized() };
+        &x$(.$field)+ as *const _ as usize - &x as *const _ as usize
+    }}
+}

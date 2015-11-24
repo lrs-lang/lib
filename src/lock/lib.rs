@@ -20,8 +20,8 @@ pub use raw_condvar::{RawCondvar, RAW_CONDVAR_INIT};
 pub use condvar::{Condvar, CONDVAR_INIT};
 pub use lock::{Lock, LockGuard, LOCK_INIT, DUMMY, LockStatus};
 pub use mutex::{Mutex, MutexGuard};
-pub use stlock::{StLock, StLockGuard};
-pub use stmutex::{StMutex, StMutexGuard};
+pub use stlock::{SingleThreadLock, SingleThreadLockGuard};
+pub use stmutex::{SingleThreadMutex, SingleThreadMutexGuard};
 pub use once::{Once, OnceStatus};
 
 mod std { pub use fmt::std::*; }

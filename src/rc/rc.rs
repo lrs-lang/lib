@@ -10,14 +10,14 @@ use core::{mem, ptr, intrinsics};
 use base::clone::{Clone};
 use base::default::{Default};
 use base::undef::{UndefState};
-use cell::copy_cell::{CopyCell};
+use cell::{Cell};
 use fmt::{Debug, Write};
 use alloc::{self, Allocator};
 
 struct Inner<T, H = alloc::Heap>
     where H: Allocator,
 {
-    count: CopyCell<usize>,
+    count: Cell<usize>,
     pool: H::Pool,
     val: T,
 }

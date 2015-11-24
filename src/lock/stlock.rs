@@ -3,9 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use {atomic};
-use core::{mem, marker};
+use core::{mem};
 use core::ops::{Eq};
-use cell::{CopyCell};
+use cell::{Cell};
 
 /// A single-threaded lock.
 ///
@@ -13,32 +13,35 @@ use cell::{CopyCell};
 ///
 /// This can be used to protect critical sections from signal handlers. It cannot be
 /// used for inter-thread synchronization.
-pub struct StLock {
-    locked: CopyCell<bool>,
+pub struct SingleThreadLock {
+    locked1: Cell<bool>,
+    locked2: Cell<bool>,
 }
 
 /// = Remarks
 ///
 /// Two locks are equal if their addresses are equal.
-impl Eq for StLock {
-    fn eq(&self, other: &StLock) -> bool {
+impl Eq for SingleThreadLock {
+    fn eq(&self, other: &SingleThreadLock) -> bool {
         mem::addr(self) == mem::addr(other)
     }
 }
 
-unsafe impl Sync for StLock { } // XXX: Should be ThreadLocal and not Sync.
-unsafe impl Send for StLock { }
+unsafe impl Sync for SingleThreadLock { } // XXX: Should be ThreadLocal and not Sync.
+unsafe impl Send for SingleThreadLock { }
 
-impl StLock {
+impl SingleThreadLock {
     /// Creates a new, unlocked, lock.
-    pub const fn new() -> StLock {
-        StLock { locked: CopyCell::new(false) }
+    pub const fn new() -> SingleThreadLock {
+        SingleThreadLock {
+            locked1: Cell::new(false),
+            locked2: Cell::new(false),
+        }
     }
 
     /// Returns whether the lock is locked.
     pub fn locked(&self) -> bool {
-        atomic::single_thread_fence_acquire();
-        self.locked.get()
+        self.locked1.get()
     }
 
     /// Locks the lock.
@@ -49,7 +52,7 @@ impl StLock {
     /// = Remarks
     ///
     /// This function aborts the process if the lock is already locked.
-    pub fn lock<'a>(&'a self) -> StLockGuard<'a> {
+    pub fn lock<'a>(&'a self) -> SingleThreadLockGuard<'a> {
         self.try_lock().unwrap()
     }
 
@@ -58,13 +61,18 @@ impl StLock {
     /// [return_value]
     /// Returns a guard that will unlock the lock or `None` if the lock is already
     /// locked.
-    pub fn try_lock<'a>(&'a self) -> Option<StLockGuard<'a>> {
-        if !self.locked.get() {
-            self.locked.set(true);
-            atomic::single_thread_fence();
-            Some(StLockGuard {
-                lock: &self
-            })
+    pub fn try_lock<'a>(&'a self) -> Option<SingleThreadLockGuard<'a>> {
+        if !self.locked1.get() {
+            self.locked1.set(true);
+            atomic::single_thread_fence_acquire_release();
+            if !self.locked2.get() {
+                self.locked2.set(true);
+                Some(SingleThreadLockGuard {
+                    lock: &self
+                })
+            } else {
+                None
+            }
         } else {
             None
         }
@@ -76,27 +84,26 @@ impl StLock {
 /// = Remarks
 ///
 /// This guard automatically unlocks the lock when it goes out of scope.
-pub struct StLockGuard<'a> {
-    lock: &'a StLock,
+pub struct SingleThreadLockGuard<'a> {
+    lock: &'a SingleThreadLock,
 }
 
-impl<'a> !marker::Leak for StLockGuard<'a> { }
-
-impl<'a> StLockGuard<'a> {
+impl<'a> SingleThreadLockGuard<'a> {
     /// Returns the lock guarded by this guard.
-    pub fn as_lock(&self) -> &'a StLock {
+    pub fn as_lock(&self) -> &'a SingleThreadLock {
         self.lock
     }
 
     /// Unlocks the lock and returns a reference to the lock.
-    pub fn unlock(self) -> &'a StLock {
+    pub fn unlock(self) -> &'a SingleThreadLock {
         self.lock
     }
 }
 
-impl<'a> Drop for StLockGuard<'a> {
+impl<'a> Drop for SingleThreadLockGuard<'a> {
     fn drop(&mut self) {
-        atomic::single_thread_fence();
-        self.lock.locked.set(false);
+        self.lock.locked2.set(false);
+        atomic::single_thread_fence_release();
+        self.lock.locked1.set(false);
     }
 }

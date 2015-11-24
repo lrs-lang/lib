@@ -287,6 +287,9 @@ extern "rust-intrinsic" {
     /// * {copy}
     pub fn copy_nonoverlapping<T>(src: *const T, dst: *mut T, count: usize);
 
+    pub fn volatile_load<T>(src: *const T) -> T;
+    pub fn volatile_store<T>(dst: *mut T, val: T);
+
     pub fn sqrtf32(x: f32) -> f32;
     pub fn sqrtf64(x: f64) -> f64;
     pub fn powif32(a: f32, x: i32) -> f32;

@@ -32,7 +32,7 @@ use core::marker::{Sync};
 #[derive(Copy)]
 pub struct Cell<T> {
     /// The data contained in the cell.
-    pub data: T,
+    data: T,
 }
 
 impl<T> !Sync for Cell<T> { }
@@ -42,12 +42,27 @@ impl<T> Cell<T> {
     ///
     /// [argument, data]
     /// The datum initially contained in the cell.
-    pub fn new(data: T) -> Cell<T> {
+    pub const fn new(data: T) -> Cell<T> {
         Cell { data: data }
     }
 
     /// Returns a mutable pointer to the data.
     pub fn ptr(&self) -> *mut T {
         &self.data as *const T as *mut T
+    }
+}
+
+impl<T: Copy> Cell<T> {
+    /// Returns a copy of the contained data.
+    pub fn get(&self) -> T {
+        self.data
+    }
+
+    /// Modifies the contained data.
+    ///
+    /// [argument, data]
+    /// The new value.
+    pub fn set(&self, data: T) {
+        unsafe { *self.ptr() = data; }
     }
 }

@@ -35,14 +35,12 @@ impl<T> RefCell<T> {
     ///
     /// [argument, data]
     /// The initial datum stored in the cell.
-    pub fn new(data: T) -> RefCell<T> {
+    pub const fn new(data: T) -> RefCell<T> {
         RefCell {
-            inner: Cell {
-                data: Inner {
-                    status: RefCellStatus::Free,
-                    data: data,
-                },
-            },
+            inner: Cell::new(Inner {
+                status: RefCellStatus::Free,
+                data: data,
+            }),
         }
     }
 

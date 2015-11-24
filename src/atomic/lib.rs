@@ -67,7 +67,7 @@ macro_rules! impl_atomic {
         }
 
         /// A zero initializer for static variables.
-        pub const $init: $name = $name { val: Cell { data: 0 } };
+        pub const $init: $name = $name { val: Cell::new(0) };
 
         unsafe impl Sync for $name { }
         unsafe impl Send for $name { }
@@ -78,7 +78,7 @@ macro_rules! impl_atomic {
             /// [argument, val]
             /// The value which is initially stored in the atomic integer.
             pub const fn new(val: $raw) -> $name {
-                $name { val: Cell { data: val } }
+                $name { val: Cell::new(val) }
             }
 
             pub unsafe fn wrap(val: *mut $raw) -> &'static $name {

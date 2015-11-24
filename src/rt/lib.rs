@@ -23,7 +23,7 @@ use base::prelude::*;
 use core::{mem};
 use str_one::{CStr};
 use cty_base::types::{c_char};
-use lock::{StMutex};
+use lock::{SingleThreadMutex};
 
 mod std { pub use base::std::*; pub use cty; }
 pub mod aux;
@@ -61,7 +61,7 @@ impl AtExit {
     }
 }
 
-pub fn at_exit() -> &'static StMutex<AtExit> {
+pub fn at_exit() -> &'static SingleThreadMutex<AtExit> {
     imp::tls::at_exit()
 }
 

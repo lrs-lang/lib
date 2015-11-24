@@ -300,3 +300,41 @@ impl<T> Ord for OwnedPtr<T> {
 
 unsafe impl<T: Sync + ?Sized> Sync for OwnedPtr<T> { }
 unsafe impl<T: Send + ?Sized> Send for OwnedPtr<T> { }
+
+/// Performs a volatile load.
+///
+/// [argument, src]
+/// The source to load from.
+///
+/// [return_value]
+/// Returns the loaded value.
+///
+/// = Remarks
+///
+/// This is unsafe because the pointer might not be valid.
+///
+/// = See also
+///
+/// * link:lrs::mem::volatile_load
+pub unsafe fn volatile_load<T>(src: *const T) -> T {
+    intrinsics::volatile_load(src)
+}
+
+/// Performs a volatile store.
+///
+/// [argument, dst]
+/// The destination to write to.
+///
+/// [argument, val]
+/// The value to write.
+///
+/// = Remarks
+///
+/// This is unsafe because the pointer might not be valid.
+///
+/// = See also
+///
+/// * link:lrs::mem::volatile_store
+pub unsafe fn volatile_store<T>(dst: *mut T, val: T) {
+    intrinsics::volatile_store(dst, val);
+}

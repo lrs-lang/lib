@@ -302,3 +302,33 @@ pub fn align_for_mut<T>(buf: &mut [u8]) -> &mut [u8] {
 pub fn addr<T>(obj: &T) -> usize {
     obj as *const T as usize
 }
+
+/// Performs a volatile load.
+///
+/// [argument, src]
+/// The source to load from.
+///
+/// [return_value]
+/// Returns the loaded value.
+///
+/// = See also
+///
+/// * link:lrs::ptr::volatile_load
+pub fn volatile_load<T>(src: &T) -> T {
+    unsafe { intrinsics::volatile_load(src) }
+}
+
+/// Performs a volatile store.
+///
+/// [argument, dst]
+/// The destination to write to.
+///
+/// [argument, val]
+/// The value to write.
+///
+/// = See also
+///
+/// * link:lrs::ptr::volatile_store
+pub fn volatile_store<T>(dst: &mut T, val: T) {
+    unsafe { intrinsics::volatile_store(dst, val); }
+}

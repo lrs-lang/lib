@@ -21,10 +21,10 @@ impl<T> Mutex<T> {
     ///
     /// [argument, data]
     /// The data to be protected by the mutex.
-    pub fn new(data: T) -> Mutex<T> {
+    pub const fn new(data: T) -> Mutex<T> {
         Mutex {
             lock: Lock::new(),
-            data: Cell { data: data },
+            data: Cell::new(data),
         }
     }
 

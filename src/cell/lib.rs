@@ -10,12 +10,10 @@
 
 extern crate lrs_base as base;
 
-pub use copy_cell::{CopyCell};
 pub use ref_cell::{RefCell, RefCellStatus, RefCellBorrow, RefCellBorrowMut};
 pub use cell::{Cell};
 
 pub mod std { pub use ::base::std::*; }
 
-pub mod copy_cell;
 pub mod ref_cell;
 pub mod cell;

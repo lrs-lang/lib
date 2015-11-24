@@ -6,7 +6,7 @@ use {aux, cty, AtExit};
 use core::{ptr};
 use base::prelude::*;
 use atomic::{AtomicCInt, AtomicU8};
-use lock::{StMutex};
+use lock::{SingleThreadMutex};
 
 #[cfg(target_arch = "x86_64")] #[path = "x86_64.rs"] pub mod arch;
 #[cfg(target_arch = "x86")] #[path = "x86.rs"] pub mod arch;
@@ -36,7 +36,7 @@ pub struct Private {
     /// Values defined in the thread crate.
     pub status: AtomicU8,
 
-    pub at_exit: StMutex<AtExit>,
+    pub at_exit: SingleThreadMutex<AtExit>,
 }
 
 impl !Send for Private { }
@@ -69,7 +69,7 @@ pub unsafe fn set_static_image() {
     let mem = mmap(0, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1,
                    0) as *mut u8;
     let (private, tp) = arch::place_tls(mem);
-    ptr::write(&mut (*private).at_exit, StMutex::new(AtExit::new()));
+    ptr::write(&mut (*private).at_exit, SingleThreadMutex::new(AtExit::new()));
 
     arch::set_tp(tp).unwrap();
 }
@@ -86,6 +86,6 @@ pub unsafe fn private() -> &'static Private {
     &*arch::get_private()
 }
 
-pub fn at_exit() -> &'static StMutex<AtExit> {
+pub fn at_exit() -> &'static SingleThreadMutex<AtExit> {
     unsafe { &(*arch::get_private()).at_exit }
 }

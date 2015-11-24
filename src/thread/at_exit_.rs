@@ -7,7 +7,7 @@ use base::{error};
 use core::{ptr, mem};
 use {rt};
 use rt::{AtExit};
-use lock::{StMutexGuard};
+use lock::{SingleThreadMutexGuard};
 use alloc::{Allocator, Bda};
 
 pub fn at_exit<F>(f: F) -> Result
@@ -68,7 +68,7 @@ pub fn at_exit<F>(f: F) -> Result
 #[repr(C)]
 struct Entry {
     size: usize,
-    invoke: unsafe extern fn(StMutexGuard<AtExit>, *mut u8),
+    invoke: unsafe extern fn(SingleThreadMutexGuard<AtExit>, *mut u8),
     data: u8,
 }
 
@@ -95,7 +95,7 @@ pub unsafe fn run() {
 }
 
 /// Reads the closure onto its stack, drops the guard, and invokes the closure.
-unsafe extern fn invoke<F>(guard: StMutexGuard<AtExit>, f: *mut u8)
+unsafe extern fn invoke<F>(guard: SingleThreadMutexGuard<AtExit>, f: *mut u8)
     where F: FnOnce() + 'static,
 {
     let f = ptr::read(f as *mut F);
