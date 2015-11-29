@@ -378,13 +378,13 @@ impl<T, H> Drop for Vec<T, H>
     where H: Allocator,
 {
     fn drop(&mut self) {
-        unsafe {
-            if mem::needs_drop::<T>() {
-                for i in 0..self.len {
-                    ptr::drop(self.ptr.add(i));
-                }
+        if mem::needs_drop::<T>() {
+            for i in 0..self.len {
+                unsafe { ptr::drop(self.ptr.add(i)); }
             }
-            if *self.ptr != empty_ptr() {
+        }
+        if *self.ptr != empty_ptr() {
+            unsafe {
                 H::free_array(&mut self.pool, *self.ptr, self.cap);
             }
         }
@@ -596,16 +596,14 @@ impl<'a, T> Iterator for Drainer<'a, T> {
     type Item = T;
     fn next(&mut self) -> Option<T> {
         if self.cur != self.end {
-            unsafe {
-                if mem::size_of::<T>() != 0 {
-                    let t = ptr::read(self.cur);
+            if mem::size_of::<T>() != 0 {
+                unsafe {
                     self.cur = self.cur.add(1);
-                    Some(t)
-                } else {
-                    let t = mem::unsafe_zeroed();
-                    self.cur = (self.cur as usize + 1) as *const _;
-                    Some(t)
+                    Some(ptr::read(self.cur.sub(1)))
                 }
+            } else {
+                self.cur = (self.cur as usize + 1) as *const _;
+                unsafe { Some(mem::unsafe_zeroed()) }
             }
         } else {
             None
@@ -616,16 +614,16 @@ impl<'a, T> Iterator for Drainer<'a, T> {
 impl<'a, T> Drop for Drainer<'a, T> {
     fn drop(&mut self) {
         if mem::needs_drop::<T>() {
-            unsafe {
-                if mem::size_of::<T>() != 0 {
-                    while self.cur != self.end {
+            if mem::size_of::<T>() != 0 {
+                while self.cur != self.end {
+                    unsafe {
                         ptr::drop(self.cur as *mut T);
                         self.cur = self.cur.add(1);
                     }
-                } else {
-                    for _ in 0..(self.end as usize - self.cur as usize) {
-                        drop(mem::unsafe_zeroed::<T>());
-                    }
+                }
+            } else {
+                for _ in 0..(self.end as usize - self.cur as usize) {
+                    unsafe { drop(mem::unsafe_zeroed::<T>()); }
                 }
             }
         }

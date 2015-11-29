@@ -73,9 +73,11 @@ extern crate lrs_user_group;
 extern crate lrs_vec;
 extern crate lrs_clone;
 extern crate lrs_c_ptr_ptr;
+extern crate lrs_tree;
 
 pub mod atomic;
 pub mod alloc;
+pub mod tree;
 pub mod bool;
 pub mod dir;
 pub mod env;

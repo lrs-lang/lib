@@ -14,8 +14,33 @@ use cell::{Cell};
 /// This can be used to protect critical sections from signal handlers. It cannot be
 /// used for inter-thread synchronization.
 pub struct SingleThreadLock {
-    locked1: Cell<bool>,
-    locked2: Cell<bool>,
+    /// Used to check if we are in a signal handler that is interrupting the critical
+    /// section.
+    down_lock: Cell<bool>,
+
+    /// Used to check if we have been interrupted by a signal handler which entered the
+    /// critical section and never left it, e.g., it forgot the guard or put it into a
+    /// global. Consider the following event:
+    ///
+    ///     Bad event:
+    ///         1: a signal arrives
+    ///         2: the signal handler tries to lock
+    ///         3: the signal handler forgets the lock guard
+    ///
+    /// And let's see how it fits into our locking process
+    ///
+    ///     a: we load down_lock into `var`
+    ///     b: we store true in down_lock
+    ///     c: we check if `var` or up_lock are true
+    ///
+    /// * If the bad event happens before `a`, then `var` is true and our locking fails.
+    /// * If the bad event happens before `b`, then `up_lock` is true and our locking
+    ///   fails.
+    /// * If the bad event happens after `b`, then step 2 of the bad event fails and they
+    ///   can't acquire the lock.
+    ///
+    /// Hence, with this double-locking trick, there is only ever one lock guard.
+    up_lock: Cell<bool>,
 }
 
 /// = Remarks
@@ -35,14 +60,14 @@ impl SingleThreadLock {
     /// Creates a new, unlocked, lock.
     pub const fn new() -> SingleThreadLock {
         SingleThreadLock {
-            locked1: Cell::new(false),
-            locked2: Cell::new(false),
+            down_lock: Cell::new(false),
+            up_lock: Cell::new(false),
         }
     }
 
     /// Returns whether the lock is locked.
     pub fn locked(&self) -> bool {
-        self.locked1.get()
+        self.down_lock.get()
     }
 
     /// Locks the lock.
@@ -63,15 +88,15 @@ impl SingleThreadLock {
     /// Returns a guard that will unlock the lock or `None` if the lock is already
     /// locked.
     pub fn try_lock<'a>(&'a self) -> Option<SingleThreadLockGuard<'a>> {
-        let locked = self.locked1.get();
-        self.locked1.set(true);
+        let locked = self.down_lock.get();
+        self.down_lock.set(true);
 
         atomic::single_thread_fence_acquire_release();
 
-        if locked | self.locked2.get() {
+        if locked | self.up_lock.get() {
             None
         } else {
-            self.locked2.set(true);
+            self.up_lock.set(true);
             Some(SingleThreadLockGuard {
                 lock: &self
             })
@@ -102,8 +127,8 @@ impl<'a> SingleThreadLockGuard<'a> {
 
 impl<'a> Drop for SingleThreadLockGuard<'a> {
     fn drop(&mut self) {
-        self.lock.locked2.set(false);
+        self.lock.up_lock.set(false);
         atomic::single_thread_fence_release();
-        self.lock.locked1.set(false);
+        self.lock.down_lock.set(false);
     }
 }

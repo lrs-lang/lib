@@ -15,6 +15,7 @@ obj io         core base arch_fns
 obj fmt        core base io
 
 obj cell       core base
+obj tree       core base cell fmt
 obj str_one    core cty_base base arch_fns fmt parse
 obj getopt     core base str_one
 
