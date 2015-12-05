@@ -66,8 +66,10 @@
 //! ----
 
 pub use lrs_time_base::{Time};
-pub use lrs_time_base::timer::{Timer};
-pub use lrs_time_base::clock::{Clock};
-pub use lrs_time_base::clock::{REAL, MONO, PROCESS, THREAD, MONO_RAW, REAL_COARSE,
-                                 MONO_COARSE, BOOT};
 pub use lrs_time_ext::{DateTime, Weekday, Zone};
+
+#[cfg(not(freestanding))] pub use lrs_time_base::timer::{Timer};
+#[cfg(not(freestanding))] pub use lrs_time_base::clock::{Clock};
+#[cfg(not(freestanding))]
+pub use lrs_time_base::clock::{REAL, MONO, PROCESS, THREAD, MONO_RAW, REAL_COARSE,
+                               MONO_COARSE, BOOT};

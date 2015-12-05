@@ -11,10 +11,10 @@
 
 extern crate lrs_base as base;
 extern crate lrs_cty as cty;
-extern crate lrs_syscall as syscall;
 extern crate lrs_fmt as fmt;
-extern crate lrs_fd as fd;
 extern crate lrs_rv as rv;
+#[cfg(not(freestanding))] extern crate lrs_fd as fd;
+#[cfg(not(freestanding))] extern crate lrs_syscall as syscall;
 
 use base::prelude::*;
 mod std { pub use fmt::std::*; pub use {cty}; }
@@ -24,8 +24,8 @@ use core::cmp::{Ord};
 use cty::{timespec, time_t, k_long};
 use fmt::{Debug, Write};
 
-pub mod clock;
-pub mod timer;
+#[cfg(not(freestanding))] pub mod clock;
+#[cfg(not(freestanding))] pub mod timer;
 
 pub fn time_from_timespec(t: timespec) -> Time {
     Time {

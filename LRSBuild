@@ -1,79 +1,124 @@
-obj core
-obj cfg        core
-obj libc       core
-obj int        core
-obj saturating core
-obj wrapping   core
-obj cty_base   core
-obj arch_fns   core libc cty_base
-obj base       core cty_base wrapping
+std:
+let
+    obj = name: deps: {
+        crate_name = "lrs_" ++ name,
+        path = "src/\{name}/lib.rs",
+        inherit name deps,
+    };
 
-obj hash       core base wrapping
-obj rv         core base int
-obj parse      core base
-obj io         core base arch_fns
-obj fmt        core base io
+    cfg = c: std.contains std.cfgs c;
 
-obj cell       core base
-obj tree       core base cell fmt
-obj str_one    core cty_base base arch_fns fmt parse
-obj getopt     core base str_one
+    freestanding = cfg "freestanding";
+    no_libc = cfg "no_libc" || freestanding;
 
-obj atomic     core base cell
-obj cty        core base cty_base
-obj r_syscall  core cty
-obj syscall    core saturating base str_one cty r_syscall atomic
+    hobj = name: deps: if freestanding then null else obj name deps;
+    cobj = name: deps: if no_libc then null else obj name deps;
 
-obj kernel     core base atomic cty syscall parse arch_fns
-obj lock       core base cell io fmt atomic syscall cty
-obj rt         core libc base str_one libc r_syscall syscall cty atomic lock
+    hdep = deps: if freestanding then [] else deps;
+    cdep = deps: if no_libc then [] else deps;
 
-obj clone      core libc base cty syscall fmt r_syscall
-obj fd         core base rv io cty syscall fmt
-obj mem        core base cty fmt syscall fd
+    objs = rec {
+        core = obj "core" [],
+        cfg = obj "cfg" [core],
+        libc = cobj "libc" [core],
+        int = obj "int" [core],
+        saturating = obj "saturating" [core],
+        wrapping = obj "wrapping" [core],
+        cty_base = obj "cty_base" [core],
+        arch_fns = obj "arch_fns" ([core, cty_base] ++ cdep [libc]),
+        base = obj "base" [core, cty_base, wrapping],
+        hash = obj "hash" [core, base, wrapping],
+        rv = obj "rv" [core, base, int],
+        parse = obj "parse" [core, base],
+        io = obj "io" [core, base, arch_fns],
+        fmt = obj "fmt" [core, base, io],
+        cell = obj "cell" [core, base],
+        tree = obj "tree" [core, base, cell, fmt],
+        str_one = obj "str_one" [core, cty_base, base, arch_fns, fmt, parse],
+        getopt = obj "getopt" [core, base, str_one],
+        atomic = obj "atomic" [core, base, cell],
+        cty = obj "cty" [core, base, cty_base],
+        r_syscall = hobj "r_syscall" [core, cty],
+        syscall = hobj "syscall" [core, saturating, base, str_one, cty, r_syscall,
+                                  atomic],
+        kernel = hobj "kernel" [core, base, atomic, cty, syscall, parse, arch_fns],
+        lock = obj "lock" ([core, base, cell, io, fmt, atomic, cty] ++ hdep [syscall]),
+        rt = hobj "rt" ([core, base, str_one, libc, r_syscall, syscall, cty, atomic,
+                         lock] ++ cdep [libc]),
+        clone = hobj "clone" ([core, base, cty, syscall, fmt, r_syscall] ++ cdep [libc]),
+        fd = hobj "fd" [core, base, rv, io, cty, syscall, fmt],
+        mem = hobj "mem" [core, base, cty, fmt, syscall, fd],
+        time_base = obj "time_base" ([core, base, cty, fmt, rv] ++ hdep [syscall, fd]),
+        event = hobj "event" [core, base, cty, fmt, syscall, fd, io],
+        signal = hobj "signal" [core, base, cty, fmt, syscall, fd, rv, time_base],
+        pipe = hobj "pipe" [core, base, cty, fmt, syscall, fd, rv, io, saturating],
+        alloc = obj "alloc" ([core, base, cty] ++ cdep [libc] ++ hdep [syscall]),
+        queue = hobj "queue" [core, base, cell, arch_fns, atomic, lock, alloc],
+        box = obj "box" [core, base, alloc, fmt],
+        c_ptr_ptr = obj "c_ptr_ptr" [core, base, cty_base, str_one, alloc],
+        buf_reader = obj "buf_reader" [core, arch_fns, base, io, alloc, str_one],
+        rc = obj "rc" [core, base, fmt, cell, alloc, atomic],
+        vec = obj "vec" [core, base, str_one, io, fmt, alloc],
+        ringbuf = obj "ringbuf" [core, base, fmt, alloc, wrapping],
+        hashmap = obj "hashmap" [core, base, alloc, hash, fmt],
+        iter = obj "iter" [core, base, vec],
+        str_two = obj "str_two" [core, arch_fns, base, str_one, fmt, vec, alloc],
+        rmo = obj "rmo" [core, base, fmt, str_one, vec, str_two, alloc],
+        str_three = obj "str_three" [core, arch_fns, base, str_one, str_two, rmo, alloc],
+        swap = hobj "swap" [core, base, cty, syscall, fmt, alloc, rmo, str_three],
+        inotify = hobj "inotify" [core, base, cty, fmt, syscall, fd, rv, io, str_one,
+                                  str_three, alloc, rmo],
+        env = hobj "env" [core, base, str_one, rt, syscall, alloc, str_two, str_three,
+                          cty, rmo],
+        fs = hobj "fs" [core, base, fmt, cty, syscall, rv, str_three, alloc, rmo],
+        socket = hobj "socket" [core, base, cty, arch_fns, str_one, fmt, syscall, rv, fd,
+                                io, saturating, time_base, alloc],
+        netlink = hobj "netlink" [core, base, cty, vec, alloc, fmt],
+        sys = hobj "sys" [core, base, fmt, cty, syscall, str_one, str_three, rv,
+                          time_base, rmo, alloc],
+        poll = hobj "poll" [core, base, cty, syscall, fd, rv, saturating, fmt, time_base],
+        dev = hobj "dev" [core, base, fmt, cty],
+        file = hobj "file" [core, base, io, cty, fmt, int, syscall, str_one, str_two,
+                            str_three, arch_fns, rv, parse, fd, dev, fs, time_base, vec,
+                            rmo],
+        mqueue = hobj "mqueue" [core, base, cty, fmt, syscall, fd, file, str_three, rmo,
+                                alloc, time_base, rv],
+        tty = hobj "tty" [core, base, syscall, cty, fd, file, signal, dev, fmt],
+        thread = hobj "thread" ([core, base, syscall, cty, lock, fmt, time_base, iter,
+                                 clone, fd, rt, mem, atomic, alloc, signal]
+                                  ++ cdep [libc]),
+        process = hobj "process" [core, base, syscall, cty, fmt, str_one, str_two,
+                                  str_three, c_ptr_ptr, alloc, rt, env, file, rmo, rv,
+                                  time_base],
+        time_ext = obj "time_ext" ([core, base, fmt, str_one, time_base, io, vec]
+                                        ++ hdep [file]),
+        dir = hobj "dir" [core, base, cty, str_one, str_two, str_three, syscall, fd, fmt,
+                          file, vec, rmo, alloc],
+        user_group = hobj "user_group" [core, base, arch_fns, io, buf_reader, fmt,
+                                        str_one, str_two, cty, parse, file, vec, rmo,
+                                        iter, alloc],
+    };
 
-obj time_base  core base cty syscall fmt fd rv
+    lrs = {
+        crate_name = "lrs",
+        path = "\d/src/lrs/lib.rs",
+        name = "lrs",
+        deps = std.filter (std.to_list objs) o: o != null,
+    };
 
-obj event      core base cty fmt syscall fd io
-obj signal     core base cty fmt syscall fd rv time_base
-obj pipe       core base cty fmt syscall fd rv io saturating
+    not_null = val: alt: if val != null then val else alt;
 
-obj alloc      core base cty syscall libc
-obj queue      core base cell arch_fns atomic lock alloc
-obj box        core base alloc fmt
+    target = if std.path ? 1 && std.path.0 == "src" && objs ? (std.path.1) then
+        not_null objs.(std.path.1) lrs
+    else
+        lrs;
 
-obj c_ptr_ptr  core base cty_base str_one alloc
-obj buf_reader core arch_fns base io alloc str_one
-obj rc         core base fmt cell alloc atomic
+    ccfg = c: cfg: if c then [cfg] else [];
 
-obj vec        core base str_one io fmt alloc
-obj ringbuf    core base fmt alloc wrapping
-obj hashmap    core base alloc hash fmt fd
-obj iter       core base vec
-
-obj str_two    core arch_fns base str_one fmt vec alloc
-obj rmo        core base fmt str_one vec str_two alloc
-obj str_three  core arch_fns base str_one str_two rmo alloc
-
-obj swap       core base cty syscall fmt alloc rmo str_three
-obj inotify    core base cty fmt syscall fd rv io str_one str_three alloc rmo
-obj env        core base str_one rt syscall alloc str_two str_three cty rmo
-
-obj fs         core base fmt cty syscall rv str_three alloc rmo
-obj socket     core base cty arch_fns str_one fmt syscall rv fd io saturating time_base alloc
-obj netlink    core base cty vec alloc fmt
-
-obj sys        core base fmt cty syscall str_one str_three rv time_base rmo alloc
-obj poll       core base cty syscall fd rv saturating fmt time_base
-
-obj dev        core base fmt cty
-obj file       core base io cty fmt int syscall str_one str_two str_three arch_fns rv parse fd dev fs time_base vec rmo
-
-obj mqueue     core base cty fmt syscall fd file str_three rmo alloc time_base rv
-obj tty        core base syscall cty fd file signal dev fmt
-obj thread     core base syscall cty libc lock fmt time_base iter clone fd rt mem atomic alloc signal
-obj process    core base syscall cty fmt str_one str_two str_three c_ptr_ptr alloc rt env file rmo rv time_base
-obj time_ext   core base fmt str_one file time_base io vec
-
-obj dir        core base cty str_one str_two str_three syscall fd fmt file vec rmo alloc
-obj user_group core base arch_fns io buf_reader fmt str_one str_two cty parse file vec rmo iter alloc
+in
+    {
+        cfgs = ccfg no_libc "no_libc" ++
+               ccfg freestanding "freestanding" ++
+               std.cfgs,
+        inherit target,
+    }

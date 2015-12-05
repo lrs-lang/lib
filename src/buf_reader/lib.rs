@@ -132,7 +132,7 @@ impl<R, H> BufReader<R, H>
         let start = self.start % self.cap;
         let end = self.end % self.cap;
         let slices: [&[u8]; 2] = unsafe {
-            if start <= end {
+            if start <= end && self.end.wrapping_sub(self.start) != self.cap {
                 [slice::from_ptr(self.data.add(start), end - start),
                  &[][..]]
             } else {

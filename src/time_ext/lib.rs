@@ -8,13 +8,13 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-extern crate lrs_base      as base;
-extern crate lrs_fmt       as fmt;
-extern crate lrs_str_one   as str_one;
-extern crate lrs_file      as file;
+extern crate lrs_base as base;
+extern crate lrs_fmt as fmt;
+extern crate lrs_str_one as str_one;
 extern crate lrs_time_base as time_base;
-extern crate lrs_io        as io;
-extern crate lrs_vec       as vec;
+extern crate lrs_io as io;
+extern crate lrs_vec as vec;
+#[cfg(not(freestanding))] extern crate lrs_file as file;
 
 use base::prelude::*;
 mod std { pub use vec::std::*; }
@@ -23,9 +23,10 @@ pub use time_base::{Time};
 
 use fmt::{Debug, Write};
 use vec::{Vec};
-use str_one::{AsNoNullStr};
-use file::{File};
-use io::{BufWrite};
+
+#[cfg(not(freestanding))] use str_one::{AsNoNullStr};
+#[cfg(not(freestanding))] use io::{BufWrite};
+#[cfg(not(freestanding))] use file::{File};
 
 mod parse;
 mod convert;
@@ -97,12 +98,20 @@ pub struct Zone {
 }
 
 impl Zone {
+    #[cfg(not(freestanding))]
     fn load_from(zone: &[u8]) -> Result<Zone> {
         let mut file = try!(File::open_read(&zone));
         let mut data: Vec<u8> = Vec::new();
         try!(data.read_to_eof(&mut file));
-        let mut input = &data[..];
-        parse::parse(&mut input)
+        Zone::load_bytes(&data)
+    }
+
+    /// Parses a time zone from memory.
+    ///
+    /// [argument, zone]
+    /// The zone to parse.
+    pub fn load_bytes(mut zone: &[u8]) -> Result<Zone> {
+        parse::parse(&mut zone)
     }
 
     /// Loads a time zone from a well known name.
@@ -114,6 +123,7 @@ impl Zone {
     ///
     /// For example: "Europe/Berlin", "Asia/Tokyo". The full list of name can be found on
     /// wikipedia.
+    #[cfg(not(freestanding))]
     pub fn load<S>(zone: S) -> Result<Zone>
         where S: AsNoNullStr,
     {
@@ -127,11 +137,13 @@ impl Zone {
     }
 
     /// Loads the UTC time zone.
+    #[cfg(not(freestanding))]
     pub fn utc() -> Result<Zone> {
         Zone::load_from(b"/usr/share/zoneinfo/UTC\0")
     }
 
     /// Loads the local time zone.
+    #[cfg(not(freestanding))]
     pub fn local() -> Result<Zone> {
         Zone::load_from(b"/etc/localtime\0")
     }

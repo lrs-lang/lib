@@ -11,11 +11,15 @@ pub use lrs_core::mem::{
     as_mut_slice, unsafe_zeroed,
 };
 
+#[cfg(not(freestanding))]
 pub use lrs_mem::{
     advise, protect, lock, unlock, lock_all, unlock_all, Availability, availability,
 };
+
+#[cfg(not(freestanding))]
 pub use lrs_mem::flags::{MemLockFlags};
 
+#[cfg(not(freestanding))]
 pub mod advice {
     pub use lrs_mem::adv::{
         Normal, Random, Sequential, WillNeed, DontNeed, Remove, DontFork, DoFork,
@@ -24,6 +28,7 @@ pub mod advice {
     };
 }
 
+#[cfg(not(freestanding))]
 pub mod flags {
     pub use lrs_mem::flags::{
         MLOCK_CURRENT, MLOCK_FUTURE,

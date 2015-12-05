@@ -12,7 +12,6 @@ extern crate lrs_base as base;
 extern crate lrs_alloc as alloc;
 extern crate lrs_hash as hash;
 extern crate lrs_fmt as fmt;
-extern crate lrs_fd as fd;
 
 use base::prelude::*;
 use core::ops::{Eq};
@@ -27,7 +26,7 @@ use table::{GenericMap};
 
 pub use table::{Entry, VacantEntry, OccupiedEntry};
 
-mod std { pub use fmt::std::*; pub use fd; }
+mod std { pub use fmt::std::*; }
 
 mod bucket;
 mod table;

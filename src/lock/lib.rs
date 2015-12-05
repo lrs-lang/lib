@@ -14,22 +14,23 @@ extern crate lrs_fmt as fmt;
 extern crate lrs_cell as cell;
 extern crate lrs_atomic as atomic;
 extern crate lrs_cty as cty;
-extern crate lrs_syscall as syscall;
 
-pub use raw_condvar::{RawCondvar, RAW_CONDVAR_INIT};
-pub use condvar::{Condvar, CONDVAR_INIT};
-pub use lock::{Lock, LockGuard, LOCK_INIT, DUMMY, LockStatus};
-pub use mutex::{Mutex, MutexGuard};
+#[cfg(not(freestanding))]extern crate lrs_syscall as syscall;
+
+#[cfg(not(freestanding))] pub use raw_condvar::{RawCondvar, RAW_CONDVAR_INIT};
+#[cfg(not(freestanding))] pub use condvar::{Condvar, CONDVAR_INIT};
+#[cfg(not(freestanding))] pub use lock::{Lock, LockGuard, LOCK_INIT, DUMMY, LockStatus};
+#[cfg(not(freestanding))] pub use mutex::{Mutex, MutexGuard};
+#[cfg(not(freestanding))] pub use once::{Once, OnceStatus};
 pub use stlock::{SingleThreadLock, SingleThreadLockGuard};
 pub use stmutex::{SingleThreadMutex, SingleThreadMutexGuard};
-pub use once::{Once, OnceStatus};
 
 mod std { pub use fmt::std::*; }
 
-mod raw_condvar;
-mod condvar;
-mod lock;
-mod mutex;
+#[cfg(not(freestanding))] mod raw_condvar;
+#[cfg(not(freestanding))] mod condvar;
+#[cfg(not(freestanding))] mod lock;
+#[cfg(not(freestanding))] mod mutex;
+#[cfg(not(freestanding))] mod once;
 mod stlock;
 mod stmutex;
-mod once;

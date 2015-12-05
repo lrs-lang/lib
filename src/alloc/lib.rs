@@ -10,30 +10,30 @@
 
 extern crate lrs_base as base;
 extern crate lrs_cty as cty;
-extern crate lrs_syscall as syscall;
-extern crate lrs_libc;
+#[cfg(not(freestanding))] extern crate lrs_syscall as syscall;
+#[cfg(not(no_libc))] extern crate lrs_libc;
 
 use base::prelude::*;
 use core::marker::{Leak};
 use core::{mem};
 use base::{error};
 
-#[cfg(not(no_libc))] pub use libc::{Libc};
 pub use no::{NoMem};
 pub use ta::{TaAlloc, TaPool};
-pub use bda::{Bda};
 pub use align::{AlignAlloc};
+#[cfg(not(no_libc))] pub use libc::{Libc};
+#[cfg(not(freestanding))] pub use bda::{Bda};
 
 #[cfg(jemalloc)]
 pub use jemalloc::{JeMalloc};
 
 mod std { pub use base::std::*; }
 
-#[cfg(not(no_libc))] mod libc;
 mod no;
-mod bda;
 mod align;
 mod ta;
+#[cfg(not(no_libc))] mod libc;
+#[cfg(not(freestanding))] mod bda;
 
 #[cfg(jemalloc)]
 mod jemalloc;
@@ -42,7 +42,10 @@ mod jemalloc;
 #[cfg(not(no_libc))] pub type Heap = Libc;
 
 /// The default allocator
-#[cfg(no_libc)] pub type Heap = Bda;
+#[cfg(all(no_libc, not(freestanding)))] pub type Heap = Bda;
+
+/// The default allocator
+#[cfg(all(no_libc, freestanding))] pub type Heap = NoMem<'static>;
 
 pub type FbHeap = Heap;
 

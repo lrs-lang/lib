@@ -4,11 +4,10 @@
 
 #![crate_name = "lrs_arch_fns"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, asm, lang_items, prelude_import)]
-#![plugin(lrs_core_plugin)]
+#![feature(no_std, asm, lang_items)]
 #![no_std]
 
-extern crate lrs_libc as libc;
+#[cfg(not(no_libc))] extern crate lrs_libc as libc;
 extern crate lrs_cty_base as cty_base;
 
 #[cfg(not(no_libc))] #[path = "libc.rs"] mod imp;
