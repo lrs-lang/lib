@@ -75,6 +75,22 @@ impl<T> Option<T> {
         }
     }
 
+    /// Unwraps the value or returns another one.
+    ///
+    /// [argument, f]
+    /// The function that will be evaluated if the value is not present.
+    ///
+    /// [return_value]
+    /// Returns the contained value or `f()` if the value is not present.
+    pub fn unwrap_or_else<F>(self, f: F) -> T
+        where F: FnOnce() -> T,
+    {
+        match self {
+            Some(v) => v,
+            _ => f(),
+        }
+    }
+
     /// Applies a function to the value (if any) and returns the result.
     ///
     /// [argument, f]

@@ -304,6 +304,17 @@ impl<T> [T] {
     pub unsafe fn unchecked_mut_slice_to(&mut self, to: usize) -> &mut [T] {
         self.unchecked_mut_slice(0, to)
     }
+
+    /// Reverses the elements in the slice.
+    pub fn reverse(&mut self) {
+        let len = self.len();
+        unsafe {
+            for i in 0..len/2 {
+                mem::swap(&mut *self.as_mut_ptr().add(i),
+                          &mut *self.as_mut_ptr().add(len - i - 1));
+            }
+        }
+    }
 }
 
 impl<T: PartialOrd> PartialOrd for [T] {

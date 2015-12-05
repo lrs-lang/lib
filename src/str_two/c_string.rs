@@ -32,6 +32,11 @@ impl<H> CString<H>
     pub unsafe fn from_bytes_unchecked(bytes: Vec<u8, H>) -> CString<H> {
         CString { data: bytes }
     }
+
+    /// Unwraps the vector contained in the string.
+    pub fn unwrap(self) -> Vec<u8, H> {
+        self.data
+    }
 }
 
 unsafe impl<H> UndefState for CString<H>

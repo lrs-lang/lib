@@ -3,6 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use ops::{Eq};
+use marker::{Pod};
 
 macro_rules! array_impl {
     ($($size:expr)+) => {
@@ -17,6 +18,8 @@ macro_rules! array_impl {
                     true
                 }
             }
+
+            impl<T: Pod> Pod for [T; $size] { }
         )+
     }
 }

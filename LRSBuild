@@ -24,8 +24,8 @@ obj cty        core base cty_base
 obj r_syscall  core cty
 obj syscall    core saturating base str_one cty r_syscall atomic
 
-obj lock       core base cell io fmt atomic syscall cty
 obj kernel     core base atomic cty syscall parse arch_fns
+obj lock       core base cell io fmt atomic syscall cty
 obj rt         core libc base str_one libc r_syscall syscall cty atomic lock
 
 obj clone      core libc base cty syscall fmt r_syscall
@@ -48,7 +48,7 @@ obj rc         core base fmt cell alloc atomic
 
 obj vec        core base str_one io fmt alloc
 obj ringbuf    core base fmt alloc wrapping
-obj hashmap    core base alloc hash fmt
+obj hashmap    core base alloc hash fmt fd
 obj iter       core base vec
 
 obj str_two    core arch_fns base str_one fmt vec alloc

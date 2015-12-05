@@ -40,6 +40,7 @@ pub trait Iterator {
         }
         None
     }
+
     /// Yields the first value that satisfies a predicate.
     ///
     /// [argument, pred]
@@ -57,6 +58,24 @@ pub trait Iterator {
             }
         }
         None
+    }
+
+    /// Returns whether any element in the iterator satisfies a predicate.
+    ///
+    /// [argument, pred]
+    /// The predicate which returns `true` iff it is satisfied by a value.
+    ///
+    /// [return_value]
+    /// Whether any element satisfies the predicate.
+    ///
+    /// = Remarks
+    ///
+    /// The values before and including the first element that satisfies the predicate
+    /// are lost.
+    fn any<P>(&mut self, pred: P) -> bool
+        where P: FnMut(&mut Self::Item) -> bool,
+    {
+        self.find(pred).is_some()
     }
 }
 

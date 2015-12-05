@@ -4,12 +4,13 @@
 
 use base::prelude::*;
 use arch_fns::{memchr};
+use base::clone::{MaybeClone};
 use base::undef::{UndefState};
 use base::default::{Default};
 use core::{mem};
-use str_one::{NoNullStr, AsNoNullStr, AsMutNoNullStr, AsMutCStr, CStr};
+use str_one::{NoNullStr, AsNoNullStr, AsMutNoNullStr, AsMutCStr, CStr, ToCStr};
 use vec::{Vec};
-use fmt::{Debug, Write};
+use fmt::{Debug, Display, Write};
 use alloc::{self, Allocator};
 
 /// An owned byte slice with no null bytes.
@@ -148,6 +149,11 @@ impl<H> NoNullString<H>
         try!(self.data.reserve(bytes.len()));
         self.data.push_all(bytes)
     }
+
+    /// Unwraps the vector contained in the string.
+    pub fn unwrap(self) -> Vec<u8, H> {
+        self.data
+    }
 }
 
 impl<H> Deref for NoNullString<H>
@@ -226,7 +232,16 @@ impl<H> Debug for NoNullString<H>
 {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
         let nns: &NoNullStr = self.as_ref();
-        nns.fmt(w)
+        Debug::fmt(nns, w)
+    }
+}
+
+impl<H> Display for NoNullString<H>
+    where H: Allocator,
+{
+    fn fmt<W: Write>(&self, w: &mut W) -> Result {
+        let nns: &NoNullStr = self.as_ref();
+        Display::fmt(nns, w)
     }
 }
 
@@ -244,5 +259,23 @@ impl<H> AsMutCStr for NoNullString<H>
         };
         unsafe { self.data.set_len(cstr.len()); }
         Ok(cstr)
+    }
+}
+
+impl<H> ToCStr for NoNullString<H>
+    where H: Allocator,
+{
+    fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
+        let nns: &NoNullStr = self.as_ref();
+        ToCStr::to_cstr(nns, buf)
+    }
+}
+
+impl<H> MaybeClone for NoNullString<H>
+    where H: Allocator,
+          H::Pool: Default,
+{
+    fn maybe_clone(&self) -> Result<NoNullString<H>> {
+        self.data.maybe_clone().map(|o| NoNullString { data: o })
     }
 }

@@ -75,6 +75,34 @@ impl NoNullStr {
         unsafe { &mut *(self.dir() as *const _ as *mut _) }
     }
 
+    /// Splits the string into its directory and file components.
+    pub fn split(&self) -> (&NoNullStr, &NoNullStr) {
+        let bytes = &self.data;
+        let (l, r) = match memrchr(bytes, b'/') {
+            Some(idx) => (&bytes[..idx], &bytes[idx+1..]),
+            _ => (&[][..], bytes),
+        };
+        unsafe {
+            (NoNullStr::from_bytes_unchecked(l), NoNullStr::from_bytes_unchecked(r))
+        }
+    }
+
+    /// Splits the string into its directory and file components.
+    pub fn split_mut(&mut self) -> (&mut NoNullStr, &mut NoNullStr) {
+        let bytes = &mut self.data;
+        let (l, r) = match memrchr(bytes, b'/') {
+            Some(idx) => {
+                let (l, r) = bytes.split_at_mut(idx);
+                (l, &mut r[1..])
+            },
+            _ => (&mut [][..], bytes),
+        };
+        unsafe {
+            (NoNullStr::from_mut_bytes_unchecked(l),
+             NoNullStr::from_mut_bytes_unchecked(r))
+        }
+    }
+
     /// Casts a byte slice to a `NoNullStr` without checking it for validity.
     ///
     /// [argument, bytes]

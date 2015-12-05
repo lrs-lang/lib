@@ -56,7 +56,27 @@ impl Read for FdIo {
     }
 }
 
+impl<'a> Read for &'a FdIo {
+    fn scatter_read(&mut self, bufs: &mut [&mut [u8]]) -> Result<usize> {
+        retry(|| readv(self.borrow(), bufs)).map(|r| r as usize)
+    }
+
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+        retry(|| read(self.borrow(), buf)).map(|r| r as usize)
+    }
+}
+
 impl Write for FdIo {
+    fn gather_write(&mut self, bufs: &[&[u8]]) -> Result<usize> {
+        retry(|| writev(self.borrow(), bufs)).map(|r| r as usize)
+    }
+
+    fn write(&mut self, buf: &[u8]) -> Result<usize> {
+        retry(|| write(self.borrow(), buf)).map(|r| r as usize)
+    }
+}
+
+impl<'a> Write for &'a FdIo {
     fn gather_write(&mut self, bufs: &[&[u8]]) -> Result<usize> {
         retry(|| writev(self.borrow(), bufs)).map(|r| r as usize)
     }

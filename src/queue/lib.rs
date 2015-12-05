@@ -242,7 +242,12 @@ impl<T, H> Queue<T, H>
 
     fn get_mem(&self, pos: usize) -> T {
         unsafe {
-            ptr::read(ptr::read(self.buf.add(pos & self.cap_mask)).ptr())
+            // old code left here as a warning to future generations
+            //
+            // ptr::read(ptr::read(self.buf.add(pos & self.cap_mask)).ptr())
+            //
+            // wew, lad
+            ptr::read(self.buf.add(pos & self.cap_mask)).unwrap()
         }
     }
 

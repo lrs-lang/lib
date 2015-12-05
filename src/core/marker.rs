@@ -22,6 +22,7 @@ impl Sized for .. { }
 /// That is, types without invariants. For example, immutable slices are not `Pod` for the
 /// same reason `slice::from_ptr` is not safe. Note that only structs and primitives can
 /// be `Pod`.
+#[fundamental]
 pub trait Pod : Copy { }
 
 /// Objects that can safely be copied via `memcpy`.
@@ -31,6 +32,7 @@ pub trait Pod : Copy { }
 /// That is, objects which you can copy and use both the copy and the original. For
 /// example, immutable slices are `Copy`. This is a weaker form of `Pod`.
 #[lang = "copy"]
+#[fundamental]
 pub trait Copy { }
 
 /// Objects that allow immutable access from threads other than their owning thread.

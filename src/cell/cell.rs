@@ -52,6 +52,11 @@ impl<T> Cell<T> {
     pub fn ptr(&self) -> *mut T {
         &self.data as *const T as *mut T
     }
+
+    /// Unwraps the contained data.
+    pub fn unwrap(self) -> T {
+        self.data
+    }
 }
 
 impl<T: Copy> Cell<T> {

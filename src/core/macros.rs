@@ -40,6 +40,16 @@ macro_rules! try {
     ($val:expr) => { $val.unwrap() }
 }
 
+#[macro_export]
+macro_rules! writeln {
+    ($w:expr, $fmt:expr) => {
+        write!($w, concat!($fmt, "\n"))
+    };
+    ($w:expr, $fmt:expr, $($arg:tt)*) => {
+        write!($w, concat!($fmt, "\n"), $($arg)*)
+    };
+}
+
 /// Prints a value to stdout.
 ///
 /// Note that stdout always refers to the file descriptor `1`.
