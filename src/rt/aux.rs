@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use cty::{c_int, ElfPhdr, AUX_CNT, AT_PHDR, AT_EXECFD, AT_PHNUM, AT_PAGESZ};
+use cty::{c_int, ElfPhdr, AUX_CNT, AT_PHDR, AT_EXECFD, AT_PHNUM, AT_PAGESZ, PAGE_SIZE};
 use core::{slice};
 
 static mut AUXV: [usize; AUX_CNT] = [0; AUX_CNT];
@@ -57,9 +57,9 @@ pub fn program_header_table() -> Option<&'static [ElfPhdr]> {
 ///
 /// [return_value]
 /// Said size.
-pub fn page_size() -> Option<usize> {
+pub fn page_size() -> usize {
     match unsafe { AUXV[AT_PAGESZ] } {
-        0 => None,
-        n => Some(n),
+        0 => PAGE_SIZE,
+        n => n,
     }
 }

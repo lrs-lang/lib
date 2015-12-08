@@ -71,12 +71,12 @@ impl StrInfo {
     /// Retrieves information from the system and stores it in the object.
     pub fn update(&mut self) -> Result {
         try!(rv!(uname(&mut self.buf)));
-        self.sysname_len    = self.buf.sysname.as_cstr().unwrap().len()    as u8;
-        self.nodename_len   = self.buf.nodename.as_cstr().unwrap().len()   as u8;
-        self.release_len    = self.buf.release.as_cstr().unwrap().len()    as u8;
-        self.version_len    = self.buf.version.as_cstr().unwrap().len()    as u8;
-        self.machine_len    = self.buf.machine.as_cstr().unwrap().len()    as u8;
-        self.domainname_len = self.buf.domainname.as_cstr().unwrap().len() as u8;
+        self.sysname_len    = try!(self.buf.sysname.as_cstr()).len()    as u8;
+        self.nodename_len   = try!(self.buf.nodename.as_cstr()).len()   as u8;
+        self.release_len    = try!(self.buf.release.as_cstr()).len()    as u8;
+        self.version_len    = try!(self.buf.version.as_cstr()).len()    as u8;
+        self.machine_len    = try!(self.buf.machine.as_cstr()).len()    as u8;
+        self.domainname_len = try!(self.buf.domainname.as_cstr()).len() as u8;
         Ok(())
     }
 
@@ -291,7 +291,7 @@ pub fn enable_accounting<P>(path: P) -> Result
 ///
 /// [argument, name]
 /// The new hostname.
-pub fn set_host_name<P>(name: P) -> Result
+pub fn set_host_name<P: ?Sized>(name: &P) -> Result
     where P: AsRef<[u8]>,
 {
     rv!(sethostname(name.as_ref()))
@@ -301,7 +301,7 @@ pub fn set_host_name<P>(name: P) -> Result
 ///
 /// [argument, name]
 /// The new domain name.
-pub fn set_domain_name<P>(name: P) -> Result
+pub fn set_domain_name<P: ?Sized>(name: &P) -> Result
     where P: AsRef<[u8]>,
 {
     rv!(setdomainname(name.as_ref()))

@@ -174,7 +174,7 @@ impl<R, H> Read for BufReader<R, H>
                 return Ok(0);
             }
         }
-        let res = buf.gather_write(&self.read_slices().1).unwrap();
+        let res = try!(buf.gather_write(&self.read_slices().1));
         self.start = self.start.wrapping_add(res);
         Ok(res)
     }
@@ -187,7 +187,7 @@ impl<R, H> Read for BufReader<R, H>
         }
         let mut sum = 0;
         while self.available() > 0 && buf.len() > 0 {
-            sum += self.read(&mut buf[0]).unwrap();
+            sum += try!(self.read(&mut buf[0]));
             let b = buf;
             buf = &mut b[1..];
         }

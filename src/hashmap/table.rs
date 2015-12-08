@@ -7,7 +7,7 @@ use core::{mem, ptr, slice};
 use core::ptr::{OwnedPtr};
 use core::ops::{Eq};
 use core::iter::{IntoIterator};
-use base::clone::{Clone};
+use base::clone::{Clone, MaybeClone};
 use base::default::{Default};
 use hash::{self, Hash};
 use alloc::{self};
@@ -42,6 +42,26 @@ pub struct GenericMap<Key, Value, Bucket, Hasher = hash::xx_hash::XxHash32, Seed
     _marker: PhantomData<(Key, Value, Hasher)>,
 }
 
+impl<Key, Value, Bucket, Hasher, Seed, Allocator>
+    MaybeClone for GenericMap<Key, Value, Bucket, Hasher, Seed, Allocator>
+    where Allocator: alloc::Allocator,
+          Allocator::Pool: Default,
+          Bucket: bucket::Bucket<Key, Value>,
+          Hasher: hash::Hasher,
+          Seed: Into<Hasher::Seed>+Clone,
+          Key: Eq + Hash + MaybeClone,
+          Value: MaybeClone,
+{
+    fn maybe_clone(&self) -> Result<Self> {
+        let mut new = try!(GenericMap::details(self.size(), self.seed.clone(),
+                                               Allocator::Pool::default()));
+        for (key, val) in self {
+            new.set(try!(key.maybe_clone()), try!(val.maybe_clone()));
+        }
+        Ok(new)
+    }
+}
+
 impl<Key, Value, Bucket, Hasher, Allocator>
     GenericMap<Key, Value, Bucket, Hasher, (), Allocator>
     where Allocator: alloc::Allocator,
@@ -55,6 +75,12 @@ impl<Key, Value, Bucket, Hasher, Allocator>
         where Allocator::Pool: Default,
     {
         Self::details(DEFAULT_CAPACITY, (), Allocator::Pool::default())
+    }
+
+    pub fn with_capacity(cap: usize) -> Result<Self>
+        where Allocator::Pool: Default,
+    {
+        Self::details(cap, (), Allocator::Pool::default())
     }
 }
 
@@ -183,6 +209,10 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator>
             bucket = self.bucket_idx(bucket + i);
             i += 1;
         }
+    }
+
+    pub fn size(&self) -> usize {
+        self.elements - self.deleted
     }
 
     /// Finds an entry in the table and returns a reference to it.

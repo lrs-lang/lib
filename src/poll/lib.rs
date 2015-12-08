@@ -28,7 +28,7 @@ use cty::{
     POLLIN, POLLOUT, POLLRDHUP, POLLPRI, EPOLLET, EPOLLONESHOT, EPOLLWAKEUP,
 };
 use syscall::{epoll_create, epoll_ctl, epoll_pwait, close};
-use fd::{FDContainer};
+use fd::{FdContainer};
 use rv::{retry};
 use saturating::{SaturatingCast};
 use fmt::{Debug, Write};
@@ -222,7 +222,7 @@ impl Epoll {
     ///
     /// [argument, flags]
     /// The flags to be set.
-    pub fn add<T: FDContainer>(&self, fd: &T, flags: PollFlags) -> Result {
+    pub fn add<T: FdContainer>(&self, fd: &T, flags: PollFlags) -> Result {
         let mut event = epoll_event { events: flags.0, data: fd.borrow() as u64 };
         rv!(epoll_ctl(self.fd, EPOLL_CTL_ADD, fd.borrow(), Some(&mut event)))
     }
@@ -234,7 +234,7 @@ impl Epoll {
     ///
     /// [argument, flags]
     /// The new flags.
-    pub fn modify<T: FDContainer>(&self, fd: &T, flags: PollFlags) -> Result {
+    pub fn modify<T: FdContainer>(&self, fd: &T, flags: PollFlags) -> Result {
         let mut event = epoll_event { events: flags.0, data: fd.borrow() as u64 };
         rv!(epoll_ctl(self.fd, EPOLL_CTL_MOD, fd.borrow(), Some(&mut event)))
     }
@@ -243,7 +243,7 @@ impl Epoll {
     ///
     /// [argument, fd]
     /// The file descriptor to remove.
-    pub fn remove<T: FDContainer>(&self, fd: &T) -> Result {
+    pub fn remove<T: FdContainer>(&self, fd: &T) -> Result {
         rv!(epoll_ctl(self.fd, EPOLL_CTL_DEL, fd.borrow(), None))
     }
 
@@ -303,13 +303,15 @@ impl Drop for Epoll {
     }
 }
 
-impl FDContainer for Epoll {
-    fn unwrap(self) -> c_int {
+impl Into<c_int> for Epoll {
+    fn into(self) -> c_int {
         let fd = self.fd;
         mem::forget(self);
         fd
     }
+}
 
+impl FdContainer for Epoll {
     fn is_owned(&self) -> bool {
         self.owned
     }

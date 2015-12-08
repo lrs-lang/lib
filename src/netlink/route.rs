@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use base::prelude::*;
-use core::{mem};
 use kind::{Kind};
 use cty::{
     RTM_NEWLINK, RTM_DELLINK, RTM_GETLINK,
@@ -51,12 +49,6 @@ pub struct IfInfoMsg {
     pub change: u32,
 }
 
-impl AsRef<[u8]> for IfInfoMsg {
-    fn as_ref(&self) -> &[u8] {
-        mem::as_bytes(self)
-    }
-}
-
 #[repr(C)]
 #[derive(Pod, Eq)]
 pub struct IfAddrMsg {
@@ -65,12 +57,6 @@ pub struct IfAddrMsg {
     pub flags:  u8,
     pub scope:  u8,
     pub index:  u32,
-}
-
-impl AsRef<[u8]> for IfAddrMsg {
-    fn as_ref(&self) -> &[u8] {
-        mem::as_bytes(self)
-    }
 }
 
 #[repr(C)]
@@ -85,12 +71,6 @@ pub struct RouteMsg {
     pub scope:    u8,
     pub ty:       u8,
     pub flags:    u32,
-}
-
-impl AsRef<[u8]> for RouteMsg {
-    fn as_ref(&self) -> &[u8] {
-        mem::as_bytes(self)
-    }
 }
 
 pub mod link_attr {

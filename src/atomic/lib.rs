@@ -85,7 +85,7 @@ macro_rules! impl_atomic {
                 mem::cast(val)
             }
 
-            pub unsafe fn unwrap(&self) -> *mut $raw {
+            pub unsafe fn as_ptr(&self) -> *mut $raw {
                 self.val.ptr()
             }
 

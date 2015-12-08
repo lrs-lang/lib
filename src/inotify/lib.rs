@@ -30,7 +30,7 @@ use cty::{c_int, c_char, PATH_MAX};
 use core::{mem};
 use alloc::{FbHeap};
 use rmo::{Rmo};
-use fd::{FDContainer};
+use fd::{FdContainer};
 use event::{InodeEvents};
 use flags::{InotifyFlags, WatchFlags};
 use str_one::{CStr};
@@ -175,13 +175,15 @@ impl Drop for Inotify {
     }
 }
 
-impl FDContainer for Inotify {
-    fn unwrap(self) -> c_int {
+impl Into<c_int> for Inotify {
+    fn into(self) -> c_int {
         let fd = self.fd;
         mem::forget(fd);
         fd
     }
+}
 
+impl FdContainer for Inotify {
     fn is_owned(&self) -> bool {
         self.owned
     }

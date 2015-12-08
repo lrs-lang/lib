@@ -6,7 +6,7 @@ use base::prelude::*;
 use core::{mem};
 use cty::{c_int, itimerspec, TFD_TIMER_ABSTIME};
 use syscall::{close, timerfd_settime, timerfd_gettime, read};
-use fd::{FDContainer};
+use fd::{FdContainer};
 use rv::{retry};
 
 use super::{Time, time_to_timespec, time_from_timespec};
@@ -94,13 +94,15 @@ impl Drop for Timer {
     }
 }
 
-impl FDContainer for Timer {
-    fn unwrap(self) -> c_int {
+impl Into<c_int> for Timer {
+    fn into(self) -> c_int {
         let fd = self.fd;
         mem::forget(self);
         fd
     }
+}
 
+impl FdContainer for Timer {
     fn is_owned(&self) -> bool {
         self.owned
     }

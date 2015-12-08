@@ -26,7 +26,7 @@ pub struct CStr {
 ///
 /// This operation can fail if the object has interior null bytes, e.g.,
 /// `"Hello World\0\0\0"` will succeed but `"Hello\0World\0"` will fail.
-pub trait AsCStr : ToCStr+AsRef<[u8]> {
+pub trait AsCStr : ToCStr {
     /// Borrows the object as a `CStr`.
     fn as_cstr(&self) -> Result<&CStr>;
 }

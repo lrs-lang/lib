@@ -40,35 +40,49 @@ owned!(String,       NoNullString);
 owned!(String,       CString);
 owned!(String,       String);
 
-macro_rules! borrowed {
+macro_rules! borrowed_no_str {
     ($one:ident, $two:ty) => {
         impl<H> Eq<$two> for $one<H>
             where H: Allocator,
         {
             fn eq(&self, other: &$two) -> bool {
-                self.deref() == other
+                let deref: &[u8] = self.deref().deref();
+                deref == other
             }
         }
     }
 }
 
-borrowed!(ByteString,   ByteStr);
-borrowed!(ByteString,   NoNullStr);
-borrowed!(ByteString,   CStr);
-borrowed!(ByteString,   str);
-borrowed!(ByteString,   [u8]);
-borrowed!(NoNullString, ByteStr);
-borrowed!(NoNullString, NoNullStr);
-borrowed!(NoNullString, CStr);
-borrowed!(NoNullString, str);
-borrowed!(NoNullString, [u8]);
-borrowed!(CString,      ByteStr);
-borrowed!(CString,      NoNullStr);
-borrowed!(CString,      CStr);
-borrowed!(CString,      str);
-borrowed!(CString,      [u8]);
-borrowed!(String,       ByteStr);
-borrowed!(String,       NoNullStr);
-borrowed!(String,       CStr);
-borrowed!(String,       str);
-borrowed!(String,       [u8]);
+borrowed_no_str!(ByteString,   ByteStr);
+borrowed_no_str!(ByteString,   NoNullStr);
+borrowed_no_str!(ByteString,   CStr);
+borrowed_no_str!(ByteString,   str);
+borrowed_no_str!(ByteString,   [u8]);
+borrowed_no_str!(NoNullString, ByteStr);
+borrowed_no_str!(NoNullString, NoNullStr);
+borrowed_no_str!(NoNullString, CStr);
+borrowed_no_str!(NoNullString, str);
+borrowed_no_str!(NoNullString, [u8]);
+borrowed_no_str!(CString,      ByteStr);
+borrowed_no_str!(CString,      NoNullStr);
+borrowed_no_str!(CString,      CStr);
+borrowed_no_str!(CString,      str);
+borrowed_no_str!(CString,      [u8]);
+
+macro_rules! borrowed_str {
+    ($one:ident, $two:ty) => {
+        impl<H> Eq<$two> for $one<H>
+            where H: Allocator,
+        {
+            fn eq(&self, other: &$two) -> bool {
+                self.as_bytes() == other
+            }
+        }
+    }
+}
+
+borrowed_str!(String,       ByteStr);
+borrowed_str!(String,       NoNullStr);
+borrowed_str!(String,       CStr);
+borrowed_str!(String,       str);
+borrowed_str!(String,       [u8]);

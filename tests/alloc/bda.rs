@@ -6,7 +6,7 @@ use std::alloc::{Bda, Allocator, empty_ptr};
 use std::env::aux::{page_size};
 
 fn ps() -> usize {
-    page_size().unwrap()
+    page_size()
 }
 
 #[test]

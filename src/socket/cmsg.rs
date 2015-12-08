@@ -3,6 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use base::prelude::*;
+use base::{error};
 use core::{mem, slice, ptr};
 use core::ptr::{OwnedPtr};
 use base::default::{Default};
@@ -239,7 +240,7 @@ impl<H> CMsgBuf<H>
     /// [argument, fds]
     /// The file descriptors to be added.
     pub fn fds(&mut self, fds: &[c_int]) -> Result {
-        self.bytes(fds.as_ref(), SOL_SOCKET, SCM_RIGHTS)
+        self.bytes(fds.as_bytes(), SOL_SOCKET, SCM_RIGHTS)
     }
 
     /// Adds process credentials to the buffer.
@@ -289,11 +290,11 @@ impl<'a> CMsgIter<'a> {
     /// = Remarks
     ///
     /// This operation fails if the slice is not properly aligned.
-    pub fn new(buf: &'a [u8]) -> Option<CMsgIter<'a>> {
+    pub fn new(buf: &'a [u8]) -> Result<CMsgIter<'a>> {
         if buf.as_ptr() as usize & PTR_MASK != 0 {
-            None
+            Err(error::InvalidArgument)
         } else {
-            Some(CMsgIter { data: buf })
+            Ok(CMsgIter { data: buf })
         }
     }
 

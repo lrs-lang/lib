@@ -288,6 +288,7 @@ impl<'a> InformationIter<'a> {
             *err = Err(e);
         }
         InformationIter {
+            // FIXME
             file: BufReader::new(File::invalid(), 0).unwrap(),
             err: None,
         }

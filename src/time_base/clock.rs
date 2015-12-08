@@ -10,7 +10,7 @@ use cty::{clockid_t, c_int, TIMER_ABSTIME, TFD_NONBLOCK};
 use syscall::{clock_gettime, clock_settime, clock_getres, clock_nanosleep,
                     timerfd_create};
 use rv::{retry};
-use fd::{FDContainer};
+use fd::{FdContainer};
 
 use super::{Time, time_from_timespec, time_to_timespec};
 use timer::{Timer};

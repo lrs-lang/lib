@@ -7,3 +7,4 @@ dragons
 .*
 *.html
 !.gitignore
+config.mk

@@ -709,7 +709,7 @@ macro_rules! int_impls {
             fn into_iter(self) -> Range<$t> { Range { start: $t::min(), end: self.end } }
         }
 
-        impl Pod for $t { }
+        unsafe impl Pod for $t { }
     }
 }
 

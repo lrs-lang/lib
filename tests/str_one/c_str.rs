@@ -12,9 +12,9 @@ fn from_ptr() {
     test!(s == "abc");
     test!(s.as_ptr() as usize == x.as_ptr() as usize);
     test!(s.bytes_with_null() == &x[..]);
-    test!(s[1..] == "bc");
-    test!(s[..1] == "a");
-    test!(s[..] == "abc");
+    test!(&s[1..] == "bc");
+    test!(&s[..1] == "a");
+    test!(&s[..] == "abc");
     test!(s[1] == b'b');
 }
 

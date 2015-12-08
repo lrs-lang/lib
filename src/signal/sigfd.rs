@@ -7,14 +7,14 @@ use core::{mem};
 use base::undef::{UndefState};
 use cty::{c_int};
 use syscall::{close, read, signalfd4};
-use fd::{FDContainer};
+use fd::{FdContainer};
 use rv::{retry};
 use {Sigset};
 use signals::{Signal};
 
 /// Information about a signal received via a `Sigfd`.
 #[repr(C)]
-#[derive(Pod)]
+#[derive(Copy)]
 pub struct SigfdInfo {
     /// The signal number.
     pub signo    : u32,
@@ -52,6 +52,7 @@ pub struct SigfdInfo {
     pub addr_lsb : u16,
     pub padding : [u8; 46],
 }
+unsafe impl Pod for SigfdInfo { }
 
 impl SigfdInfo {
     /// Returns the signal that generated the information.
@@ -129,13 +130,15 @@ impl Drop for Sigfd {
     }
 }
 
-impl FDContainer for Sigfd {
-    fn unwrap(self) -> c_int {
+impl Into<c_int> for Sigfd {
+    fn into(self) -> c_int {
         let fd = self.fd;
         mem::forget(self);
         fd
     }
+}
 
+impl FdContainer for Sigfd {
     fn is_owned(&self) -> bool {
         self.owned
     }

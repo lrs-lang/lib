@@ -61,7 +61,7 @@ use str_three::{ToCString};
 use arch_fns::{memchr};
 use rv::{retry};
 use cty::alias::{UserId, GroupId};
-use fd::{FDContainer};
+use fd::{FdContainer};
 use rmo::{Rmo, ToOwned};
 use alloc::{FbHeap};
 use io::{Write};
@@ -650,7 +650,7 @@ pub fn create_device<P>(path: P, dev: Device, mode: Mode) -> Result
 /// * link:man::setxattr(2)
 /// * link:lrs::file::set_attr_no_follow
 /// * link:lrs::file::File::set_attr
-pub fn set_attr<P, S, V>(path: P, name: S, val: V) -> Result
+pub fn set_attr<P, S, V: ?Sized>(path: P, name: S, val: &V) -> Result
     where P: ToCString, S: ToCString, V: AsRef<[u8]>,
 {
     let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
@@ -686,7 +686,7 @@ pub fn set_attr<P, S, V>(path: P, name: S, val: V) -> Result
 /// * link:man::setxattr(2)
 /// * link:lrs::file::set_attr
 /// * link:lrs::file::File::set_attr
-pub fn set_attr_no_follow<P, S, V>(path: P, name: S, val: V) -> Result
+pub fn set_attr_no_follow<P, S, V: ?Sized>(path: P, name: S, val: &V) -> Result
     where P: ToCString, S: ToCString, V: AsRef<[u8]>,
 {
     let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
@@ -1927,13 +1927,13 @@ impl File {
         // enough space for "/proc/self/fd/-{u64::MAX}\0"
         let mut proc_buf = [0; 36];
         let _ = write!(&mut proc_buf[..], "/proc/self/fd/{}", self.fd);
-        let cstr = proc_buf.as_cstr().unwrap();
+        let cstr = try!(proc_buf.as_cstr());
         let len = try!(rv!(readlinkat(self.fd, cstr, buf), -> usize));
         if buf.len() <= len {
             Err(error::NoMemory)
         } else {
             buf[len] = 0;
-            Ok(buf[..len+1].as_mut_cstr().unwrap())
+            buf[..len+1].as_mut_cstr()
         }
     }
 
@@ -2083,7 +2083,7 @@ impl File {
     /// = See also
     ///
     /// * link:man:fsetxattr(2)
-    pub fn set_attr<S, V>(&self, name: S, val: V) -> Result
+    pub fn set_attr<S, V: ?Sized>(&self, name: S, val: &V) -> Result
         where S: ToCString, V: AsRef<[u8]>,
     {
         let mut buf: [u8; 128] = unsafe { mem::uninit() };
@@ -2923,6 +2923,18 @@ impl Write for File {
     }
 }
 
+impl<'a> Read for &'a File {
+    fn scatter_read(&mut self, buf: &mut [&mut [u8]]) -> Result<usize> {
+        File::scatter_read(*self, buf)
+    }
+}
+
+impl<'a> Write for &'a File {
+    fn gather_write(&mut self, buf: &[&[u8]]) -> Result<usize> {
+        File::gather_write(*self, buf)
+    }
+}
+
 unsafe impl UndefState for File {
     fn num() -> usize { bool::num() }
 
@@ -2943,13 +2955,15 @@ impl Drop for File {
     }
 }
 
-impl FDContainer for File {
-    fn unwrap(self) -> c_int {
+impl Into<c_int> for File {
+    fn into(self) -> c_int {
         let fd = self.fd;
         mem::forget(self);
         fd
     }
+}
 
+impl FdContainer for File {
     fn is_owned(&self) -> bool {
         self.owned
     }
@@ -3080,11 +3094,11 @@ impl<'a> Iterator for ListAttrIter<'a> {
     type Item = &'a ByteStr;
 
     fn next(&mut self) -> Option<&'a ByteStr> {
-        if self.pos == self.buf.len() {
-            return None;
-        }
         let buf = &self.buf[self.pos..];
-        let len = memchr(buf, 0).unwrap();
+        let len = match memchr(buf, 0) {
+            Some(l) => l,
+            _ => return None,
+        };
         self.pos += len + 1;
         Some(buf[..len].as_ref())
     }
@@ -3100,12 +3114,15 @@ impl Iterator for ListAttrIterator {
     type Item = ByteString;
 
     fn next(&mut self) -> Option<ByteString> {
-        if self.pos == self.buf.len() {
-            return None;
-        }
         let buf = &self.buf[self.pos..];
-        let len = memchr(buf, 0).unwrap();
+        let len = match memchr(buf, 0) {
+            Some(l) => l,
+            _ => return None,
+        };
         self.pos += len + 1;
-        Some(buf[..len].as_byte_str().to_owned().unwrap())
+        match buf[..len].as_byte_str().to_owned() {
+            Ok(b) => Some(b),
+            _ => None,
+        }
     }
 }

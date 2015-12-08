@@ -57,7 +57,7 @@ impl<'a> Lock {
         LockGuard { lock: self }
     }
 
-    pub unsafe fn unwrap(&self) -> &AtomicCInt {
+    pub unsafe fn as_atomic(&self) -> &AtomicCInt {
         &self.val
     }
 

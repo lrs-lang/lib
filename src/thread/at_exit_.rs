@@ -40,7 +40,7 @@ pub fn at_exit<F>(f: F) -> Result
     let needed = align!(needed, [%] mem::align_of::<Entry>());
 
     if at_exit.cap - at_exit.len < needed {
-        let ps = rt::aux::page_size().unwrap();
+        let ps = rt::aux::page_size();
         let new_cap = align!(at_exit.cap + needed, [%] ps);
         unsafe {
             at_exit.ptr = if at_exit.ptr.is_null() {

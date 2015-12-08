@@ -47,7 +47,7 @@ mod std { pub use base::std::*; pub use cty; }
 /// whole string is equal to `name`, the empty string is returned. Otherwise it tries to
 /// split the variable at the first `=` character and compares the part before the `=` to
 /// `name`. If they compare equal, the part after the `=` is returned.
-pub fn var<S>(name: S) -> Result<&'static CStr>
+pub fn var<S: ?Sized>(name: &S) -> Result<&'static CStr>
     where S: AsRef<[u8]>
 {
     let bytes = name.as_ref();

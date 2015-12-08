@@ -27,7 +27,7 @@ use syscall::{
     mmap, munmap, mremap, msync, mprotect, madvise, mlock, munlock, mlockall, munlockall,
     mincore,
 };
-use fd::{FDContainer};
+use fd::{FdContainer};
 use adv::{MemAdvice};
 
 mod std { pub use fmt::std::*; pub use cty; }
@@ -118,7 +118,7 @@ impl MemMap {
     /// * link:man:mmap(2)
     pub fn file<F>(file: &F, at: u64, len: usize, protection: MemProtFlags, shared: bool,
                    flags: MemMapFlags) -> Result<MemMap>
-        where F: FDContainer,
+        where F: FdContainer,
     {
         MemMap::common(len, protection, shared, flags, file.borrow(), at)
     }

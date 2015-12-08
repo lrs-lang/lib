@@ -4,10 +4,10 @@
 
 use intrinsics::{self};
 use mem::{self};
-use ops::{Eq, PartialOrd, Ordering, Deref};
+use ops::{Eq, PartialOrd, Ordering, Deref, CoerceUnsized};
 use cmp::{Ord};
 use option::{Option};
-use marker::{Sized, PhantomData, Sync, Send, Copy};
+use marker::{Sized, PhantomData, Sync, Send, Copy, Unsize, Pod};
 
 /// Reads a value from a pointer.
 ///
@@ -129,6 +129,8 @@ impl<T> *const T {
     }
 }
 
+unsafe impl<T> Pod for *const T { }
+
 impl<T> Eq for *const T {
     fn eq(&self, other: &*const T) -> bool {
         *self as usize == *other as usize
@@ -203,6 +205,8 @@ impl<T> *mut T {
     }
 }
 
+unsafe impl<T> Pod for *mut T { }
+
 impl<T> Eq for *mut T {
     fn eq(&self, other: &*mut T) -> bool {
         *self as usize == *other as usize
@@ -257,6 +261,10 @@ impl<T> Ord for NonZeroPtr<T> {
     }
 }
 
+impl<T: ?Sized, U: ?Sized> CoerceUnsized<NonZeroPtr<U>> for NonZeroPtr<T>
+    where T: Unsize<U>,
+{}
+
 pub struct OwnedPtr<T: ?Sized> {
     ptr: NonZeroPtr<T>,
     _marker: PhantomData<T>,
@@ -300,6 +308,10 @@ impl<T> Ord for OwnedPtr<T> {
 
 unsafe impl<T: Sync + ?Sized> Sync for OwnedPtr<T> { }
 unsafe impl<T: Send + ?Sized> Send for OwnedPtr<T> { }
+
+impl<T: ?Sized, U: ?Sized> CoerceUnsized<OwnedPtr<U>> for OwnedPtr<T>
+    where T: Unsize<U>,
+{}
 
 /// Performs a volatile load.
 ///

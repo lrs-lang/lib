@@ -4,7 +4,7 @@
 
 use intrinsics::{self};
 use ptr::{self};
-use marker::{Pod, Copy, Leak};
+use marker::{Pod, Copy, Leak, Sized};
 use cmp::{self};
 use slice::{self};
 use option::{Option};
@@ -220,8 +220,8 @@ pub fn size_of<T>() -> usize {
 }
 
 /// Returns the size of an object.
-pub fn size_of_val<T>(_: &T) -> usize {
-    unsafe { intrinsics::size_of::<T>() }
+pub fn size_of_val<T: ?Sized>(v: &T) -> usize {
+    unsafe { intrinsics::size_of_val(v) }
 }
 
 /// Returns the alignment required for a type.
@@ -230,12 +230,12 @@ pub fn align_of<T>() -> usize {
 }
 
 /// Returns the alignment required for a type.
-pub fn align_of_val<T>(_: &T) -> usize {
-    unsafe { intrinsics::min_align_of::<T>() }
+pub fn align_of_val<T: ?Sized>(v: &T) -> usize {
+    unsafe { intrinsics::min_align_of_val(v) }
 }
 
 /// Returns whether a type has a `Drop` implementation.
-pub fn needs_drop<T>() -> bool {
+pub fn needs_drop<T: ?Sized>() -> bool {
     unsafe { intrinsics::needs_drop::<T>() }
 }
 

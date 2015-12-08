@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use core::marker::{Sync};
+use base::prelude::*;
 use core::{ptr};
 
 /// A container with interior mutability.
@@ -52,9 +52,10 @@ impl<T> Cell<T> {
     pub fn ptr(&self) -> *mut T {
         &self.data as *const T as *mut T
     }
+}
 
-    /// Unwraps the contained data.
-    pub fn unwrap(self) -> T {
+impl<T> Into<T> for Cell<T> {
+    fn into(self) -> T {
         self.data
     }
 }

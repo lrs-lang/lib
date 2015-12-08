@@ -19,7 +19,7 @@ macro_rules! array_impl {
                 }
             }
 
-            impl<T: Pod> Pod for [T; $size] { }
+            unsafe impl<T: Pod> Pod for [T; $size] { }
         )+
     }
 }

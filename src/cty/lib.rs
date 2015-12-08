@@ -1076,7 +1076,7 @@ pub struct oldold_utsname {
 pub const __NEW_UTS_LEN : usize = 64;
 
 #[repr(C)]
-#[derive(Pod)]
+#[derive(Copy)]
 pub struct old_utsname {
     pub sysname:  [c_char; 65],
     pub nodename: [c_char; 65],
@@ -1084,9 +1084,10 @@ pub struct old_utsname {
     pub version:  [c_char; 65],
     pub machine:  [c_char; 65],
 }
+unsafe impl Pod for old_utsname { }
 
 #[repr(C)]
-#[derive(Pod)]
+#[derive(Copy)]
 pub struct new_utsname {
     pub sysname:    [c_char; __NEW_UTS_LEN + 1],
     pub nodename:   [c_char; __NEW_UTS_LEN + 1],
@@ -1095,11 +1096,12 @@ pub struct new_utsname {
     pub machine:    [c_char; __NEW_UTS_LEN + 1],
     pub domainname: [c_char; __NEW_UTS_LEN + 1],
 }
+unsafe impl Pod for new_utsname { }
 
 // signal.h
 
 #[repr(C)]
-#[derive(Pod)]
+#[derive(Copy)]
 pub struct old_sigaction {
     pub sa_handler:  __sighandler_t,
     pub sa_mask:     old_sigset_t,
@@ -1375,7 +1377,7 @@ pub fn PERF_EVENT_IOC_ID()         -> c_uint { _IOR::<*mut __u64>(b'$' as c_uint
 pub const PERF_IOC_FLAG_GROUP : c_uint = 1;
 
 #[repr(C)]
-#[derive(Pod)]
+#[derive(Copy)]
 pub struct perf_event_mmap_page {
     pub version:        __u32,
     pub compat_version: __u32,
@@ -1407,6 +1409,7 @@ pub struct perf_event_mmap_page {
     pub data_head:   __u64,
     pub data_tail:   __u64,
 }
+unsafe impl Pod for perf_event_mmap_page { }
 
 impl perf_event_mmap_page {
     pub fn capabilities(&self) -> __u64 { self.__union_one }
@@ -2740,11 +2743,12 @@ pub const P_PGID      : c_int = 2;
 pub const UNIX_PATH_MAX : usize = 108;
 
 #[repr(C)]
-#[derive(Pod)]
+#[derive(Copy)]
 pub struct sockaddr_un {
     pub sun_family: __kernel_sa_family_t,
     pub sun_path: [c_char; UNIX_PATH_MAX],
 }
+unsafe impl Pod for sockaddr_un { }
 
 
 // uapi/linux/net.h
@@ -4818,7 +4822,7 @@ pub const SFD_CLOEXEC  : c_int = O_CLOEXEC;
 pub const SFD_NONBLOCK : c_int = O_NONBLOCK;
 
 #[repr(C)]
-#[derive(Pod)]
+#[derive(Copy)]
 pub struct signalfd_siginfo {
     pub ssi_signo    : __u32,
     pub ssi_errno    : __s32,
@@ -4839,6 +4843,7 @@ pub struct signalfd_siginfo {
     pub ssi_addr_lsb : __u16,
     pub __pad : [__u8; 46],
 }
+unsafe impl Pod for signalfd_siginfo { }
 
 /////////////////////////
 // include/linux/splice.h

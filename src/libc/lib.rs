@@ -48,13 +48,13 @@ impl pthread_key_t {
     }
 }
 
-impl Pod for pthread_key_t { }
+unsafe impl Pod for pthread_key_t { }
 impl Copy for pthread_key_t { }
 
-impl Pod for pthread_t { }
+unsafe impl Pod for pthread_t { }
 impl Copy for pthread_t { }
 
-impl Pod for pthread_attr_t { }
+unsafe impl Pod for pthread_attr_t { }
 impl Copy for pthread_attr_t { }
 
 #[cfg(not(any(no_link_args, no_libc)))]

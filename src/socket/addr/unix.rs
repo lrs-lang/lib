@@ -104,7 +104,8 @@ impl UnixSockAddr {
     ///
     /// [argument, name]
     /// The address of the socket address.
-    pub fn from_abstract<T>(buf: &mut [u8], name: T) -> Result<&mut UnixSockAddr>
+    pub fn from_abstract<'a, T: ?Sized>(buf: &'a mut [u8],
+                                        name: &T) -> Result<&'a mut UnixSockAddr>
         where T: AsRef<[u8]>
     {
         let name = name.as_ref();

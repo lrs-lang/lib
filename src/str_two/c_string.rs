@@ -9,6 +9,7 @@ use str_one::c_str::{CStr, ToCStr};
 use fmt::{Debug, Write};
 use vec::{Vec};
 use alloc::{self, Allocator};
+use {ByteString, NoNullString};
 
 /// An owned byte slice that has exactly one null byte at the very end.
 pub struct CString<Heap = alloc::Heap>
@@ -32,10 +33,30 @@ impl<H> CString<H>
     pub unsafe fn from_bytes_unchecked(bytes: Vec<u8, H>) -> CString<H> {
         CString { data: bytes }
     }
+}
 
-    /// Unwraps the vector contained in the string.
-    pub fn unwrap(self) -> Vec<u8, H> {
+impl<H> Into<Vec<u8, H>> for CString<H>
+    where H: Allocator, 
+{
+    fn into(mut self) -> Vec<u8, H> {
+        self.data.pop();
         self.data
+    }
+}
+
+impl<H> Into<ByteString<H>> for CString<H>
+    where H: Allocator, 
+{
+    fn into(self) -> ByteString<H> {
+        ByteString::from_vec(self.into())
+    }
+}
+
+impl<H> Into<NoNullString<H>> for CString<H>
+    where H: Allocator, 
+{
+    fn into(self) -> NoNullString<H> {
+        unsafe { NoNullString::from_bytes_unchecked(self.into()) }
     }
 }
 

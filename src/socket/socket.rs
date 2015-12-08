@@ -30,7 +30,7 @@ use syscall::{
     ioctl_siocoutq, accept4,
 };
 use str_one::{ToCStr, CStr, AsMutCStr};
-use fd::{FDContainer};
+use fd::{FdContainer};
 use rv::{retry};
 use saturating::{SaturatingCast};
 
@@ -265,7 +265,7 @@ impl Socket {
     /// = See also
     ///
     /// * link:man:bind(2)
-    pub fn bind<A>(&self, addr: A) -> Result
+    pub fn bind<A: ?Sized>(&self, addr: &A) -> Result
         where A: AsRef<[u8]>,
     {
         rv!(bind(self.fd, addr.as_ref().as_ref()))
@@ -326,7 +326,7 @@ impl Socket {
     /// = See also
     ///
     /// * link:man:connect(2)
-    pub fn connect<A>(&self, addr: A) -> Result
+    pub fn connect<A: ?Sized>(&self, addr: &A) -> Result
         where A: AsRef<[u8]>,
     {
         rv!(connect(self.fd, addr.as_ref()))
@@ -478,7 +478,8 @@ impl Socket {
     /// = See also
     ///
     /// * link:man:sendto(2)
-    pub fn send_to<A>(&self, buf: &[u8], addr: A, flags: MsgFlags) -> Result<usize>
+    pub fn send_to<A: ?Sized>(&self, buf: &[u8], addr: &A,
+                              flags: MsgFlags) -> Result<usize>
         where A: AsRef<[u8]>,
     {
         let flags = flags.0 | MSG_NOSIGNAL;
@@ -522,8 +523,8 @@ impl Socket {
     /// = See also
     ///
     /// * link:man:sendmsg(2)
-    pub fn gather_send_to<A>(&self, buf: &[&[u8]], addr: A,
-                             flags: MsgFlags) -> Result<usize>
+    pub fn gather_send_to<A: ?Sized>(&self, buf: &[&[u8]], addr: &A,
+                                     flags: MsgFlags) -> Result<usize>
         where A: AsRef<[u8]>,
     {
         let addr = addr.as_ref();
@@ -549,7 +550,8 @@ impl Socket {
     /// = See also
     ///
     /// * link:man:sendmsg(2)
-    pub fn send_ctrl<C>(&self, buf: &[&[u8]], ctrl: C, flags: MsgFlags) -> Result<usize>
+    pub fn send_ctrl<C: ?Sized>(&self, buf: &[&[u8]], ctrl: &C,
+                                flags: MsgFlags) -> Result<usize>
         where C: AsRef<[u8]>,
     {
         let addr: &[u8] = &[];
@@ -578,8 +580,8 @@ impl Socket {
     /// = See also
     ///
     /// * link:man:sendmsg(2)
-    pub fn send_ctrl_to<A, C>(&self, buf: &[&[u8]], addr: A, ctrl: C,
-                              flags: MsgFlags) -> Result<usize>
+    pub fn send_ctrl_to<A: ?Sized, C: ?Sized>(&self, buf: &[&[u8]], addr: &A, ctrl: &C,
+                                              flags: MsgFlags) -> Result<usize>
         where A: AsRef<[u8]>,
               C: AsRef<[u8]>,
     {
@@ -749,7 +751,7 @@ impl Socket {
             _ => None,
         };
         let ctrl_buf = unsafe { slice::from_ptr(ctrl_ptr, msg.msg_controllen as usize) };
-        let iter = CMsgIter::new(ctrl_buf).unwrap();
+        let iter = try!(CMsgIter::new(ctrl_buf));
         Ok((buf_len, addr, iter, MsgFlags(msg.msg_flags as c_int)))
     }
 
@@ -809,7 +811,7 @@ impl Socket {
     pub fn device<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
         let mut len = 0;
         try!(rv!(getsockopt(self.fd, SOL_SOCKET, SO_BINDTODEVICE, buf, &mut len)));
-        Ok(buf[..len].as_mut_cstr().unwrap())
+        buf[..len].as_mut_cstr()
     }
 
     /// Retrieves whether this socket allows broadcasting.
@@ -1134,17 +1136,16 @@ impl Socket {
     /// * link:man:socket(7) and SO_PEEK_OFF therein
     /// * link:lrs::socket::Socket::peek_offset
     pub fn set_peek_offset(&self, val: Option<usize>) -> Result {
-        if val.is_none() {
-            let val: c_int = -1;
-            rv!(setsockopt(self.fd, SOL_SOCKET, SO_PEEK_OFF, val.as_ref()))
-        } else {
-            let val = val.unwrap();
+        if let Some(val) = val {
             if val > INT_MAX as usize {
                 Err(error::InvalidArgument)
             } else {
                 let val = val as c_int;
                 rv!(setsockopt(self.fd, SOL_SOCKET, SO_PEEK_OFF, val.as_ref()))
             }
+        } else {
+            let val: c_int = -1;
+            rv!(setsockopt(self.fd, SOL_SOCKET, SO_PEEK_OFF, val.as_ref()))
         }
     }
 
@@ -2375,8 +2376,15 @@ impl Drop for Socket {
     }
 }
 
-impl FDContainer for Socket {
-    fn unwrap(self) -> c_int { self.fd }
+impl Into<c_int> for Socket {
+    fn into(self) -> c_int {
+        let fd = self.fd;
+        mem::forget(self);
+        fd
+    }
+}
+
+impl FdContainer for Socket {
     fn is_owned(&self) -> bool { self.owned }
     fn borrow(&self) -> c_int { self.fd }
     fn from_owned(fd: c_int) -> Socket { Socket { fd: fd, owned: true } }

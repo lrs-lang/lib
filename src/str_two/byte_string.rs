@@ -47,9 +47,12 @@ impl<H> ByteString<H>
     pub fn from_vec(v: Vec<u8, H>) -> ByteString<H> {
         ByteString { data: v }
     }
+}
 
-    /// Unwraps the vector contained in the string.
-    pub fn unwrap(self) -> Vec<u8, H> {
+impl<H> Into<Vec<u8, H>> for ByteString<H>
+    where H: Allocator, 
+{
+    fn into(self) -> Vec<u8, H> {
         self.data
     }
 }
@@ -130,6 +133,14 @@ impl<H> AsMut<ByteStr> for ByteString<H>
 {
     fn as_mut(&mut self) -> &mut ByteStr {
         self.data.as_mut()
+    }
+}
+
+impl<H> AsMut<Vec<u8, H>> for ByteString<H>
+    where H: Allocator,
+{
+    fn as_mut(&mut self) -> &mut Vec<u8, H> {
+        &mut self.data
     }
 }
 

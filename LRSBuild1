@@ -1,0 +1,79 @@
+obj core
+obj cfg        core
+obj libc       core
+obj int        core
+obj saturating core
+obj wrapping   core
+obj cty_base   core
+obj arch_fns   core libc cty_base
+obj base       core cty_base wrapping
+
+obj hash       core base wrapping
+obj rv         core base int
+obj parse      core base
+obj io         core base arch_fns
+obj fmt        core base io
+
+obj cell       core base
+obj tree       core base cell fmt
+obj str_one    core cty_base base arch_fns fmt parse
+obj getopt     core base str_one
+
+obj atomic     core base cell
+obj cty        core base cty_base
+obj r_syscall  core cty
+obj syscall    core saturating base str_one cty r_syscall atomic
+
+obj kernel     core base atomic cty syscall parse arch_fns
+obj lock       core base cell io fmt atomic syscall cty
+obj rt         core libc base str_one libc r_syscall syscall cty atomic lock
+
+obj clone      core libc base cty syscall fmt r_syscall
+obj fd         core base rv io cty syscall fmt
+obj mem        core base cty fmt syscall fd
+
+obj time_base  core base cty syscall fmt fd rv
+
+obj event      core base cty fmt syscall fd io
+obj signal     core base cty fmt syscall fd rv time_base
+obj pipe       core base cty fmt syscall fd rv io saturating
+
+obj alloc      core base cty syscall libc
+obj queue      core base cell arch_fns atomic lock alloc
+obj box        core base alloc fmt
+
+obj c_ptr_ptr  core base cty_base str_one alloc
+obj buf_reader core arch_fns base io alloc str_one
+obj rc         core base fmt cell alloc atomic
+
+obj vec        core base str_one io fmt alloc
+obj ringbuf    core base fmt alloc wrapping
+obj hashmap    core base alloc hash fmt fd
+obj iter       core base vec
+
+obj str_two    core arch_fns base str_one fmt vec alloc
+obj rmo        core base fmt str_one vec str_two alloc
+obj str_three  core arch_fns base str_one str_two rmo alloc
+
+obj swap       core base cty syscall fmt alloc rmo str_three
+obj inotify    core base cty fmt syscall fd rv io str_one str_three alloc rmo
+obj env        core base str_one rt syscall alloc str_two str_three cty rmo
+
+obj fs         core base fmt cty syscall rv str_three alloc rmo
+obj socket     core base cty arch_fns str_one fmt syscall rv fd io saturating time_base alloc
+obj netlink    core base cty vec alloc fmt
+
+obj sys        core base fmt cty syscall str_one str_three rv time_base rmo alloc
+obj poll       core base cty syscall fd rv saturating fmt time_base
+
+obj dev        core base fmt cty
+obj file       core base io cty fmt int syscall str_one str_two str_three arch_fns rv parse fd dev fs time_base vec rmo
+
+obj mqueue     core base cty fmt syscall fd file str_three rmo alloc time_base rv
+obj tty        core base syscall cty fd file signal dev fmt
+obj thread     core base syscall cty libc lock fmt time_base iter clone fd rt mem atomic alloc signal
+obj process    core base syscall cty fmt str_one str_two str_three c_ptr_ptr alloc rt env file rmo rv time_base
+obj time_ext   core base fmt str_one file time_base io vec
+
+obj dir        core base cty str_one str_two str_three syscall fd fmt file vec rmo alloc
+obj user_group core base arch_fns io buf_reader fmt str_one str_two cty parse file vec rmo iter alloc

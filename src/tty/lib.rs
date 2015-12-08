@@ -23,7 +23,7 @@ use cty::{
     c_int, winsize, c_ushort, TCIFLUSH, TCOFLUSH, TCOOFF, TCOON, TCIOFF, TCION,
 };
 use cty::alias::{ProcessId};
-use fd::{FDContainer};
+use fd::{FdContainer};
 use file::flags::{FileFlags, Mode};
 use file::{File};
 use dev::{Device, DeviceType};
@@ -63,7 +63,7 @@ impl Tty {
     ///
     /// * link:man:pty(7)
     pub fn new_pty(flags: FileFlags) -> Result<Tty> {
-        Ok(Tty::from_owned(try!(File::open("/dev/ptmx", flags, Mode(0))).unwrap()))
+        Ok(Tty::from_owned(try!(File::open("/dev/ptmx", flags, Mode(0))).into()))
     }
 
     /// Allows opening the slave.
@@ -488,13 +488,15 @@ impl Tty {
     }
 }
 
-impl FDContainer for Tty {
-    fn unwrap(self) -> c_int {
+impl Into<c_int> for Tty {
+    fn into(self) -> c_int {
         let fd = self.fd;
         mem::forget(fd);
         fd
     }
+}
 
+impl FdContainer for Tty {
     fn is_owned(&self) -> bool {
         self.owned
     }
@@ -517,7 +519,7 @@ impl FDContainer for Tty {
 /// [argument, fd]
 /// The file descriptor to check.
 pub fn is_a_tty<F>(fd: &F) -> bool
-    where F: FDContainer
+    where F: FdContainer
 {
     Tty::from_borrowed(fd.borrow()).line_discipline().is_ok()
 }

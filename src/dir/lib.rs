@@ -31,7 +31,7 @@ use str_three::{ToCString};
 use syscall::{getdents};
 use base::error::{Errno};
 use vec::{Vec};
-use fd::{FDContainer};
+use fd::{FdContainer};
 use fmt::{Debug, Write};
 use core::{mem};
 use rmo::{Rmo, ToOwned};

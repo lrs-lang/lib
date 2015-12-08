@@ -157,6 +157,6 @@ pub mod prelude {
         pub use lrs_vec::{Vec};
         pub use lrs_rmo::{ToOwned};
         pub use lrs_io::{Read, Write, BufRead, BufWrite};
-        #[cfg(not(freestanding))] pub use lrs_fd::{FDContainer};
+        #[cfg(not(freestanding))] pub use lrs_fd::{FdContainer};
     }
 }

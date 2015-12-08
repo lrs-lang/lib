@@ -73,7 +73,7 @@ impl ByteStr {
     ///
     /// [argument, arg]
     /// The byte slice to be checked.
-    pub fn starts_with<A>(&self, arg: A) -> bool
+    pub fn starts_with<A: ?Sized>(&self, arg: &A) -> bool
         where A: AsRef<[u8]>,
     {
         self.data.starts_with(arg.as_ref())
@@ -172,13 +172,13 @@ impl IndexMut<Range<usize>> for ByteStr {
     }
 }
 
-impl<T: AsRef<[u8]>> PartialOrd<T> for ByteStr {
+impl<T: AsRef<[u8]>+?Sized> PartialOrd<T> for ByteStr {
     fn partial_cmp(&self, other: &T) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<T: AsRef<[u8]>> Ord<T> for ByteStr {
+impl<T: AsRef<[u8]>+?Sized> Ord<T> for ByteStr {
     fn cmp(&self, other: &T) -> Ordering {
         self.data.cmp(other.as_ref())
     }
@@ -262,21 +262,21 @@ impl AsMut<ByteStr> for [u8] {
 
 impl AsRef<ByteStr> for [i8] {
     fn as_ref(&self) -> &ByteStr {
-        let bytes: &[u8] = self.as_ref();
+        let bytes: &[u8] = self.as_bytes();
         bytes.as_ref()
     }
 }
 
 impl AsMut<ByteStr> for [i8] {
     fn as_mut(&mut self) -> &mut ByteStr {
-        let bytes: &mut [u8] = self.as_mut();
+        let bytes: &mut [u8] = self.as_mut_bytes();
         bytes.as_mut()
     }
 }
 
 impl AsRef<ByteStr> for str {
     fn as_ref(&self) -> &ByteStr {
-        let bytes: &[u8] = self.as_ref();
+        let bytes: &[u8] = self.as_bytes();
         bytes.as_ref()
     }
 }

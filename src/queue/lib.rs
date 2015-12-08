@@ -247,7 +247,7 @@ impl<T, H> Queue<T, H>
             // ptr::read(ptr::read(self.buf.add(pos & self.cap_mask)).ptr())
             //
             // wew, lad
-            ptr::read(self.buf.add(pos & self.cap_mask)).unwrap()
+            ptr::read(self.buf.add(pos & self.cap_mask)).into()
         }
     }
 

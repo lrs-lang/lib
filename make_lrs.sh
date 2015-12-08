@@ -6,7 +6,7 @@ function build {
     lrsc --out-dir=obj/$target src/$1/lib.rs
 }
 
-OBJS="$(cat LRSBuild | grep '^obj ' | cut '-d ' -f 2) lrs"
+OBJS="$(cat LRSBuild1 | grep '^obj ' | cut '-d ' -f 2) lrs"
 
 mkdir -p obj
 

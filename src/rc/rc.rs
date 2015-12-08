@@ -5,7 +5,8 @@
 use base::prelude::*;
 use core::ptr::{OwnedPtr};
 use core::iter::{IntoIterator};
-use core::marker::{Leak};
+use core::marker::{Leak, Unsize};
+use core::ops::{CoerceUnsized};
 use core::{mem, ptr, intrinsics};
 use base::clone::{Clone};
 use base::default::{Default};
@@ -14,7 +15,7 @@ use cell::{Cell};
 use fmt::{Debug, Write};
 use alloc::{self, Allocator};
 
-struct Inner<T, H = alloc::Heap>
+struct Inner<T: ?Sized, H = alloc::Heap>
     where H: Allocator,
 {
     count: Cell<usize>,
@@ -64,7 +65,7 @@ impl<T, H> Drop for RcBuf<T, H>
 }
 
 /// A single-threaded reference-counted container.
-pub struct Rc<T, Heap = alloc::Heap>
+pub struct Rc<T: ?Sized, Heap = alloc::Heap>
     where Heap: Allocator,
           T: Leak,
 {
@@ -100,7 +101,7 @@ impl<T, H> Rc<T, H>
     }
 }
 
-impl<T, H> Rc<T, H>
+impl<T: ?Sized, H> Rc<T, H>
     where H: Allocator,
           T: Leak,
 {
@@ -122,6 +123,12 @@ impl<T, H> Rc<T, H>
         }
     }
 }
+
+impl<T: ?Sized, U: ?Sized, H> CoerceUnsized<Rc<U, H>> for Rc<T, H>
+    where T: Unsize<U> + Leak,
+          U: Leak,
+          H: Allocator,
+{}
 
 impl<'a, T, H> IntoIterator for &'a Rc<T, H>
     where &'a T: IntoIterator,
@@ -148,9 +155,9 @@ unsafe impl<T, H> UndefState for Rc<T, H>
     }
 }
 
-impl<T, H> !Send for Rc<T, H> { }
+impl<T: ?Sized, H> !Send for Rc<T, H> { }
 
-impl<T, H> Drop for Rc<T, H>
+impl<T: ?Sized, H> Drop for Rc<T, H>
     where H: Allocator,
           T: Leak,
 {
@@ -170,7 +177,7 @@ impl<T, H> Drop for Rc<T, H>
     }
 }
 
-impl<T, H> Deref for Rc<T, H>
+impl<T: ?Sized, H> Deref for Rc<T, H>
     where H: Allocator,
           T: Leak,
 {
@@ -181,7 +188,7 @@ impl<T, H> Deref for Rc<T, H>
     }
 }
 
-impl<T, H> Clone for Rc<T, H>
+impl<T: ?Sized, H> Clone for Rc<T, H>
     where H: Allocator,
           T: Leak,
 {
@@ -190,7 +197,7 @@ impl<T, H> Clone for Rc<T, H>
     }
 }
 
-impl<T, H> Debug for Rc<T, H>
+impl<T: ?Sized, H> Debug for Rc<T, H>
     where T: Debug + Leak,
           H: Allocator,
 {

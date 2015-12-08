@@ -19,7 +19,6 @@ mod std { pub use fmt_::std::*; pub use cty; }
 
 use base::prelude::*;
 use base::{error};
-use core::{mem};
 use cty::{c_int};
 use fmt_::{Debug, Write};
 
@@ -37,12 +36,6 @@ pub struct MsgHeader {
     pub flags:    flags::NlFlags,
     pub sequence: u32,
     pub port:     u32,
-}
-
-impl AsRef<[u8]> for MsgHeader {
-    fn as_ref(&self) -> &[u8] {
-        mem::as_bytes(self)
-    }
 }
 
 impl Debug for MsgHeader {
@@ -71,21 +64,9 @@ impl Debug for MsgError {
     }
 }
 
-impl AsRef<[u8]> for MsgError {
-    fn as_ref(&self) -> &[u8] {
-        mem::as_bytes(self)
-    }
-}
-
 #[repr(C)]
 #[derive(Pod, Eq)]
 pub struct Attr {
     pub len: u16,
     pub ty: u16,
-}
-
-impl AsRef<[u8]> for Attr {
-    fn as_ref(&self) -> &[u8] {
-        mem::as_bytes(self)
-    }
 }

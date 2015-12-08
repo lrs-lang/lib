@@ -5,35 +5,35 @@
 #[test]
 #[cfg(target_endian = "little")]
 fn as_ref() {
-    test!(1u8.as_ref() == &[1][..]);
-    test!(1u16.as_ref() == &[1, 0][..]);
-    test!(1u32.as_ref() == &[1, 0, 0, 0][..]);
-    test!(1u64.as_ref() == &[1, 0, 0, 0, 0, 0, 0, 0][..]);
+    test!(AsRef::<[u8]>::as_ref(&1u8)  == &[1][..]);
+    test!(AsRef::<[u8]>::as_ref(&1u16) == &[1, 0][..]);
+    test!(AsRef::<[u8]>::as_ref(&1u32) == &[1, 0, 0, 0][..]);
+    test!(AsRef::<[u8]>::as_ref(&1u64) == &[1, 0, 0, 0, 0, 0, 0, 0][..]);
 }
 
 #[test]
 #[cfg(target_endian = "big")]
 fn as_ref() {
-    test!(1u8.as_ref() == &[1][..]);
-    test!(1u16.as_ref() == &[0, 1][..]);
-    test!(1u32.as_ref() == &[0, 0, 0, 1][..]);
-    test!(1u64.as_ref() == &[0, 0, 0, 0, 0, 0, 0, 1][..]);
+    test!(AsRef::<[u8]>::as_ref(&1u8)  == &[1][..]);
+    test!(AsRef::<[u8]>::as_ref(&1u16) == &[0, 1][..]);
+    test!(AsRef::<[u8]>::as_ref(&1u32) == &[0, 0, 0, 1][..]);
+    test!(AsRef::<[u8]>::as_ref(&1u64) == &[0, 0, 0, 0, 0, 0, 0, 1][..]);
 }
 
 #[test]
 #[cfg(target_endian = "little")]
 fn as_mut() {
-    test!(1u8.as_mut() == &[1][..]);
-    test!(1u16.as_mut() == &[1, 0][..]);
-    test!(1u32.as_mut() == &[1, 0, 0, 0][..]);
-    test!(1u64.as_mut() == &[1, 0, 0, 0, 0, 0, 0, 0][..]);
+    test!(AsMut::<[u8]>::as_mut(&mut 1u8)  == &[1][..]);
+    test!(AsMut::<[u8]>::as_mut(&mut 1u16) == &[1, 0][..]);
+    test!(AsMut::<[u8]>::as_mut(&mut 1u32) == &[1, 0, 0, 0][..]);
+    test!(AsMut::<[u8]>::as_mut(&mut 1u64) == &[1, 0, 0, 0, 0, 0, 0, 0][..]);
 }
 
 #[test]
 #[cfg(target_endian = "big")]
 fn as_mut() {
-    test!(1u8.as_mut() == &[1][..]);
-    test!(1u16.as_mut() == &[0, 1][..]);
-    test!(1u32.as_mut() == &[0, 0, 0, 1][..]);
-    test!(1u64.as_mut() == &[0, 0, 0, 0, 0, 0, 0, 1][..]);
+    test!(AsMut::<[u8]>::as_mut(&mut 1u8)  == &[1][..]);
+    test!(AsMut::<[u8]>::as_mut(&mut 1u16) == &[0, 1][..]);
+    test!(AsMut::<[u8]>::as_mut(&mut 1u32) == &[0, 0, 0, 1][..]);
+    test!(AsMut::<[u8]>::as_mut(&mut 1u64) == &[0, 0, 0, 0, 0, 0, 0, 1][..]);
 }

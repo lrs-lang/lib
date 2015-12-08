@@ -22,8 +22,9 @@ pub mod std {
 pub mod clone;
 pub mod result;
 pub mod error;
-pub mod rmo;
+pub mod as_ref;
 pub mod into;
+pub mod to;
 pub mod undef;
 pub mod default;
 
@@ -32,6 +33,6 @@ pub mod prelude {
     pub use core::bool::{BoolExt};
     pub use result::{Result};
     pub use result::Result::{Ok, Err};
-    pub use rmo::{AsRef, AsMut};
+    pub use as_ref::{AsRef, AsMut};
     pub use into::{Into};
 }

@@ -31,7 +31,7 @@ use cty::{c_int};
 use cty::alias::{ProcessId};
 use iter::{IteratorExt};
 use fmt::{Debug, Write};
-use fd::{FDContainer};
+use fd::{FdContainer};
 use clone::flags::{CloneFlags};
 
 mod std { pub use fmt::std::*; pub use cty; pub use fd; }
@@ -307,7 +307,7 @@ pub fn current_cpu() -> Result<u32> {
 ///
 /// * link:man:setns(2)
 pub fn join_namespace<F>(ns: &F, kind: CloneFlags) -> Result
-    where F: FDContainer,
+    where F: FdContainer,
 {
     rv!(syscall::setns(ns.borrow(), kind.0))
 }

@@ -8,10 +8,10 @@ use std::share::{Cell};
 fn test() {
     let cell = Cell::new(1);
     unsafe {
-        test!(cell.data == 1);
+        test!(cell.get() == 1);
         test!(*cell.ptr() == 1);
         *cell.ptr() = 2;
-        test!(cell.data == 2);
+        test!(cell.get() == 2);
         test!(*cell.ptr() == 2);
     }
 }

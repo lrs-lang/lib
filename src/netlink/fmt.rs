@@ -221,7 +221,7 @@ impl<'a, H> NlData<'a, H>
     pub fn add_u64 (&mut self, ty: u16, val: u64) -> Result { self.add_simple(ty, val) }
     pub fn add_i64 (&mut self, ty: u16, val: i64) -> Result { self.add_simple(ty, val) }
 
-    pub fn add_string<T>(&mut self, ty: u16, val: T) -> Result
+    pub fn add_string<T: ?Sized>(&mut self, ty: u16, val: &T) -> Result
         where T: AsRef<[u8]>,
     {
         let val = val.as_ref();

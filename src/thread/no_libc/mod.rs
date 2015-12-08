@@ -83,7 +83,7 @@ impl Builder {
     /// Creates a new thread-builder.
     pub fn new() -> Result<Builder> {
         Ok(Builder {
-            guard_size: aux::page_size().unwrap(),
+            guard_size: aux::page_size(),
             user_stack_size: 2 << 23, // 8MB
         })
     }
@@ -93,7 +93,7 @@ impl Builder {
     /// [argument, size]
     /// The size of the guard page.
     pub fn set_guard_size(&mut self, size: usize) -> Result {
-        if size < aux::page_size().unwrap() {
+        if size < aux::page_size() {
             Err(InvalidArgument)
         } else {
             self.guard_size = size;
@@ -111,7 +111,7 @@ impl Builder {
     /// [argument, size]
     /// The size of the thread's stack.
     pub fn set_stack_size(&mut self, size: usize) -> Result {
-        if size < aux::page_size().unwrap() {
+        if size < aux::page_size() {
             Err(InvalidArgument)
         } else {
             self.user_stack_size = size;
@@ -178,7 +178,7 @@ impl Builder {
 
         const STACK_ALIGNMENT: usize = 16;
 
-        let page_size = aux::page_size().unwrap();
+        let page_size = aux::page_size();
         let guard_size = align!(self.guard_size, [%] page_size);
         let stack_size = align!(self.user_stack_size, [%] STACK_ALIGNMENT);
         let map_size = align!(guard_size + stack_size + tls::size(), [%] page_size);
@@ -258,7 +258,7 @@ unsafe extern fn start<'a, F>(data: *mut Payload<'a, F>) -> !
         // and call `futex_wake` on the `tid` address once this thread exits. We set this
         // address to the address of the lock. Since `0` means unlocked, this will unlock
         // the lock for us.
-        syscall::set_tid_address(Some(LOCK.unwrap()));
+        syscall::set_tid_address(Some(LOCK.as_atomic()));
 
         // Block all signals so that we don't get interrupted after we've destroyed our
         // stack.

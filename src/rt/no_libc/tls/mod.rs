@@ -45,7 +45,10 @@ impl !Sync for Private { }
 pub static mut STATIC_IMAGE: Option<TlsImage> = None;
 
 pub unsafe fn init() {
-    let phdrs = aux::program_header_table().unwrap();
+    let phdrs = match aux::program_header_table() {
+        Some(p) => p,
+        _ => return,
+    };
 
     if let Some(tls) = phdrs.iter().find(|h| h.p_type == cty::PT_TLS) {
         let image = TlsImage {
@@ -65,12 +68,13 @@ pub unsafe fn set_static_image() {
     use syscall::{mmap};
     use cty::{PROT_READ, PROT_WRITE, MAP_ANONYMOUS, MAP_PRIVATE};
 
-    let size = align!(arch::mem_size(), [%] aux::page_size().unwrap());
+    let size = align!(arch::mem_size(), [%] aux::page_size());
     let mem = mmap(0, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1,
                    0) as *mut u8;
     let (private, tp) = arch::place_tls(mem);
     ptr::write(&mut (*private).at_exit, SingleThreadMutex::new(AtExit::new()));
 
+    // There is really nothing we can do if this step fails.
     arch::set_tp(tp).unwrap();
 }
 

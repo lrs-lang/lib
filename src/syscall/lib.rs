@@ -2222,7 +2222,7 @@ pub fn getsockopt(sockfd: c_int, level: c_int, optname: c_int, optval: &mut [u8]
 pub fn futex_wait(addr: &AtomicCInt, val: c_int, timeout: Option<&timespec>) -> c_int {
     let timeout = timeout.map(|t| t as *const _ as *mut _).unwrap_or(0 as *mut _);
     unsafe {
-        r::futex(addr.unwrap() as *mut _, FUTEX_WAIT, val as c_uint, timeout, 0 as *mut _,
+        r::futex(addr.as_ptr() as *mut _, FUTEX_WAIT, val as c_uint, timeout, 0 as *mut _,
                  0)
     }
 }
@@ -2244,7 +2244,7 @@ pub fn futex_wait(addr: &AtomicCInt, val: c_int, timeout: Option<&timespec>) -> 
 pub fn futex_wake(addr: &AtomicCInt, num: usize) -> c_int {
     let num: c_int = num.saturating_cast();
     unsafe {
-        r::futex(addr.unwrap() as *mut _, FUTEX_WAKE, num as c_uint, 0 as *mut _,
+        r::futex(addr.as_ptr() as *mut _, FUTEX_WAKE, num as c_uint, 0 as *mut _,
                  0 as *mut _, 0)
     }
 }
@@ -4104,6 +4104,6 @@ pub fn pivot_root(new: &CStr, old: &CStr) -> c_int {
 ///
 /// * link:man:set_tid_address(2)
 pub unsafe fn set_tid_address(tidptr: Option<&AtomicCInt>) -> c_int {
-    let addr = tidptr.map(|t| t.unwrap()).unwrap_or(0 as *mut _);
+    let addr = tidptr.map(|t| t.as_ptr()).unwrap_or(0 as *mut _);
     r::set_tid_address(addr) as c_int
 }

@@ -25,7 +25,7 @@ use syscall::{
 use base::undef::{UndefState};
 use core::{mem};
 use cty::{c_int, c_uint};
-use fd::{FDContainer};
+use fd::{FdContainer};
 use flags::{PipeFlags, TeeFlags, SpliceFlags};
 use io::{Read, Write};
 use rv::{retry};
@@ -252,7 +252,7 @@ impl Pipe {
     ///
     /// * link:man:splice(2)
     pub fn read_from<T>(&self, src: &T, n: usize, flags: SpliceFlags) -> Result<usize>
-        where T: FDContainer,
+        where T: FdContainer,
     {
         retry(|| {
             splice(src.borrow(), None, self.fd, None, n, flags.0)
@@ -289,7 +289,7 @@ impl Pipe {
     /// * link:man:splice(2)
     pub fn read_from_at<T>(&self, src: &T, at: &mut u64, n: usize,
                            flags: SpliceFlags) -> Result<usize>
-        where T: FDContainer,
+        where T: FdContainer,
     {
         retry(|| {
             splice(src.borrow(), Some(at), self.fd, None, n, flags.0)
@@ -321,7 +321,7 @@ impl Pipe {
     ///
     /// * link:man:splice(2)
     pub fn write_to<T>(&self, dst: &T, n: usize, flags: SpliceFlags) -> Result<usize>
-        where T: FDContainer,
+        where T: FdContainer,
     {
         retry(|| {
             splice(self.fd, None, dst.borrow(), None, n, flags.0)
@@ -358,7 +358,7 @@ impl Pipe {
     /// * link:man:splice(2)
     pub fn write_to_at<T>(&self, dst: &T, at: &mut u64, n: usize,
                           flags: SpliceFlags) -> Result<usize>
-        where T: FDContainer,
+        where T: FdContainer,
     {
         retry(|| {
             splice(self.fd, None, dst.borrow(), Some(at), n, flags.0)
@@ -396,13 +396,15 @@ impl Drop for Pipe {
     }
 }
 
-impl FDContainer for Pipe {
-    fn unwrap(self) -> c_int {
+impl Into<c_int> for Pipe {
+    fn into(self) -> c_int {
         let fd = self.fd;
         mem::forget(fd);
         fd
     }
+}
 
+impl FdContainer for Pipe {
     fn is_owned(&self) -> bool {
         self.owned
     }

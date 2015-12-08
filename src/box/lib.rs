@@ -18,6 +18,8 @@ use base::default::{Default};
 use core::ptr::{OwnedPtr};
 use core::{ptr, mem, intrinsics};
 use fmt::{Debug, Write};
+use core::marker::{Unsize};
+use core::ops::{CoerceUnsized};
 
 mod std { pub use fmt::std::*; }
 
@@ -25,8 +27,8 @@ mod std { pub use fmt::std::*; }
 pub struct BoxBuf<T, Heap = alloc::Heap>
     where Heap: alloc::Allocator,
 {
-    data: OwnedPtr<T>,
     pool: Heap::Pool,
+    data: OwnedPtr<T>,
 }
 
 impl<T, H> BoxBuf<T, H>
@@ -56,11 +58,11 @@ impl<T, H> Drop for BoxBuf<T, H>
 }
 
 /// A heap-allocated object.
-pub struct Box<T, Heap = alloc::Heap>
+pub struct Box<T: ?Sized, Heap = alloc::Heap>
     where Heap: alloc::Allocator,
 {
-    data: OwnedPtr<T>,
     pool: Heap::Pool,
+    data: OwnedPtr<T>,
 }
 
 impl<T, H> Box<T, H>
@@ -89,7 +91,7 @@ impl<T, H> Box<T, H>
     }
 }
 
-impl<T, H> Deref for Box<T, H>
+impl<T: ?Sized, H> Deref for Box<T, H>
     where H: alloc::Allocator,
 {
     type Target = T;
@@ -98,7 +100,7 @@ impl<T, H> Deref for Box<T, H>
     }
 }
 
-impl<T, H> DerefMut for Box<T, H>
+impl<T: ?Sized, H> DerefMut for Box<T, H>
     where H: alloc::Allocator,
 {
     fn deref_mut(&mut self) -> &mut T {
@@ -106,7 +108,7 @@ impl<T, H> DerefMut for Box<T, H>
     }
 }
 
-impl<T, H> Drop for Box<T, H>
+impl<T: ?Sized, H> Drop for Box<T, H>
     where H: alloc::Allocator,
 {
     fn drop(&mut self) {
@@ -119,7 +121,7 @@ impl<T, H> Drop for Box<T, H>
     }
 }
 
-impl<T, H> Debug for Box<T, H>
+impl<T: ?Sized, H> Debug for Box<T, H>
     where H: alloc::Allocator,
           T: Debug
 {
@@ -127,3 +129,7 @@ impl<T, H> Debug for Box<T, H>
         (**self).fmt(w)
     }
 }
+
+impl<T: ?Sized, U: ?Sized> CoerceUnsized<Box<U>> for Box<T>
+    where T: Unsize<U>,
+{}

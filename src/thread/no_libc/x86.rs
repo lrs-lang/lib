@@ -16,7 +16,7 @@ pub unsafe fn start_thread(func: unsafe extern fn(*mut u8) -> !, arg: *mut u8,
     }
     let mut user_desc = tls::arch::magic_array(tp);
     __start_thread(flags, stack, 0 as *mut _, arg, user_desc.as_mut_ptr(), func,
-                   ctid.unwrap())
+                   ctid.as_ptr())
 }
 
 pub unsafe fn stop_thread(stack_base: *mut u8, stack_size: usize,

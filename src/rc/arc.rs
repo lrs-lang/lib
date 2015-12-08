@@ -6,7 +6,8 @@ use base::prelude::*;
 use core::{mem, ptr, intrinsics};
 use core::ptr::{OwnedPtr};
 use core::iter::{IntoIterator};
-use core::marker::{Leak};
+use core::marker::{Leak, Unsize};
+use core::ops::{CoerceUnsized};
 use base::clone::{Clone, MaybeClone};
 use base::default::{Default};
 use base::undef::{UndefState};
@@ -14,7 +15,7 @@ use atomic::{AtomicUsize};
 use fmt::{Debug, Write};
 use alloc::{self, Allocator};
 
-struct Inner<T, H = alloc::Heap>
+struct Inner<T: ?Sized, H = alloc::Heap>
     where H: Allocator,
 {
     count: AtomicUsize,
@@ -64,7 +65,7 @@ impl<T, H> Drop for ArcBuf<T, H>
 }
 
 /// An atomically reference-counted container.
-pub struct Arc<T, Heap = alloc::Heap>
+pub struct Arc<T: ?Sized, Heap = alloc::Heap>
     where Heap: Allocator,
           T: Leak,
 {
@@ -100,7 +101,7 @@ impl<T, H> Arc<T, H>
     }
 }
 
-impl<T, H> Arc<T, H>
+impl<T: ?Sized, H> Arc<T, H>
     where H: Allocator,
           T: Leak,
 {
@@ -122,6 +123,12 @@ impl<T, H> Arc<T, H>
         }
     }
 }
+
+impl<T: ?Sized, U: ?Sized, H> CoerceUnsized<Arc<U, H>> for Arc<T, H>
+    where T: Unsize<U> + Leak,
+          U: Leak,
+          H: Allocator,
+{}
 
 impl<'a, T, H> IntoIterator for &'a Arc<T, H>
     where &'a T: IntoIterator,
@@ -148,10 +155,10 @@ unsafe impl<T, H> UndefState for Arc<T, H>
     }
 }
 
-unsafe impl<T, H> Send for Arc<T, H> where T: Sync+Send+Leak, H: Send+Allocator { }
-unsafe impl<T, H> Sync for Arc<T, H> where T: Sync+Leak, H: Allocator { }
+unsafe impl<T: ?Sized, H> Send for Arc<T, H> where T: Sync+Send+Leak, H:Send+Allocator { }
+unsafe impl<T: ?Sized, H> Sync for Arc<T, H> where T: Sync+Leak, H: Allocator { }
 
-impl<T, H> Drop for Arc<T, H>
+impl<T: ?Sized, H> Drop for Arc<T, H>
     where H: Allocator,
           T: Leak,
 {
@@ -169,7 +176,7 @@ impl<T, H> Drop for Arc<T, H>
     }
 }
 
-impl<T, H> Deref for Arc<T, H>
+impl<T: ?Sized, H> Deref for Arc<T, H>
     where H: Allocator,
           T: Leak,
 {
@@ -180,7 +187,7 @@ impl<T, H> Deref for Arc<T, H>
     }
 }
 
-impl<T, H> Clone for Arc<T, H>
+impl<T: ?Sized, H> Clone for Arc<T, H>
     where H: Allocator,
           T: Leak,
 {
@@ -189,7 +196,7 @@ impl<T, H> Clone for Arc<T, H>
     }
 }
 
-impl<T, H> MaybeClone for Arc<T, H>
+impl<T: ?Sized, H> MaybeClone for Arc<T, H>
     where H: Allocator,
           T: Leak,
 {
@@ -198,7 +205,7 @@ impl<T, H> MaybeClone for Arc<T, H>
     }
 }
 
-impl<T, H> Debug for Arc<T, H>
+impl<T: ?Sized, H> Debug for Arc<T, H>
     where T: Debug + Leak,
           H: Allocator,
 {

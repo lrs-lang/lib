@@ -23,7 +23,7 @@ extern crate lrs_str_three as str_three;
 use base::prelude::*;
 use core::{mem};
 use base::undef::{UndefState};
-use fd::{FDContainer};
+use fd::{FdContainer};
 use file::flags::{FileFlags, Mode};
 use fmt::{Debug, Write};
 use cty::{mq_attr, NAME_MAX, c_int, c_uint, k_long};
@@ -273,13 +273,15 @@ impl Drop for MsgQueue {
     }
 }
 
-impl FDContainer for MsgQueue {
-    fn unwrap(self) -> c_int {
+impl Into<c_int> for MsgQueue {
+    fn into(self) -> c_int {
         let fd = self.fd;
         mem::forget(fd);
         fd
     }
+}
 
+impl FdContainer for MsgQueue {
     fn is_owned(&self) -> bool {
         self.owned
     }

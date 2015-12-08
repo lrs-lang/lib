@@ -43,8 +43,8 @@ let
                                   atomic],
         kernel = hobj "kernel" [core, base, atomic, cty, syscall, parse, arch_fns],
         lock = obj "lock" ([core, base, cell, io, fmt, atomic, cty] ++ hdep [syscall]),
-        rt = hobj "rt" ([core, base, str_one, libc, r_syscall, syscall, cty, atomic,
-                         lock] ++ cdep [libc]),
+        rt = hobj "rt" ([core, base, str_one, r_syscall, syscall, cty, atomic, lock]
+                            ++ cdep [libc]),
         clone = hobj "clone" ([core, base, cty, syscall, fmt, r_syscall] ++ cdep [libc]),
         fd = hobj "fd" [core, base, rv, io, cty, syscall, fmt],
         mem = hobj "mem" [core, base, cty, fmt, syscall, fd],

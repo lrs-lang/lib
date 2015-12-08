@@ -23,11 +23,11 @@ fn wrap() {
 }
 
 #[test]
-fn unwrap() {
+fn as_ptr() {
     let x = AtomicI32::new(2);
     unsafe {
-        test!(*x.unwrap() == 2);
-        *x.unwrap() = 3;
+        test!(*x.as_ptr() == 2);
+        *x.as_ptr() = 3;
     }
     test!(x.load() == 3);
 }

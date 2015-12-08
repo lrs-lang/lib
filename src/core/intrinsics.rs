@@ -111,6 +111,12 @@ extern "rust-intrinsic" {
     /// A pointer to the object whose destructor will be run.
     pub fn drop_in_place<T: ?Sized>(obj: *mut T);
 
+    /// Returns the size of a value.
+    pub fn size_of_val<T: ?Sized>(obj: &T) -> usize;
+
+    /// Returns the alignment of a vaule.
+    pub fn min_align_of_val<T: ?Sized>(obj: &T) -> usize;
+
     /// Calculates the alignment of a type.
     ///
     /// [return_value]
@@ -221,7 +227,7 @@ extern "rust-intrinsic" {
     ///
     /// [return_value]
     /// Return whether `T` has a destructor.
-    pub fn needs_drop<T>() -> bool;
+    pub fn needs_drop<T: ?Sized>() -> bool;
 
     /// Creates a pointer by calculating an offset from another one.
     ///

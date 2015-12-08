@@ -4,7 +4,7 @@
 
 //! Raw file descriptor handling.
 
-pub use lrs_fd::{STDIN, STDOUT, STDERR, FdIo, FDContainer};
+pub use lrs_fd::{STDIN, STDOUT, STDERR, FdIo, FdContainer};
 pub use lrs_fd::flags::{DescriptionFlags};
 
 /// File description flags.

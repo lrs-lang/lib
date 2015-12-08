@@ -12,6 +12,7 @@ use str_one::{NoNullStr, AsNoNullStr, AsMutNoNullStr, AsMutCStr, CStr, ToCStr};
 use vec::{Vec};
 use fmt::{Debug, Display, Write};
 use alloc::{self, Allocator};
+use {ByteString};
 
 /// An owned byte slice with no null bytes.
 pub struct NoNullString<Heap = alloc::Heap>
@@ -149,10 +150,21 @@ impl<H> NoNullString<H>
         try!(self.data.reserve(bytes.len()));
         self.data.push_all(bytes)
     }
+}
 
-    /// Unwraps the vector contained in the string.
-    pub fn unwrap(self) -> Vec<u8, H> {
+impl<H> Into<Vec<u8, H>> for NoNullString<H>
+    where H: Allocator, 
+{
+    fn into(self) -> Vec<u8, H> {
         self.data
+    }
+}
+
+impl<H> Into<ByteString<H>> for NoNullString<H>
+    where H: Allocator, 
+{
+    fn into(self) -> ByteString<H> {
+        ByteString::from_vec(self.into())
     }
 }
 

@@ -4,9 +4,8 @@
 
 // Eq implementations
 
-use core::marker::{Sized};
+use base::prelude::*;
 use core::ops::{Eq};
-use base::rmo::{AsRef};
 use byte_str::{ByteStr};
 use c_str::{CStr};
 use no_null_str::{NoNullStr};

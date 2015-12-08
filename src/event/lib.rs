@@ -20,7 +20,7 @@ use base::undef::{UndefState};
 use cty::{c_int};
 use syscall::{close, eventfd2};
 use core::{mem};
-use fd::{FDContainer};
+use fd::{FdContainer};
 use flags::{EventfdFlags};
 use io::{Read, Write};
 
@@ -124,13 +124,15 @@ impl Drop for Eventfd {
     }
 }
 
-impl FDContainer for Eventfd {
-    fn unwrap(self) -> c_int {
+impl Into<c_int> for Eventfd {
+    fn into(self) -> c_int {
         let fd = self.fd;
         mem::forget(fd);
         fd
     }
+}
 
+impl FdContainer for Eventfd {
     fn is_owned(&self) -> bool {
         self.owned
     }

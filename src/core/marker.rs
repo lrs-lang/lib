@@ -23,7 +23,9 @@ impl Sized for .. { }
 /// same reason `slice::from_ptr` is not safe. Note that only structs and primitives can
 /// be `Pod`.
 #[fundamental]
-pub trait Pod : Copy { }
+pub unsafe trait Pod : Copy {
+    fn _assert_pod() { }
+}
 
 /// Objects that can safely be copied via `memcpy`.
 ///

@@ -9,6 +9,7 @@ use base::default::{Default};
 use fmt::{Debug, Display, Write};
 use vec::{Vec};
 use alloc::{self, Allocator};
+use {ByteString};
 
 /// An owned UTF-8 string.
 pub struct String<Heap = alloc::Heap>
@@ -71,7 +72,6 @@ impl<H> String<H>
         self.data.shrink_to_fit()
     }
 
-
     pub fn push(&mut self, s: &str) -> Result {
         self.data.push_all(s.as_bytes())
     }
@@ -80,6 +80,22 @@ impl<H> String<H>
         let len = c.len();
         let bytes = c.to_utf8();
         self.data.push_all(&bytes[..len])
+    }
+}
+
+impl<H> Into<Vec<u8, H>> for String<H>
+    where H: Allocator, 
+{
+    fn into(self) -> Vec<u8, H> {
+        self.data
+    }
+}
+
+impl<H> Into<ByteString<H>> for String<H>
+    where H: Allocator, 
+{
+    fn into(self) -> ByteString<H> {
+        ByteString::from_vec(self.into())
     }
 }
 

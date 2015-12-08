@@ -13,7 +13,7 @@ pub unsafe fn start_thread(func: unsafe extern fn(*mut u8) -> !, arg: *mut u8,
                           tp: *mut u8, func: unsafe extern fn(*mut u8) -> !,
                           ctid: *mut c_int) -> c_long;
     }
-    __start_thread(flags, stack, 0 as *mut _, arg, tp, func, ctid.unwrap())
+    __start_thread(flags, stack, 0 as *mut _, arg, tp, func, ctid.as_ptr())
 }
 
 pub unsafe fn stop_thread(stack_base: *mut u8, stack_size: usize,

@@ -87,10 +87,7 @@ impl<'a> Write for &'a FdIo {
 }
 
 /// Objects that are file descriptor wrappers.
-pub trait FDContainer {
-    /// Consumes the object and returns the file descriptor without closing it.
-    fn unwrap(self) -> c_int;
-
+pub trait FdContainer: Into<c_int> {
     /// Returns whether the object owns the file descriptor, i.e., whether it closes it
     /// when it goes out of scope.
     fn is_owned(&self) -> bool;
@@ -128,7 +125,7 @@ pub trait FDContainer {
     /// = See also
     ///
     /// * link:man:fcntl(2) and the description of `F_GETFD` therein.
-    /// * link:lrs::fd::FDContainer::set_close_on_exec
+    /// * link:lrs::fd::FdContainer::set_close_on_exec
     fn is_close_on_exec(&self) -> Result<bool> {
         let ret = fcntl_getfd(self.borrow());
         if ret < 0 {
@@ -164,7 +161,7 @@ pub trait FDContainer {
     /// = See also
     ///
     /// * link:man:fcntl(2) and the description of `F_GETFL` therein.
-    /// * link:lrs::fd::FDContainer::set_description_flags
+    /// * link:lrs::fd::FdContainer::set_description_flags
     fn description_flags(&self) -> Result<DescriptionFlags> {
         let ret = fcntl_getfl(self.borrow());
         if ret < 0 {
@@ -182,7 +179,7 @@ pub trait FDContainer {
     /// = See also
     ///
     /// * link:man:fcntl(2) and the description of `F_SETFL` therein.
-    /// * link:lrs::fd::FDContainer::description_flags
+    /// * link:lrs::fd::FdContainer::description_flags
     fn set_description_flags(&self, flags: DescriptionFlags) -> Result {
         let ret = fcntl_setfl(self.borrow(), flags.0);
         rv!(ret)
@@ -196,7 +193,7 @@ pub trait FDContainer {
     ///
     /// = See also
     ///
-    /// * link:lrs::fd::FDContainer::duplicate_min
+    /// * link:lrs::fd::FdContainer::duplicate_min
     fn duplicate(&self) -> Result<Self>
         where Self: Sized
     {
@@ -214,7 +211,7 @@ pub trait FDContainer {
     ///
     /// = See also
     ///
-    /// * link:lrs::fd::FDContainer::duplicate
+    /// * link:lrs::fd::FdContainer::duplicate
     /// * link:man:fcntl(2) and F_DUPFD_CLOEXEC therein
     fn duplicate_min(&self, min: c_int) -> Result<Self>
         where Self: Sized
@@ -245,16 +242,20 @@ pub trait FDContainer {
     }
 }
 
-impl FDContainer for FdIo {
-    fn unwrap(self) -> c_int { self.0 }
+impl Into<c_int> for FdIo {
+    fn into(self) -> c_int {
+        self.0
+    }
+}
+
+impl FdContainer for FdIo {
     fn is_owned(&self) -> bool { false }
     fn borrow(&self) -> c_int { self.0 }
     fn from_owned(fd: c_int) -> FdIo { FdIo(fd) }
     fn from_borrowed(fd: c_int) -> FdIo { FdIo(fd) }
 }
 
-impl FDContainer for c_int {
-    fn unwrap(self) -> c_int { self }
+impl FdContainer for c_int {
     fn is_owned(&self) -> bool { false }
     fn borrow(&self) -> c_int { *self }
     fn from_owned(fd: c_int) -> c_int { fd }

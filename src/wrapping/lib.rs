@@ -447,7 +447,7 @@ macro_rules! wint_impls {
             fn shr(self, other: usize) -> $t { $t(self.0 >> other) }
         }
 
-        impl Pod for $t { }
+        unsafe impl Pod for $t { }
 
         impl Copy for $t { }
 

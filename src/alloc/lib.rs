@@ -298,10 +298,10 @@ pub trait Allocator: Leak {
     ///
     /// After this function returns the pointer argument becomes invalid and must no
     /// longer be used.
-    unsafe fn free<T>(pool: &mut Self::Pool, ptr: *mut T) {
-        if mem::size_of::<T>() != 0 {
-            Self::free_raw(pool, ptr as *mut u8, mem::size_of::<T>(),
-                           mem::align_of::<T>());
+    unsafe fn free<T: ?Sized>(pool: &mut Self::Pool, ptr: *mut T) {
+        let size = mem::size_of_val(&*ptr);
+        if size != 0 {
+            Self::free_raw(pool, ptr as *mut u8, size, mem::align_of_val(&*ptr));
         }
     }
 }
