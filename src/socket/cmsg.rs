@@ -6,7 +6,6 @@ use base::prelude::*;
 use base::{error};
 use core::{mem, slice, ptr};
 use core::ptr::{OwnedPtr};
-use base::default::{Default};
 use cty::{
     cmsghdr, c_int, SCM_RIGHTS, SCM_CREDENTIALS, SOL_SOCKET, user_size_t,
     SO_TIMESTAMPNS, timespec, IPPROTO_IP, IP_OPTIONS,
@@ -15,7 +14,7 @@ use cty::alias::{ProcessId, UserId, GroupId};
 use io::{BufRead};
 use fmt::{Debug, Write};
 use time_base::{self, Time};
-use alloc::{self, NoMem, Allocator};
+use alloc::{self, NoMem, MemPool};
 
 const PTR_MASK: usize = usize::bytes() - 1;
 
@@ -150,12 +149,12 @@ impl<'a> Debug for CMsg<'a> {
 
 /// A buffer for creating control messages.
 pub struct CMsgBuf<Heap = alloc::Heap>
-    where Heap: Allocator,
+    where Heap: MemPool,
 {
     data: OwnedPtr<u8>,
     len: usize,
     cap: usize,
-    pool: Heap::Pool,
+    pool: Heap,
 }
 
 impl<'a> CMsgBuf<NoMem<'a>> {
@@ -168,14 +167,13 @@ impl<'a> CMsgBuf<NoMem<'a>> {
             data: unsafe { OwnedPtr::new(buf.as_mut_ptr() as *mut u8) },
             len: 0,
             cap: buf.len() * 8,
-            pool: (),
+            pool: NoMem::default(),
         }
     }
 }
 
 impl<H> CMsgBuf<H>
-    where H: Allocator,
-          H::Pool: Default,
+    where H: MemPool+Default,
 {
     /// Creates a new `CMsgBuf` backed by allocated memory.
     ///
@@ -187,8 +185,8 @@ impl<H> CMsgBuf<H>
     /// The buffer will be resized dynamically. This constructor fails if no memory can be
     /// allocated.
     pub fn new() -> Result<CMsgBuf<H>> {
-        let mut pool = H::Pool::default();
-        let ptr: *mut usize = unsafe { try!(H::allocate_array(&mut pool, 1)) };
+        let mut pool = H::default();
+        let ptr: *mut usize = unsafe { try!(alloc::alloc_array(&mut pool, 1)) };
         Ok(CMsgBuf {
             data: unsafe { OwnedPtr::new(ptr as *mut u8) },
             len: 0,
@@ -199,7 +197,7 @@ impl<H> CMsgBuf<H>
 }
 
 impl<H> CMsgBuf<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     /// Returns the size currently occupied by the create messages.
     pub fn len(&self) -> usize {
@@ -211,8 +209,8 @@ impl<H> CMsgBuf<H>
             let cap = self.cap / usize::bytes();
             let new_cap = pad_ptr!(self.cap * 2 + n) / usize::bytes();
             let ptr = unsafe {
-                try!(H::reallocate_array(&mut self.pool, *self.data as *mut usize, cap,
-                                        new_cap))
+                try!(alloc::realloc_array(&mut self.pool, *self.data as *mut usize, cap,
+                                          new_cap))
             };
             self.data = unsafe { OwnedPtr::new(ptr as *mut u8) };
             self.cap = new_cap * usize::bytes();
@@ -258,18 +256,18 @@ impl<H> CMsgBuf<H>
 }
 
 impl<H> Drop for CMsgBuf<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn drop(&mut self) {
         unsafe {
-            H::free_array(&mut self.pool, *self.data as *mut usize,
-                          self.cap / usize::bytes());
+            alloc::free_array(&mut self.pool, *self.data as *mut usize,
+                              self.cap / usize::bytes());
         }
     }
 }
 
 impl<H> AsRef<[u8]> for CMsgBuf<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn as_ref(&self) -> &[u8] {
         unsafe { slice::from_ptr(*self.data, self.len) }

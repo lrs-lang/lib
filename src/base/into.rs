@@ -80,30 +80,3 @@ as_into!(i32 as isize);
 
 // NOTE: No u64->usize on 64-bit because we want the definitions to exist on all
 // platforms.
-
-macro_rules! zero {
-    ($ty:ty) => {
-        impl Into<$ty> for () {
-            fn into(self) -> $ty {
-                0
-            }
-        }
-    }
-}
-
-zero!(u8    );
-zero!(u16   );
-zero!(u32   );
-zero!(u64   );
-zero!(usize );
-zero!(i8    );
-zero!(i16   );
-zero!(i32   );
-zero!(i64   );
-zero!(isize );
-
-impl<T> Into<Option<T>> for () {
-    fn into(self) -> Option<T> {
-        None
-    }
-}

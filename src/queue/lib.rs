@@ -18,8 +18,7 @@ extern crate lrs_alloc as alloc;
 use base::prelude::*;
 use core::ptr::{OwnedPtr};
 use base::{error};
-use base::default::{Default};
-use alloc::{Allocator, empty_ptr};
+use alloc::{MemPool, empty_ptr};
 use arch_fns::{spin};
 use atomic::{AtomicUsize};
 use cell::cell::{Cell};
@@ -34,7 +33,7 @@ pub mod std { pub use base::std::*; }
 ///
 /// This queue can be used for sending messages between threads.
 pub struct Queue<T, Heap = alloc::Heap>
-    where Heap: Allocator,
+    where Heap: MemPool,
 {
     // The buffer we store the massages in.
     buf: OwnedPtr<Cell<T>>,
@@ -65,12 +64,11 @@ pub struct Queue<T, Heap = alloc::Heap>
     // Mutex that protects the two atomic variables above.
     sleep_lock: Lock,
 
-    pool: Heap::Pool,
+    pool: Heap,
 }
 
 impl<T, H> Queue<T, H>
-    where H: Allocator,
-          H::Pool: Default,
+    where H: MemPool+Default,
 {
     /// Creates a new queue with allocated memory.
     ///
@@ -85,10 +83,10 @@ impl<T, H> Queue<T, H>
             Some(c) => c,
             _ => return Err(error::NoMemory),
         };
-        let mut pool = H::Pool::default();
+        let mut pool = H::default();
         let buf = match mem::size_of::<T>() {
             0 => empty_ptr(),
-            _ => unsafe { try!(H::allocate_array(&mut pool, cap)) },
+            _ => unsafe { try!(alloc::alloc_array(&mut pool, cap)) },
         };
         Ok(Queue {
             buf: unsafe { OwnedPtr::new(buf) },
@@ -114,7 +112,7 @@ impl<T, H> Queue<T, H>
 }
 
 impl<T, H> Queue<T, H>
-    where H: Allocator,
+    where H: MemPool,
 {
     /// Get a position to write to if the queue isn't full
     fn get_write_pos(&self) -> Option<usize> {
@@ -302,11 +300,11 @@ impl<T, H> Queue<T, H>
     }
 }
 
-unsafe impl<T, H> Send for Queue<T, H> where T: Send, H: Allocator+Send { }
-unsafe impl<T, H> Sync for Queue<T, H> where T: Send, H: Allocator { }
+unsafe impl<T, H> Send for Queue<T, H> where T: Send, H: MemPool+Send { }
+unsafe impl<T, H> Sync for Queue<T, H> where T: Send, H: MemPool { }
 
 impl<T, H> Drop for Queue<T, H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn drop(&mut self) {
         unsafe {
@@ -319,7 +317,7 @@ impl<T, H> Drop for Queue<T, H>
             }
 
             if mem::size_of::<T>() > 0 {
-                H::free_array(&mut self.pool, *self.buf, self.cap_mask + 1);
+                alloc::free_array(&mut self.pool, *self.buf, self.cap_mask + 1);
             }
         }
     }

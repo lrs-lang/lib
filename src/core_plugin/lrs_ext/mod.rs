@@ -1,8 +1,8 @@
-pub use self::clone::{
-    derive_clone, derive_maybe_clone, derive_clone_for_copy, derive_copy_clone_for,
+pub use self::to::{
+    derive_to, derive_try_to, derive_to_for_copy, derive_copy_to_for,
 };
 pub use self::eq::{derive_eq};
-pub use self::copy::{derive_copy, derive_copy_and_clone, derive_pod_copy_and_clone};
+pub use self::copy::{derive_copy, derive_copy_and_to, derive_pod_copy_and_to};
 pub use self::format::{expand_format_args};
 pub use self::debug::{derive_debug};
 
@@ -40,7 +40,7 @@ macro_rules! path_std {
     )
 }
 
-mod clone;
+mod to;
 mod eq;
 mod copy;
 mod format;

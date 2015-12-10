@@ -19,24 +19,22 @@ use base::prelude::*;
 use core::{mem, ptr};
 use core::ptr::{OwnedPtr};
 use wrapping::{Wsize};
-use base::clone::{MaybeClone};
 use base::undef::{UndefState};
 use base::{error};
-use base::default::{Default};
 use core::ops::{Eq, Index, IndexMut};
 use core::iter::{IntoIterator};
 use fmt::{Debug, Write};
-use alloc::{Allocator, empty_ptr};
+use alloc::{MemPool, empty_ptr};
 
 /// A resizable ring buffer.
 pub struct DynRingBuf<T, Heap = alloc::Heap>
-    where Heap: Allocator,
+    where Heap: MemPool,
 {
     ptr: OwnedPtr<T>,
     left: Wsize,
     right: Wsize,
     cap: usize,
-    pool: Heap::Pool,
+    pool: Heap,
 }
 
 impl<'a, T> DynRingBuf<T, alloc::NoMem<'a>> {
@@ -51,7 +49,7 @@ impl<'a, T> DynRingBuf<T, alloc::NoMem<'a>> {
                 left: Wsize(0),
                 right: Wsize(0),
                 cap: 0,
-                pool: (),
+                pool: alloc::NoMem::default(),
             };
         }
 
@@ -70,32 +68,32 @@ impl<'a, T> DynRingBuf<T, alloc::NoMem<'a>> {
             left: Wsize(0),
             right: Wsize(0),
             cap: cap,
-            pool: (),
+            pool: alloc::NoMem::default(),
         }
     }
 }
 
 impl<T, H> DynRingBuf<T, H>
-    where H: Allocator,
+    where H: MemPool,
 {
     /// Creates a new ring buffer.
     pub fn new() -> Self
-        where H::Pool: Default,
+        where H: Default,
     {
         DynRingBuf {
             ptr: unsafe { OwnedPtr::new(empty_ptr()) },
             left: Wsize(0),
             right: Wsize(0),
             cap: if mem::size_of::<T>() == 0 { !0 >> 1 } else { 0 },
-            pool: H::Pool::default(),
+            pool: H::default(),
         }
     }
 
     /// Creates a new ring buffer and reserves a certain amount of space for it.
     pub fn with_capacity(mut cap: usize) -> Result<Self>
-        where H::Pool: Default,
+        where H: Default,
     {
-        let mut pool = H::Pool::default();
+        let mut pool = H::default();
         let size = mem::size_of::<T>();
         if cap == 0 || size == 0 {
             return Ok(DynRingBuf {
@@ -107,7 +105,7 @@ impl<T, H> DynRingBuf<T, H>
             });
         }
         cap = cap.checked_next_power_of_two().unwrap_or(!0);
-        let ptr = unsafe { OwnedPtr::new(try!(H::allocate_array(&mut pool, cap))) };
+        let ptr = unsafe { OwnedPtr::new(try!(alloc::alloc_array(&mut pool, cap))) };
         Ok(DynRingBuf {
             ptr: ptr,
             left: Wsize(0),
@@ -121,7 +119,7 @@ impl<T, H> DynRingBuf<T, H>
     ///
     /// [argument, pool]
     /// The pool to draw memory from.
-    pub fn with_pool(pool: H::Pool) -> Self {
+    pub fn with_pool(pool: H) -> Self {
         DynRingBuf {
             ptr: unsafe { OwnedPtr::new(empty_ptr()) },
             left: Wsize(0),
@@ -169,9 +167,9 @@ impl<T, H> DynRingBuf<T, H>
                                 .checked_next_power_of_two().unwrap_or(!0);
 
         let ptr = if *self.ptr == empty_ptr() {
-            unsafe { H::allocate_array(&mut self.pool, new_cap) }
+            unsafe { alloc::alloc_array(&mut self.pool, new_cap) }
         } else {
-            unsafe { H::reallocate_array(&mut self.pool, *self.ptr, self.cap, new_cap) }
+            unsafe { alloc::realloc_array(&mut self.pool, *self.ptr, self.cap, new_cap) }
         };
         self.ptr = unsafe { OwnedPtr::new(try!(ptr)) };
 
@@ -300,7 +298,7 @@ impl<T, H> DynRingBuf<T, H>
 }
 
 impl<'a, T: 'a, H> IntoIterator for &'a DynRingBuf<T, H>
-    where H: Allocator,
+    where H: MemPool,
 {
     type Item = &'a T;
     type IntoIter = RingBufIter<'a, T>;
@@ -308,7 +306,7 @@ impl<'a, T: 'a, H> IntoIterator for &'a DynRingBuf<T, H>
 }
 
 unsafe impl<T, H> UndefState for DynRingBuf<T, H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn num() -> usize { <OwnedPtr<T> as UndefState>::num() }
 
@@ -321,24 +319,24 @@ unsafe impl<T, H> UndefState for DynRingBuf<T, H>
     }
 }
 
-unsafe impl<T, H> Sync for DynRingBuf<T, H> where T: Sync, H: Allocator, { }
-unsafe impl<T, H> Send for DynRingBuf<T, H> where T: Send, H: Allocator+Send { }
+unsafe impl<T, H> Sync for DynRingBuf<T, H> where T: Sync, H: MemPool, { }
+unsafe impl<T, H> Send for DynRingBuf<T, H> where T: Send, H: MemPool+Send { }
 
 impl<T, H> Drop for DynRingBuf<T, H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn drop(&mut self) {
         self.clear();
         unsafe {
             if *self.ptr != empty_ptr() {
-                H::free_array(&mut self.pool, *self.ptr, self.cap);
+                alloc::free_array(&mut self.pool, *self.ptr, self.cap);
             }
         }
     }
 }
 
 impl<T, H> Index<usize> for DynRingBuf<T, H>
-    where H: Allocator,
+    where H: MemPool,
 {
     type Output = T;
     fn index(&self, idx: usize) -> &T {
@@ -349,7 +347,7 @@ impl<T, H> Index<usize> for DynRingBuf<T, H>
 }
 
 impl<T, H> IndexMut<usize> for DynRingBuf<T, H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn index_mut(&mut self, idx: usize) -> &mut T {
         assert!(idx < self.len());
@@ -360,8 +358,8 @@ impl<T, H> IndexMut<usize> for DynRingBuf<T, H>
 
 impl<T, H1, H2> Eq<DynRingBuf<T, H1>> for DynRingBuf<T, H2>
     where T: Eq,
-          H1: Allocator,
-          H2: Allocator,
+          H1: MemPool,
+          H2: MemPool,
 {
     fn eq(&self, other: &DynRingBuf<T, H1>) -> bool {
         if self.ptr == other.ptr {
@@ -385,7 +383,7 @@ impl<T, H1, H2> Eq<DynRingBuf<T, H1>> for DynRingBuf<T, H2>
 
 impl<T, H> Eq<[T]> for DynRingBuf<T, H>
     where T: Eq,
-          H: Allocator,
+          H: MemPool,
 {
     fn eq(&self, other: &[T]) -> bool {
         if self.len() != other.len() {
@@ -406,7 +404,7 @@ impl<T, H> Eq<[T]> for DynRingBuf<T, H>
 
 impl<T, H> Debug for DynRingBuf<T, H>
     where T: Debug,
-          H: Allocator,
+          H: MemPool,
 {
     fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
         try!(write!(w, "["));
@@ -423,15 +421,15 @@ impl<T, H> Debug for DynRingBuf<T, H>
     }
 }
 
-impl<T, H> MaybeClone for DynRingBuf<T, H>
-    where T: MaybeClone,
-          H: Allocator,
-          H::Pool: Default,
+impl<T, H1, H2> TryTo<DynRingBuf<T, H2>> for DynRingBuf<T, H1>
+    where T: TryTo,
+          H1: MemPool,
+          H2: MemPool+Default,
 {
-    fn maybe_clone(&self) -> Result<DynRingBuf<T, H>> {
+    fn try_to(&self) -> Result<DynRingBuf<T, H2>> {
         let mut vec = try!(DynRingBuf::with_capacity(self.len()));
         for i in 0..self.len() {
-            vec.push_right(try!(self[i].maybe_clone()));
+            vec.push_right(try!(self[i].try_to()));
         }
         Ok(vec)
     }

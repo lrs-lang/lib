@@ -8,7 +8,7 @@ use syscall::{mmap, munmap, mremap};
 use cty::{
     MAP_ANONYMOUS, PROT_READ, PROT_WRITE, MAP_PRIVATE, c_int, MREMAP_MAYMOVE,
 };
-use {Allocator, MAX_SIZE};
+use {MemPool, MAX_SIZE};
 
 /// The brain-dead allocator
 ///
@@ -22,13 +22,17 @@ use {Allocator, MAX_SIZE};
 /// = See also
 ///
 /// * {mmap}
+#[derive(Copy)]
 pub struct Bda;
 
-impl Allocator for Bda {
-    type Pool = ();
+impl Default for Bda {
+    fn default() -> Bda {
+        Bda
+    }
+}
 
-    unsafe fn allocate_raw(_: &mut (), size: usize,
-                           alignment: usize) -> Result<*mut u8> {
+impl MemPool for Bda {
+    unsafe fn alloc(&mut self, size: usize, alignment: usize) -> Result<*mut u8> {
         let _ = alignment;
         if size > MAX_SIZE {
             return Err(error::InvalidArgument);
@@ -42,13 +46,13 @@ impl Allocator for Bda {
         }
     }
 
-    unsafe fn free_raw(_: &mut (), ptr: *mut u8, size: usize, alignment: usize) {
+    unsafe fn free(&mut self, ptr: *mut u8, size: usize, alignment: usize) {
         let _ = alignment;
         munmap(ptr as usize, size);
     }
 
-    unsafe fn reallocate_raw(_: &mut (), old_ptr: *mut u8, oldsize: usize, newsize: usize,
-                             alignment: usize) -> Result<*mut u8> {
+    unsafe fn realloc(&mut self, old_ptr: *mut u8, oldsize: usize, newsize: usize,
+                      alignment: usize) -> Result<*mut u8> {
         let _ = alignment;
         if newsize > MAX_SIZE {
             return Err(error::InvalidArgument);

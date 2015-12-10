@@ -6,13 +6,13 @@ use base::prelude::*;
 use str_one::byte_str::{ByteStr};
 use str_two::byte_string::{ByteString};
 use {ToOwned};
-use alloc::{Allocator};
+use alloc::{MemPool};
 
 impl<H> ToOwned<H> for ByteStr
-    where H: Allocator,
+    where H: MemPool,
 {
     type Owned = ByteString<H>;
-    fn to_owned_with_pool(&self, pool: H::Pool) -> Result<ByteString<H>> {
+    fn to_owned_with_pool(&self, pool: H) -> Result<ByteString<H>> {
         self.as_ref().to_owned_with_pool(pool).map(|o| ByteString::from_vec(o))
     }
 }

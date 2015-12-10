@@ -7,8 +7,6 @@ use core::{mem, ptr, slice};
 use core::ptr::{OwnedPtr};
 use core::ops::{Eq};
 use core::iter::{IntoIterator};
-use base::clone::{Clone, MaybeClone};
-use base::default::{Default};
 use hash::{self, Hash};
 use alloc::{self};
 use bucket::{self, SetBucket, MutSetBucket};
@@ -25,11 +23,11 @@ const DEFAULT_CAPACITY: usize = 8;
 
 /// A generic hash map that uses open addressing and quadratic probing.
 pub struct GenericMap<Key, Value, Bucket, Hasher = hash::xx_hash::XxHash32, Seed = (),
-                      Allocator = alloc::Heap>
-    where Allocator: alloc::Allocator,
+                      Allocator: ?Sized = alloc::Heap>
+    where Allocator: alloc::MemPool,
           Bucket: bucket::Bucket<Key, Value>,
           Hasher: hash::Hasher,
-          Seed: Into<Hasher::Seed>+Clone,
+          Seed: To<Hasher::Seed>,
           Key: Eq + Hash,
 {
     table: OwnedPtr<Bucket>,
@@ -37,26 +35,26 @@ pub struct GenericMap<Key, Value, Bucket, Hasher = hash::xx_hash::XxHash32, Seed
     buckets: usize,
     elements: usize,
     deleted: usize,
-    pool: Allocator::Pool,
     seed: Seed,
     _marker: PhantomData<(Key, Value, Hasher)>,
+    pool: Allocator,
 }
 
-impl<Key, Value, Bucket, Hasher, Seed, Allocator>
-    MaybeClone for GenericMap<Key, Value, Bucket, Hasher, Seed, Allocator>
-    where Allocator: alloc::Allocator,
-          Allocator::Pool: Default,
-          Bucket: bucket::Bucket<Key, Value>,
-          Hasher: hash::Hasher,
-          Seed: Into<Hasher::Seed>+Clone,
-          Key: Eq + Hash + MaybeClone,
-          Value: MaybeClone,
+impl<K, V, B, H, S, A1: ?Sized, A2>
+    TryTo<GenericMap<K, V, B, H, S, A2>> for GenericMap<K, V, B, H, S, A1>
+    where A1: alloc::MemPool,
+          A2: alloc::MemPool+Default,
+          B: bucket::Bucket<K, V>,
+          H: hash::Hasher,
+          S: To<H::Seed>+To,
+          K: Eq + Hash + TryTo,
+          V: TryTo,
 {
-    fn maybe_clone(&self) -> Result<Self> {
-        let mut new = try!(GenericMap::details(self.size(), self.seed.clone(),
-                                               Allocator::Pool::default()));
+    fn try_to(&self) -> Result<GenericMap<K, V, B, H, S, A2>> {
+        let mut new = try!(GenericMap::details(self.size(), self.seed.to(),
+                                               A2::default()));
         for (key, val) in self {
-            new.set(try!(key.maybe_clone()), try!(val.maybe_clone()));
+            new.set(try!(key.try_to()), try!(val.try_to()));
         }
         Ok(new)
     }
@@ -64,32 +62,28 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator>
 
 impl<Key, Value, Bucket, Hasher, Allocator>
     GenericMap<Key, Value, Bucket, Hasher, (), Allocator>
-    where Allocator: alloc::Allocator,
+    where Allocator: alloc::MemPool + Default,
           Bucket: bucket::Bucket<Key, Value>,
           Hasher: hash::Hasher,
-          (): Into<Hasher::Seed>,
+          (): To<Hasher::Seed>,
           Key: Eq + Hash,
 {
     /// Creates a new map with the default parameters.
-    pub fn new() -> Result<Self>
-        where Allocator::Pool: Default,
-    {
-        Self::details(DEFAULT_CAPACITY, (), Allocator::Pool::default())
+    pub fn new() -> Result<Self> {
+        Self::details(DEFAULT_CAPACITY, (), Allocator::default())
     }
 
-    pub fn with_capacity(cap: usize) -> Result<Self>
-        where Allocator::Pool: Default,
-    {
-        Self::details(cap, (), Allocator::Pool::default())
+    pub fn with_capacity(cap: usize) -> Result<Self> {
+        Self::details(cap, (), Allocator::default())
     }
 }
 
 impl<Key, Value, Bucket, Hasher, Seed, Allocator>
     GenericMap<Key, Value, Bucket, Hasher, Seed, Allocator>
-    where Allocator: alloc::Allocator,
+    where Allocator: alloc::MemPool,
           Bucket: bucket::Bucket<Key, Value>,
           Hasher: hash::Hasher,
-          Seed: Into<Hasher::Seed>+Clone,
+          Seed: To<Hasher::Seed>,
           Key: Eq + Hash,
 {
     /// Creates a new map.
@@ -103,13 +97,13 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator>
     /// [argument, pool]
     /// The memory pool which will be used for allocations.
     pub fn details(capacity: usize, seed: Seed,
-                   mut pool: Allocator::Pool) -> Result<Self> {
+                   mut pool: Allocator) -> Result<Self> {
         let buckets = capacity
                            .checked_next_power_of_two().unwrap_or(!0)
                            .checked_mul(2).unwrap_or(!0);
 
         let table = unsafe {
-            let table: *mut Bucket = try!(Allocator::allocate_array(&mut pool, buckets));
+            let table: *mut Bucket = try!(alloc::alloc_array(&mut pool, buckets));
             for i in 0..buckets {
                 (&mut *table.add(i)).set_empty();
             }
@@ -127,7 +121,16 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator>
         };
         Ok(map)
     }
+}
 
+impl<Key, Value, Bucket, Hasher, Seed, Allocator: ?Sized>
+    GenericMap<Key, Value, Bucket, Hasher, Seed, Allocator>
+    where Allocator: alloc::MemPool,
+          Bucket: bucket::Bucket<Key, Value>,
+          Hasher: hash::Hasher,
+          Seed: To<Hasher::Seed>,
+          Key: Eq + Hash,
+{
     /// Searches for a key in the table.
     ///
     /// [argument, key]
@@ -164,7 +167,7 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator>
         where Q: Hash,
               Key: Eq<Q>,
     {
-        let hash = Hasher::hash(key, self.seed.clone()).into() as usize;
+        let hash = Hasher::hash(key, self.seed.to()).into() as usize;
         self.search2(key, hash, true)
     }
 
@@ -329,7 +332,7 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator>
         where Q: Hash,
               Key: Eq<Q>,
     {
-        let hash = Hasher::hash(key, self.seed.clone()).into() as usize;
+        let hash = Hasher::hash(key, self.seed.to()).into() as usize;
 
         let (kind, bucket) = unsafe { self.search2(key, hash, true) };
 
@@ -394,14 +397,14 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator>
                                     .checked_mul(2).unwrap_or(!0);
 
         unsafe {
-            let new_table = try!(Allocator::allocate_array(&mut self.pool, new_buckets));
+            let new_table = try!(alloc::alloc_array(&mut self.pool, new_buckets));
             self.copy_table(new_table, new_buckets);
 
             let old_table = mem::replace(&mut self.table, OwnedPtr::new(new_table));
             let old_buckets = mem::replace(&mut self.buckets, new_buckets);
             self.elements -= self.deleted;
             self.deleted = 0;
-            Allocator::free_array(&mut self.pool, *old_table, old_buckets);
+            alloc::free_array(&mut self.pool, *old_table, old_buckets);
         }
 
         Ok(true)
@@ -442,7 +445,7 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator>
             if bucket.is_set() {
                 // Find an empty bucket in the new array.
                 let mut new_pos = Hasher::hash(bucket.key(),
-                                               self.seed.clone()).into() as usize
+                                               self.seed.to()).into() as usize
                                                             & (new_buckets - 1);
                 let mut i = 1;
                 loop {
@@ -605,12 +608,12 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator>
     }
 }
 
-impl<Key, Value, Bucket, Hasher, Seed, Allocator>
+impl<Key, Value, Bucket, Hasher, Seed, Allocator: ?Sized>
     Drop for GenericMap<Key, Value, Bucket, Hasher, Seed, Allocator>
-    where Allocator: alloc::Allocator,
+    where Allocator: alloc::MemPool,
           Bucket: bucket::Bucket<Key, Value>,
           Hasher: hash::Hasher,
-          Seed: Into<Hasher::Seed>+Clone,
+          Seed: To<Hasher::Seed>,
           Key: Eq + Hash,
 {
     fn drop(&mut self) {
@@ -626,17 +629,17 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator>
                 bucket = bucket.add(1);
             }
 
-            Allocator::free_array(&mut self.pool, *self.table, self.buckets);
+            alloc::free_array(&mut self.pool, *self.table, self.buckets);
         }
     }
 }
 
-impl<'a, Key: 'a, Value: 'a, Bucket, Hasher, Seed, Allocator>
+impl<'a, Key: 'a, Value: 'a, Bucket, Hasher, Seed, Allocator: ?Sized>
     IntoIterator for &'a GenericMap<Key, Value, Bucket, Hasher, Seed, Allocator>
-    where Allocator: alloc::Allocator,
+    where Allocator: alloc::MemPool,
           Bucket: bucket::Bucket<Key, Value>,
           Hasher: hash::Hasher,
-          Seed: Into<Hasher::Seed>+Clone,
+          Seed: To<Hasher::Seed>,
           Key: Eq + Hash,
 {
     type Item = (&'a Key, &'a Value);
@@ -676,12 +679,12 @@ impl<'a, Key: 'a, Value: 'a, Bucket> Iterator for MapIter<'a, Key, Value, Bucket
     }
 }
 
-impl<Key, Value, Bucket, Hasher, Seed, Allocator>
+impl<Key, Value, Bucket, Hasher, Seed, Allocator: ?Sized>
     Debug for GenericMap<Key, Value, Bucket, Hasher, Seed, Allocator>
-    where Allocator: alloc::Allocator,
+    where Allocator: alloc::MemPool,
           Bucket: bucket::Bucket<Key, Value>,
           Hasher: hash::Hasher,
-          Seed: Into<Hasher::Seed>+Clone,
+          Seed: To<Hasher::Seed>,
           Key: Eq + Hash + Debug,
           Value: Debug,
 {

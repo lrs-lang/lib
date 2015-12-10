@@ -2,25 +2,25 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::alloc::{NoMem, Allocator};
+use std::alloc::{self, NoMem, MemPool};
 
 #[test]
 fn allocate_raw() {
     unsafe {
-        test!(NoMem::allocate_raw(&mut (), 1, 1).is_err());
+        test!(NoMem::default().alloc(1, 1).is_err());
     }
 }
 
 #[test]
 fn allocate() {
     unsafe {
-        test!(NoMem::allocate::<u8>(&mut ()).is_err());
+        test!(alloc::alloc::<u8, _>(&mut NoMem::default()).is_err());
     }
 }
 
 #[test]
 fn allocate_array() {
     unsafe {
-        test!(NoMem::allocate_array::<u8>(&mut (), 1).is_err());
+        test!(alloc::alloc_array::<u8, _>(&mut NoMem::default(), 1).is_err());
     }
 }

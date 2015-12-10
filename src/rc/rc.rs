@@ -8,31 +8,29 @@ use core::iter::{IntoIterator};
 use core::marker::{Leak, Unsize};
 use core::ops::{CoerceUnsized};
 use core::{mem, ptr, intrinsics};
-use base::clone::{Clone};
-use base::default::{Default};
 use base::undef::{UndefState};
 use cell::{Cell};
 use fmt::{Debug, Write};
-use alloc::{self, Allocator};
+use alloc::{self, MemPool};
 
 struct Inner<T: ?Sized, H = alloc::Heap>
-    where H: Allocator,
+    where H: MemPool,
 {
     count: Cell<usize>,
-    pool: H::Pool,
+    pool: H,
     val: T,
 }
 
 /// A buffer used when creating a new `Rc`.
 pub struct RcBuf<T, Heap = alloc::Heap>
-    where Heap: Allocator,
+    where Heap: MemPool,
           T: Leak,
 {
     data: OwnedPtr<Inner<T, Heap>>,
 }
 
 impl<T, H> RcBuf<T, H>
-    where H: Allocator,
+    where H: MemPool,
           T: Leak,
 {
     /// Stores a value in the buffer, creating a real `Rc`.
@@ -49,32 +47,31 @@ impl<T, H> RcBuf<T, H>
     }
 }
 
-unsafe impl<T, H> Send for RcBuf<T, H> where T: Leak, H: Send+Allocator { }
-unsafe impl<T, H> Sync for RcBuf<T, H> where T: Leak, H: Allocator { }
+unsafe impl<T, H> Send for RcBuf<T, H> where T: Leak, H: Send+MemPool { }
+unsafe impl<T, H> Sync for RcBuf<T, H> where T: Leak, H: MemPool { }
 
 impl<T, H> Drop for RcBuf<T, H>
-    where H: Allocator,
+    where H: MemPool,
           T: Leak,
 {
     fn drop(&mut self) {
         unsafe {
             let mut pool = ptr::read(&(**self.data).pool);
-            H::free(&mut pool, *self.data);
+            alloc::free(&mut pool, *self.data);
         }
     }
 }
 
 /// A single-threaded reference-counted container.
 pub struct Rc<T: ?Sized, Heap = alloc::Heap>
-    where Heap: Allocator,
+    where Heap: MemPool,
           T: Leak,
 {
     data: OwnedPtr<Inner<T, Heap>>,
 }
 
 impl<T, H> Rc<T, H>
-    where H: Allocator,
-          H::Pool: Default,
+    where H: MemPool+Default,
           T: Leak,
 {
     /// Creates a new Rc.
@@ -92,8 +89,8 @@ impl<T, H> Rc<T, H>
     /// ----
     pub fn new() -> Result<RcBuf<T, H>> {
         unsafe {
-            let mut pool = H::Pool::default();
-            let data_ptr = try!(H::allocate::<Inner<T, H>>(&mut pool));
+            let mut pool = H::default();
+            let data_ptr = try!(alloc::alloc::<Inner<T, H>, _>(&mut pool));
             ptr::write(&mut (*data_ptr).pool, pool);
             (*data_ptr).count.set(1);
             Ok(RcBuf { data: OwnedPtr::new(data_ptr) })
@@ -102,7 +99,7 @@ impl<T, H> Rc<T, H>
 }
 
 impl<T: ?Sized, H> Rc<T, H>
-    where H: Allocator,
+    where H: MemPool,
           T: Leak,
 {
     /// Returns a mutable reference to the contained data if this is the only reference.
@@ -127,12 +124,12 @@ impl<T: ?Sized, H> Rc<T, H>
 impl<T: ?Sized, U: ?Sized, H> CoerceUnsized<Rc<U, H>> for Rc<T, H>
     where T: Unsize<U> + Leak,
           U: Leak,
-          H: Allocator,
+          H: MemPool,
 {}
 
 impl<'a, T, H> IntoIterator for &'a Rc<T, H>
     where &'a T: IntoIterator,
-          H: Allocator,
+          H: MemPool,
           T: Leak,
 {
     type Item = <&'a T as IntoIterator>::Item;
@@ -141,7 +138,7 @@ impl<'a, T, H> IntoIterator for &'a Rc<T, H>
 }
 
 unsafe impl<T, H> UndefState for Rc<T, H>
-    where H: Allocator,
+    where H: MemPool,
           T: Leak,
 {
     fn num() -> usize { <OwnedPtr<Inner<T, H>> as UndefState>::num() }
@@ -158,7 +155,7 @@ unsafe impl<T, H> UndefState for Rc<T, H>
 impl<T: ?Sized, H> !Send for Rc<T, H> { }
 
 impl<T: ?Sized, H> Drop for Rc<T, H>
-    where H: Allocator,
+    where H: MemPool,
           T: Leak,
 {
     fn drop(&mut self) {
@@ -171,14 +168,14 @@ impl<T: ?Sized, H> Drop for Rc<T, H>
                     ptr::drop(&mut data.val);
                 }
                 let mut pool = ptr::read(&data.pool);
-                H::free(&mut pool, *self.data);
+                alloc::free(&mut pool, *self.data);
             }
         }
     }
 }
 
 impl<T: ?Sized, H> Deref for Rc<T, H>
-    where H: Allocator,
+    where H: MemPool,
           T: Leak,
 {
     type Target = T;
@@ -188,18 +185,27 @@ impl<T: ?Sized, H> Deref for Rc<T, H>
     }
 }
 
-impl<T: ?Sized, H> Clone for Rc<T, H>
-    where H: Allocator,
+impl<T: ?Sized, H> To for Rc<T, H>
+    where H: MemPool,
           T: Leak,
 {
-    fn clone(&self) -> Rc<T, H> {
+    fn to(&self) -> Rc<T, H> {
         self.add_ref()
+    }
+}
+
+impl<T: ?Sized, H> TryTo for Rc<T, H>
+    where H: MemPool,
+          T: Leak,
+{
+    fn try_to(&self) -> Result<Rc<T, H>> {
+        Ok(self.add_ref())
     }
 }
 
 impl<T: ?Sized, H> Debug for Rc<T, H>
     where T: Debug + Leak,
-          H: Allocator,
+          H: MemPool,
 {
     fn fmt<W: Write+?Sized>(&self, mut w: &mut W) -> Result {
         write!(w, "Rc {{ data: {:?} }}", self.deref())

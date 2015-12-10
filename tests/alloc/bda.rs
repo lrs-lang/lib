@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::alloc::{Bda, Allocator, empty_ptr};
+use std::alloc::{self, Bda, MemPool, empty_ptr};
 use std::env::aux::{page_size};
 
 fn ps() -> usize {
@@ -12,7 +12,7 @@ fn ps() -> usize {
 #[test]
 fn allocate_raw() {
     unsafe {
-        let alloc = Bda::allocate_raw(&mut (), 1, 1).unwrap();
+        let alloc = Bda.alloc(1, 1).unwrap();
         test!(alloc as usize % ps() == 0);
     }
 }
@@ -20,9 +20,9 @@ fn allocate_raw() {
 #[test]
 fn reallocate_raw() {
     unsafe {
-        let alloc = Bda::allocate_raw(&mut (), 1, 1).unwrap();
+        let alloc = Bda.alloc(1, 1).unwrap();
         *alloc = 1;
-        let realloc = Bda::reallocate_raw(&mut (), alloc, 1, ps()+1, 1).unwrap();
+        let realloc = Bda.realloc(alloc, 1, ps()+1, 1).unwrap();
         test!(realloc as usize % ps() == 0);
         test!(*realloc == 1);
         *realloc.add(ps()) = 1;
@@ -32,8 +32,8 @@ fn reallocate_raw() {
 #[test]
 fn free_raw() {
     unsafe {
-        let alloc = Bda::allocate_raw(&mut (), 1, 1).unwrap();
-        Bda::free_raw(&mut (), alloc, 1, 1);
+        let alloc = Bda.alloc(1, 1).unwrap();
+        Bda.free(alloc, 1, 1);
     }
 }
 
@@ -41,8 +41,8 @@ fn free_raw() {
 #[should_panic]
 fn segfault() {
     unsafe {
-        let alloc = Bda::allocate_raw(&mut (), 1, 1).unwrap();
-        Bda::free_raw(&mut (), alloc, 1, 1);
+        let alloc = Bda.alloc(1, 1).unwrap();
+        Bda.free(alloc, 1, 1);
         *alloc = 1;
     }
 }
@@ -50,32 +50,32 @@ fn segfault() {
 #[test]
 fn allocate() {
     unsafe {
-        let alloc = Bda::allocate(&mut ()).unwrap();
+        let alloc = alloc::alloc(&mut Bda).unwrap();
         test!(alloc as usize % ps() == 0);
         *alloc = 1;
 
-        test!(Bda::allocate::<()>(&mut ()).unwrap() == empty_ptr());
+        test!(alloc::alloc::<(), _>(&mut Bda).unwrap() == empty_ptr());
     }
 }
 
 #[test]
 fn allocate_array() {
     unsafe {
-        let alloc = Bda::allocate_array(&mut (), 2).unwrap();
+        let alloc = alloc::alloc_array(&mut Bda, 2).unwrap();
         test!(alloc as usize % ps() == 0);
         *alloc = 1;
         *alloc.add(1) = 1;
 
-        test!(Bda::allocate_array::<()>(&mut (), 2).unwrap() == empty_ptr());
+        test!(alloc::alloc_array::<(), _>(&mut Bda, 2).unwrap() == empty_ptr());
     }
 }
 
 #[test]
 fn reallocate_array() {
     unsafe {
-        let alloc = Bda::allocate_array(&mut (), 1).unwrap();
+        let alloc = alloc::alloc_array(&mut Bda, 1).unwrap();
         *alloc = 1;
-        let realloc = Bda::reallocate_array(&mut (), alloc, 1, 2).unwrap();
+        let realloc = alloc::realloc_array(&mut Bda, alloc, 1, 2).unwrap();
         test!(realloc as usize % ps() == 0);
         test!(*realloc == 1);
         *realloc.add(1) = 1;
@@ -85,15 +85,15 @@ fn reallocate_array() {
 #[test]
 fn free_array() {
     unsafe {
-        let alloc = Bda::allocate_array::<i32>(&mut (), 2).unwrap();
-        Bda::free_array(&mut (), alloc, 2);
+        let alloc = alloc::alloc_array::<i32, _>(&mut Bda, 2).unwrap();
+        alloc::free_array(&mut Bda, alloc, 2);
     }
 }
 
 #[test]
 fn free() {
     unsafe {
-        let alloc = Bda::allocate::<i32>(&mut ()).unwrap();
-        Bda::free(&mut (), alloc);
+        let alloc = alloc::alloc::<i32, _>(&mut Bda).unwrap();
+        alloc::free(&mut Bda, alloc);
     }
 }

@@ -17,8 +17,7 @@ use base::prelude::*;
 use core::{slice, cmp};
 use core::ptr::{OwnedPtr};
 use base::{error};
-use base::default::{Default};
-use alloc::{NoMem, Allocator};
+use alloc::{NoMem, MemPool};
 use io::{Read, BufRead, Write};
 use arch_fns::{memchr};
 
@@ -27,20 +26,19 @@ pub mod std { pub use base::std::*; }
 /// A buffered reader.
 pub struct BufReader<R, Heap = alloc::Heap>
     where R: Read,
-          Heap: Allocator,
+          Heap: MemPool,
 {
     data: OwnedPtr<u8>,
     cap: usize,
     start: usize,
     end: usize,
     read: R,
-    pool: Heap::Pool,
+    pool: Heap,
 }
 
 impl<R, H> BufReader<R, H>
     where R: Read,
-          H: Allocator,
-          H::Pool: Default,
+          H: MemPool+Default,
 {
     /// Allocates a new buffered reader.
     ///
@@ -58,8 +56,8 @@ impl<R, H> BufReader<R, H>
             Some(n) => n,
             _ => return Err(error::NoMemory),
         };
-        let mut pool = H::Pool::default();
-        let ptr = unsafe { try!(H::allocate_array(&mut pool, size)) };
+        let mut pool = H::default();
+        let ptr = unsafe { try!(alloc::alloc_array(&mut pool, size)) };
         let ptr = unsafe { OwnedPtr::new(ptr) };
         Ok(BufReader {
             data: ptr,
@@ -97,14 +95,14 @@ impl<'a, R> BufReader<R, NoMem<'a>>
             start: 0,
             end: 0,
             read: read,
-            pool: (),
+            pool: NoMem::default(),
         }
     }
 }
 
 impl<R, H> BufReader<R, H>
     where R: Read,
-          H: Allocator,
+          H: MemPool,
 {
     /// Returns the number of currently buffered bytes.
     pub fn available(&self) -> usize {
@@ -161,7 +159,7 @@ impl<R, H> BufReader<R, H>
 
 impl<R, H> Read for BufReader<R, H>
     where R: Read,
-          H: Allocator,
+          H: MemPool,
 {
     fn read(&mut self, mut buf: &mut [u8]) -> Result<usize> {
         if self.available() == 0 {
@@ -197,16 +195,16 @@ impl<R, H> Read for BufReader<R, H>
 
 impl<R, H> Drop for BufReader<R, H>
     where R: Read,
-          H: Allocator,
+          H: MemPool,
 {
     fn drop(&mut self) {
-        unsafe { H::free_array(&mut self.pool, *self.data, self.cap); }
+        unsafe { alloc::free_array(&mut self.pool, *self.data, self.cap); }
     }
 }
 
 impl<R, H> BufRead for BufReader<R, H>
     where R: Read,
-          H: Allocator,
+          H: MemPool,
 {
     fn copy_until<W: Write>(&mut self, dst: &mut W, b: u8) -> Result<usize> {
         let mut len = 0;

@@ -16,7 +16,6 @@ extern crate lrs_fmt as fmt;
 use base::prelude::*;
 use core::ops::{Eq};
 use base::undef::{UndefState};
-use base::clone::{Clone};
 use alloc::{Heap};
 use hash::{Hash};
 use hash::xx_hash::{XxHash32};
@@ -32,15 +31,15 @@ mod bucket;
 mod table;
 
 pub type CompactMap<Key, Value, Hasher = XxHash32, Seed = (), Allocator = Heap>
-    where Allocator: alloc::Allocator,
+    where Allocator: alloc::MemPool,
           Hasher: hash::Hasher,
-          Seed: Into<Hasher::Seed>+Clone,
+          Seed: Into<Hasher::Seed>+To,
           Key: Eq + Hash + UndefState
     = GenericMap<Key, Value, CompactBucket<Key, Value>, Hasher, Seed, Allocator>;
 
 pub type HashMap<Key, Value, Hasher = XxHash32, Seed = (), Allocator = Heap>
-    where Allocator: alloc::Allocator,
+    where Allocator: alloc::MemPool,
           Hasher: hash::Hasher,
-          Seed: Into<Hasher::Seed>+Clone,
+          Seed: Into<Hasher::Seed>+To,
           Key: Eq + Hash + UndefState
     = GenericMap<Key, Value, LooseBucket<Key, Value>, Hasher, Seed, Allocator>;

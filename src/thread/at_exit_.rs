@@ -8,7 +8,7 @@ use core::{ptr, mem};
 use {rt};
 use rt::{AtExit};
 use lock::{SingleThreadMutexGuard};
-use alloc::{Allocator, Bda};
+use alloc::{Bda, MemPool};
 
 pub fn at_exit<F>(f: F) -> Result
     where F: FnOnce() + 'static,
@@ -44,10 +44,9 @@ pub fn at_exit<F>(f: F) -> Result
         let new_cap = align!(at_exit.cap + needed, [%] ps);
         unsafe {
             at_exit.ptr = if at_exit.ptr.is_null() {
-                try!(Bda::allocate_raw(&mut (), new_cap, ps))
+                try!(Bda.alloc(new_cap, ps))
             } else {
-                try!(Bda::reallocate_raw(&mut (), at_exit.ptr, (*at_exit).cap, new_cap,
-                                         ps))
+                try!(Bda.realloc(at_exit.ptr, (*at_exit).cap, new_cap, ps))
             };
         }
         at_exit.cap = new_cap;
@@ -81,7 +80,7 @@ pub unsafe fn run() {
         let mut at_exit = at_exit.lock();
         if pos == at_exit.len {
             if pos != 0 {
-                Bda::free_raw(&mut (), at_exit.ptr, at_exit.cap, 1);
+                Bda.free(at_exit.ptr, at_exit.cap, 1);
                 at_exit.ptr = 0 as *mut u8;
                 at_exit.len = 0;
                 at_exit.cap = 0;

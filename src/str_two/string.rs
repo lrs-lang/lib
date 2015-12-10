@@ -5,21 +5,20 @@
 use base::prelude::*;
 use core::{mem};
 use base::undef::{UndefState};
-use base::default::{Default};
 use fmt::{Debug, Display, Write};
 use vec::{Vec};
-use alloc::{self, Allocator};
+use alloc::{self, MemPool};
 use {ByteString};
 
 /// An owned UTF-8 string.
 pub struct String<Heap = alloc::Heap>
-    where Heap: Allocator,
+    where Heap: MemPool,
 {
     data: Vec<u8, Heap>,
 }
 
 impl<H> String<H>
-    where H: Allocator, 
+    where H: MemPool, 
 {
     pub unsafe fn from_bytes_unchecked(bytes: Vec<u8, H>) -> String<H> {
         String { data: bytes }
@@ -34,18 +33,18 @@ impl<H> String<H>
     }
 
     pub fn new() -> String<H>
-        where H::Pool: Default,
+        where H: Default,
     {
         String { data: Vec::new() }
     }
 
     pub fn with_capacity(cap: usize) -> Result<String<H>>
-        where H::Pool: Default,
+        where H: Default,
     {
         Ok(String { data: try!(Vec::with_capacity(cap)) })
     }
 
-    pub fn with_pool(pool: H::Pool) -> String<H> {
+    pub fn with_pool(pool: H) -> String<H> {
         String { data: Vec::with_pool(pool) }
     }
 
@@ -84,7 +83,7 @@ impl<H> String<H>
 }
 
 impl<H> Into<Vec<u8, H>> for String<H>
-    where H: Allocator, 
+    where H: MemPool, 
 {
     fn into(self) -> Vec<u8, H> {
         self.data
@@ -92,7 +91,7 @@ impl<H> Into<Vec<u8, H>> for String<H>
 }
 
 impl<H> Into<ByteString<H>> for String<H>
-    where H: Allocator, 
+    where H: MemPool, 
 {
     fn into(self) -> ByteString<H> {
         ByteString::from_vec(self.into())
@@ -100,7 +99,7 @@ impl<H> Into<ByteString<H>> for String<H>
 }
 
 unsafe impl<H> UndefState for String<H>
-    where H: Allocator, 
+    where H: MemPool, 
 {
     fn num() -> usize { <Vec<u8, H> as UndefState>::num() }
 
@@ -114,7 +113,7 @@ unsafe impl<H> UndefState for String<H>
 }
 
 impl<H> Deref for String<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     type Target = str;
     fn deref(&self) -> &str {
@@ -123,7 +122,7 @@ impl<H> Deref for String<H>
 }
 
 impl<H> Debug for String<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
         Debug::fmt(self.deref(), w)
@@ -131,7 +130,7 @@ impl<H> Debug for String<H>
 }
 
 impl<H> Display for String<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
         Display::fmt(self.deref(), w)

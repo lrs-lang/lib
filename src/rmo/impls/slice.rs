@@ -5,15 +5,15 @@
 use base::prelude::*;
 use vec::{Vec};
 use {ToOwned};
-use alloc::{Allocator};
+use alloc::{MemPool};
 use str_two::{String};
 
 impl<T, H> ToOwned<H> for [T]
     where T: Copy,
-          H: Allocator,
+          H: MemPool,
 {
     type Owned = Vec<T, H>;
-    fn to_owned_with_pool(&self, pool: H::Pool) -> Result<Vec<T, H>> {
+    fn to_owned_with_pool(&self, pool: H) -> Result<Vec<T, H>> {
         let mut vec = Vec::with_pool(pool);
         try!(vec.reserve(self.len()));
         vec.push_all(self);
@@ -22,10 +22,10 @@ impl<T, H> ToOwned<H> for [T]
 }
 
 impl<H> ToOwned<H> for str
-    where H: Allocator,
+    where H: MemPool,
 {
     type Owned = String<H>;
-    fn to_owned_with_pool(&self, pool: H::Pool) -> Result<String<H>> {
+    fn to_owned_with_pool(&self, pool: H) -> Result<String<H>> {
         let mut vec = Vec::with_pool(pool);
         try!(vec.reserve(self.len()));
         vec.push_all(self.as_bytes());

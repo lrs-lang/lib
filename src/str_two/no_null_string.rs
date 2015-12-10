@@ -4,26 +4,23 @@
 
 use base::prelude::*;
 use arch_fns::{memchr};
-use base::clone::{MaybeClone};
 use base::undef::{UndefState};
-use base::default::{Default};
 use core::{mem};
 use str_one::{NoNullStr, AsNoNullStr, AsMutNoNullStr, AsMutCStr, CStr, ToCStr};
 use vec::{Vec};
 use fmt::{Debug, Display, Write};
-use alloc::{self, Allocator};
+use alloc::{self, MemPool};
 use {ByteString};
 
 /// An owned byte slice with no null bytes.
 pub struct NoNullString<Heap = alloc::Heap>
-    where Heap: Allocator,
+    where Heap: MemPool,
 {
     data: Vec<u8, Heap>,
 }
 
 impl<H> NoNullString<H>
-    where H: Allocator,
-          H::Pool: Default,
+    where H: MemPool+Default,
 {
     /// Creates a new, allocated `NoNullString`.
     pub fn new() -> NoNullString<H> {
@@ -39,7 +36,7 @@ impl<'a> NoNullString<alloc::NoMem<'a>> {
 }
 
 impl<H> NoNullString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     pub fn from_bytes(bytes: Vec<u8, H>) -> Result<NoNullString<H>, Vec<u8, H>> {
         if memchr(&bytes, 0).is_some() {
@@ -153,7 +150,7 @@ impl<H> NoNullString<H>
 }
 
 impl<H> Into<Vec<u8, H>> for NoNullString<H>
-    where H: Allocator, 
+    where H: MemPool, 
 {
     fn into(self) -> Vec<u8, H> {
         self.data
@@ -161,7 +158,7 @@ impl<H> Into<Vec<u8, H>> for NoNullString<H>
 }
 
 impl<H> Into<ByteString<H>> for NoNullString<H>
-    where H: Allocator, 
+    where H: MemPool, 
 {
     fn into(self) -> ByteString<H> {
         ByteString::from_vec(self.into())
@@ -169,7 +166,7 @@ impl<H> Into<ByteString<H>> for NoNullString<H>
 }
 
 impl<H> Deref for NoNullString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     type Target = NoNullStr;
     fn deref(&self) -> &NoNullStr {
@@ -178,7 +175,7 @@ impl<H> Deref for NoNullString<H>
 }
 
 unsafe impl<H> UndefState for NoNullString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn num() -> usize { <Vec<u8, H> as UndefState>::num() }
 
@@ -192,7 +189,7 @@ unsafe impl<H> UndefState for NoNullString<H>
 }
 
 impl<H> DerefMut for NoNullString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn deref_mut(&mut self) -> &mut NoNullStr {
         self.as_mut()
@@ -200,7 +197,7 @@ impl<H> DerefMut for NoNullString<H>
 }
 
 impl<H> AsRef<[u8]> for NoNullString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn as_ref(&self) -> &[u8] {
         &self.data
@@ -208,7 +205,7 @@ impl<H> AsRef<[u8]> for NoNullString<H>
 }
 
 impl<H> AsRef<NoNullStr> for NoNullString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn as_ref(&self) -> &NoNullStr {
         unsafe { NoNullStr::from_bytes_unchecked(&self.data) }
@@ -216,7 +213,7 @@ impl<H> AsRef<NoNullStr> for NoNullString<H>
 }
 
 impl<H> AsMut<NoNullStr> for NoNullString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn as_mut(&mut self) -> &mut NoNullStr {
         unsafe { NoNullStr::from_mut_bytes_unchecked(&mut self.data) }
@@ -224,7 +221,7 @@ impl<H> AsMut<NoNullStr> for NoNullString<H>
 }
 
 impl<H> AsNoNullStr for NoNullString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn as_no_null_str(&self) -> Result<&NoNullStr> {
         unsafe { Ok(NoNullStr::from_bytes_unchecked(&self.data)) }
@@ -232,7 +229,7 @@ impl<H> AsNoNullStr for NoNullString<H>
 }
 
 impl<H> AsMutNoNullStr for NoNullString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
         unsafe { Ok(NoNullStr::from_mut_bytes_unchecked(&mut self.data)) }
@@ -240,7 +237,7 @@ impl<H> AsMutNoNullStr for NoNullString<H>
 }
 
 impl<H> Debug for NoNullString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
         let nns: &NoNullStr = self.as_ref();
@@ -249,7 +246,7 @@ impl<H> Debug for NoNullString<H>
 }
 
 impl<H> Display for NoNullString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
         let nns: &NoNullStr = self.as_ref();
@@ -258,7 +255,7 @@ impl<H> Display for NoNullString<H>
 }
 
 impl<H> AsMutCStr for NoNullString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn as_mut_cstr(&mut self) -> Result<&mut CStr> {
         // We push a 0 at the end, create a slice, then truncate without reallocating so
@@ -275,7 +272,7 @@ impl<H> AsMutCStr for NoNullString<H>
 }
 
 impl<H> ToCStr for NoNullString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
         let nns: &NoNullStr = self.as_ref();
@@ -283,11 +280,11 @@ impl<H> ToCStr for NoNullString<H>
     }
 }
 
-impl<H> MaybeClone for NoNullString<H>
-    where H: Allocator,
-          H::Pool: Default,
+impl<H1, H2> TryTo<NoNullString<H2>> for NoNullString<H1>
+    where H1: MemPool,
+          H2: MemPool+Default,
 {
-    fn maybe_clone(&self) -> Result<NoNullString<H>> {
-        self.data.maybe_clone().map(|o| NoNullString { data: o })
+    fn try_to(&self) -> Result<NoNullString<H2>> {
+        self.data.try_to().map(|o| NoNullString { data: o })
     }
 }

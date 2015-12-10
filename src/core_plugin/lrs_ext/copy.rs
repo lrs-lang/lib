@@ -26,14 +26,14 @@ pub fn derive_copy(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Annota
     trait_def.expand(cx, mitem, item, push)
 }
 
-pub fn derive_copy_and_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem,
-                             item: &Annotatable, push: &mut FnMut(Annotatable)) {
+pub fn derive_copy_and_to(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem,
+                          item: &Annotatable, push: &mut FnMut(Annotatable)) {
     derive_copy(cx, span, mitem, item, push);
-    super::clone::derive_clone_for_copy(cx, span, mitem, item, push);
+    super::to::derive_to_for_copy(cx, span, mitem, item, push);
 }
 
-pub fn derive_pod_copy_and_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem,
-                                 anno: &Annotatable, push: &mut FnMut(Annotatable)) {
+pub fn derive_pod_copy_and_to(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem,
+                              anno: &Annotatable, push: &mut FnMut(Annotatable)) {
     let item = match *anno {
         Annotatable::Item(ref item) => item,
         _ => {
@@ -86,5 +86,5 @@ pub fn derive_pod_copy_and_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem,
 
     trait_def.expand(cx, mitem, anno, push);
 
-    derive_copy_and_clone(cx, span, mitem, anno, push);
+    derive_copy_and_to(cx, span, mitem, anno, push);
 }

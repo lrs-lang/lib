@@ -11,7 +11,6 @@ extern crate lrs_base as base;
 extern crate lrs_wrapping as wrapping;
 
 use base::prelude::*;
-use base::default::{Default};
 
 pub mod std { pub use base::std::*; }
 

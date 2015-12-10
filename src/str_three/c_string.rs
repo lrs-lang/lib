@@ -6,18 +6,16 @@ use base::prelude::*;
 use arch_fns::{memchr, all_bytes};
 use core::{mem};
 use base::{error};
-use base::default::{Default};
 use rmo::{Rmo, ToOwned};
 use str_one::{CStr, NoNullStr, ByteStr, AsByteStr};
 use str_two::{CString, NoNullString, ByteString};
-use alloc::{Allocator};
+use alloc::{MemPool};
 
 /// Objects that can be turned into a `CString` by allocating.
 pub trait ToCString {
     /// Converts the object into an allocated `CString`.
     fn to_cstring<H>(&self) -> Result<CString<H>>
-        where H: Allocator,
-              H::Pool: Default;
+        where H: MemPool+Default;
 
     /// Tries to convert the object into an `Rmo<CStr>` with or without allocating.
     ///
@@ -33,8 +31,7 @@ pub trait ToCString {
     ///
     /// The default implementation simply calls `to_cstring`.
     fn rmo_cstr<'a, H>(&'a self, _buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
-        where H: Allocator,
-              H::Pool: Default,
+        where H: MemPool+Default,
     {
         self.to_cstring().map(|r| Rmo::Owned(r))
     }
@@ -42,15 +39,13 @@ pub trait ToCString {
 
 impl<'b, T: ToCString+?Sized> ToCString for &'b T {
     fn to_cstring<H>(&self) -> Result<CString<H>>
-        where H: Allocator,
-              H::Pool: Default,
+        where H: MemPool+Default,
     {
         (**self).to_cstring()
     }
 
     fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
-        where H: Allocator,
-              H::Pool: Default,
+        where H: MemPool+Default,
     {
         (**self).rmo_cstr(buf)
     }
@@ -58,15 +53,13 @@ impl<'b, T: ToCString+?Sized> ToCString for &'b T {
 
 impl<'b, T: ToCString+?Sized> ToCString for &'b mut T {
     fn to_cstring<H>(&self) -> Result<CString<H>>
-        where H: Allocator,
-              H::Pool: Default,
+        where H: MemPool+Default,
     {
         (**self).to_cstring()
     }
 
     fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
-        where H: Allocator,
-              H::Pool: Default,
+        where H: MemPool+Default,
     {
         (**self).rmo_cstr(buf)
     }
@@ -74,16 +67,14 @@ impl<'b, T: ToCString+?Sized> ToCString for &'b mut T {
 
 impl ToCString for CStr {
     fn to_cstring<H>(&self) -> Result<CString<H>>
-        where H: Allocator,
-              H::Pool: Default,
+        where H: MemPool+Default,
     {
         let bytes: &[u8] = self.bytes_with_null();
         bytes.to_owned().map(|o| unsafe { CString::from_bytes_unchecked(o) })
     }
 
     fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
-        where H: Allocator,
-              H::Pool: Default,
+        where H: MemPool+Default,
     {
         let bytes: &[u8] = self.bytes_with_null();
         if bytes.len() <= buf.len() {
@@ -97,8 +88,7 @@ impl ToCString for CStr {
 
 impl ToCString for [u8] {
     fn to_cstring<H>(&self) -> Result<CString<H>>
-        where H: Allocator,
-              H::Pool: Default,
+        where H: MemPool+Default,
     {
         if let Some(idx) = memchr(self, 0) {
             if idx == self.len() - 1 || all_bytes(&self[idx+1..], 0) {
@@ -115,8 +105,7 @@ impl ToCString for [u8] {
     }
 
     fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
-        where H: Allocator,
-              H::Pool: Default,
+        where H: MemPool+Default,
     {
         if let Some(idx) = memchr(self, 0) {
             if idx == self.len() - 1 || all_bytes(&self[idx+1..], 0) {
@@ -141,16 +130,14 @@ impl ToCString for [u8] {
 
 impl ToCString for [i8] {
     fn to_cstring<H>(&self) -> Result<CString<H>>
-        where H: Allocator,
-              H::Pool: Default,
+        where H: MemPool+Default,
     {
         let bytes: &[u8] = self.as_ref();
         bytes.to_cstring()
     }
 
     fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
-        where H: Allocator,
-              H::Pool: Default,
+        where H: MemPool+Default,
     {
         let bytes: &[u8] = self.as_ref();
         bytes.rmo_cstr(buf)
@@ -159,16 +146,14 @@ impl ToCString for [i8] {
 
 impl ToCString for str {
     fn to_cstring<H>(&self) -> Result<CString<H>>
-        where H: Allocator,
-              H::Pool: Default,
+        where H: MemPool+Default,
     {
         let bytes: &[u8] = self.as_ref();
         bytes.to_cstring()
     }
 
     fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
-        where H: Allocator,
-              H::Pool: Default,
+        where H: MemPool+Default,
     {
         let bytes: &[u8] = self.as_ref();
         bytes.rmo_cstr(buf)
@@ -177,8 +162,7 @@ impl ToCString for str {
 
 impl ToCString for NoNullStr {
     fn to_cstring<H>(&self) -> Result<CString<H>>
-        where H: Allocator,
-              H::Pool: Default,
+        where H: MemPool+Default,
     {
         let bytes: &[u8] = self.as_ref();
         match bytes.to_owned() {
@@ -192,8 +176,7 @@ impl ToCString for NoNullStr {
     }
 
     fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
-        where H: Allocator,
-              H::Pool: Default,
+        where H: MemPool+Default,
     {
         let bytes: &[u8] = self.as_ref();
         if bytes.len() < buf.len() {
@@ -207,18 +190,16 @@ impl ToCString for NoNullStr {
 }
 
 impl<A> ToCString for NoNullString<A>
-    where A: Allocator,
+    where A: MemPool,
 {
     fn to_cstring<H>(&self) -> Result<CString<H>>
-        where H: Allocator,
-              H::Pool: Default,
+        where H: MemPool+Default,
     {
         self.deref().to_cstring()
     }
 
     fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
-        where H: Allocator,
-              H::Pool: Default,
+        where H: MemPool+Default,
     {
         self.deref().rmo_cstr(buf)
     }
@@ -226,33 +207,29 @@ impl<A> ToCString for NoNullString<A>
 
 impl ToCString for ByteStr {
     fn to_cstring<H>(&self) -> Result<CString<H>>
-        where H: Allocator,
-              H::Pool: Default,
+        where H: MemPool+Default,
     {
         self.as_ref().to_cstring()
     }
 
     fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
-        where H: Allocator,
-              H::Pool: Default,
+        where H: MemPool+Default,
     {
         self.as_ref().rmo_cstr(buf)
     }
 }
 
 impl<A> ToCString for ByteString<A>
-    where A: Allocator,
+    where A: MemPool,
 {
     fn to_cstring<H>(&self) -> Result<CString<H>>
-        where H: Allocator,
-              H::Pool: Default,
+        where H: MemPool+Default,
     {
         self.as_byte_str().to_cstring()
     }
 
     fn rmo_cstr<'a, H>(&'a self, buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, H>>
-        where H: Allocator,
-              H::Pool: Default,
+        where H: MemPool+Default,
     {
         self.as_byte_str().rmo_cstr(buf)
     }

@@ -4,9 +4,8 @@
 
 use base::prelude::*;
 use core::{mem};
-use base::default::{Default};
 use io::{BufRead};
-use alloc::{self, Allocator};
+use alloc::{self, MemPool};
 use buf_reader::{BufReader};
 use fmt::{Debug, Write};
 use base::error::{self};
@@ -89,11 +88,10 @@ impl<'a> Info<'a> {
 }
 
 impl<'a, H> ToOwned<H> for Info<'a>
-    where H: Allocator,
-          H::Pool: Copy,
+    where H: MemPool+Copy,
 {
     type Owned = Information<H>;
-    fn to_owned_with_pool(&self, pool: H::Pool) -> Result<Self::Owned> {
+    fn to_owned_with_pool(&self, pool: H) -> Result<Self::Owned> {
         Ok(Information {
             name:     try!(self.name.to_owned_with_pool(pool)),
             password: try!(self.password.to_owned_with_pool(pool)),
@@ -118,7 +116,7 @@ impl<'a> Debug for Info<'a> {
 /// Struct holding allocated user info.
 #[derive(Eq)]
 pub struct Information<H = alloc::Heap>
-    where H: Allocator,
+    where H: MemPool,
 {
     name:     ByteString<H>,
     password: ByteString<H>,
@@ -130,8 +128,7 @@ pub struct Information<H = alloc::Heap>
 }
 
 impl<H> Information<H>
-    where H: Allocator,
-          H::Pool: Default + Copy,
+    where H: MemPool+Default+Copy,
 {
     /// Retrieves user info of the user with a certain id.
     ///
@@ -166,8 +163,7 @@ impl<H> Information<H>
 }
 
 impl<H> Information<H>
-    where H: Allocator,
-          H::Pool: Copy,
+    where H: MemPool+Copy,
 {
     /// Retrieves user info of the user with a certain id.
     ///
@@ -176,7 +172,7 @@ impl<H> Information<H>
     ///
     /// [argument, pool]
     /// The pool in which the information will be stored.
-    pub fn from_user_id_with_pool(id: UserId, pool: H::Pool) -> Result<Information<H>> {
+    pub fn from_user_id_with_pool(id: UserId, pool: H) -> Result<Information<H>> {
         let mut buf = [0; INFO_BUF_SIZE];
         Info::from_user_id(&mut buf, id).chain(|i| i.to_owned_with_pool(pool))
     }
@@ -188,7 +184,7 @@ impl<H> Information<H>
     ///
     /// [argument, pool]
     /// The pool in which the information will be stored.
-    pub fn from_user_name_with_pool<S>(name: S, pool: H::Pool) -> Result<Information<H>>
+    pub fn from_user_name_with_pool<S>(name: S, pool: H) -> Result<Information<H>>
         where S: AsByteStr
     {
         let mut buf = [0; INFO_BUF_SIZE];
@@ -202,7 +198,7 @@ impl<H> Information<H>
     ///
     /// [argument, pool]
     /// The pool in which the information will be stored.
-    pub fn find_by_with_pool<F>(pred: F, pool: H::Pool) -> Result<Information<H>>
+    pub fn find_by_with_pool<F>(pred: F, pool: H) -> Result<Information<H>>
         where F: Fn(&Info) -> bool,
     {
         let mut buf = [0; INFO_BUF_SIZE];
@@ -211,7 +207,7 @@ impl<H> Information<H>
 }
 
 impl<H> Information<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     /// Borrows the information.
     pub fn to_info<'a>(&'a self) -> Info<'a> {
@@ -228,7 +224,7 @@ impl<H> Information<H>
 }
 
 impl<H> Debug for Information<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
         write!(w, "Information {{ name: {:?}, password: {:?}, user_id: {:?}, \

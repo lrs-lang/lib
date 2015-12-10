@@ -4,7 +4,7 @@
 
 use base::prelude::*;
 use base::{error};
-use {Allocator, MAX_SIZE};
+use {MemPool, MAX_SIZE};
 use cty::{c_int};
 
 #[cfg(target_arch = "arm")]
@@ -34,12 +34,17 @@ extern {
 /// To use this you have to compile lrs with the `jemalloc` option, compile a recent
 /// version of jemalloc with the `je_` prefix and add `-L path_to_jemalloc` to your
 /// compiler invocation.
+#[derive(Copy)]
 pub struct JeMalloc;
 
-impl Allocator for JeMalloc {
-    type Pool = ();
+impl Default for JeMalloc {
+    fn default() -> JeMalloc {
+        JeMalloc
+    }
+}
 
-    unsafe fn allocate_raw(_: &mut (), size: usize, alignment: usize) -> Result<*mut u8> {
+impl MemPool for JeMalloc {
+    unsafe fn alloc(&mut self, size: usize, alignment: usize) -> Result<*mut u8> {
         if size > MAX_SIZE {
             Err(error::InvalidArgument)
         } else {
@@ -53,13 +58,13 @@ impl Allocator for JeMalloc {
         }
     }
 
-    unsafe fn free_raw(_: &mut (), ptr: *mut u8, size: usize, alignment: usize) {
+    unsafe fn free(&mut self, ptr: *mut u8, size: usize, alignment: usize) {
         let flags = mallocx_align!(alignment);
         je_sdallocx(ptr, size, flags);
     }
 
-    unsafe fn reallocate_raw(_: &mut (), old_ptr: *mut u8, oldsize: usize, newsize: usize,
-                             alignment: usize) -> Result<*mut u8> {
+    unsafe fn realloc(&mut self, old_ptr: *mut u8, oldsize: usize, newsize: usize,
+                      alignment: usize) -> Result<*mut u8> {
         let _ = oldsize;
         if newsize > MAX_SIZE {
             Err(error::InvalidArgument)

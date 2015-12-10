@@ -4,7 +4,7 @@
 
 use base::prelude::*;
 use base::{error};
-use {Allocator};
+use {MemPool};
 
 /// Heap without memory backing it
 ///
@@ -14,14 +14,19 @@ use {Allocator};
 /// memory is available.
 pub struct NoMem<'a>(PhantomData<&'a ()>);
 
-impl<'a> Allocator for NoMem<'a> {
-    type Pool = ();
-    unsafe fn allocate_raw(_: &mut (), _: usize, _: usize) -> Result<*mut u8> {
+impl<'a> Default for NoMem<'a> {
+    fn default() -> NoMem<'a> {
+        NoMem(PhantomData)
+    }
+}
+
+impl<'a> MemPool for NoMem<'a> {
+    unsafe fn alloc(&mut self, _: usize, _: usize) -> Result<*mut u8> {
         Err(error::NoMemory)
     }
-    unsafe fn free_raw(_: &mut (), _: *mut u8, _: usize, _: usize) { }
-    unsafe fn reallocate_raw(_: &mut (), _: *mut u8, _: usize, _: usize,
-                             _: usize) -> Result<*mut u8> {
+    unsafe fn free(&mut self, _: *mut u8, _: usize, _: usize) { }
+    unsafe fn realloc(&mut self, _: *mut u8, _: usize, _: usize,
+                      _: usize) -> Result<*mut u8> {
         Err(error::NoMemory)
     }
 }

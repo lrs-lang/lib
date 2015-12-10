@@ -138,7 +138,7 @@ impl<'a> Iter<'a> {
 }
 
 /// An entry in a directory.
-#[derive(MaybeClone)]
+#[derive(TryTo)]
 pub struct Entry {
     /// The inode of the entry.
     pub inode: u64,

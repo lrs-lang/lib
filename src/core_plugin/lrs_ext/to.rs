@@ -66,20 +66,20 @@ fn expr_try(cx: &ExtCtxt, sp: Span, head: P<Expr>) -> P<Expr> {
     cx.expr_match(sp, head, vec!(ok_arm, err_arm))
 }
 
-fn cs_maybe_clone(name: &str, cx: &mut ExtCtxt, trait_span: Span,
-                  substr: &Substructure) -> P<Expr> {
+fn cs_try_to(name: &str, cx: &mut ExtCtxt, trait_span: Span,
+             substr: &Substructure) -> P<Expr> {
     let ctor_path;
     let all_fields;
 
     let fn_path = vec!(
         cx.ident_of("std"),
-        cx.ident_of("clone"),
-        cx.ident_of("MaybeClone"),
-        cx.ident_of("maybe_clone"),
+        cx.ident_of("conv"),
+        cx.ident_of("TryTo"),
+        cx.ident_of("try_to"),
     );
 
     let subcall = |field: &FieldInfo| {
-        // ::std::clone::MaybeClone::maybe_clone(&field)
+        // ::std::conv::TryTo::try_to(&field)
         let call = {
             let args = vec![cx.expr_addr_of(field.span, field.self_.clone())];
             cx.expr_call_global(field.span, fn_path.clone(), args)
@@ -139,7 +139,7 @@ fn cs_maybe_clone(name: &str, cx: &mut ExtCtxt, trait_span: Span,
     }
 }
 
-pub fn derive_maybe_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem,
+pub fn derive_try_to(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem,
                           item: &Annotatable, push: &mut FnMut(Annotatable)) {
     let inline = cx.meta_word(span, InternedString::new("inline"));
     let attrs = vec!(cx.attribute(span, inline));
@@ -152,13 +152,13 @@ pub fn derive_maybe_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem,
     let trait_def = TraitDef {
         span: span,
         attributes: Vec::new(),
-        path: path!(std::clone::MaybeClone),
+        path: path!(std::conv::TryTo),
         additional_bounds: Vec::new(),
         generics: LifetimeBounds::empty(),
         is_unsafe: false,
         methods: vec!(
             MethodDef {
-                name: "maybe_clone",
+                name: "try_to",
                 generics: LifetimeBounds::empty(),
                 explicit_self: borrowed_explicit_self(),
                 args: Vec::new(),
@@ -166,7 +166,7 @@ pub fn derive_maybe_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem,
                 attributes: attrs,
                 is_unsafe: false,
                 combine_substructure: combine_substructure(Box::new(|c, s, sub| {
-                    cs_maybe_clone("MaybeClone", c, s, sub)
+                    cs_try_to("TryTo", c, s, sub)
                 })),
             }
         ),
@@ -176,20 +176,20 @@ pub fn derive_maybe_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem,
     trait_def.expand(cx, mitem, item, push)
 }
 
-fn cs_clone(name: &str, cx: &mut ExtCtxt, trait_span: Span,
-            substr: &Substructure) -> P<Expr> {
+fn cs_to(name: &str, cx: &mut ExtCtxt, trait_span: Span,
+         substr: &Substructure) -> P<Expr> {
     let ctor_path;
     let all_fields;
 
     let fn_path = vec!(
         cx.ident_of("std"),
-        cx.ident_of("clone"),
-        cx.ident_of("Clone"),
-        cx.ident_of("clone"),
+        cx.ident_of("conv"),
+        cx.ident_of("To"),
+        cx.ident_of("to"),
     );
 
     let subcall = |field: &FieldInfo| {
-        // ::std::clone::Clone::clone(&field)
+        // ::std::conv::To::to(&field)
         let args = vec![cx.expr_addr_of(field.span, field.self_.clone())];
         cx.expr_call_global(field.span, fn_path.clone(), args)
     };
@@ -242,21 +242,21 @@ fn cs_clone(name: &str, cx: &mut ExtCtxt, trait_span: Span,
     }
 }
 
-pub fn derive_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem,
-                    item: &Annotatable, push: &mut FnMut(Annotatable)) {
+pub fn derive_to(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem,
+                 item: &Annotatable, push: &mut FnMut(Annotatable)) {
     let inline = cx.meta_word(span, InternedString::new("inline"));
     let attrs = vec!(cx.attribute(span, inline));
     let ret_ty = Ty::Self_;
     let trait_def = TraitDef {
         span: span,
         attributes: Vec::new(),
-        path: path_std!(cx, std::clone::Clone),
+        path: path!(std::conv::To),
         additional_bounds: Vec::new(),
         generics: LifetimeBounds::empty(),
         is_unsafe: false,
         methods: vec!(
             MethodDef {
-                name: "clone",
+                name: "to",
                 generics: LifetimeBounds::empty(),
                 explicit_self: borrowed_explicit_self(),
                 args: Vec::new(),
@@ -264,7 +264,7 @@ pub fn derive_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem,
                 attributes: attrs,
                 is_unsafe: false,
                 combine_substructure: combine_substructure(Box::new(|c, s, sub| {
-                    cs_clone("Clone", c, s, sub)
+                    cs_to("To", c, s, sub)
                 })),
             }
         ),
@@ -274,7 +274,7 @@ pub fn derive_clone(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem,
     trait_def.expand(cx, mitem, item, push);
 }
 
-pub fn derive_clone_for_copy(cx: &mut ExtCtxt, span: Span, _mitem: &MetaItem,
+pub fn derive_to_for_copy(cx: &mut ExtCtxt, span: Span, _mitem: &MetaItem,
                              item: &Annotatable, push: &mut FnMut(Annotatable)) {
     let item = match *item {
         Annotatable::Item(ref i) => i,
@@ -316,8 +316,8 @@ pub fn derive_clone_for_copy(cx: &mut ExtCtxt, span: Span, _mitem: &MetaItem,
         let lts = Lts(&generics.lifetimes, span);
 
         let impl_item = quote_item!(cx,
-            impl $lts ::std::clone::Clone for $ty $lts {
-                fn clone(&self) -> $ty $lts {
+            impl $lts ::std::conv::To for $ty $lts {
+                fn to(&self) -> $ty $lts {
                     *self
                 }
             }
@@ -326,8 +326,8 @@ pub fn derive_clone_for_copy(cx: &mut ExtCtxt, span: Span, _mitem: &MetaItem,
         push(Annotatable::Item(impl_item));
 
         let impl_item = quote_item!(cx,
-            impl $lts ::std::clone::MaybeClone for $ty $lts {
-                fn maybe_clone(&self) -> ::std::result::Result<$ty $lts> {
+            impl $lts ::std::conv::TryTo for $ty $lts {
+                fn try_to(&self) -> ::std::result::Result<$ty $lts> {
                     ::std::result::Result::Ok(*self)
                 }
             }
@@ -337,8 +337,8 @@ pub fn derive_clone_for_copy(cx: &mut ExtCtxt, span: Span, _mitem: &MetaItem,
     }
 }
 
-pub fn derive_copy_clone_for<'cx>(cx: &'cx mut ExtCtxt, sp: Span,
-                                  tts: &[TokenTree]) -> Box<MacResult+'cx> {
+pub fn derive_copy_to_for<'cx>(cx: &'cx mut ExtCtxt, sp: Span,
+                               tts: &[TokenTree]) -> Box<MacResult+'cx> {
     let mut p = cx.new_parser_from_tts(tts);
     if p.token == Eof {
         cx.span_err(sp, "requires a target");
@@ -348,8 +348,8 @@ pub fn derive_copy_clone_for<'cx>(cx: &'cx mut ExtCtxt, sp: Span,
     let item = quote_item!(cx,
         #[automatically_derived]
         #[inline(always)]
-        impl ::std::clone::Clone for $dest {
-            fn clone(&self) -> $dest {
+        impl ::std::conv::To for $dest {
+            fn to(&self) -> $dest {
                 *self
             }
         }

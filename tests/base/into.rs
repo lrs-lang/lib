@@ -46,22 +46,3 @@ fn ints() {
     as_into!(i32 as i64);
     as_into!(i32 as isize);
 }
-
-#[test]
-fn zero() {
-    test!(Into::<u8>::into(()) == 0);
-    test!(Into::<u16>::into(()) == 0);
-    test!(Into::<u32>::into(()) == 0);
-    test!(Into::<u64>::into(()) == 0);
-    test!(Into::<usize>::into(()) == 0);
-    test!(Into::<i8>::into(()) == 0);
-    test!(Into::<i16>::into(()) == 0);
-    test!(Into::<i32>::into(()) == 0);
-    test!(Into::<i64>::into(()) == 0);
-    test!(Into::<isize>::into(()) == 0);
-}
-
-#[test]
-fn option() {
-    test!(Into::<Option<u8>>::into(()) == None);
-}

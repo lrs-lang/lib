@@ -6,13 +6,13 @@ use base::prelude::*;
 use str_one::c_str::{CStr};
 use str_two::c_string::{CString};
 use {ToOwned};
-use alloc::{Allocator};
+use alloc::{MemPool};
 
 impl<H> ToOwned<H> for CStr
-    where H: Allocator,
+    where H: MemPool,
 {
     type Owned = CString<H>;
-    fn to_owned_with_pool(&self, pool: H::Pool) -> Result<CString<H>> {
+    fn to_owned_with_pool(&self, pool: H) -> Result<CString<H>> {
         let bytes = self.bytes_with_null();
         bytes.to_owned_with_pool(pool).map(|o| unsafe { CString::from_bytes_unchecked(o) })
     }

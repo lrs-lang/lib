@@ -92,20 +92,20 @@ pub fn plugin_registrar(reg: &mut Registry) {
         MultiDecorator(Box::new(lrs_ext::derive_copy)));
 
     reg.register_syntax_extension(
-        token::intern("derive_Clone"),
-        MultiDecorator(Box::new(lrs_ext::derive_clone)));
+        token::intern("derive_To"),
+        MultiDecorator(Box::new(lrs_ext::derive_to)));
 
     reg.register_syntax_extension(
-        token::intern("derive_MaybeClone"),
-        MultiDecorator(Box::new(lrs_ext::derive_maybe_clone)));
+        token::intern("derive_TryTo"),
+        MultiDecorator(Box::new(lrs_ext::derive_try_to)));
 
     reg.register_syntax_extension(
         token::intern("derive_Copy"),
-        MultiDecorator(Box::new(lrs_ext::derive_copy_and_clone)));
+        MultiDecorator(Box::new(lrs_ext::derive_copy_and_to)));
 
     reg.register_syntax_extension(
         token::intern("derive_Pod"),
-        MultiDecorator(Box::new(lrs_ext::derive_pod_copy_and_clone)));
+        MultiDecorator(Box::new(lrs_ext::derive_pod_copy_and_to)));
 
     reg.register_syntax_extension(
         token::intern("derive_Eq"),
@@ -120,6 +120,6 @@ pub fn plugin_registrar(reg: &mut Registry) {
         lrs_ext::expand_format_args);
 
     reg.register_macro(
-        "derive_Clone_for",
-        lrs_ext::derive_copy_clone_for);
+        "derive_To_for",
+        lrs_ext::derive_copy_to_for);
 }

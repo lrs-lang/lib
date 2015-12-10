@@ -103,7 +103,7 @@ pub mod hash;
 pub mod hashmap;
 pub mod slice;
 pub mod string;
-pub mod into;
+pub mod conv;
 pub mod time;
 pub mod util;
 pub mod vec;
@@ -115,7 +115,7 @@ pub mod bx;
 #[cfg(not(freestanding))]
 pub use hosted::{
     event, user, poll, sync, process, fd, file, dir, env, tty, fs, group, netlink,
-    mem_map, signal, sys, thread, inotify, clone, socket, syscall, msg_queue, pipe, swap,
+    mem_map, signal, sys, thread, inotify, socket, syscall, msg_queue, pipe, swap,
 };
 
 #[cfg(not(freestanding))]
@@ -139,7 +139,6 @@ mod hosted {
     pub mod sys;
     pub mod thread;
     pub mod inotify;
-    pub mod clone;
     pub mod socket;
     pub mod syscall;
     pub mod msg_queue;
@@ -152,7 +151,6 @@ pub mod prelude {
     pub mod v1 {
         pub use lrs_core::cmp::{PartialOrd, Ord};
         pub use lrs_base::prelude::*;
-        pub use lrs_base::clone::{Clone};
         pub use lrs_parse::{Parse};
         pub use lrs_vec::{Vec};
         pub use lrs_rmo::{ToOwned};

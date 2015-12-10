@@ -22,25 +22,23 @@ pub mod std {
 use base::prelude::*;
 use core::{mem, ptr, cmp, slice};
 use core::ptr::{OwnedPtr};
-use base::clone::{MaybeClone};
 use base::undef::{UndefState};
-use base::default::{Default};
 use core::ops::{Eq, Range};
 use core::iter::{IntoIterator};
 use io::{Read, Write, BufWrite};
 use fmt::{Debug};
-use alloc::{Allocator, empty_ptr};
+use alloc::{MemPool, empty_ptr};
 use str_one::{ByteStr, CStr, AsCStr, AsMutCStr, ToCStr, NoNullStr, AsMutNoNullStr,
               AsNoNullStr};
 
 /// A vector.
-pub struct Vec<T, Heap = alloc::Heap>
-    where Heap: Allocator,
+pub struct Vec<T, Pool: ?Sized = alloc::Heap>
+    where Pool: MemPool,
 {
     ptr: OwnedPtr<T>,
     len: usize,
     cap: usize,
-    pool: Heap::Pool,
+    pool: Pool,
 }
 
 impl<'a, T> Vec<T, alloc::NoMem<'a>> {
@@ -51,37 +49,37 @@ impl<'a, T> Vec<T, alloc::NoMem<'a>> {
     pub fn buffered(buf: &'a mut [u8]) -> Vec<T, alloc::NoMem<'a>> {
         if mem::size_of::<T>() == 0 {
             let ptr = unsafe { OwnedPtr::new(empty_ptr()) };
-            return Vec { ptr: ptr, len: 0, cap: 0, pool: () };
+            return Vec { ptr: ptr, len: 0, cap: 0, pool: alloc::NoMem::default() };
         }
 
         let buf = mem::align_for_mut::<T>(buf);
         let cap = buf.len() / mem::size_of::<T>();
         let ptr = unsafe { OwnedPtr::new(buf.as_mut_ptr() as *mut T) };
-        Vec { ptr: ptr, len: 0, cap: cap, pool: () }
+        Vec { ptr: ptr, len: 0, cap: cap, pool: alloc::NoMem::default() }
     }
 }
 
 impl<T, H = alloc::Heap> Vec<T, H>
-    where H: Allocator,
+    where H: MemPool,
 {
     /// Creates a new allocating vector.
     pub fn new() -> Vec<T, H>
-        where H::Pool: Default,
+        where H: Default,
     {
         let ptr = unsafe { OwnedPtr::new(empty_ptr()) };
-        Vec { ptr: ptr, len: 0, cap: 0, pool: H::Pool::default(), }
+        Vec { ptr: ptr, len: 0, cap: 0, pool: H::default(), }
     }
 
     /// Creates a new allocating vector and reserves a certain amount of space for it.
     pub fn with_capacity(cap: usize) -> Result<Vec<T, H>>
-        where H::Pool: Default,
+        where H: Default,
     {
-        let mut pool = H::Pool::default();
+        let mut pool = H::default();
         if cap == 0 || mem::size_of::<T>() == 0 {
             let ptr = unsafe { OwnedPtr::new(empty_ptr()) };
             return Ok(Vec { ptr: ptr, len: 0, cap: cap, pool: pool });
         }
-        let ptr = unsafe { try!(H::allocate_array(&mut pool, cap)) };
+        let ptr = unsafe { try!(alloc::alloc_array(&mut pool, cap)) };
         let ptr = unsafe { OwnedPtr::new(ptr) };
         Ok(Vec { ptr: ptr, len: 0, cap: cap, pool: pool })
     }
@@ -90,7 +88,7 @@ impl<T, H = alloc::Heap> Vec<T, H>
     ///
     /// [argument, pool]
     /// The pool to draw memory from.
-    pub fn with_pool(pool: H::Pool) -> Vec<T, H> {
+    pub fn with_pool(pool: H) -> Vec<T, H> {
         let ptr = unsafe { OwnedPtr::new(empty_ptr()) };
         Vec { ptr: ptr, len: 0, cap: 0, pool: pool }
     }
@@ -110,7 +108,7 @@ impl<T, H = alloc::Heap> Vec<T, H>
     ///
     /// The allocator must be the same allocator that was used to allocate the memory.
     pub unsafe fn from_raw_parts(ptr: *mut T, len: usize, cap: usize,
-                                 pool: H::Pool) -> Vec<T, H> {
+                                 pool: H) -> Vec<T, H> {
         Vec {
             ptr: OwnedPtr::new(ptr),
             len: len,
@@ -118,7 +116,11 @@ impl<T, H = alloc::Heap> Vec<T, H>
             pool: pool,
         }
     }
+}
 
+impl<T, H: ?Sized = alloc::Heap> Vec<T, H>
+    where H: MemPool,
+{
     /// Returns the capacity of the vector.
     pub fn capacity(&self) -> usize {
         self.cap
@@ -144,9 +146,9 @@ impl<T, H = alloc::Heap> Vec<T, H>
 
         let new_cap = self.len + cmp::max(n, self.cap / 2 + 1);
         let ptr = if *self.ptr == empty_ptr() {
-            unsafe { H::allocate_array(&mut self.pool, new_cap) }
+            unsafe { alloc::alloc_array(&mut self.pool, new_cap) }
         } else {
-            unsafe { H::reallocate_array(&mut self.pool, *self.ptr, self.cap, new_cap) }
+            unsafe { alloc::realloc_array(&mut self.pool, *self.ptr, self.cap, new_cap) }
         };
         self.ptr = unsafe { OwnedPtr::new(try!(ptr)) };
         self.cap = new_cap;
@@ -156,8 +158,9 @@ impl<T, H = alloc::Heap> Vec<T, H>
     /// Minimizes the amount of used memory.
     pub fn shrink_to_fit(&mut self) -> Result {
         if self.len < self.cap {
-            let ptr = unsafe { H::reallocate_array(&mut self.pool, *self.ptr, self.cap,
-                                                   self.len) };
+            let ptr = unsafe {
+                alloc::realloc_array(&mut self.pool, *self.ptr, self.cap, self.len)
+            };
             self.ptr = unsafe { OwnedPtr::new(try!(ptr)) };
             self.cap = self.len;
         }
@@ -331,7 +334,7 @@ impl<T, H = alloc::Heap> Vec<T, H>
 }
 
 unsafe impl<T, H> UndefState for Vec<T, H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn num() -> usize { <OwnedPtr<T> as UndefState>::num() }
 
@@ -344,8 +347,8 @@ unsafe impl<T, H> UndefState for Vec<T, H>
     }
 }
 
-impl<H> BufWrite for Vec<u8, H>
-    where H: Allocator,
+impl<H: ?Sized> BufWrite for Vec<u8, H>
+    where H: MemPool,
 {
     fn read_to_eof<R>(&mut self, mut r: R) -> Result<usize>
         where R: Read,
@@ -371,11 +374,11 @@ impl<H> BufWrite for Vec<u8, H>
     }
 }
 
-unsafe impl<T, H> Sync for Vec<T, H> where T: Sync, H: Allocator, { }
-unsafe impl<T, H> Send for Vec<T, H> where T: Send, H: Allocator+Send { }
+unsafe impl<T, H> Sync for Vec<T, H> where T: Sync, H: MemPool, { }
+unsafe impl<T, H: ?Sized> Send for Vec<T, H> where T: Send, H: MemPool+Send { }
 
-impl<T, H> Drop for Vec<T, H>
-    where H: Allocator,
+impl<T, H: ?Sized> Drop for Vec<T, H>
+    where H: MemPool,
 {
     fn drop(&mut self) {
         if mem::needs_drop::<T>() {
@@ -385,16 +388,16 @@ impl<T, H> Drop for Vec<T, H>
         }
         if *self.ptr != empty_ptr() {
             unsafe {
-                H::free_array(&mut self.pool, *self.ptr, self.cap);
+                alloc::free_array(&mut self.pool, *self.ptr, self.cap);
             }
         }
     }
 }
 
-impl<T, H1, H2> Eq<Vec<T, H1>> for Vec<T, H2>
+impl<T, H1: ?Sized, H2: ?Sized> Eq<Vec<T, H1>> for Vec<T, H2>
     where T: Eq,
-          H1: Allocator,
-          H2: Allocator,
+          H1: MemPool,
+          H2: MemPool,
 {
     fn eq(&self, other: &Vec<T, H1>) -> bool {
         self.deref().eq(other.deref())
@@ -404,9 +407,9 @@ impl<T, H1, H2> Eq<Vec<T, H1>> for Vec<T, H2>
     }
 }
 
-impl<T, H> Eq<[T]> for Vec<T, H>
+impl<T, H: ?Sized> Eq<[T]> for Vec<T, H>
     where T: Eq,
-          H: Allocator,
+          H: MemPool,
 {
     fn eq(&self, other: &[T]) -> bool {
         self.deref().eq(other)
@@ -416,8 +419,8 @@ impl<T, H> Eq<[T]> for Vec<T, H>
     }
 }
 
-impl<T, H> Deref for Vec<T, H>
-    where H: Allocator,
+impl<T, H: ?Sized> Deref for Vec<T, H>
+    where H: MemPool,
 {
     type Target = [T];
     fn deref(&self) -> &[T] {
@@ -425,103 +428,103 @@ impl<T, H> Deref for Vec<T, H>
     }
 }
 
-impl<T, H> DerefMut for Vec<T, H>
-    where H: Allocator,
+impl<T, H: ?Sized> DerefMut for Vec<T, H>
+    where H: MemPool,
 {
     fn deref_mut(&mut self) -> &mut [T] {
         unsafe { slice::from_ptr(*self.ptr, self.len) }
     }
 }
 
-impl<T, H> Debug for Vec<T, H>
+impl<T, H: ?Sized> Debug for Vec<T, H>
     where T: Debug,
-          H: Allocator,
+          H: MemPool,
 {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
         self.deref().fmt(w)
     }
 }
 
-impl<T, H> MaybeClone for Vec<T, H>
-    where T: MaybeClone,
-          H: Allocator,
-          H::Pool: Default,
+impl<T, H1: ?Sized, H2> TryTo<Vec<T, H2>> for Vec<T, H1>
+    where T: TryTo,
+          H1: MemPool,
+          H2: MemPool + Default,
 {
-    fn maybe_clone(&self) -> Result<Vec<T, H>> {
+    fn try_to(&self) -> Result<Vec<T, H2>> {
         let mut vec = try!(Vec::with_capacity(self.len()));
         for i in 0..self.len() {
-            vec.push(try!(self[i].maybe_clone()));
+            vec.push(try!(self[i].try_to()));
         }
         Ok(vec)
     }
 }
 
-impl<'a, T, H> IntoIterator for &'a Vec<T, H>
-    where H: Allocator,
+impl<'a, T, H: ?Sized> IntoIterator for &'a Vec<T, H>
+    where H: MemPool,
 {
     type Item = &'a T;
     type IntoIter = slice::Items<'a, T>;
     fn into_iter(self) -> slice::Items<'a, T> { self.iter() }
 }
 
-impl<'a, T, H> IntoIterator for &'a mut Vec<T, H>
-    where H: Allocator,
+impl<'a, T, H: ?Sized> IntoIterator for &'a mut Vec<T, H>
+    where H: MemPool,
 {
     type Item = &'a mut T;
     type IntoIter = slice::MutItems<'a, T>;
     fn into_iter(self) -> slice::MutItems<'a, T> { self.iter_mut() }
 }
 
-impl<T, H> AsRef<[T]> for Vec<T, H>
-    where H: Allocator,
+impl<T, H: ?Sized> AsRef<[T]> for Vec<T, H>
+    where H: MemPool,
 {
     fn as_ref(&self) -> &[T] {
         self.deref()
     }
 }
 
-impl<T, H> AsMut<[T]> for Vec<T, H>
-    where H: Allocator,
+impl<T, H: ?Sized> AsMut<[T]> for Vec<T, H>
+    where H: MemPool,
 {
     fn as_mut(&mut self) -> &mut [T] {
         self.deref_mut()
     }
 }
 
-impl<H> AsRef<ByteStr> for Vec<u8, H>
-    where H: Allocator,
+impl<H: ?Sized> AsRef<ByteStr> for Vec<u8, H>
+    where H: MemPool,
 {
     fn as_ref(&self) -> &ByteStr {
         self.deref().as_ref()
     }
 }
 
-impl<H> AsMut<ByteStr> for Vec<u8, H>
-    where H: Allocator,
+impl<H: ?Sized> AsMut<ByteStr> for Vec<u8, H>
+    where H: MemPool,
 {
     fn as_mut(&mut self) -> &mut ByteStr {
         self.deref_mut().as_mut()
     }
 }
 
-impl<H> AsCStr for Vec<u8, H>
-    where H: Allocator,
+impl<H: ?Sized> AsCStr for Vec<u8, H>
+    where H: MemPool,
 {
     fn as_cstr(&self) -> Result<&CStr> {
         self.deref().as_cstr()
     }
 }
 
-impl<H> AsMutCStr for Vec<u8, H>
-    where H: Allocator,
+impl<H: ?Sized> AsMutCStr for Vec<u8, H>
+    where H: MemPool,
 {
     fn as_mut_cstr(&mut self) -> Result<&mut CStr> {
         self.deref_mut().as_mut_cstr()
     }
 }
 
-impl<H> ToCStr for Vec<u8, H>
-    where H: Allocator,
+impl<H: ?Sized> ToCStr for Vec<u8, H>
+    where H: MemPool,
 {
     fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
         self.deref().to_cstr(buf)
@@ -536,24 +539,24 @@ impl<H> ToCStr for Vec<u8, H>
     }
 }
 
-impl<H> AsNoNullStr for Vec<u8, H>
-    where H: Allocator,
+impl<H: ?Sized> AsNoNullStr for Vec<u8, H>
+    where H: MemPool,
 {
     fn as_no_null_str(&self) -> Result<&NoNullStr> {
         self.deref().as_no_null_str()
     }
 }
 
-impl<H> AsMutNoNullStr for Vec<u8, H>
-    where H: Allocator,
+impl<H: ?Sized> AsMutNoNullStr for Vec<u8, H>
+    where H: MemPool,
 {
     fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
         self.deref_mut().as_mut_no_null_str()
     }
 }
 
-impl<H> Write for Vec<u8, H>
-    where H: Allocator,
+impl<H: ?Sized> Write for Vec<u8, H>
+    where H: MemPool,
 {
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         try!(self.reserve(buf.len()));
@@ -573,8 +576,8 @@ impl<H> Write for Vec<u8, H>
     }
 }
 
-impl<H> Vec<u8, H>
-    where H: Allocator,
+impl<H: ?Sized> Vec<u8, H>
+    where H: MemPool,
 {
     pub fn unused(&mut self) -> &mut [u8] {
         unsafe { slice::from_ptr(self.ptr.add(self.len), self.cap - self.len) }

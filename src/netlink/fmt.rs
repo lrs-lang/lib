@@ -5,9 +5,8 @@
 use base::prelude::*;
 use alloc::{self};
 use core::{mem};
-use base::default::{Default};
 use cty::{nlmsghdr, nlattr};
-use alloc::{NoMem, Allocator, AlignAlloc};
+use alloc::{NoMem, MemPool, AlignAlloc};
 use vec::{Vec};
 use kind::{self};
 use flags::{self};
@@ -15,7 +14,7 @@ use flags::{self};
 macro_rules! align { ($val:expr) => { ($val + 3) & !3 } }
 
 pub struct NlBuf<H = alloc::Heap>
-    where H: Allocator
+    where H: MemPool
 {
     buf: Vec<u8, AlignAlloc<u32, H>>,
 }
@@ -24,14 +23,15 @@ impl<'a> NlBuf<NoMem<'a>> {
     pub fn buffered(buf: &'a mut [u8]) -> NlBuf<NoMem<'a>> {
         let buf = mem::align_for_mut::<u32>(buf);
         NlBuf {
-            buf: unsafe { Vec::from_raw_parts(buf.as_mut_ptr(), 0, buf.len(), ()) },
+            buf: unsafe {
+                Vec::from_raw_parts(buf.as_mut_ptr(), 0, buf.len(), AlignAlloc::default())
+            },
         }
     }
 }
 
 impl<H> NlBuf<H>
-    where H: Allocator,
-          H::Pool: Default,
+    where H: MemPool+Default,
 {
     pub fn new() -> NlBuf<H> {
         NlBuf {
@@ -41,7 +41,7 @@ impl<H> NlBuf<H>
 }
 
 impl<H> NlBuf<H>
-    where H: Allocator
+    where H: MemPool,
 {
     pub fn new_msg<'a>(&'a mut self, ty: kind::Kind, flags: flags::NlFlags, seq: u32,
                        port: u32) -> Result<NlMsg<'a, H>> {
@@ -64,7 +64,7 @@ impl<H> NlBuf<H>
 }
 
 impl<H> AsRef<[u8]> for NlBuf<H>
-    where H: Allocator
+    where H: MemPool,
 {
     fn as_ref(&self) -> &[u8] {
         &self.buf
@@ -72,16 +72,14 @@ impl<H> AsRef<[u8]> for NlBuf<H>
 }
 
 pub struct NlMsg<'a, H: 'a = alloc::Heap>
-    where H: Allocator,
-          H::Pool: 'a,
+    where H: MemPool+'a,
 {
     data: NlData<'a, H>,
     start: usize,
 }
 
 impl<'a, H> NlMsg<'a, H>
-    where H: Allocator + 'a,
-          H::Pool: 'a,
+    where H: MemPool+'a,
 {
     pub fn cancel(mut self) {
         self.data.buf.truncate(self.start);
@@ -90,8 +88,7 @@ impl<'a, H> NlMsg<'a, H>
 }
 
 impl<'a, H> Deref for NlMsg<'a, H>
-    where H: Allocator + 'a,
-          H::Pool: 'a,
+    where H: MemPool+'a,
 {
     type Target = NlData<'a, H>;
     fn deref(&self) -> &NlData<'a, H> {
@@ -100,8 +97,7 @@ impl<'a, H> Deref for NlMsg<'a, H>
 }
 
 impl<'a, H> DerefMut for NlMsg<'a, H>
-    where H: Allocator + 'a,
-          H::Pool: 'a,
+    where H: MemPool+'a,
 {
     fn deref_mut(&mut self) -> &mut NlData<'a, H> {
         &mut self.data
@@ -109,8 +105,7 @@ impl<'a, H> DerefMut for NlMsg<'a, H>
 }
 
 impl<'a, H> Drop for NlMsg<'a, H>
-    where H: Allocator + 'a,
-          H::Pool: 'a,
+    where H: MemPool+'a,
 {
     fn drop(&mut self) {
         unsafe {
@@ -121,16 +116,14 @@ impl<'a, H> Drop for NlMsg<'a, H>
 }
 
 pub struct NlAttr<'a, H = alloc::Heap>
-    where H: Allocator + 'a,
-          H::Pool: 'a,
+    where H: MemPool+'a,
 {
     data: NlData<'a, H>,
     start: usize,
 }
 
 impl<'a, H> NlAttr<'a, H>
-    where H: Allocator + 'a,
-          H::Pool: 'a,
+    where H: MemPool+'a,
 {
     pub fn cancel(mut self) {
         self.data.buf.truncate(self.start);
@@ -139,8 +132,7 @@ impl<'a, H> NlAttr<'a, H>
 }
 
 impl<'a, H> Deref for NlAttr<'a, H>
-    where H: Allocator + 'a,
-          H::Pool: 'a,
+    where H: MemPool+'a,
 {
     type Target = NlData<'a, H>;
     fn deref(&self) -> &NlData<'a, H> {
@@ -149,8 +141,7 @@ impl<'a, H> Deref for NlAttr<'a, H>
 }
 
 impl<'a, H> DerefMut for NlAttr<'a, H>
-    where H: Allocator + 'a,
-          H::Pool: 'a,
+    where H: MemPool+'a,
 {
     fn deref_mut(&mut self) -> &mut NlData<'a, H> {
         &mut self.data
@@ -158,8 +149,7 @@ impl<'a, H> DerefMut for NlAttr<'a, H>
 }
 
 impl<'a, H> Drop for NlAttr<'a, H>
-    where H: Allocator + 'a,
-          H::Pool: 'a,
+    where H: MemPool+'a,
 {
     fn drop(&mut self) {
         unsafe {
@@ -170,15 +160,13 @@ impl<'a, H> Drop for NlAttr<'a, H>
 }
 
 pub struct NlData<'a, H = alloc::Heap>
-    where H: Allocator + 'a,
-          H::Pool: 'a,
+    where H: MemPool+'a,
 {
     buf: &'a mut Vec<u8, AlignAlloc<u32, H>>,
 }
 
 impl<'a, H> NlData<'a, H>
-    where H: Allocator + 'a,
-          H::Pool: 'a,
+    where H: MemPool+'a,
 {
     unsafe fn add_attr(&mut self, payload: usize) -> Result<(&mut nlattr, &mut [u8])> {
         let size = mem::size_of::<nlattr>() + align!(payload);

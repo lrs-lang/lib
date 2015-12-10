@@ -6,13 +6,13 @@ use base::prelude::*;
 use str_one::no_null_str::{NoNullStr};
 use str_two::no_null_string::{NoNullString};
 use {ToOwned};
-use alloc::{Allocator};
+use alloc::{MemPool};
 
 impl<H> ToOwned<H> for NoNullStr
-    where H: Allocator,
+    where H: MemPool,
 {
     type Owned = NoNullString<H>;
-    fn to_owned_with_pool(&self, pool: H::Pool) -> Result<NoNullString<H>> {
+    fn to_owned_with_pool(&self, pool: H) -> Result<NoNullString<H>> {
         let bytes: &[u8] = self.as_ref();
         bytes.to_owned_with_pool(pool).map(|o| unsafe {
             NoNullString::from_bytes_unchecked(o)

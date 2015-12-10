@@ -6,7 +6,7 @@ use std::{mem};
 use std::ops::{Eq};
 
 struct T { x: [u64; 2] }
-impl Pod for T { }
+unsafe impl Pod for T { }
 impl Copy for T { }
 impl Eq for T { fn eq(&self, o: &T) -> bool { self.x == o.x } }
 

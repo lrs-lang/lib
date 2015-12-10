@@ -14,7 +14,6 @@ extern crate lrs_alloc as alloc;
 extern crate lrs_fmt   as fmt;
 
 use base::prelude::*;
-use base::default::{Default};
 use core::ptr::{OwnedPtr};
 use core::{ptr, mem, intrinsics};
 use fmt::{Debug, Write};
@@ -25,14 +24,14 @@ mod std { pub use fmt::std::*; }
 
 /// A heap-allocated object.
 pub struct BoxBuf<T, Heap = alloc::Heap>
-    where Heap: alloc::Allocator,
+    where Heap: alloc::MemPool,
 {
-    pool: Heap::Pool,
+    pool: Heap,
     data: OwnedPtr<T>,
 }
 
 impl<T, H> BoxBuf<T, H>
-    where H: alloc::Allocator,
+    where H: alloc::MemPool,
 {
     /// Stores a value in the buffer, creating a real `Box`.
     ///
@@ -50,24 +49,23 @@ impl<T, H> BoxBuf<T, H>
 }
 
 impl<T, H> Drop for BoxBuf<T, H>
-    where H: alloc::Allocator,
+    where H: alloc::MemPool,
 {
     fn drop(&mut self) {
-        unsafe { H::free(&mut self.pool, *self.data); }
+        unsafe { alloc::free(&mut self.pool, *self.data); }
     }
 }
 
 /// A heap-allocated object.
 pub struct Box<T: ?Sized, Heap = alloc::Heap>
-    where Heap: alloc::Allocator,
+    where Heap: alloc::MemPool,
 {
-    pool: Heap::Pool,
+    pool: Heap,
     data: OwnedPtr<T>,
 }
 
 impl<T, H> Box<T, H>
-    where H: alloc::Allocator,
-          H::Pool: Default,
+    where H: alloc::MemPool+Default,
 {
     /// Creates a new box.
     ///
@@ -84,15 +82,15 @@ impl<T, H> Box<T, H>
     /// ----
     pub fn new() -> Result<BoxBuf<T, H>> {
         unsafe {
-            let mut pool = H::Pool::default();
-            let ptr = try!(H::allocate(&mut pool));
+            let mut pool = H::default();
+            let ptr = try!(alloc::alloc(&mut pool));
             Ok(BoxBuf { data: OwnedPtr::new(ptr), pool: pool })
         }
     }
 }
 
 impl<T: ?Sized, H> Deref for Box<T, H>
-    where H: alloc::Allocator,
+    where H: alloc::MemPool,
 {
     type Target = T;
     fn deref(&self) -> &T {
@@ -101,7 +99,7 @@ impl<T: ?Sized, H> Deref for Box<T, H>
 }
 
 impl<T: ?Sized, H> DerefMut for Box<T, H>
-    where H: alloc::Allocator,
+    where H: alloc::MemPool,
 {
     fn deref_mut(&mut self) -> &mut T {
         unsafe { &mut **self.data }
@@ -109,20 +107,20 @@ impl<T: ?Sized, H> DerefMut for Box<T, H>
 }
 
 impl<T: ?Sized, H> Drop for Box<T, H>
-    where H: alloc::Allocator,
+    where H: alloc::MemPool,
 {
     fn drop(&mut self) {
         unsafe {
             if mem::needs_drop::<T>() {
                 ptr::drop(*self.data);
             }
-            H::free(&mut self.pool, *self.data);
+            alloc::free(&mut self.pool, *self.data);
         }
     }
 }
 
 impl<T: ?Sized, H> Debug for Box<T, H>
-    where H: alloc::Allocator,
+    where H: alloc::MemPool,
           T: Debug
 {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {

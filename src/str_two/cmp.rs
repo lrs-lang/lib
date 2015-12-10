@@ -8,13 +8,13 @@ use string::{String};
 use byte_string::{ByteString};
 use c_string::{CString};
 use no_null_string::{NoNullString};
-use alloc::{Allocator};
+use alloc::{MemPool};
 
 macro_rules! owned {
     ($one:ident, $two:ident) => {
         impl<H1, H2> Eq<$two<H2>> for $one<H1>
-            where H1: Allocator,
-                  H2: Allocator,
+            where H1: MemPool,
+                  H2: MemPool,
         {
             fn eq(&self, other: &$two<H2>) -> bool {
                 self.deref() == other.deref()
@@ -43,7 +43,7 @@ owned!(String,       String);
 macro_rules! borrowed_no_str {
     ($one:ident, $two:ty) => {
         impl<H> Eq<$two> for $one<H>
-            where H: Allocator,
+            where H: MemPool,
         {
             fn eq(&self, other: &$two) -> bool {
                 let deref: &[u8] = self.deref().deref();
@@ -72,7 +72,7 @@ borrowed_no_str!(CString,      [u8]);
 macro_rules! borrowed_str {
     ($one:ident, $two:ty) => {
         impl<H> Eq<$two> for $one<H>
-            where H: Allocator,
+            where H: MemPool,
         {
             fn eq(&self, other: &$two) -> bool {
                 self.as_bytes() == other

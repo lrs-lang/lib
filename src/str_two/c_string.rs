@@ -8,18 +8,18 @@ use base::undef::{UndefState};
 use str_one::c_str::{CStr, ToCStr};
 use fmt::{Debug, Write};
 use vec::{Vec};
-use alloc::{self, Allocator};
+use alloc::{self, MemPool};
 use {ByteString, NoNullString};
 
 /// An owned byte slice that has exactly one null byte at the very end.
 pub struct CString<Heap = alloc::Heap>
-    where Heap: Allocator,
+    where Heap: MemPool,
 {
     data: Vec<u8, Heap>,
 }
 
 impl<H> CString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     /// Creates a `CString` by wrapping a vector without checking the vector for validity.
     ///
@@ -36,7 +36,7 @@ impl<H> CString<H>
 }
 
 impl<H> Into<Vec<u8, H>> for CString<H>
-    where H: Allocator, 
+    where H: MemPool, 
 {
     fn into(mut self) -> Vec<u8, H> {
         self.data.pop();
@@ -45,7 +45,7 @@ impl<H> Into<Vec<u8, H>> for CString<H>
 }
 
 impl<H> Into<ByteString<H>> for CString<H>
-    where H: Allocator, 
+    where H: MemPool, 
 {
     fn into(self) -> ByteString<H> {
         ByteString::from_vec(self.into())
@@ -53,7 +53,7 @@ impl<H> Into<ByteString<H>> for CString<H>
 }
 
 impl<H> Into<NoNullString<H>> for CString<H>
-    where H: Allocator, 
+    where H: MemPool, 
 {
     fn into(self) -> NoNullString<H> {
         unsafe { NoNullString::from_bytes_unchecked(self.into()) }
@@ -61,7 +61,7 @@ impl<H> Into<NoNullString<H>> for CString<H>
 }
 
 unsafe impl<H> UndefState for CString<H>
-    where H: Allocator, 
+    where H: MemPool, 
 {
     fn num() -> usize { <Vec<u8, H> as UndefState>::num() }
 
@@ -75,7 +75,7 @@ unsafe impl<H> UndefState for CString<H>
 }
 
 impl<H> Deref for CString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     type Target = CStr;
     fn deref(&self) -> &CStr {
@@ -84,7 +84,7 @@ impl<H> Deref for CString<H>
 }
 
 impl<H> Debug for CString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
         Debug::fmt(self.deref(), w)
@@ -92,7 +92,7 @@ impl<H> Debug for CString<H>
 }
 
 impl<H> AsRef<CStr> for CString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn as_ref(&self) -> &CStr {
         self.deref()
@@ -100,7 +100,7 @@ impl<H> AsRef<CStr> for CString<H>
 }
 
 impl<H> AsMut<CStr> for CString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn as_mut(&mut self) -> &mut CStr {
         unsafe { CStr::from_mut_bytes_unchecked(&mut self.data[..]) }
@@ -108,7 +108,7 @@ impl<H> AsMut<CStr> for CString<H>
 }
 
 impl<H> ToCStr for CString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
         self.deref().to_cstr(buf)

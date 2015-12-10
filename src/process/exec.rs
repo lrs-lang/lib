@@ -12,7 +12,7 @@ use str_two::{NoNullString};
 use str_three::{ToCString};
 use rt::{raw_env};
 use rmo::{Rmo};
-use alloc::{Allocator, FbHeap};
+use alloc::{MemPool, FbHeap};
 use {env, file};
 
 /// Executes a program in place of the current program.
@@ -79,7 +79,7 @@ pub fn exec<P>(path: P, argv: &[*const c_char]) -> Result
 }
 
 fn exec_rel<H>(rel: &CStr, mut buf: NoNullString<H>, args: &[*const c_char]) -> Result
-    where H: Allocator,
+    where H: MemPool,
 {
     for path in try!(env::path()) {
         try!(buf.set_path(path));

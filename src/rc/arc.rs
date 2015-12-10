@@ -8,31 +8,29 @@ use core::ptr::{OwnedPtr};
 use core::iter::{IntoIterator};
 use core::marker::{Leak, Unsize};
 use core::ops::{CoerceUnsized};
-use base::clone::{Clone, MaybeClone};
-use base::default::{Default};
 use base::undef::{UndefState};
 use atomic::{AtomicUsize};
 use fmt::{Debug, Write};
-use alloc::{self, Allocator};
+use alloc::{self, MemPool};
 
 struct Inner<T: ?Sized, H = alloc::Heap>
-    where H: Allocator,
+    where H: MemPool,
 {
     count: AtomicUsize,
-    pool: H::Pool,
+    pool: H,
     val: T,
 }
 
 /// A buffer used when creating a new `Arc`.
 pub struct ArcBuf<T, Heap = alloc::Heap>
-    where Heap: Allocator,
+    where Heap: MemPool,
           T: Leak,
 {
     data: OwnedPtr<Inner<T, Heap>>,
 }
 
 impl<T, H> ArcBuf<T, H>
-    where H: Allocator,
+    where H: MemPool,
           T: Leak,
 {
     /// Stores a value in the buffer, creating a real `Arc`.
@@ -49,32 +47,31 @@ impl<T, H> ArcBuf<T, H>
     }
 }
 
-unsafe impl<T, H> Send for ArcBuf<T, H> where T: Leak, H: Send+Allocator { }
-unsafe impl<T, H> Sync for ArcBuf<T, H> where T: Leak, H: Allocator { }
+unsafe impl<T, H> Send for ArcBuf<T, H> where T: Leak, H: Send+MemPool { }
+unsafe impl<T, H> Sync for ArcBuf<T, H> where T: Leak, H: MemPool { }
 
 impl<T, H> Drop for ArcBuf<T, H>
-    where H: Allocator,
+    where H: MemPool,
           T: Leak,
 {
     fn drop(&mut self) {
         unsafe {
             let mut pool = ptr::read(&(**self.data).pool);
-            H::free(&mut pool, *self.data);
+            alloc::free(&mut pool, *self.data);
         }
     }
 }
 
 /// An atomically reference-counted container.
 pub struct Arc<T: ?Sized, Heap = alloc::Heap>
-    where Heap: Allocator,
+    where Heap: MemPool,
           T: Leak,
 {
     data: OwnedPtr<Inner<T, Heap>>,
 }
 
 impl<T, H> Arc<T, H>
-    where H: Allocator,
-          H::Pool: Default,
+    where H: MemPool+Default,
           T: Leak,
 {
     /// Creates a new Arc.
@@ -92,8 +89,8 @@ impl<T, H> Arc<T, H>
     /// ----
     pub fn new() -> Result<ArcBuf<T, H>> {
         unsafe {
-            let mut pool = H::Pool::default();
-            let data_ptr = try!(H::allocate::<Inner<T, H>>(&mut pool));
+            let mut pool = H::default();
+            let data_ptr = try!(alloc::alloc::<Inner<T, H>, _>(&mut pool));
             ptr::write(&mut (*data_ptr).pool, pool);
             (*data_ptr).count.store(1);
             Ok(ArcBuf { data: OwnedPtr::new(data_ptr) })
@@ -102,7 +99,7 @@ impl<T, H> Arc<T, H>
 }
 
 impl<T: ?Sized, H> Arc<T, H>
-    where H: Allocator,
+    where H: MemPool,
           T: Leak,
 {
     /// Returns a mutable reference to the contained data if this is the only reference.
@@ -127,12 +124,12 @@ impl<T: ?Sized, H> Arc<T, H>
 impl<T: ?Sized, U: ?Sized, H> CoerceUnsized<Arc<U, H>> for Arc<T, H>
     where T: Unsize<U> + Leak,
           U: Leak,
-          H: Allocator,
+          H: MemPool,
 {}
 
 impl<'a, T, H> IntoIterator for &'a Arc<T, H>
     where &'a T: IntoIterator,
-          H: Allocator,
+          H: MemPool,
           T: Leak,
 {
     type Item = <&'a T as IntoIterator>::Item;
@@ -141,7 +138,7 @@ impl<'a, T, H> IntoIterator for &'a Arc<T, H>
 }
 
 unsafe impl<T, H> UndefState for Arc<T, H>
-    where H: Allocator,
+    where H: MemPool,
           T: Leak,
 {
     fn num() -> usize { <OwnedPtr<Inner<T, H>> as UndefState>::num() }
@@ -155,11 +152,11 @@ unsafe impl<T, H> UndefState for Arc<T, H>
     }
 }
 
-unsafe impl<T: ?Sized, H> Send for Arc<T, H> where T: Sync+Send+Leak, H:Send+Allocator { }
-unsafe impl<T: ?Sized, H> Sync for Arc<T, H> where T: Sync+Leak, H: Allocator { }
+unsafe impl<T: ?Sized, H> Send for Arc<T, H> where T: Sync+Send+Leak, H:Send+MemPool { }
+unsafe impl<T: ?Sized, H> Sync for Arc<T, H> where T: Sync+Leak, H: MemPool { }
 
 impl<T: ?Sized, H> Drop for Arc<T, H>
-    where H: Allocator,
+    where H: MemPool,
           T: Leak,
 {
     fn drop(&mut self) {
@@ -170,14 +167,14 @@ impl<T: ?Sized, H> Drop for Arc<T, H>
                     ptr::drop(&mut data.val);
                 }
                 let mut pool = ptr::read(&data.pool);
-                H::free(&mut pool, *self.data);
+                alloc::free(&mut pool, *self.data);
             }
         }
     }
 }
 
 impl<T: ?Sized, H> Deref for Arc<T, H>
-    where H: Allocator,
+    where H: MemPool,
           T: Leak,
 {
     type Target = T;
@@ -187,27 +184,27 @@ impl<T: ?Sized, H> Deref for Arc<T, H>
     }
 }
 
-impl<T: ?Sized, H> Clone for Arc<T, H>
-    where H: Allocator,
+impl<T: ?Sized, H> To for Arc<T, H>
+    where H: MemPool,
           T: Leak,
 {
-    fn clone(&self) -> Arc<T, H> {
+    fn to(&self) -> Arc<T, H> {
         self.add_ref()
     }
 }
 
-impl<T: ?Sized, H> MaybeClone for Arc<T, H>
-    where H: Allocator,
+impl<T: ?Sized, H> TryTo for Arc<T, H>
+    where H: MemPool,
           T: Leak,
 {
-    fn maybe_clone(&self) -> Result<Arc<T, H>> {
+    fn try_to(&self) -> Result<Arc<T, H>> {
         Ok(self.add_ref())
     }
 }
 
 impl<T: ?Sized, H> Debug for Arc<T, H>
     where T: Debug + Leak,
-          H: Allocator,
+          H: MemPool,
 {
     fn fmt<W: Write+?Sized>(&self, mut w: &mut W) -> Result {
         write!(w, "Arc {{ data: {:?} }}", self.deref())

@@ -4,7 +4,7 @@
 
 use base::prelude::*;
 use base::{error};
-use {Allocator, MAX_SIZE};
+use {MemPool, MAX_SIZE};
 use lrs_libc as libc;
 
 /// The libc allocator
@@ -13,22 +13,26 @@ use lrs_libc as libc;
 ///
 /// This allocator ignores the alignment argument and always returns maximally aligned
 /// pointers.
+#[derive(Copy)]
 pub struct Libc;
 
-impl Allocator for Libc {
-    type Pool = ();
+impl Default for Libc {
+    fn default() -> Libc {
+        Libc
+    }
+}
 
-    unsafe fn allocate_raw(pool: &mut (), size: usize,
-                           alignment: usize) -> Result<*mut u8> {
-        Libc::reallocate_raw(pool, 0 as *mut u8, 0, size, alignment)
+impl MemPool for Libc {
+    unsafe fn alloc(&mut self, size: usize, alignment: usize) -> Result<*mut u8> {
+        self.realloc(0 as *mut u8, 0, size, alignment)
     }
 
-    unsafe fn free_raw(pool: &mut (), ptr: *mut u8, size: usize, alignment: usize) {
-        Libc::reallocate_raw(pool, ptr, size, 0, alignment);
+    unsafe fn free(&mut self, ptr: *mut u8, size: usize, alignment: usize) {
+        self.realloc(ptr, size, 0, alignment);
     }
 
-    unsafe fn reallocate_raw(_: &mut (), old_ptr: *mut u8, oldsize: usize, newsize: usize,
-                             alignment: usize) -> Result<*mut u8> {
+    unsafe fn realloc(&mut self, old_ptr: *mut u8, oldsize: usize, newsize: usize,
+                      alignment: usize) -> Result<*mut u8> {
         let _ = oldsize;
         let _ = alignment;
         if newsize > MAX_SIZE {

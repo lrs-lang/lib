@@ -4,13 +4,11 @@
 
 use base::prelude::*;
 use core::{mem};
-use base::clone::{MaybeClone};
 use base::undef::{UndefState};
-use base::default::{Default};
 use str_one::{ByteStr, ToCStr, CStr};
 use fmt::{Debug, Display, Write};
 use vec::{Vec};
-use alloc::{self, Allocator};
+use alloc::{self, MemPool};
 
 /// An owned byte sequence that can be interpreted as a string.
 ///
@@ -22,14 +20,13 @@ use alloc::{self, Allocator};
 ///
 /// The Display implementation writes the contained bytes directly to the output.
 pub struct ByteString<Heap = alloc::Heap>
-    where Heap: Allocator,
+    where Heap: MemPool,
 {
     data: Vec<u8, Heap>,
 }
 
 impl<H> ByteString<H>
-    where H: Allocator,
-          H::Pool: Default,
+    where H: MemPool+Default,
 {
     /// Creates a new allocated `ByteString`.
     pub fn new() -> ByteString<H> {
@@ -38,7 +35,7 @@ impl<H> ByteString<H>
 }
 
 impl<H> ByteString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     /// Creates a `ByteString` by wrapping a vector.
     ///
@@ -50,7 +47,7 @@ impl<H> ByteString<H>
 }
 
 impl<H> Into<Vec<u8, H>> for ByteString<H>
-    where H: Allocator, 
+    where H: MemPool, 
 {
     fn into(self) -> Vec<u8, H> {
         self.data
@@ -58,7 +55,7 @@ impl<H> Into<Vec<u8, H>> for ByteString<H>
 }
 
 unsafe impl<H> UndefState for ByteString<H>
-    where H: Allocator, 
+    where H: MemPool, 
 {
     fn num() -> usize { <Vec<u8, H> as UndefState>::num() }
 
@@ -72,7 +69,7 @@ unsafe impl<H> UndefState for ByteString<H>
 }
 
 impl<H> Deref for ByteString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     type Target = ByteStr;
     fn deref(&self) -> &ByteStr {
@@ -81,7 +78,7 @@ impl<H> Deref for ByteString<H>
 }
 
 impl<H> DerefMut for ByteString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn deref_mut(&mut self) -> &mut ByteStr {
         unsafe { mem::cast(self.data.deref_mut()) }
@@ -89,7 +86,7 @@ impl<H> DerefMut for ByteString<H>
 }
 
 impl<H> Debug for ByteString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
         Debug::fmt(self.deref(), w)
@@ -97,7 +94,7 @@ impl<H> Debug for ByteString<H>
 }
 
 impl<H> Display for ByteString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
         Display::fmt(self.deref(), w)
@@ -105,7 +102,7 @@ impl<H> Display for ByteString<H>
 }
 
 impl<H> AsRef<[u8]> for ByteString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn as_ref(&self) -> &[u8] {
         &self.data[..]
@@ -113,7 +110,7 @@ impl<H> AsRef<[u8]> for ByteString<H>
 }
 
 impl<H> AsMut<[u8]> for ByteString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn as_mut(&mut self) -> &mut [u8] {
         &mut self.data[..]
@@ -121,7 +118,7 @@ impl<H> AsMut<[u8]> for ByteString<H>
 }
 
 impl<H> AsRef<ByteStr> for ByteString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn as_ref(&self) -> &ByteStr {
         self.data.as_ref()
@@ -129,7 +126,7 @@ impl<H> AsRef<ByteStr> for ByteString<H>
 }
 
 impl<H> AsMut<ByteStr> for ByteString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn as_mut(&mut self) -> &mut ByteStr {
         self.data.as_mut()
@@ -137,24 +134,24 @@ impl<H> AsMut<ByteStr> for ByteString<H>
 }
 
 impl<H> AsMut<Vec<u8, H>> for ByteString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn as_mut(&mut self) -> &mut Vec<u8, H> {
         &mut self.data
     }
 }
 
-impl<H> MaybeClone for ByteString<H>
-    where H: Allocator,
-          H::Pool: Default,
+impl<H1, H2> TryTo<ByteString<H2>> for ByteString<H1>
+    where H1: MemPool,
+          H2: MemPool+Default,
 {
-    fn maybe_clone(&self) -> Result<ByteString<H>> {
-        self.data.maybe_clone().map(|o| ByteString { data: o })
+    fn try_to(&self) -> Result<ByteString<H2>> {
+        self.data.try_to().map(|o| ByteString { data: o })
     }
 }
 
 impl<H> ToCStr for ByteString<H>
-    where H: Allocator,
+    where H: MemPool,
 {
     fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
         self.data.to_cstr(buf)

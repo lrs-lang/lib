@@ -4,8 +4,7 @@
 
 #![crate_name = "lrs_alloc"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, const_fn)]
-#![plugin(lrs_core_plugin)]
+#![feature(no_std, const_fn)]
 #![no_std]
 
 extern crate lrs_base as base;
@@ -19,7 +18,7 @@ use core::{mem};
 use base::{error};
 
 pub use no::{NoMem};
-pub use ta::{TaAlloc, TaPool};
+pub use ta::{TaPool};
 pub use align::{AlignAlloc};
 #[cfg(not(no_libc))] pub use libc::{Libc};
 #[cfg(not(freestanding))] pub use bda::{Bda};
@@ -37,6 +36,8 @@ mod ta;
 
 #[cfg(jemalloc)]
 mod jemalloc;
+
+// NOTE: The default allocator should be `Default`, `Copy`, `Send`, `Sync`, etc.
 
 /// The default allocator
 #[cfg(not(no_libc))] pub type Heap = Libc;
@@ -65,10 +66,7 @@ pub fn empty_ptr<T>() -> *mut T {
 /// == Bugs
 ///
 /// This needs better documentation.
-pub trait Allocator: Leak {
-    /// The memory pool used by this type.
-    type Pool;
-
+pub trait MemPool: Leak {
     /// Allocates a chunk of bytes with the specified properties.
     ///
     /// [argument, pool]
@@ -90,8 +88,7 @@ pub trait Allocator: Leak {
     /// by the hardware can be satisfied.
     ///
     /// If `size` is zero, the behavior is undefined.
-    unsafe fn allocate_raw(pool: &mut Self::Pool, size: usize,
-                           alignment: usize) -> Result<*mut u8>;
+    unsafe fn alloc(&mut self, size: usize, alignment: usize) -> Result<*mut u8>;
 
     /// Reallocates a chunk of bytes.
     ///
@@ -129,8 +126,8 @@ pub trait Allocator: Leak {
     /// are the same as the first `oldsize` bytes in the old object.
     ///
     /// If `newsize` is `0`, the behavior is undefined.
-    unsafe fn reallocate_raw(pool: &mut Self::Pool, ptr: *mut u8, oldsize: usize,
-                             newsize: usize, alignment: usize) -> Result<*mut u8>;
+    unsafe fn realloc(&mut self, ptr: *mut u8, oldsize: usize,
+                      newsize: usize, alignment: usize) -> Result<*mut u8>;
 
     /// Deallocates a chunk of bytes with the specified properties.
     ///
@@ -157,151 +154,170 @@ pub trait Allocator: Leak {
     ///
     /// This function always succeeds and the pointer argument must no longer be used
     /// after this call.
-    unsafe fn free_raw(pool: &mut Self::Pool, ptr: *mut u8, size: usize,
-                       alignment: usize);
+    unsafe fn free(&mut self, ptr: *mut u8, size: usize, alignment: usize);
+}
 
-    /// Allocates an object of the specified type.
-    ///
-    /// [argument, pool]
-    /// The pool from which to draw memory.
-    ///
-    /// [return_value]
-    /// Returns a pointer to an allocated object.
-    ///
-    /// = Remarks
-    ///
-    /// If `T` has size `0`, a call to this function behaves like a call to `empty_ptr`.
-    unsafe fn allocate<T>(pool: &mut Self::Pool) -> Result<*mut T> {
-        if mem::size_of::<T>() == 0 {
-            Ok(empty_ptr())
-        } else {
-            Self::allocate_raw(pool, mem::size_of::<T>(), mem::align_of::<T>())
-                        .map(|r| r as *mut T)
-        }
+impl<'a, T: MemPool> MemPool for &'a mut T {
+    unsafe fn alloc(&mut self, size: usize, alignment: usize) -> Result<*mut u8> {
+        (**self).alloc(size, alignment)
     }
 
-    /// Allocates an array of the specified type.
-    ///
-    /// [argument, pool]
-    /// The pool from which to draw memory.
-    ///
-    /// [argument, num]
-    /// The number of elements in the array.
-    ///
-    /// [return_value]
-    /// Returns a pointer to an allocated array.
-    ///
-    /// = Remarks
-    ///
-    /// If `T` has size `0`, a call to this function behaves like a call to `empty_ptr`.
-    /// Otherwise, if `num` is `0`, the behavior is undefined.
-    unsafe fn allocate_array<T>(pool: &mut Self::Pool, num: usize) -> Result<*mut T> {
-        if mem::size_of::<T>() == 0 {
-            Ok(empty_ptr())
-        } else {
-            match num.checked_mul(mem::size_of::<T>()) {
-                Some(size) => Self::allocate_raw(pool, size, mem::align_of::<T>())
-                                        .map(|r| r as *mut T),
-                _ => Err(error::InvalidArgument),
-            }
-        }
+    unsafe fn realloc(&mut self, ptr: *mut u8, oldsize: usize,
+                      newsize: usize, alignment: usize) -> Result<*mut u8> {
+        (**self).realloc(ptr, oldsize, newsize, alignment)
     }
 
-    /// Reallocates an array.
-    ///
-    /// [argument, pool]
-    /// The pool from which to draw memory.
-    ///
-    /// [argument, ptr]
-    /// The pointer that should be reallocated.
-    ///
-    /// [argument, num]
-    /// The old number of elements in the array.
-    ///
-    /// [argument, newnum]
-    /// The new number of elements in the array.
-    ///
-    /// [return_value]
-    /// Returns a pointer to the new array.
-    ///
-    /// = Remarks
-    ///
-    /// If `T` has size `0`, a call to this function behaves like a call to `empty_ptr`.
-    /// Otherwise:
-    ///
-    /// The pointer argument must be a pointer returned by a previous call to
-    /// `allocate_array` or `reallocate_array` with the same allocator and pool. The
-    /// oldnum argument must be the number of elements pointed to by the pointer argument.
-    ///
-    /// Otherwise the behavior is undefined.
-    ///
-    /// If `newnum` is `0`, the behavior is undefined.
-    ///
-    /// If this function returns successfully, the old pointer becomes invalid and must no
-    /// longer be used. Otherwise the old pointer can continued to be used.
-    unsafe fn reallocate_array<T>(pool: &mut Self::Pool, ptr: *mut T, oldnum: usize,
-                                  newnum: usize) -> Result<*mut T> {
-        if mem::size_of::<T>() == 0 {
-            Ok(empty_ptr())
-        } else {
-            match newnum.checked_mul(mem::size_of::<T>()) {
-                Some(size) => Self::reallocate_raw(pool, ptr as *mut u8,
-                                                   oldnum * mem::size_of::<T>(), size,
-                                                   mem::align_of::<T>())
-                                        .map(|r| r as *mut T),
-                _ => Err(error::InvalidArgument),
-            }
+    unsafe fn free(&mut self, ptr: *mut u8, size: usize, alignment: usize) {
+        (**self).free(ptr, size, alignment)
+    }
+}
+
+/// Allocates an object of the specified type.
+///
+/// [argument, pool]
+/// The pool from which to draw memory.
+///
+/// [return_value]
+/// Returns a pointer to an allocated object.
+///
+/// = Remarks
+///
+/// If `T` has size `0`, a call to this function behaves like a call to `empty_ptr`.
+pub unsafe fn alloc<T, M: ?Sized>(pool: &mut M) -> Result<*mut T>
+    where M: MemPool,
+{
+    if mem::size_of::<T>() == 0 {
+        Ok(empty_ptr())
+    } else {
+        pool.alloc(mem::size_of::<T>(), mem::align_of::<T>()).map(|r| r as *mut T)
+    }
+}
+
+/// Allocates an array of the specified type.
+///
+/// [argument, pool]
+/// The pool from which to draw memory.
+///
+/// [argument, num]
+/// The number of elements in the array.
+///
+/// [return_value]
+/// Returns a pointer to an allocated array.
+///
+/// = Remarks
+///
+/// If `T` has size `0`, a call to this function behaves like a call to `empty_ptr`.
+/// Otherwise, if `num` is `0`, the behavior is undefined.
+pub unsafe fn alloc_array<T, M: ?Sized>(pool: &mut M, num: usize) -> Result<*mut T>
+    where M: MemPool,
+{
+    if mem::size_of::<T>() == 0 {
+        Ok(empty_ptr())
+    } else {
+        match num.checked_mul(mem::size_of::<T>()) {
+            Some(size) => pool.alloc(size, mem::align_of::<T>()).map(|r| r as *mut T),
+            _ => Err(error::InvalidArgument),
         }
     }
+}
 
-    /// Frees an array.
-    ///
-    /// [argument, ptr]
-    /// The pointer to the array.
-    ///
-    /// [argument, num]
-    /// The number of elements in the array.
-    ///
-    /// = Remarks
-    ///
-    /// If `T` has size `0`, this function performs no operation. Otherwise:
-    ///
-    /// The pointer argument must be a pointer returned by a previous call to
-    /// `allocate_array` or `reallocate_array` with the same allocator. The num argument
-    /// must be the number of elements in the array.
-    ///
-    /// Otherwise the behavior is undefined.
-    ///
-    /// After this function returns the pointer argument becomes invalid and must no
-    /// longer be used.
-    unsafe fn free_array<T>(pool: &mut Self::Pool, ptr: *mut T, num: usize) {
-        if mem::size_of::<T>() != 0 {
-            Self::free_raw(pool, ptr as *mut u8, num * mem::size_of::<T>(),
-                           mem::align_of::<T>());
+/// Reallocates an array.
+///
+/// [argument, pool]
+/// The pool from which to draw memory.
+///
+/// [argument, ptr]
+/// The pointer that should be reallocated.
+///
+/// [argument, num]
+/// The old number of elements in the array.
+///
+/// [argument, newnum]
+/// The new number of elements in the array.
+///
+/// [return_value]
+/// Returns a pointer to the new array.
+///
+/// = Remarks
+///
+/// If `T` has size `0`, a call to this function behaves like a call to `empty_ptr`.
+/// Otherwise:
+///
+/// The pointer argument must be a pointer returned by a previous call to
+/// `allocate_array` or `reallocate_array` with the same allocator and pool. The
+/// oldnum argument must be the number of elements pointed to by the pointer argument.
+///
+/// Otherwise the behavior is undefined.
+///
+/// If `newnum` is `0`, the behavior is undefined.
+///
+/// If this function returns successfully, the old pointer becomes invalid and must no
+/// longer be used. Otherwise the old pointer can continued to be used.
+pub unsafe fn realloc_array<T, M: ?Sized>(pool: &mut M, ptr: *mut T, oldnum: usize,
+                                          newnum: usize) -> Result<*mut T>
+    where M: MemPool,
+{
+    if mem::size_of::<T>() == 0 {
+        Ok(empty_ptr())
+    } else {
+        match newnum.checked_mul(mem::size_of::<T>()) {
+            Some(size) => pool.realloc(ptr as *mut u8, oldnum * mem::size_of::<T>(), size,
+                                       mem::align_of::<T>()).map(|r| r as *mut T),
+            _ => Err(error::InvalidArgument),
         }
     }
+}
 
-    /// Frees an object.
-    ///
-    /// [argument, pool]
-    /// The pool to which the memory is returned.
-    ///
-    /// [argument, ptr]
-    /// The pointer to the object.
-    ///
-    /// = Remarks
-    ///
-    /// If `T` has size `0`, this function performs no operation. Otherwise:
-    ///
-    /// The pointer argument must be a pointer returned by a previous call to `allocate`
-    /// with the same allocator and pool. Otherwise the behavior is undefined.
-    ///
-    /// After this function returns the pointer argument becomes invalid and must no
-    /// longer be used.
-    unsafe fn free<T: ?Sized>(pool: &mut Self::Pool, ptr: *mut T) {
-        let size = mem::size_of_val(&*ptr);
-        if size != 0 {
-            Self::free_raw(pool, ptr as *mut u8, size, mem::align_of_val(&*ptr));
-        }
+/// Frees an array.
+///
+/// [argument, ptr]
+/// The pointer to the array.
+///
+/// [argument, num]
+/// The number of elements in the array.
+///
+/// = Remarks
+///
+/// If `T` has size `0`, this function performs no operation. Otherwise:
+///
+/// The pointer argument must be a pointer returned by a previous call to
+/// `allocate_array` or `reallocate_array` with the same allocator. The num argument
+/// must be the number of elements in the array.
+///
+/// Otherwise the behavior is undefined.
+///
+/// After this function returns the pointer argument becomes invalid and must no
+/// longer be used.
+pub unsafe fn free_array<T, M: ?Sized>(pool: &mut M, ptr: *mut T, num: usize)
+    where M: MemPool,
+{
+    if mem::size_of::<T>() != 0 {
+        pool.free(ptr as *mut u8, num * mem::size_of::<T>(), mem::align_of::<T>());
+    }
+}
+
+/// Frees an object.
+///
+/// [argument, pool]
+/// The pool to which the memory is returned.
+///
+/// [argument, ptr]
+/// The pointer to the object.
+///
+/// = Remarks
+///
+/// If `T` has size `0`, this function performs no operation. Otherwise:
+///
+/// The pointer argument must be a pointer returned by a previous call to `allocate`
+/// with the same allocator and pool. Otherwise the behavior is undefined.
+///
+/// After this function returns the pointer argument becomes invalid and must no
+/// longer be used.
+pub unsafe fn free<T: ?Sized, M: ?Sized>(pool: &mut M, ptr: *mut T)
+    where M: MemPool,
+{
+    let size = mem::size_of_val(&*ptr);
+    if size != 0 {
+        pool.free(ptr as *mut u8, size, mem::align_of_val(&*ptr));
     }
 }

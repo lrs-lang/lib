@@ -4,8 +4,7 @@
 
 #![crate_name = "lrs_c_ptr_ptr"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, const_fn)]
-#![plugin(lrs_core_plugin)]
+#![feature(no_std, const_fn)]
 #![no_std]
 
 extern crate lrs_cty_base as cty_base;
@@ -16,11 +15,10 @@ extern crate lrs_str_one as str_one;
 use base::prelude::*;
 use core::ptr::{OwnedPtr};
 use base::{error};
-use base::default::{Default};
 use cty_base::types::{c_char};
 use core::{slice};
 use str_one::{ToCStr};
-use alloc::{Allocator};
+use alloc::{MemPool};
 
 mod std { pub use base::std::*; }
 
@@ -35,13 +33,13 @@ pub type SCPtrPtr<Heap = alloc::Heap> = CPtrPtr<Heap>;
 
 /// A helper type for creating `*const *const c_char` objects.
 pub struct CPtrPtr<Heap = alloc::Heap>
-    where Heap: Allocator,
+    where Heap: MemPool,
 {
     buf: OwnedPtr<usize>,
     pos: usize,
     cap: usize,
     num: usize,
-    pool: Heap::Pool,
+    pool: Heap,
 }
 
 impl<'a> CPtrPtr<alloc::NoMem<'a>> {
@@ -63,21 +61,20 @@ impl<'a> CPtrPtr<alloc::NoMem<'a>> {
             pos: 0,
             cap: cap,
             num: 0,
-            pool: (),
+            pool: alloc::NoMem::default(),
         }
     }
 }
 
 impl<Heap> CPtrPtr<Heap>
-    where Heap: Allocator,
-          Heap::Pool: Default,
+    where Heap: MemPool+Default,
 {
     /// Allocates a new `CPtrPtr`.
     pub fn new() -> Result<CPtrPtr<Heap>> {
         const DEFAULT_CAP: usize = 32;
-        let mut pool = Heap::Pool::default();
+        let mut pool = Heap::default();
         let buf = unsafe {
-            OwnedPtr::new(try!(Heap::allocate_array(&mut pool, DEFAULT_CAP)))
+            OwnedPtr::new(try!(alloc::alloc_array(&mut pool, DEFAULT_CAP)))
         };
         Ok(CPtrPtr {
             buf: buf,
@@ -90,13 +87,13 @@ impl<Heap> CPtrPtr<Heap>
 }
 
 impl<Heap> CPtrPtr<Heap>
-    where Heap: Allocator,
+    where Heap: MemPool,
 {
     fn double(&mut self) -> Result {
         let new_cap = self.cap + self.cap / 2 + 1;
         self.buf = unsafe {
-            OwnedPtr::new(try!(Heap::reallocate_array(&mut self.pool, *self.buf, self.cap,
-                                                      new_cap)))
+            OwnedPtr::new(try!(alloc::realloc_array(&mut self.pool, *self.buf, self.cap,
+                                                    new_cap)))
         };
         self.cap = new_cap;
         Ok(())
@@ -186,11 +183,11 @@ impl<Heap> CPtrPtr<Heap>
 }
 
 impl<Heap> Drop for CPtrPtr<Heap>
-    where Heap: Allocator,
+    where Heap: MemPool,
 {
     fn drop(&mut self) {
         unsafe {
-            Heap::free_array(&mut self.pool, *self.buf, self.cap)
+            alloc::free_array(&mut self.pool, *self.buf, self.cap)
         }
     }
 }

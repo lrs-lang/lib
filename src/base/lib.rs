@@ -4,8 +4,7 @@
 
 #![crate_name = "lrs_base"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, custom_attribute, custom_derive, prelude_import)]
-#![plugin(lrs_core_plugin)]
+#![feature(no_std, custom_derive, default_type_parameter_fallback)]
 #![no_std]
 
 extern crate lrs_wrapping as wrapping;
@@ -13,13 +12,18 @@ extern crate lrs_cty_base as cty_base;
 
 pub mod std {
     pub use core::*;
-    pub use {result, clone, error};
+    pub use {result, error};
     pub mod share {
         pub use core::thread_local::*;
     }
+    pub mod conv {
+        pub use default::{Default};
+        pub use into::{Into};
+        pub use to::{To, TryTo};
+        pub use as_ref::{AsRef, AsMut};
+    }
 }
 
-pub mod clone;
 pub mod result;
 pub mod error;
 pub mod as_ref;
@@ -35,4 +39,6 @@ pub mod prelude {
     pub use result::Result::{Ok, Err};
     pub use as_ref::{AsRef, AsMut};
     pub use into::{Into};
+    pub use to::{To, TryTo};
+    pub use default::{Default};
 }

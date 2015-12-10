@@ -24,7 +24,7 @@ use core::{mem};
 use str_one::{CStr, NoNullStr};
 use str_two::{NoNullString};
 use str_three::{ToCString};
-use alloc::{Allocator, FbHeap};
+use alloc::{MemPool, FbHeap};
 use rt::{env};
 use base::{error};
 use cty::{PATH_MAX, PAGE_SIZE};
@@ -91,7 +91,7 @@ impl Iterator for PathIter {
 /// [argument, buf]
 /// The buffer in which the current working directory will be stored.
 pub fn get_cwd<H>(buf: &mut NoNullString<H>) -> Result<&mut NoNullStr>
-    where H: Allocator,
+    where H: MemPool,
 {
     for &res in &[0, 128, 256, 512, 1024, 2048, PAGE_SIZE][..] {
         try!(buf.reserve(res));
