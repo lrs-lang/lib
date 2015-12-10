@@ -101,14 +101,14 @@ let
 
     lrs = {
         crate_name = "lrs",
-        path = "\d/src/lrs/lib.rs",
+        path = "src/lrs/lib.rs",
         name = "lrs",
         deps = std.filter (std.to_list objs) o: o != null,
     };
 
     libtest = {
         crate_name = "test",
-        path = "\d/src/test/lib.rs",
+        path = "src/test/lib.rs",
         name = "libtest",
         deps = [lrs],
     };

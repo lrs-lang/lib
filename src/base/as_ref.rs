@@ -3,6 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use core::{mem, slice};
+use result::{Result};
+use result::Result::{Ok};
 
 /// Objects that can be immutably borrowed.
 pub trait AsRef<Target: ?Sized> {
@@ -16,6 +18,14 @@ pub trait AsMut<Target: ?Sized> {
     fn as_mut(&mut self) -> &mut Target;
 }
 
+pub trait TryAsRef<Target: ?Sized> {
+    fn try_as_ref(&self) -> Result<&Target>;
+}
+
+pub trait TryAsMut<Target: ?Sized> {
+    fn try_as_mut(&mut self) -> Result<&mut Target>;
+}
+
 impl<T> AsRef<T> for T {
     fn as_ref(&self) -> &T {
         self
@@ -25,6 +35,18 @@ impl<T> AsRef<T> for T {
 impl<T> AsMut<T> for T {
     fn as_mut(&mut self) -> &mut T {
         self
+    }
+}
+
+impl<T> TryAsRef<T> for T {
+    fn try_as_ref(&self) -> Result<&T> {
+        Ok(self)
+    }
+}
+
+impl<T> TryAsMut<T> for T {
+    fn try_as_mut(&mut self) -> Result<&mut T> {
+        Ok(self)
     }
 }
 
