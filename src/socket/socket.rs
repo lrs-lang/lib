@@ -29,7 +29,7 @@ use syscall::{
     sendmsg, recvfrom, recvmsg, getsockopt, setsockopt, ioctl_siocgstampns, ioctl_siocinq,
     ioctl_siocoutq, accept4,
 };
-use str_one::{ToCStr, CStr, AsMutCStr};
+use str_one::{ToCStr, CStr};
 use fd::{FdContainer};
 use rv::{retry};
 use saturating::{SaturatingCast};
@@ -811,7 +811,7 @@ impl Socket {
     pub fn device<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
         let mut len = 0;
         try!(rv!(getsockopt(self.fd, SOL_SOCKET, SO_BINDTODEVICE, buf, &mut len)));
-        buf[..len].as_mut_cstr()
+        buf[..len].try_as_mut()
     }
 
     /// Retrieves whether this socket allows broadcasting.

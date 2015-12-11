@@ -11,7 +11,6 @@
 extern crate lrs_base      as base;
 extern crate lrs_str_one   as str_one;
 extern crate lrs_str_two   as str_two;
-extern crate lrs_str_three as str_three;
 extern crate lrs_rt        as rt;
 extern crate lrs_cty       as cty;
 extern crate lrs_rmo       as rmo;
@@ -22,13 +21,12 @@ use base::prelude::*;
 use core::slice::{Split};
 use core::{mem};
 use str_one::{CStr, NoNullStr};
-use str_two::{NoNullString};
-use str_three::{ToCString};
-use alloc::{MemPool, FbHeap};
+use str_two::{NoNullString, CString};
+use alloc::{MemPool, FbHeap, FcPool, OncePool};
 use rt::{env};
 use base::{error};
 use cty::{PATH_MAX, PAGE_SIZE};
-use rmo::{Rmo};
+use rmo::{Rmo, ToRmo};
 
 mod std { pub use base::std::*; pub use cty; }
 
@@ -111,14 +109,23 @@ pub fn get_cwd<H>(buf: &mut NoNullString<H>) -> Result<&mut NoNullStr>
     abort!();
 }
 
+type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
+
+fn rmo_cstr<'a, S>(s: &'a S,
+                   buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
+    where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
+{
+    s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::default()))
+}
+
 /// Sets the current working directory.
 ///
 /// [argument, path]
 /// The path of the new current working directory.
 pub fn set_cwd<P>(path: P) -> Result
-    where P: ToCString,
+    where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
     let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
+    let path = try!(rmo_cstr(&path, &mut buf));
     rv!(syscall::chdir(&path))
 }

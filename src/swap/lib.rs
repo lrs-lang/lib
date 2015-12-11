@@ -14,21 +14,32 @@ extern crate lrs_syscall as syscall;
 extern crate lrs_fmt as fmt;
 extern crate lrs_alloc as alloc;
 extern crate lrs_rmo as rmo;
-extern crate lrs_str_three as str_three;
+extern crate lrs_str_one as str_one;
+extern crate lrs_str_two as str_two;
 
 use base::prelude::*;
 use core::{mem};
 use base::{error};
 use cty::{c_int, PATH_MAX, SWAP_FLAG_PREFER};
-use alloc::{FbHeap};
-use rmo::{Rmo};
-use str_three::{ToCString};
+use alloc::{FbHeap, FcPool, OncePool};
+use rmo::{Rmo, ToRmo};
+use str_one::{CStr};
+use str_two::{CString};
 use flags::{SwapFlags};
 use syscall::{swapon, swapoff};
 
 mod std { pub use fmt::std::*; pub use cty; }
 
 pub mod flags;
+
+type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
+
+fn rmo_cstr<'a, S>(s: &'a S,
+                   buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
+    where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
+{
+    s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::default()))
+}
 
 /// Adds a swap file/device.
 ///
@@ -55,7 +66,7 @@ pub mod flags;
 ///
 /// * link:man:swapon(2)
 pub fn swap_on<P>(path: P, flags: SwapFlags, priority: Option<i16>) -> Result
-    where P: ToCString,
+    where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
     let mut flags = flags.0;
     match priority {
@@ -64,7 +75,7 @@ pub fn swap_on<P>(path: P, flags: SwapFlags, priority: Option<i16>) -> Result
         _ => flags &= !SWAP_FLAG_PREFER,
     }
     let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
+    let path = try!(rmo_cstr(&path, &mut buf));
     rv!(swapon(&path, flags))
 }
 
@@ -77,9 +88,9 @@ pub fn swap_on<P>(path: P, flags: SwapFlags, priority: Option<i16>) -> Result
 ///
 /// * link:man:swapoff(2)
 pub fn swap_off<P>(path: P) -> Result
-    where P: ToCString,
+    where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
     let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
+    let path = try!(rmo_cstr(&path, &mut buf));
     rv!(swapoff(&path))
 }

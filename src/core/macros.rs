@@ -199,3 +199,36 @@ macro_rules! thread_local {
         )+
     }
 }
+
+#[macro_export]
+macro_rules! impl_try_as_ref {
+    ($target:ty, $source:ty) => {
+        impl ::std::conv::TryAsRef<$target> for $source {
+            fn try_as_ref(&self) -> ::std::result::Result<&$target> {
+                ::std::result::Result::Ok(self.as_ref())
+            }
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! impl_try_as_mut {
+    ($target:ty, $source:ty) => {
+        impl ::std::conv::TryAsMut<$target> for $source {
+            fn try_as_mut(&mut self) -> ::std::result::Result<&mut $target> {
+                ::std::result::Result::Ok(self.as_mut())
+            }
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! impl_try_to {
+    ($target:ty, $source:ty) => {
+        impl ::std::conv::TryTo<$target> for $source {
+            fn try_to(&mut self) -> ::std::result::Result<&mut $target> {
+                ::std::result::Result::Ok(self.to())
+            }
+        }
+    }
+}

@@ -274,6 +274,14 @@ impl<H> AsRef<[u8]> for CMsgBuf<H>
     }
 }
 
+impl<H> TryAsRef<[u8]> for CMsgBuf<H>
+    where H: MemPool,
+{
+    fn try_as_ref(&self) -> Result<&[u8]> {
+        Ok(self.as_ref())
+    }
+}
+
 /// An iterator over control messages.
 pub struct CMsgIter<'a> {
     data: &'a [u8],
@@ -379,5 +387,11 @@ impl<'a> Iterator for CMsgIter<'a> {
 impl<'a> AsRef<[u8]> for CMsgIter<'a> {
     fn as_ref(&self) -> &[u8] {
         self.data
+    }
+}
+
+impl<'a> TryAsRef<[u8]> for CMsgIter<'a> {
+    fn try_as_ref(&self) -> Result<&[u8]> {
+        Ok(self.as_ref())
     }
 }

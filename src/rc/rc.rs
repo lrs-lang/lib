@@ -70,8 +70,8 @@ pub struct Rc<T: ?Sized, Heap = alloc::Heap>
     data: OwnedPtr<Inner<T, Heap>>,
 }
 
-impl<T, H> Rc<T, H>
-    where H: MemPool+Default,
+impl<T: ?Sized, H = alloc::Heap> Rc<T, H>
+    where H: MemPool,
           T: Leak,
 {
     /// Creates a new Rc.
@@ -87,21 +87,37 @@ impl<T, H> Rc<T, H>
     /// ----
     /// let arc: Rc<Vec<u8>> = try!(Rc::new()).set(Vec::new());
     /// ----
-    pub fn new() -> Result<RcBuf<T, H>> {
+    pub fn new() -> Result<RcBuf<T, H>>
+        where H: Default,
+              T: Sized,
+    {
+        Self::with_pool(H::default())
+    }
+
+    /// Creates a new Rc.
+    ///
+    /// = Remarks
+    ///
+    /// This function first creates an `RcBuf` which can then be used to create a real
+    /// `Rc` as shown in the example. The function does not take a value argument itself
+    /// since this would complicate handling the case where allocating memory fails.
+    /// 
+    /// = Examples
+    ///
+    /// ----
+    /// let arc: Rc<Vec<u8>> = try!(Rc::new()).set(Vec::new());
+    /// ----
+    pub fn with_pool(mut pool: H) -> Result<RcBuf<T, H>>
+        where T: Sized,
+    {
         unsafe {
-            let mut pool = H::default();
             let data_ptr = try!(alloc::alloc::<Inner<T, H>, _>(&mut pool));
             ptr::write(&mut (*data_ptr).pool, pool);
             (*data_ptr).count.set(1);
             Ok(RcBuf { data: OwnedPtr::new(data_ptr) })
         }
     }
-}
 
-impl<T: ?Sized, H> Rc<T, H>
-    where H: MemPool,
-          T: Leak,
-{
     /// Returns a mutable reference to the contained data if this is the only reference.
     pub fn as_mut(&mut self) -> Option<&mut T> {
         let data = unsafe { &mut **self.data };

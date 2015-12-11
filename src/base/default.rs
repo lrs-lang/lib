@@ -3,7 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use core::marker::{Sized};
-use to::{To};
+use from::{From, TryFrom};
+use result::{Result};
+use result::Result::{Ok};
 
 /// Types that have a default value.
 pub trait Default: Sized {
@@ -11,11 +13,19 @@ pub trait Default: Sized {
     fn default() -> Self;
 }
 
-impl<T> To<T> for ()
+impl<T> From<()> for T
     where T: Default,
 {
-    fn to(&self) -> T {
+    fn from(_: &()) -> T {
         T::default()
+    }
+}
+
+impl<T> TryFrom<()> for T
+    where T: Default,
+{
+    fn try_from(_: &()) -> Result<T> {
+        Ok(T::default())
     }
 }
 

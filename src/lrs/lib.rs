@@ -39,7 +39,6 @@ extern crate lrs_rv;
 extern crate lrs_saturating;
 extern crate lrs_getopt;
 extern crate lrs_str_one;
-extern crate lrs_str_three;
 extern crate lrs_str_two;
 extern crate lrs_time_base;
 extern crate lrs_time_ext;
@@ -74,7 +73,7 @@ extern crate lrs_lock;
 #[cfg(not(freestanding))] extern crate lrs_thread;
 #[cfg(not(freestanding))] extern crate lrs_process;
 #[cfg(not(freestanding))] extern crate lrs_dir;
-#[cfg(not(freestanding))] extern crate lrs_user_group;
+// #[cfg(not(freestanding))] extern crate lrs_user_group;
 
 pub mod atomic;
 pub mod alloc;
@@ -114,7 +113,7 @@ pub mod bx;
 
 #[cfg(not(freestanding))]
 pub use hosted::{
-    event, user, poll, sync, process, fd, file, dir, env, tty, fs, group, netlink,
+    event, /* user, group, */ poll, sync, process, fd, file, dir, env, tty, fs, netlink,
     mem_map, signal, sys, thread, inotify, socket, syscall, msg_queue, pipe, swap,
 };
 
@@ -122,7 +121,7 @@ pub use hosted::{
 #[path = ""]
 mod hosted {
     pub mod event;
-    pub mod user;
+    // pub mod user;
     pub mod poll;
     pub mod sync;
     pub mod process;
@@ -132,7 +131,7 @@ mod hosted {
     pub mod env;
     pub mod tty;
     pub mod fs;
-    pub mod group;
+    // pub mod group;
     pub mod netlink;
     pub mod mem_map;
     pub mod signal;
@@ -153,7 +152,6 @@ pub mod prelude {
         pub use lrs_base::prelude::*;
         pub use lrs_parse::{Parse};
         pub use lrs_vec::{Vec};
-        pub use lrs_rmo::{ToOwned};
         pub use lrs_io::{Read, Write, BufRead, BufWrite};
         #[cfg(not(freestanding))] pub use lrs_fd::{FdContainer};
     }

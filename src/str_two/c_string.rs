@@ -99,6 +99,14 @@ impl<H> AsRef<CStr> for CString<H>
     }
 }
 
+impl<H> TryAsRef<CStr> for CString<H>
+    where H: MemPool,
+{
+    fn try_as_ref(&self) -> Result<&CStr> {
+        Ok(self.deref())
+    }
+}
+
 impl<H> AsMut<CStr> for CString<H>
     where H: MemPool,
 {
@@ -107,10 +115,27 @@ impl<H> AsMut<CStr> for CString<H>
     }
 }
 
+impl<H> TryAsMut<CStr> for CString<H>
+    where H: MemPool,
+{
+    fn try_as_mut(&mut self) -> Result<&mut CStr> {
+        Ok(self.as_mut())
+    }
+}
+
 impl<H> ToCStr for CString<H>
     where H: MemPool,
 {
     fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
         self.deref().to_cstr(buf)
+    }
+}
+
+impl<H> TryFrom<CStr> for CString<H>
+    where H: MemPool+Default,
+{
+    fn try_from(c: &CStr) -> Result<CString<H>> {
+        let bytes = c.bytes_with_null();
+        bytes.try_to().map(|o| unsafe { CString::from_bytes_unchecked(o) })
     }
 }

@@ -9,13 +9,12 @@ use alloc::{self, MemPool};
 use buf_reader::{BufReader};
 use fmt::{Debug, Write};
 use base::error::{self};
-use str_one::{AsByteStr, ByteStr};
+use str_one::{ByteStr};
 use str_two::{ByteString};
 use cty::alias::{UserId, GroupId};
 use parse::{Parse};
 use file::{File};
 use vec::{Vec};
-use rmo::{ToOwned};
 use iter::{IteratorExt};
 
 use {LineReader};
@@ -55,9 +54,9 @@ impl<'a> Info<'a> {
     /// [argument, name]
     /// The name of the user.
     pub fn from_user_name<S>(buf: &'a mut [u8], name: S) -> Result<Info<'a>>
-        where S: AsByteStr,
+        where S: AsRef<ByteStr>,
     {
-        let name = name.as_byte_str();
+        let name = name.as_ref();
         Info::find_by(buf, |user| user.name == name)
     }
 
@@ -84,23 +83,6 @@ impl<'a> Info<'a> {
         }
         try!(err);
         Err(error::DoesNotExist)
-    }
-}
-
-impl<'a, H> ToOwned<H> for Info<'a>
-    where H: MemPool+Copy,
-{
-    type Owned = Information<H>;
-    fn to_owned_with_pool(&self, pool: H) -> Result<Self::Owned> {
-        Ok(Information {
-            name:     try!(self.name.to_owned_with_pool(pool)),
-            password: try!(self.password.to_owned_with_pool(pool)),
-            user_id:  self.user_id,
-            group_id: self.group_id,
-            comment:  try!(self.comment.to_owned_with_pool(pool)),
-            home:     try!(self.home.to_owned_with_pool(pool)),
-            shell:    try!(self.shell.to_owned_with_pool(pool)),
-        })
     }
 }
 
@@ -136,7 +118,7 @@ impl<H> Information<H>
     /// The id of the user.
     pub fn from_user_id(id: UserId) -> Result<Information<H>> {
         let mut buf = [0; INFO_BUF_SIZE];
-        Info::from_user_id(&mut buf, id).chain(|i| i.to_owned())
+        Info::from_user_id(&mut buf, id).chain(|i| i.try_to())
     }
 
     /// Retrieves user info of the user with a certain name.
@@ -144,10 +126,10 @@ impl<H> Information<H>
     /// [argument, name]
     /// The name of the user.
     pub fn from_user_name<S>(name: S) -> Result<Information<H>>
-        where S: AsByteStr
+        where S: AsRef<ByteStr>
     {
         let mut buf = [0; INFO_BUF_SIZE];
-        Info::from_user_name(&mut buf, name).chain(|i| i.to_owned())
+        Info::from_user_name(&mut buf, name).chain(|i| i.try_to())
     }
 
     /// Finds the first user that satisfies the predicate.
@@ -158,7 +140,7 @@ impl<H> Information<H>
         where F: Fn(&Info) -> bool,
     {
         let mut buf = [0; INFO_BUF_SIZE];
-        Info::find_by(&mut buf, pred).chain(|i| i.to_owned())
+        Info::find_by(&mut buf, pred).chain(|i| i.try_to())
     }
 }
 
@@ -174,7 +156,7 @@ impl<H> Information<H>
     /// The pool in which the information will be stored.
     pub fn from_user_id_with_pool(id: UserId, pool: H) -> Result<Information<H>> {
         let mut buf = [0; INFO_BUF_SIZE];
-        Info::from_user_id(&mut buf, id).chain(|i| i.to_owned_with_pool(pool))
+        Info::from_user_id(&mut buf, id).chain(|i| i.try_to_owned_with_pool(pool))
     }
 
     /// Retrieves user info of the user with a certain name.
@@ -185,7 +167,7 @@ impl<H> Information<H>
     /// [argument, pool]
     /// The pool in which the information will be stored.
     pub fn from_user_name_with_pool<S>(name: S, pool: H) -> Result<Information<H>>
-        where S: AsByteStr
+        where S: AsRef<ByteStr>
     {
         let mut buf = [0; INFO_BUF_SIZE];
         Info::from_user_name(&mut buf, name).chain(|i| i.to_owned_with_pool(pool))
@@ -397,13 +379,13 @@ impl<'a> InfoIter<'a> {
         }
         if let Some((parts, uid, gid)) = parse_line(buf) {
             Some(Info {
-                name:     parts[0].as_byte_str(),
-                password: parts[1].as_byte_str(),
+                name:     parts[0].as_ref(),
+                password: parts[1].as_ref(),
                 user_id:  uid,
                 group_id: gid,
-                comment:  parts[4].as_byte_str(),
-                home:     parts[5].as_byte_str(),
-                shell:    parts[6].as_byte_str(),
+                comment:  parts[4].as_ref(),
+                home:     parts[5].as_ref(),
+                shell:    parts[6].as_ref(),
             })
         } else {
             self.reader.set_err(error::InvalidSequence);

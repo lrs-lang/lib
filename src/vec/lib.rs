@@ -28,8 +28,7 @@ use core::iter::{IntoIterator};
 use io::{Read, Write, BufWrite};
 use fmt::{Debug};
 use alloc::{MemPool, empty_ptr};
-use str_one::{ByteStr, CStr, AsCStr, AsMutCStr, ToCStr, NoNullStr, AsMutNoNullStr,
-              AsNoNullStr};
+use str_one::{ByteStr, CStr, ToCStr, NoNullStr};
 
 /// A vector.
 pub struct Vec<T, Pool: ?Sized = alloc::Heap>
@@ -41,24 +40,6 @@ pub struct Vec<T, Pool: ?Sized = alloc::Heap>
     pool: Pool,
 }
 
-impl<'a, T> Vec<T, alloc::NoMem<'a>> {
-    /// Creates a vector which is backed by borrowed memory.
-    ///
-    /// [argument, buf]
-    /// The buffer which will be used to store elements it.
-    pub fn buffered(buf: &'a mut [u8]) -> Vec<T, alloc::NoMem<'a>> {
-        if mem::size_of::<T>() == 0 {
-            let ptr = unsafe { OwnedPtr::new(empty_ptr()) };
-            return Vec { ptr: ptr, len: 0, cap: 0, pool: alloc::NoMem::default() };
-        }
-
-        let buf = mem::align_for_mut::<T>(buf);
-        let cap = buf.len() / mem::size_of::<T>();
-        let ptr = unsafe { OwnedPtr::new(buf.as_mut_ptr() as *mut T) };
-        Vec { ptr: ptr, len: 0, cap: cap, pool: alloc::NoMem::default() }
-    }
-}
-
 impl<T, H = alloc::Heap> Vec<T, H>
     where H: MemPool,
 {
@@ -66,8 +47,7 @@ impl<T, H = alloc::Heap> Vec<T, H>
     pub fn new() -> Vec<T, H>
         where H: Default,
     {
-        let ptr = unsafe { OwnedPtr::new(empty_ptr()) };
-        Vec { ptr: ptr, len: 0, cap: 0, pool: H::default(), }
+        Self::with_pool(H::default())
     }
 
     /// Creates a new allocating vector and reserves a certain amount of space for it.
@@ -445,15 +425,24 @@ impl<T, H: ?Sized> Debug for Vec<T, H>
     }
 }
 
-impl<T, H1: ?Sized, H2> TryTo<Vec<T, H2>> for Vec<T, H1>
-    where T: TryTo,
-          H1: MemPool,
-          H2: MemPool + Default,
+impl<T, H2: ?Sized, U = T, H1 = H2> TryFrom<Vec<T, H2>> for Vec<U, H1>
+    where T: TryTo<U>,
+          H2: MemPool,
+          H1: MemPool + Default,
 {
-    fn try_to(&self) -> Result<Vec<T, H2>> {
-        let mut vec = try!(Vec::with_capacity(self.len()));
-        for i in 0..self.len() {
-            vec.push(try!(self[i].try_to()));
+    fn try_from(v: &Vec<T, H2>) -> Result<Vec<U, H1>> {
+        (**v).try_to()
+    }
+}
+
+impl<T, H, U = T> TryFrom<[T]> for Vec<U, H>
+    where T: TryTo<U>,
+          H: MemPool + Default,
+{
+    fn try_from(ts: &[T]) -> Result<Vec<U, H>> {
+        let mut vec = try!(Vec::with_capacity(ts.len()));
+        for t in ts {
+            vec.push(try!(t.try_to()));
         }
         Ok(vec)
     }
@@ -483,11 +472,27 @@ impl<T, H: ?Sized> AsRef<[T]> for Vec<T, H>
     }
 }
 
+impl<T, H: ?Sized> TryAsRef<[T]> for Vec<T, H>
+    where H: MemPool,
+{
+    fn try_as_ref(&self) -> Result<&[T]> {
+        Ok(self.deref())
+    }
+}
+
 impl<T, H: ?Sized> AsMut<[T]> for Vec<T, H>
     where H: MemPool,
 {
     fn as_mut(&mut self) -> &mut [T] {
         self.deref_mut()
+    }
+}
+
+impl<T, H: ?Sized> TryAsMut<[T]> for Vec<T, H>
+    where H: MemPool,
+{
+    fn try_as_mut(&mut self) -> Result<&mut [T]> {
+        Ok(self.deref_mut())
     }
 }
 
@@ -499,6 +504,14 @@ impl<H: ?Sized> AsRef<ByteStr> for Vec<u8, H>
     }
 }
 
+impl<H: ?Sized> TryAsRef<ByteStr> for Vec<u8, H>
+    where H: MemPool,
+{
+    fn try_as_ref(&self) -> Result<&ByteStr> {
+        Ok(self.deref().as_ref())
+    }
+}
+
 impl<H: ?Sized> AsMut<ByteStr> for Vec<u8, H>
     where H: MemPool,
 {
@@ -507,19 +520,27 @@ impl<H: ?Sized> AsMut<ByteStr> for Vec<u8, H>
     }
 }
 
-impl<H: ?Sized> AsCStr for Vec<u8, H>
+impl<H: ?Sized> TryAsMut<ByteStr> for Vec<u8, H>
     where H: MemPool,
 {
-    fn as_cstr(&self) -> Result<&CStr> {
-        self.deref().as_cstr()
+    fn try_as_mut(&mut self) -> Result<&mut ByteStr> {
+        Ok(self.deref_mut().as_mut())
     }
 }
 
-impl<H: ?Sized> AsMutCStr for Vec<u8, H>
+impl<H: ?Sized> TryAsRef<CStr> for Vec<u8, H>
     where H: MemPool,
 {
-    fn as_mut_cstr(&mut self) -> Result<&mut CStr> {
-        self.deref_mut().as_mut_cstr()
+    fn try_as_ref(&self) -> Result<&CStr> {
+        self.deref().try_as_ref()
+    }
+}
+
+impl<H: ?Sized> TryAsMut<CStr> for Vec<u8, H>
+    where H: MemPool,
+{
+    fn try_as_mut(&mut self) -> Result<&mut CStr> {
+        self.deref_mut().try_as_mut()
     }
 }
 
@@ -539,19 +560,19 @@ impl<H: ?Sized> ToCStr for Vec<u8, H>
     }
 }
 
-impl<H: ?Sized> AsNoNullStr for Vec<u8, H>
+impl<H: ?Sized> TryAsRef<NoNullStr> for Vec<u8, H>
     where H: MemPool,
 {
-    fn as_no_null_str(&self) -> Result<&NoNullStr> {
-        self.deref().as_no_null_str()
+    fn try_as_ref(&self) -> Result<&NoNullStr> {
+        self.deref().try_as_ref()
     }
 }
 
-impl<H: ?Sized> AsMutNoNullStr for Vec<u8, H>
+impl<H: ?Sized> TryAsMut<NoNullStr> for Vec<u8, H>
     where H: MemPool,
 {
-    fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
-        self.deref_mut().as_mut_no_null_str()
+    fn try_as_mut(&mut self) -> Result<&mut NoNullStr> {
+        self.deref_mut().try_as_mut()
     }
 }
 

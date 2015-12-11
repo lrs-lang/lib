@@ -2,18 +2,18 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use core::{mem, slice};
+use core::{slice, mem};
 use result::{Result};
 use result::Result::{Ok};
 
 /// Objects that can be immutably borrowed.
-pub trait AsRef<Target: ?Sized> {
+pub trait AsRef<Target: ?Sized>: TryAsRef<Target> {
     /// Borrows the object.
     fn as_ref(&self) -> &Target;
 }
 
 /// Objects that can be mutably borrowed.
-pub trait AsMut<Target: ?Sized> {
+pub trait AsMut<Target: ?Sized>: TryAsMut<Target> {
     /// Borrows the object.
     fn as_mut(&mut self) -> &mut Target;
 }
@@ -56,9 +56,21 @@ impl<T: Pod> AsRef<[u8]> for [T] {
     }
 }
 
+impl<T: Pod> TryAsRef<[u8]> for [T] {
+    fn try_as_ref(&self) -> Result<&[u8]> {
+        Ok(self.as_bytes())
+    }
+}
+
 impl<T: Pod> AsMut<[u8]> for [T] {
     fn as_mut(&mut self) -> &mut [u8] {
         self.as_mut_bytes()
+    }
+}
+
+impl<T: Pod> TryAsMut<[u8]> for [T] {
+    fn try_as_mut(&mut self) -> Result<&mut [u8]> {
+        Ok(self.as_mut_bytes())
     }
 }
 
@@ -68,15 +80,33 @@ impl<T: Pod> AsRef<[u8]> for T {
     }
 }
 
+impl<T: Pod> TryAsRef<[u8]> for T {
+    fn try_as_ref(&self) -> Result<&[u8]> {
+        Ok(mem::as_bytes(self))
+    }
+}
+
 impl<T: Pod> AsMut<[u8]> for T {
     fn as_mut(&mut self) -> &mut [u8] {
         mem::as_mut_bytes(self)
     }
 }
 
+impl<T: Pod> TryAsMut<[u8]> for T {
+    fn try_as_mut(&mut self) -> Result<&mut [u8]> {
+        Ok(mem::as_mut_bytes(self))
+    }
+}
+
 impl AsRef<[u8]> for str {
     fn as_ref(&self) -> &[u8] {
         self.as_bytes()
+    }
+}
+
+impl TryAsRef<[u8]> for str {
+    fn try_as_ref(&self) -> Result<&[u8]> {
+        Ok(self.as_bytes())
     }
 }
 
@@ -88,6 +118,12 @@ impl AsRef<[u8]> for char {
     }
 }
 
+impl TryAsRef<[u8]> for char {
+    fn try_as_ref(&self) -> Result<&[u8]> {
+        Ok(self.as_ref())
+    }
+}
+
 impl AsRef<[u8]> for [char] {
     fn as_ref(&self) -> &[u8] {
         unsafe {
@@ -95,5 +131,11 @@ impl AsRef<[u8]> for [char] {
             let size = mem::size_of::<char>() * self.len();
             slice::from_ptr(ptr as *const _, size)
         }
+    }
+}
+
+impl TryAsRef<[u8]> for [char] {
+    fn try_as_ref(&self) -> Result<&[u8]> {
+        Ok(self.as_ref())
     }
 }

@@ -65,9 +65,23 @@ pub struct Box<T: ?Sized, Heap = alloc::Heap>
 }
 
 impl<T, H> Box<T, H>
-    where H: alloc::MemPool+Default,
+    where H: alloc::MemPool,
 {
     /// Creates a new box.
+    /// 
+    /// = See also
+    ///
+    /// * link:lrs::bx::Box::with_pool[with_pool]
+    pub fn new() -> Result<BoxBuf<T, H>>
+        where H: Default,
+    {
+        Self::with_pool(H::default())
+    }
+
+    /// Creates a new box.
+    ///
+    /// [argument, pool]
+    /// The pool from which the box will be allocated.
     ///
     /// = Remarks
     ///
@@ -80,9 +94,8 @@ impl<T, H> Box<T, H>
     /// ----
     /// let bx: Box<u8> = try!(Box::new()).set(0);
     /// ----
-    pub fn new() -> Result<BoxBuf<T, H>> {
+    pub fn with_pool(mut pool: H) -> Result<BoxBuf<T, H>> {
         unsafe {
-            let mut pool = H::default();
             let ptr = try!(alloc::alloc(&mut pool));
             Ok(BoxBuf { data: OwnedPtr::new(ptr), pool: pool })
         }

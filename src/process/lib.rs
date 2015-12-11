@@ -15,7 +15,6 @@ extern crate lrs_cty as cty;
 extern crate lrs_fmt as fmt;
 extern crate lrs_str_one as str_one;
 extern crate lrs_str_two as str_two;
-extern crate lrs_str_three as str_three;
 extern crate lrs_alloc as alloc;
 extern crate lrs_c_ptr_ptr as c_ptr_ptr;
 extern crate lrs_rt as rt;

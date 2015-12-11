@@ -19,6 +19,16 @@ pub struct TaPool<'a> {
     _data: PhantomData<&'a ()>,
 }
 
+impl<'a> Default for TaPool<'a> {
+    fn default() -> Self {
+        static B: &'static [u8] = &[];
+        TaPool {
+            pool: &B as *const &[u8] as *mut *mut [u8],
+            _data: PhantomData,
+        }
+    }
+}
+
 impl<'a> TaPool<'a> {
     /// Creates a new pool from a byte slice.
     ///

@@ -13,7 +13,7 @@ extern crate lrs_fmt as fmt;
 extern crate lrs_cty as cty;
 extern crate lrs_syscall as syscall;
 extern crate lrs_str_one as str_one;
-extern crate lrs_str_three as str_three;
+extern crate lrs_str_two as str_two;
 extern crate lrs_rv as rv;
 extern crate lrs_time_base as time_base;
 extern crate lrs_iter as iter;
@@ -36,11 +36,11 @@ use syscall::{
     uname, sysinfo, getrandom, acct, sethostname, setdomainname,
     reboot,
 };
-use str_one::{AsCStr, ByteStr, CStr, ToCStr};
-use str_three::{ToCString};
+use str_one::{ByteStr, CStr};
+use str_two::{CString};
 use rv::{retry};
-use rmo::{Rmo};
-use alloc::{FbHeap};
+use rmo::{Rmo, ToRmo};
+use alloc::{FbHeap, FcPool, OncePool};
 
 use time_base::{Time};
 
@@ -71,12 +71,12 @@ impl StrInfo {
     /// Retrieves information from the system and stores it in the object.
     pub fn update(&mut self) -> Result {
         try!(rv!(uname(&mut self.buf)));
-        self.sysname_len    = try!(self.buf.sysname.as_cstr()).len()    as u8;
-        self.nodename_len   = try!(self.buf.nodename.as_cstr()).len()   as u8;
-        self.release_len    = try!(self.buf.release.as_cstr()).len()    as u8;
-        self.version_len    = try!(self.buf.version.as_cstr()).len()    as u8;
-        self.machine_len    = try!(self.buf.machine.as_cstr()).len()    as u8;
-        self.domainname_len = try!(self.buf.domainname.as_cstr()).len() as u8;
+        self.sysname_len    = try!(self.buf.sysname.try_as_ref()).len()    as u8;
+        self.nodename_len   = try!(self.buf.nodename.try_as_ref()).len()   as u8;
+        self.release_len    = try!(self.buf.release.try_as_ref()).len()    as u8;
+        self.version_len    = try!(self.buf.version.try_as_ref()).len()    as u8;
+        self.machine_len    = try!(self.buf.machine.try_as_ref()).len()    as u8;
+        self.domainname_len = try!(self.buf.domainname.try_as_ref()).len() as u8;
         Ok(())
     }
 
@@ -275,15 +275,24 @@ pub fn get_random_non_blocking(buf: &mut [u8]) -> Result<&mut [u8]> {
     Ok(&mut buf[..num as usize])
 }
 
+type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
+
+fn rmo_cstr<'a, S>(s: &'a S,
+                   buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
+    where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
+{
+    s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::default()))
+}
+
 /// Enables process accounting.
 ///
 /// [argument, path]
 /// The file to which the accounting information will be written.
 pub fn enable_accounting<P>(path: P) -> Result
-    where P: ToCString,
+    where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
     let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
+    let path = try!(rmo_cstr(&path, &mut buf));
     rv!(acct(Some(&path)))
 }
 
@@ -362,14 +371,14 @@ pub fn power_off() -> Result {
 /// * link:man:reboot(2) and LINUX_REBOOT_CMD_RESTART and LINUX_REBOOT_CMD_RESTART2
 ///   therein
 pub fn restart<T>(msg: Option<T>) -> Result
-    where T: ToCStr,
+    where T: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
     let mut buf = [0; 256];
-    let (cmd, arg): (_, &_) = match msg {
-        Some(msg) => (LINUX_REBOOT_CMD_RESTART2, try!(msg.to_cstr(&mut buf))),
-        _ => (LINUX_REBOOT_CMD_RESTART, CStr::empty()),
+    let (cmd, arg): (_, _) = match msg {
+        Some(ref msg) => (LINUX_REBOOT_CMD_RESTART2, try!(rmo_cstr(msg, &mut buf))),
+        _ => (LINUX_REBOOT_CMD_RESTART, Rmo::Ref(&CStr::empty())),
     };
-    rv!(reboot(cmd, arg))
+    rv!(reboot(cmd, &arg))
 }
 
 /// Performs a software suspend (suspend-to-disk.)

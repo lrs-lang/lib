@@ -68,7 +68,7 @@ pub struct Queue<T, Heap = alloc::Heap>
 }
 
 impl<T, H> Queue<T, H>
-    where H: MemPool+Default,
+    where H: MemPool,
 {
     /// Creates a new queue with allocated memory.
     ///
@@ -78,12 +78,28 @@ impl<T, H> Queue<T, H>
     /// = Remarks
     ///
     /// The capacity will be increased to the next power of two.
-    pub fn new(cap: usize) -> Result<Queue<T, H>> {
+    pub fn new(cap: usize) -> Result<Queue<T, H>>
+        where H: Default,
+    {
+        Self::with_pool(cap, H::default())
+    }
+
+    /// Creates a new queue with allocated memory.
+    ///
+    /// [argument, cap]
+    /// The number of elements that can be stored in the queue.
+    ///
+    /// [argument, pool]
+    /// The memory pool from which the queue will be allocated.
+    ///
+    /// = Remarks
+    ///
+    /// The capacity will be increased to the next power of two.
+    pub fn with_pool(cap: usize, mut pool: H) -> Result<Queue<T, H>> {
         let cap = match cap.checked_next_power_of_two() {
             Some(c) => c,
             _ => return Err(error::NoMemory),
         };
-        let mut pool = H::default();
         let buf = match mem::size_of::<T>() {
             0 => empty_ptr(),
             _ => unsafe { try!(alloc::alloc_array(&mut pool, cap)) },
@@ -109,11 +125,7 @@ impl<T, H> Queue<T, H>
             pool: pool,
         })
     }
-}
 
-impl<T, H> Queue<T, H>
-    where H: MemPool,
-{
     /// Get a position to write to if the queue isn't full
     fn get_write_pos(&self) -> Option<usize> {
         loop {

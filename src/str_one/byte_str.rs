@@ -11,7 +11,7 @@ use fmt::{self, Debug, Display, LowerHex, Write};
 use parse::{Parse, Parsable};
 
 use c_str::{CStr, ToCStr};
-use no_null_str::{AsNoNullStr, AsMutNoNullStr, NoNullStr};
+use no_null_str::{NoNullStr};
 
 /// A borrowed byte sequence that can be interpreted as a string.
 ///
@@ -24,26 +24,6 @@ use no_null_str::{AsNoNullStr, AsMutNoNullStr, NoNullStr};
 /// The Display implementation writes the contained bytes directly to the output.
 pub struct ByteStr {
     data: [u8],
-}
-
-/// Objects that can be borrowed as a byte string.
-///
-/// = Remarks
-///
-/// This will likely be replaced by type ascription.
-pub trait AsByteStr {
-    /// Borrows the object as a byte string.
-    fn as_byte_str(&self) -> &ByteStr;
-}
-
-/// Objects that can be mutably borrowed as a byte string.
-///
-/// = Remarks
-///
-/// This will likely be replaced by type ascription.
-pub trait AsMutByteStr {
-    /// Borrows the object as a mutable byte string.
-    fn as_mut_byte_str(&mut self) -> &mut ByteStr;
 }
 
 impl ByteStr {
@@ -190,21 +170,33 @@ impl AsRef<[u8]> for ByteStr {
     }
 }
 
+impl TryAsRef<[u8]> for ByteStr {
+    fn try_as_ref(&self) -> Result<&[u8]> {
+        Ok(&self.data)
+    }
+}
+
 impl AsMut<[u8]> for ByteStr {
     fn as_mut(&mut self) -> &mut [u8] {
         &mut self.data
     }
 }
 
-impl AsNoNullStr for ByteStr {
-    fn as_no_null_str(&self) -> Result<&NoNullStr> {
-        self.data.as_no_null_str()
+impl TryAsMut<[u8]> for ByteStr {
+    fn try_as_mut(&mut self) -> Result<&mut [u8]> {
+        Ok(&mut self.data)
     }
 }
 
-impl AsMutNoNullStr for ByteStr {
-    fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
-        self.data.as_mut_no_null_str()
+impl TryAsRef<NoNullStr> for ByteStr {
+    fn try_as_ref(&self) -> Result<&NoNullStr> {
+        self.data.try_as_ref()
+    }
+}
+
+impl TryAsMut<NoNullStr> for ByteStr {
+    fn try_as_mut(&mut self) -> Result<&mut NoNullStr> {
+        self.data.try_as_mut()
     }
 }
 
@@ -253,12 +245,14 @@ impl AsRef<ByteStr> for [u8] {
         unsafe { mem::cast(self) }
     }
 }
+impl_try_as_ref!(ByteStr, [u8]);
 
 impl AsMut<ByteStr> for [u8] {
     fn as_mut(&mut self) -> &mut ByteStr {
         unsafe { mem::cast(self) }
     }
 }
+impl_try_as_mut!(ByteStr, [u8]);
 
 impl AsRef<ByteStr> for [i8] {
     fn as_ref(&self) -> &ByteStr {
@@ -266,6 +260,7 @@ impl AsRef<ByteStr> for [i8] {
         bytes.as_ref()
     }
 }
+impl_try_as_ref!(ByteStr, [i8]);
 
 impl AsMut<ByteStr> for [i8] {
     fn as_mut(&mut self) -> &mut ByteStr {
@@ -273,6 +268,7 @@ impl AsMut<ByteStr> for [i8] {
         bytes.as_mut()
     }
 }
+impl_try_as_mut!(ByteStr, [i8]);
 
 impl AsRef<ByteStr> for str {
     fn as_ref(&self) -> &ByteStr {
@@ -280,6 +276,7 @@ impl AsRef<ByteStr> for str {
         bytes.as_ref()
     }
 }
+impl_try_as_ref!(ByteStr, str);
 
 impl AsRef<ByteStr> for NoNullStr {
     fn as_ref(&self) -> &ByteStr {
@@ -287,6 +284,7 @@ impl AsRef<ByteStr> for NoNullStr {
         bytes.as_ref()
     }
 }
+impl_try_as_ref!(ByteStr, NoNullStr);
 
 impl AsRef<ByteStr> for CStr {
     fn as_ref(&self) -> &ByteStr {
@@ -294,19 +292,4 @@ impl AsRef<ByteStr> for CStr {
         bytes.as_ref()
     }
 }
-
-impl<T: ?Sized> AsByteStr for T
-    where T: AsRef<ByteStr>,
-{
-    fn as_byte_str(&self) -> &ByteStr {
-        self.as_ref()
-    }
-}
-
-impl<T: ?Sized> AsMutByteStr for T
-    where T: AsMut<ByteStr>,
-{
-    fn as_mut_byte_str(&mut self) -> &mut ByteStr {
-        self.as_mut()
-    }
-}
+impl_try_as_ref!(ByteStr, CStr);

@@ -8,9 +8,11 @@ use core::{mem};
 use cty::{PATH_MAX, c_ulong};
 use syscall::{statfs, StatfsType};
 use rv::{retry};
-use str_three::{ToCString};
-use alloc::{FbHeap};
-use rmo::{Rmo};
+use rmo::{ToRmo};
+use str_one::{CStr};
+use str_two::{CString};
+
+use {rmo_cstr, Pool};
 
 use self::mount::{Flags};
 use self::types::{FileSystem};
@@ -32,10 +34,10 @@ impl FileSystemInfo {
     /// [argument, path]
     /// A path inside the filesystem's mount point.
     pub fn from_path<P>(path: P) -> Result<FileSystemInfo>
-        where P: ToCString,
+        where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
         let mut path_buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut path_buf));
+        let path = try!(rmo_cstr(&path, &mut path_buf));
         let mut buf = mem::zeroed();
         retry(|| statfs(&path, &mut buf)).map(|_| FileSystemInfo(buf))
     }

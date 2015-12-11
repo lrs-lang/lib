@@ -8,7 +8,7 @@ use io::{BufRead};
 use buf_reader::{BufReader};
 use fmt::{Debug, Write};
 use base::error::{self};
-use str_one::{AsByteStr, ByteStr};
+use str_one::{ByteStr};
 use str_two::{ByteString};
 use cty::alias::{GroupId};
 use parse::{Parse};
@@ -51,9 +51,9 @@ impl<'a> Info<'a> {
     /// [argument, name]
     /// The group name.
     pub fn from_group_name<S>(buf: &'a mut [u8], name: S) -> Result<Info<'a>>
-        where S: AsByteStr,
+        where S: AsRef<ByteStr>,
     {
-        let name = name.as_byte_str();
+        let name = name.as_ref();
         Info::find_by(buf, |group| group.name == name)
     }
 
@@ -155,7 +155,7 @@ impl Information {
     /// [argument, name]
     /// The group name.
     pub fn from_group_name<S>(name: S) -> Result<Information>
-        where S: AsByteStr,
+        where S: AsRef<ByteStr>,
     {
         let mut buf = [0; INFO_BUF_SIZE];
         Info::from_group_name(&mut buf, name).chain(|i| i.to_owned())
@@ -221,7 +221,7 @@ impl<'a> Iterator for InfoMemberIter<'a> {
     type Item = &'a ByteStr;
 
     fn next(&mut self) -> Option<&'a ByteStr> {
-        self.members.next().map(|v| v.as_byte_str())
+        self.members.next().map(|v| v.as_ref())
     }
 }
 
@@ -246,7 +246,7 @@ impl<'a> Iterator for InformationMemberIter<'a> {
     type Item = &'a ByteStr;
 
     fn next(&mut self) -> Option<&'a ByteStr> {
-        self.iter.next().map(|v| v.as_byte_str())
+        self.iter.next().map(|v| v.as_ref())
     }
 }
 
@@ -398,8 +398,8 @@ impl<'a> InfoIter<'a> {
         }
         if let Some((parts, id)) = parse_line(buf) {
             Some(Info {
-                name:     parts[0].as_byte_str(),
-                password: parts[1].as_byte_str(),
+                name:     parts[0].as_ref(),
+                password: parts[1].as_ref(),
                 id:       id,
                 members:  parts[3],
             })

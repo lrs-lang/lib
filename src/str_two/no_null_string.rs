@@ -6,7 +6,7 @@ use base::prelude::*;
 use arch_fns::{memchr};
 use base::undef::{UndefState};
 use core::{mem};
-use str_one::{NoNullStr, AsNoNullStr, AsMutNoNullStr, AsMutCStr, CStr, ToCStr};
+use str_one::{NoNullStr, ToCStr, CStr};
 use vec::{Vec};
 use fmt::{Debug, Display, Write};
 use alloc::{self, MemPool};
@@ -20,18 +20,17 @@ pub struct NoNullString<Heap = alloc::Heap>
 }
 
 impl<H> NoNullString<H>
-    where H: MemPool+Default,
+    where H: MemPool,
 {
     /// Creates a new, allocated `NoNullString`.
-    pub fn new() -> NoNullString<H> {
-        NoNullString { data: Vec::new() }
+    pub fn new() -> Self
+        where H: Default,
+    {
+        Self::with_pool(H::default())
     }
-}
 
-impl<'a> NoNullString<alloc::NoMem<'a>> {
-    /// Creates a `NoNullString` that is backed by borrowed memory.
-    pub fn buffered(buf: &'a mut [u8]) -> NoNullString<alloc::NoMem<'a>> {
-        NoNullString { data: Vec::buffered(buf) }
+    pub fn with_pool(pool: H) -> Self {
+        NoNullString { data: Vec::with_pool(pool) }
     }
 }
 
@@ -104,10 +103,10 @@ impl<H> NoNullString<H>
     /// = Remarks
     ///
     /// This first appends a '/' and then the provided filename to the buffer.
-    pub fn push_file<F>(&mut self, name: F) -> Result
-        where F: AsNoNullStr,
+    pub fn push_file<F: ?Sized>(&mut self, name: &F) -> Result
+        where F: TryAsRef<NoNullStr>,
     {
-        let bytes: &[u8] = try!(name.as_no_null_str()).as_ref();
+        let bytes: &[u8] = try!(name.try_as_ref()).as_ref();
         try!(self.data.reserve(bytes.len() + 1));
         self.data.push(b'/');
         self.data.push_all(bytes)
@@ -139,10 +138,10 @@ impl<H> NoNullString<H>
     ///
     /// [argument, path]
     /// The new contents of the string.
-    pub fn set_path<F>(&mut self, path: F) -> Result
-        where F: AsNoNullStr,
+    pub fn set_path<F: ?Sized>(&mut self, path: &F) -> Result
+        where F: TryAsRef<NoNullStr>,
     {
-        let bytes: &[u8] = try!(path.as_no_null_str()).as_ref();
+        let bytes: &[u8] = try!(path.try_as_ref()).as_ref();
         self.clear();
         try!(self.data.reserve(bytes.len()));
         self.data.push_all(bytes)
@@ -204,11 +203,27 @@ impl<H> AsRef<[u8]> for NoNullString<H>
     }
 }
 
+impl<H> TryAsRef<[u8]> for NoNullString<H>
+    where H: MemPool,
+{
+    fn try_as_ref(&self) -> Result<&[u8]> {
+        Ok(&self.data)
+    }
+}
+
 impl<H> AsRef<NoNullStr> for NoNullString<H>
     where H: MemPool,
 {
     fn as_ref(&self) -> &NoNullStr {
         unsafe { NoNullStr::from_bytes_unchecked(&self.data) }
+    }
+}
+
+impl<H> TryAsRef<NoNullStr> for NoNullString<H>
+    where H: MemPool,
+{
+    fn try_as_ref(&self) -> Result<&NoNullStr> {
+        Ok(self.as_ref())
     }
 }
 
@@ -220,19 +235,11 @@ impl<H> AsMut<NoNullStr> for NoNullString<H>
     }
 }
 
-impl<H> AsNoNullStr for NoNullString<H>
+impl<H> TryAsMut<NoNullStr> for NoNullString<H>
     where H: MemPool,
 {
-    fn as_no_null_str(&self) -> Result<&NoNullStr> {
-        unsafe { Ok(NoNullStr::from_bytes_unchecked(&self.data)) }
-    }
-}
-
-impl<H> AsMutNoNullStr for NoNullString<H>
-    where H: MemPool,
-{
-    fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
-        unsafe { Ok(NoNullStr::from_mut_bytes_unchecked(&mut self.data)) }
+    fn try_as_mut(&mut self) -> Result<&mut NoNullStr> {
+        Ok(self.as_mut())
     }
 }
 
@@ -254,10 +261,10 @@ impl<H> Display for NoNullString<H>
     }
 }
 
-impl<H> AsMutCStr for NoNullString<H>
+impl<H> TryAsMut<CStr> for NoNullString<H>
     where H: MemPool,
 {
-    fn as_mut_cstr(&mut self) -> Result<&mut CStr> {
+    fn try_as_mut(&mut self) -> Result<&mut CStr> {
         // We push a 0 at the end, create a slice, then truncate without reallocating so
         // that after the reference is dropped the null is gone.
 
@@ -286,5 +293,14 @@ impl<H1, H2> TryTo<NoNullString<H2>> for NoNullString<H1>
 {
     fn try_to(&self) -> Result<NoNullString<H2>> {
         self.data.try_to().map(|o| NoNullString { data: o })
+    }
+}
+
+impl<H> TryFrom<NoNullStr> for NoNullString<H>
+    where H: MemPool+Default,
+{
+    fn try_from(c: &NoNullStr) -> Result<NoNullString<H>> {
+        let bytes: &[u8] = c.as_ref();
+        unsafe { Ok(NoNullString::from_bytes_unchecked(try!(bytes.try_to()))) }
     }
 }

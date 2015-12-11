@@ -20,7 +20,8 @@ pub mod std {
         pub use default::{Default};
         pub use into::{Into};
         pub use to::{To, TryTo};
-        pub use as_ref::{AsRef, AsMut};
+        pub use from::{From, TryFrom};
+        pub use as_ref::{AsRef, AsMut, TryAsRef, TryAsMut};
     }
 }
 
@@ -29,6 +30,7 @@ pub mod error;
 pub mod as_ref;
 pub mod into;
 pub mod to;
+pub mod from;
 pub mod undef;
 pub mod default;
 
@@ -37,8 +39,9 @@ pub mod prelude {
     pub use core::bool::{BoolExt};
     pub use result::{Result};
     pub use result::Result::{Ok, Err};
-    pub use as_ref::{AsRef, AsMut};
+    pub use as_ref::{AsRef, AsMut, TryAsRef, TryAsMut};
     pub use into::{Into};
     pub use to::{To, TryTo};
+    pub use from::{From, TryFrom};
     pub use default::{Default};
 }

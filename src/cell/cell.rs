@@ -31,20 +31,20 @@ use core::{ptr};
 /// ----
 #[lang="unsafe_cell"]
 #[derive(Copy)]
-pub struct Cell<T> {
+pub struct Cell<T: ?Sized> {
     /// The data contained in the cell.
     data: T,
 }
 
-impl<T> !Interrupt for Cell<T> { }
-impl<T> !Sync for Cell<T> { }
+impl<T: ?Sized> !Interrupt for Cell<T> { }
+impl<T: ?Sized> !Sync for Cell<T> { }
 
-impl<T> Cell<T> {
+impl<T: ?Sized> Cell<T> {
     /// Creates a new cell.
     ///
     /// [argument, data]
     /// The datum initially contained in the cell.
-    pub const fn new(data: T) -> Cell<T> {
+    pub const fn new(data: T) -> Cell<T> where T: Sized {
         Cell { data: data }
     }
 

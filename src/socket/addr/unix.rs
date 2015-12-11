@@ -5,7 +5,7 @@
 use base::prelude::*;
 use core::{mem};
 use arch_fns::{memchr};
-use str_one::{ToCStr, CStr, AsByteStr};
+use str_one::{ToCStr, CStr, ByteStr};
 use cty::{
     BYTES_PER_SHORT, AF_UNIX, sa_family_t, UNIX_PATH_MAX,
 };
@@ -201,18 +201,21 @@ impl AsRef<[u8]> for UnixSockAddr {
         &self.data
     }
 }
+impl_try_as_ref!([u8], UnixSockAddr);
 
 impl AsRef<SockAddr> for UnixSockAddr {
     fn as_ref(&self) -> &SockAddr {
         unsafe { mem::cast(self) }
     }
 }
+impl_try_as_ref!(SockAddr, UnixSockAddr);
 
 impl AsMut<SockAddr> for UnixSockAddr {
     fn as_mut(&mut self) -> &mut SockAddr {
         unsafe { mem::cast(self) }
     }
 }
+impl_try_as_mut!(SockAddr, UnixSockAddr);
 
 impl Debug for UnixSockAddr {
     fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
@@ -222,8 +225,8 @@ impl Debug for UnixSockAddr {
             },
             UnixAddrType::Unnamed => w.write(b"UnixSockAddr { unnamed }").ignore_ok(),
             UnixAddrType::Abstract => {
-                write!(w, "UnixSockAddr {{ abstract: {:?} }}",
-                       self.as_abstract().unwrap().as_byte_str())
+                let bs: &ByteStr = self.as_abstract().unwrap().as_ref();
+                write!(w, "UnixSockAddr {{ abstract: {:?} }}", bs)
             },
         }
     }

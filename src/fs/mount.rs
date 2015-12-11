@@ -11,9 +11,11 @@ use cty::{c_ulong, MS_RDONLY, MS_NOSUID, MS_NODEV, MS_NOEXEC, MS_SYNCHRONOUS,
           MS_PRIVATE, MS_SLAVE, MS_SHARED, MS_STRICTATIME, PATH_MAX};
 use fmt::{Debug, Write};
 use syscall::{self};
-use str_three::{ToCString};
-use alloc::{FbHeap};
-use rmo::{Rmo};
+use rmo::{ToRmo};
+use str_one::{CStr};
+use str_two::{CString};
+
+use {rmo_cstr, Pool};
 
 /// Mounts a filesystem.
 ///
@@ -56,16 +58,19 @@ use rmo::{Rmo};
 /// * link:man:mount(2)
 /// * {flags}
 pub fn mount<P, Q, R, S>(src: P, dst: Q, ty: R, flags: MountFlags, data: S) -> Result
-    where P: ToCString, Q: ToCString, R: ToCString, S: ToCString
+    where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
+          Q: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
+          R: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
+          S: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
     let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninit() };
     let mut buf3: [u8; 256] = unsafe { mem::uninit() };
     let mut buf4: [u8; 256] = unsafe { mem::uninit() };
-    let src  : Rmo<_, FbHeap> = try!(src.rmo_cstr(&mut  buf1));
-    let dst  : Rmo<_, FbHeap> = try!(dst.rmo_cstr(&mut  buf2));
-    let ty   : Rmo<_, FbHeap> = try!(ty.rmo_cstr(&mut   buf3));
-    let data : Rmo<_, FbHeap> = try!(data.rmo_cstr(&mut buf4));
+    let src  = try!(rmo_cstr(&src,  &mut buf1));
+    let dst  = try!(rmo_cstr(&dst,  &mut buf2));
+    let ty   = try!(rmo_cstr(&ty,   &mut buf3));
+    let data = try!(rmo_cstr(&data, &mut buf4));
     rv!(syscall::mount(&src, &dst, &ty, flags.0, &data))
 }
 

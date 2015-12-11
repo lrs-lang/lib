@@ -360,18 +360,21 @@ impl AsRef<[u8]> for Ipv6SockAddr {
         &self.data
     }
 }
+impl_try_as_ref!([u8], Ipv6SockAddr);
 
 impl AsRef<SockAddr> for Ipv6SockAddr {
     fn as_ref(&self) -> &SockAddr {
         unsafe { mem::cast(self) }
     }
 }
+impl_try_as_ref!(SockAddr, Ipv6SockAddr);
 
 impl AsMut<SockAddr> for Ipv6SockAddr {
     fn as_mut(&mut self) -> &mut SockAddr {
         unsafe { mem::cast(self) }
     }
 }
+impl_try_as_mut!(SockAddr, Ipv6SockAddr);
 
 impl Debug for Ipv6Addr {
     fn fmt<W: Write>(&self, mut w: &mut W) -> Result {

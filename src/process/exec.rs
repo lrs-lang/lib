@@ -7,13 +7,21 @@ use core::{mem};
 use base::{error};
 use syscall::{execveat};
 use cty::{AT_FDCWD, PATH_MAX, c_char};
-use str_one::{AsMutCStr, CStr};
-use str_two::{NoNullString};
-use str_three::{ToCString};
+use str_one::{CStr};
+use str_two::{NoNullString, CString};
 use rt::{raw_env};
-use rmo::{Rmo};
-use alloc::{MemPool, FbHeap};
+use rmo::{Rmo, ToRmo};
+use alloc::{MemPool, FbHeap, FcPool, OncePool};
 use {env, file};
+
+type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
+
+fn rmo_cstr<'a, S>(s: &'a S,
+                   buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
+    where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
+{
+    s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::default()))
+}
 
 /// Executes a program in place of the current program.
 ///
@@ -48,10 +56,10 @@ use {env, file};
 /// * {execve}
 /// * {cptrptr}
 pub fn exec<P>(path: P, argv: &[*const c_char]) -> Result
-    where P: ToCString,
+    where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
     let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let file: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
+    let file = try!(rmo_cstr(&path, &mut buf));
     if file.len() == 0 {
         return Err(error::InvalidArgument);
     } else if file[0] == b'/' {
@@ -65,7 +73,7 @@ pub fn exec<P>(path: P, argv: &[*const c_char]) -> Result
     // Try first without allocating
 
     let mut abs_buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let abs_file = NoNullString::buffered(&mut abs_buf);
+    let abs_file = NoNullString::with_pool(OncePool::new(&mut abs_buf));
     match exec_rel(&file, abs_file, argv) {
         Err(error::NoMemory) => { },
         x => return x,
@@ -84,7 +92,7 @@ fn exec_rel<H>(rel: &CStr, mut buf: NoNullString<H>, args: &[*const c_char]) -> 
     for path in try!(env::path()) {
         try!(buf.set_path(path));
         try!(buf.push_file(rel));
-        let cstr: &_ = try!(buf.as_mut_cstr());
+        let cstr: &_ = try!(buf.try_as_mut());
         if file::exists(cstr) == Ok(true) {
             // Paths in PATH don't have to start with a /. We pass AT_FDCWD so that such
             // paths are interpreted relative to the cwd.

@@ -17,7 +17,7 @@ use base::prelude::*;
 use core::{slice, cmp};
 use core::ptr::{OwnedPtr};
 use base::{error};
-use alloc::{NoMem, MemPool};
+use alloc::{MemPool};
 use io::{Read, BufRead, Write};
 use arch_fns::{memchr};
 
@@ -38,7 +38,7 @@ pub struct BufReader<R, Heap = alloc::Heap>
 
 impl<R, H> BufReader<R, H>
     where R: Read,
-          H: MemPool+Default,
+          H: MemPool,
 {
     /// Allocates a new buffered reader.
     ///
@@ -51,12 +51,28 @@ impl<R, H> BufReader<R, H>
     /// = Remarks
     ///
     /// `size` will be increased to the next power of two.
-    pub fn new(read: R, size: usize) -> Result<BufReader<R, H>> {
+    pub fn new(read: R, size: usize) -> Result<Self>
+        where H: Default,
+    {
+        Self::with_pool(read, size, H::default())
+    }
+
+    /// Allocates a new buffered reader.
+    ///
+    /// [argument, read]
+    /// The reader that will be wrapped in the buffered reader.
+    ///
+    /// [argument, size]
+    /// The buffer-size of the buffered reader.
+    ///
+    /// = Remarks
+    ///
+    /// `size` will be increased to the next power of two.
+    pub fn with_pool(read: R, size: usize, mut pool: H) -> Result<Self> {
         let size = match size.checked_next_power_of_two() {
             Some(n) => n,
             _ => return Err(error::NoMemory),
         };
-        let mut pool = H::default();
         let ptr = unsafe { try!(alloc::alloc_array(&mut pool, size)) };
         let ptr = unsafe { OwnedPtr::new(ptr) };
         Ok(BufReader {
@@ -68,42 +84,7 @@ impl<R, H> BufReader<R, H>
             pool: pool,
         })
     }
-}
 
-impl<'a, R> BufReader<R, NoMem<'a>>
-    where R: Read,
-{
-    /// Creates a new buffered reader that is backed by borrowed memory.
-    ///
-    /// [argument, read]
-    /// The reader that will be wrapped in the buffered reader.
-    ///
-    /// [argument, buf]
-    /// The buffer that will be used to back the buffered reader.
-    ///
-    /// = Remarks
-    ///
-    /// The length of `buf` will be decreased to the previous power of two.
-    pub fn buffered(read: R, buf: &'a mut [u8]) -> BufReader<R, NoMem<'a>> {
-        let size = match buf.len() {
-            0 => 0,
-            n => 1 << (usize::bits() - n.leading_zeros() - 1),
-        };
-        BufReader {
-            data: unsafe { OwnedPtr::new(buf.as_mut_ptr()) },
-            cap: size,
-            start: 0,
-            end: 0,
-            read: read,
-            pool: NoMem::default(),
-        }
-    }
-}
-
-impl<R, H> BufReader<R, H>
-    where R: Read,
-          H: MemPool,
-{
     /// Returns the number of currently buffered bytes.
     pub fn available(&self) -> usize {
         self.end.wrapping_sub(self.start)

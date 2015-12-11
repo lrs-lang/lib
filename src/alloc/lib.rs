@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_alloc"]
 #![crate_type = "lib"]
-#![feature(no_std, const_fn)]
+#![feature(no_std, const_fn, link_llvm_intrinsics)]
 #![no_std]
 
 extern crate lrs_base as base;
@@ -19,6 +19,8 @@ use base::{error};
 
 pub use no::{NoMem};
 pub use ta::{TaPool};
+pub use fc::{FcPool};
+pub use one::{OncePool};
 pub use align::{AlignAlloc};
 #[cfg(not(no_libc))] pub use libc::{Libc};
 #[cfg(not(freestanding))] pub use bda::{Bda};
@@ -31,6 +33,8 @@ mod std { pub use base::std::*; }
 mod no;
 mod align;
 mod ta;
+mod one;
+mod fc;
 #[cfg(not(no_libc))] mod libc;
 #[cfg(not(freestanding))] mod bda;
 
@@ -68,9 +72,6 @@ pub fn empty_ptr<T>() -> *mut T {
 /// This needs better documentation.
 pub trait MemPool: Leak {
     /// Allocates a chunk of bytes with the specified properties.
-    ///
-    /// [argument, pool]
-    /// The pool from which to draw memory.
     ///
     /// [argument, size]
     /// The size of the allocated object.

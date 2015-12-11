@@ -37,42 +37,6 @@ pub struct DynRingBuf<T, Heap = alloc::Heap>
     pool: Heap,
 }
 
-impl<'a, T> DynRingBuf<T, alloc::NoMem<'a>> {
-    /// Creates a ring buffer which is backed by borrowed memory.
-    ///
-    /// [argument, buf]
-    /// The buffer which will be used to store elements it.
-    pub fn buffered(buf: &'a mut [u8]) -> Self {
-        if mem::size_of::<T>() == 0 {
-            return DynRingBuf {
-                ptr: unsafe { OwnedPtr::new(empty_ptr()) },
-                left: Wsize(0),
-                right: Wsize(0),
-                cap: 0,
-                pool: alloc::NoMem::default(),
-            };
-        }
-
-        let buf = mem::align_for_mut::<T>(buf);
-        let cap = {
-            let tmp = buf.len() / mem::size_of::<T>();
-            let npot = tmp.next_power_of_two();
-            if npot != tmp {
-                npot >> 1
-            } else {
-                tmp
-            }
-        };
-        DynRingBuf {
-            ptr: unsafe { OwnedPtr::new(buf.as_mut_ptr() as *mut T) },
-            left: Wsize(0),
-            right: Wsize(0),
-            cap: cap,
-            pool: alloc::NoMem::default(),
-        }
-    }
-}
-
 impl<T, H> DynRingBuf<T, H>
     where H: MemPool,
 {

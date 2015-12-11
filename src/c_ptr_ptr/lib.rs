@@ -42,37 +42,19 @@ pub struct CPtrPtr<Heap = alloc::Heap>
     pool: Heap,
 }
 
-impl<'a> CPtrPtr<alloc::NoMem<'a>> {
-    /// Creates a new `CPtrPtr` from borrowed memory.
-    ///
-    /// [argument, buf]
-    /// The buffer which backs the `CPtrPtr`.
-    pub fn buffered(buf: &'a mut [u8]) -> CPtrPtr<alloc::NoMem<'a>> {
-        let (ptr, cap) = if buf.len() < USIZE_BYTES {
-            (buf.as_mut_ptr(), 0)
-        } else {
-            let original = buf.as_mut_ptr();
-            let ptr = usize_align!(original as usize) as *mut u8;
-            let cap = (buf.len() - (ptr as usize - original as usize)) / USIZE_BYTES;
-            (ptr, cap)
-        };
-        CPtrPtr {
-            buf: unsafe { OwnedPtr::new(ptr as *mut usize) },
-            pos: 0,
-            cap: cap,
-            num: 0,
-            pool: alloc::NoMem::default(),
-        }
-    }
-}
-
-impl<Heap> CPtrPtr<Heap>
-    where Heap: MemPool+Default,
+impl<H = alloc::Heap> CPtrPtr<H>
+    where H: MemPool,
 {
     /// Allocates a new `CPtrPtr`.
-    pub fn new() -> Result<CPtrPtr<Heap>> {
+    pub fn new() -> Result<Self>
+        where H: Default,
+    {
+        Self::with_pool(H::default())
+    }
+
+    /// Allocates a new `CPtrPtr`.
+    pub fn with_pool(mut pool: H) -> Result<Self> {
         const DEFAULT_CAP: usize = 32;
-        let mut pool = Heap::default();
         let buf = unsafe {
             OwnedPtr::new(try!(alloc::alloc_array(&mut pool, DEFAULT_CAP)))
         };
@@ -84,11 +66,7 @@ impl<Heap> CPtrPtr<Heap>
             pool: pool,
         })
     }
-}
 
-impl<Heap> CPtrPtr<Heap>
-    where Heap: MemPool,
-{
     fn double(&mut self) -> Result {
         let new_cap = self.cap + self.cap / 2 + 1;
         self.buf = unsafe {

@@ -20,22 +20,22 @@ pub enum RefCellStatus {
     BorrowedMut,
 }
 
-struct Inner<T> {
+struct Inner<T: ?Sized> {
     status: RefCellStatus,
     data: T,
 }
 
 /// A container with interior mutability for non-Copy types.
-pub struct RefCell<T> {
+pub struct RefCell<T: ?Sized> {
     inner: Cell<Inner<T>>,
 }
 
-impl<T> RefCell<T> {
+impl<T: ?Sized> RefCell<T> {
     /// Creates a new `RefCell`.
     ///
     /// [argument, data]
     /// The initial datum stored in the cell.
-    pub const fn new(data: T) -> RefCell<T> {
+    pub const fn new(data: T) -> RefCell<T> where T: Sized {
         RefCell {
             inner: Cell::new(Inner {
                 status: RefCellStatus::Free,
@@ -89,21 +89,21 @@ impl<T> RefCell<T> {
 unsafe impl<T: Send> Send for RefCell<T> { }
 
 /// An immutable `RefCell` borrow.
-pub struct RefCellBorrow<'a, T: 'a> {
+pub struct RefCellBorrow<'a, T: ?Sized+'a> {
     cell: &'a RefCell<T>,
     _marker: NoSend,
 }
 
-unsafe impl<'a, T: Sync> Sync for RefCellBorrow<'a, T> { }
+unsafe impl<'a, T: Sync+?Sized> Sync for RefCellBorrow<'a, T> { }
 
-impl<'a, T> Deref for RefCellBorrow<'a, T> {
+impl<'a, T: ?Sized> Deref for RefCellBorrow<'a, T> {
     type Target = T;
     fn deref(&self) -> &T {
         &self.cell.inner().data
     }
 }
 
-impl<'a, T> Drop for RefCellBorrow<'a, T> {
+impl<'a, T: ?Sized> Drop for RefCellBorrow<'a, T> {
     fn drop(&mut self) {
         let inner = self.cell.inner();
         inner.status = match inner.status {
@@ -115,27 +115,27 @@ impl<'a, T> Drop for RefCellBorrow<'a, T> {
 }
 
 /// A mutable `RefCell` borrow.
-pub struct RefCellBorrowMut<'a, T: 'a> {
+pub struct RefCellBorrowMut<'a, T: ?Sized+'a> {
     cell: &'a RefCell<T>,
     _marker: (PhantomData<&'a mut T>, NoSend),
 }
 
-unsafe impl<'a, T: Sync> Sync for RefCellBorrowMut<'a, T> { }
+unsafe impl<'a, T: Sync+?Sized> Sync for RefCellBorrowMut<'a, T> { }
 
-impl<'a, T> Deref for RefCellBorrowMut<'a, T> {
+impl<'a, T: ?Sized> Deref for RefCellBorrowMut<'a, T> {
     type Target = T;
     fn deref(&self) -> &T {
         &self.cell.inner().data
     }
 }
 
-impl<'a, T> DerefMut for RefCellBorrowMut<'a, T> {
+impl<'a, T: ?Sized> DerefMut for RefCellBorrowMut<'a, T> {
     fn deref_mut(&mut self) -> &mut T {
         &mut self.cell.inner().data
     }
 }
 
-impl<'a, T> Drop for RefCellBorrowMut<'a, T> {
+impl<'a, T: ?Sized> Drop for RefCellBorrowMut<'a, T> {
     fn drop(&mut self) {
         self.cell.inner().status = RefCellStatus::Free;
     }

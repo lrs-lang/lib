@@ -204,6 +204,7 @@ impl AsRef<[u8]> for SockAddr {
         &self.data
     }
 }
+impl_try_as_ref!([u8], SockAddr);
 
 impl Debug for SockAddr {
     fn fmt<W: Write>(&self, mut w: &mut W) -> Result {

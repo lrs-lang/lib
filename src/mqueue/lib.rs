@@ -18,7 +18,8 @@ extern crate lrs_file as file;
 extern crate lrs_rmo as rmo;
 extern crate lrs_time_base as time_base;
 extern crate lrs_alloc as alloc;
-extern crate lrs_str_three as str_three;
+extern crate lrs_str_two as str_two;
+extern crate lrs_str_one as str_one;
 
 use base::prelude::*;
 use core::{mem};
@@ -27,10 +28,11 @@ use fd::{FdContainer};
 use file::flags::{FileFlags, Mode};
 use fmt::{Debug, Write};
 use cty::{mq_attr, NAME_MAX, c_int, c_uint, k_long};
-use str_three::{ToCString};
-use rmo::{Rmo};
+use str_one::{CStr};
+use str_two::{CString};
+use rmo::{Rmo, ToRmo};
 use rv::{retry};
-use alloc::{FbHeap};
+use alloc::{FbHeap, FcPool, OncePool};
 use syscall::{close, mq_open, mq_timedsend, mq_timedreceive, mq_getsetattr, mq_unlink};
 use time_base::{time_to_timespec, Time};
 use flags::{MqFlags};
@@ -38,6 +40,15 @@ use flags::{MqFlags};
 mod std { pub use fmt::std::*; pub use cty; }
 
 pub mod flags;
+
+type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
+
+fn rmo_cstr<'a, S>(s: &'a S,
+                   buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
+    where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
+{
+    s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::default()))
+}
 
 /// Attributes of a message queue.
 pub struct MqAttr {
@@ -116,10 +127,10 @@ impl MsgQueue {
     /// * {unlink}
     pub fn open<P>(path: P, flags: FileFlags, mode: Mode,
                    attr: Option<MqAttr>) -> Result<MsgQueue>
-        where P: ToCString,
+        where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
         let mut buf: [u8; NAME_MAX] = unsafe { mem::uninit() };
-        let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
+        let path = try!(rmo_cstr(&path, &mut buf));
         let attr = attr.map(|a| a.to_native());
         let fd = try!(rv!(mq_open(&path, flags.0, mode.0, attr.as_ref()), -> c_int));
         Ok(MsgQueue::from_owned(fd))
@@ -308,9 +319,9 @@ impl FdContainer for MsgQueue {
 ///
 /// * link:man:mq_unlink(2)
 pub fn remove<P>(path: P) -> Result
-        where P: ToCString,
+    where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
     let mut buf: [u8; NAME_MAX] = unsafe { mem::uninit() };
-    let path: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
+    let path = try!(rmo_cstr(&path, &mut buf));
     rv!(mq_unlink(&path))
 }

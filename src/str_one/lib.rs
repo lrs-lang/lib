@@ -14,9 +14,9 @@ extern crate lrs_arch_fns as arch_fns;
 extern crate lrs_parse as parse;
 extern crate lrs_fmt as fmt;
 
-pub use byte_str::{ByteStr, AsByteStr, AsMutByteStr};
-pub use no_null_str::{NoNullStr, AsNoNullStr, AsMutNoNullStr};
-pub use c_str::{CStr, AsCStr, AsMutCStr, ToCStr};
+pub use byte_str::{ByteStr};
+pub use no_null_str::{NoNullStr};
+pub use c_str::{CStr, ToCStr};
 
 pub mod std { pub use ::base::std::*; }
 

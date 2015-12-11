@@ -8,9 +8,11 @@ use core::ops::{BitOr, Not, BitAnd};
 use cty::{c_int, PATH_MAX, MNT_FORCE, MNT_DETACH, MNT_EXPIRE, UMOUNT_NOFOLLOW};
 use fmt::{Debug, Write};
 use syscall::{self};
-use str_three::{ToCString};
-use alloc::{FbHeap};
-use rmo::{Rmo};
+use rmo::{ToRmo};
+use str_one::{CStr};
+use str_two::{CString};
+
+use {rmo_cstr, Pool};
 
 /// Unmounts a filesystem.
 ///
@@ -41,10 +43,10 @@ use rmo::{Rmo};
 /// * link:man:unmount(2)
 /// * {flags}
 pub fn unmount<P>(dst: P, flags: UnmountFlags) -> Result
-    where P: ToCString,
+    where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
     let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let dst: Rmo<_, FbHeap> = try!(dst.rmo_cstr(&mut buf));
+    let dst = try!(rmo_cstr(&dst, &mut buf));
     rv!(syscall::umount(&dst, flags.0))
 }
 

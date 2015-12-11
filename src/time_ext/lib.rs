@@ -24,7 +24,7 @@ pub use time_base::{Time};
 use fmt::{Debug, Write};
 use vec::{Vec};
 
-#[cfg(not(freestanding))] use str_one::{AsNoNullStr};
+#[cfg(not(freestanding))] use str_one::{NoNullStr};
 #[cfg(not(freestanding))] use io::{BufWrite};
 #[cfg(not(freestanding))] use file::{File};
 
@@ -124,11 +124,11 @@ impl Zone {
     /// For example: "Europe/Berlin", "Asia/Tokyo". The full list of name can be found on
     /// wikipedia.
     #[cfg(not(freestanding))]
-    pub fn load<S>(zone: S) -> Result<Zone>
-        where S: AsNoNullStr,
+    pub fn load<S: ?Sized>(zone: &S) -> Result<Zone>
+        where S: TryAsRef<NoNullStr>,
     {
         const PREFIX: &'static [u8] = b"/usr/share/zoneinfo/";
-        let path = try!(zone.as_no_null_str());
+        let path = try!(zone.try_as_ref());
         let mut vec: Vec<u8> = try!(Vec::with_capacity(PREFIX.len() + path.len() + 1));
         vec.push_all(PREFIX);
         vec.push_all(path.as_ref());

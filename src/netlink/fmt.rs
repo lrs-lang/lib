@@ -71,6 +71,14 @@ impl<H> AsRef<[u8]> for NlBuf<H>
     }
 }
 
+impl<H> TryAsRef<[u8]> for NlBuf<H>
+    where H: MemPool,
+{
+    fn try_as_ref(&self) -> Result<&[u8]> {
+        Ok(&self.buf)
+    }
+}
+
 pub struct NlMsg<'a, H: 'a = alloc::Heap>
     where H: MemPool+'a,
 {

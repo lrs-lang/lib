@@ -12,34 +12,12 @@ use cty_base::types::{c_char};
 use fmt::{Debug, Write};
 use parse::{Parse, Parsable};
 
-use byte_str::{AsByteStr};
-use no_null_str::{AsNoNullStr, AsMutNoNullStr, NoNullStr};
+use byte_str::{ByteStr};
+use no_null_str::{NoNullStr};
 
 /// A byte slice that has exactly one null byte at the very end.
 pub struct CStr {
     data: [u8]
-}
-
-/// Objects that can be interpreted as `CStr`s.
-///
-/// = Remarks
-///
-/// This operation can fail if the object has interior null bytes, e.g.,
-/// `"Hello World\0\0\0"` will succeed but `"Hello\0World\0"` will fail.
-pub trait AsCStr : ToCStr {
-    /// Borrows the object as a `CStr`.
-    fn as_cstr(&self) -> Result<&CStr>;
-}
-
-/// Objects that can be interpreted as mutable `CStr`s.
-///
-/// = Remarks
-///
-/// This operation can fail if the object has interior null bytes, e.g.,
-/// `"Hello World\0\0\0"` will succeed but `"Hello\0World\0"` will fail.
-pub trait AsMutCStr {
-    /// Borrows the object mutably as a `CStr`.
-    fn as_mut_cstr(&mut self) -> Result<&mut CStr>;
 }
 
 /// Objects that can be transformed into `CStr`s provided they have some scratch space
@@ -190,6 +168,12 @@ impl AsRef<[u8]> for CStr {
     }
 }
 
+impl TryAsRef<[u8]> for CStr {
+    fn try_as_ref(&self) -> Result<&[u8]> {
+        Ok(self.as_ref())
+    }
+}
+
 impl Index<usize> for CStr {
     type Output = u8;
     fn index(&self, idx: usize) -> &u8 {
@@ -249,21 +233,15 @@ impl IndexMut<Range<usize>> for CStr {
     }
 }
 
-impl AsNoNullStr for CStr {
-    fn as_no_null_str(&self) -> Result<&NoNullStr> {
-        Ok(self.as_ref())
-    }
-}
-
-impl AsMutNoNullStr for CStr {
-    fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
-        Ok(self.as_mut())
-    }
-}
-
 impl AsRef<NoNullStr> for CStr {
     fn as_ref(&self) -> &NoNullStr {
         unsafe { NoNullStr::from_bytes_unchecked(self.as_ref()) }
+    }
+}
+
+impl TryAsRef<NoNullStr> for CStr {
+    fn try_as_ref(&self) -> Result<&NoNullStr> {
+        Ok(self.as_ref())
     }
 }
 
@@ -274,15 +252,23 @@ impl AsMut<NoNullStr> for CStr {
     }
 }
 
+impl TryAsMut<NoNullStr> for CStr {
+    fn try_as_mut(&mut self) -> Result<&mut NoNullStr> {
+        Ok(self.as_mut())
+    }
+}
+
 impl Debug for CStr {
     fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
-        Debug::fmt(self.as_byte_str(), w)
+        let bs: &ByteStr = self.as_ref();
+        Debug::fmt(bs, w)
     }
 }
 
 impl Parse for CStr {
     fn parse<P: Parsable>(&self) -> Result<P> {
-        self.as_byte_str().parse()
+        let bs: &ByteStr = self.as_ref();
+        bs.parse()
     }
 }
 
@@ -299,50 +285,52 @@ fn bytes_are_valid(b: &[u8]) -> Result<usize> {
     }
 }
 
-impl AsCStr for [u8] {
-    fn as_cstr(&self) -> Result<&CStr> {
+impl TryAsRef<CStr> for [u8] {
+    fn try_as_ref(&self) -> Result<&CStr> {
         let idx = try!(bytes_are_valid(self));
         Ok(unsafe { CStr::from_bytes_unchecked(&self[..idx+1]) })
     }
 }
 
-impl AsCStr for CStr {
-    fn as_cstr(&self) -> Result<&CStr> {
-        Ok(self)
+impl AsRef<CStr> for CStr {
+    fn as_ref(&self) -> &CStr {
+        self
     }
 }
+impl_try_as_ref!(CStr, CStr);
 
-impl AsCStr for [i8] {
-    fn as_cstr(&self) -> Result<&CStr> {
+impl TryAsRef<CStr> for [i8] {
+    fn try_as_ref(&self) -> Result<&CStr> {
         let bytes: &[u8] = self.as_ref();
-        bytes.as_cstr()
+        bytes.try_as_ref()
     }
 }
 
-impl AsCStr for str {
-    fn as_cstr(&self) -> Result<&CStr> {
+impl TryAsRef<CStr> for str {
+    fn try_as_ref(&self) -> Result<&CStr> {
         let bytes: &[u8] = self.as_ref();
-        bytes.as_cstr()
+        bytes.try_as_ref()
     }
 }
 
-impl AsMutCStr for [u8] {
-    fn as_mut_cstr(&mut self) -> Result<&mut CStr> {
+impl TryAsMut<CStr> for [u8] {
+    fn try_as_mut(&mut self) -> Result<&mut CStr> {
         let idx = try!(bytes_are_valid(self));
         Ok(unsafe { CStr::from_mut_bytes_unchecked(&mut self[..idx+1]) })
     }
 }
 
-impl AsMutCStr for CStr {
-    fn as_mut_cstr(&mut self) -> Result<&mut CStr> {
-        Ok(self)
+impl AsMut<CStr> for CStr {
+    fn as_mut(&mut self) -> &mut CStr {
+        self
     }
 }
+impl_try_as_mut!(CStr, CStr);
 
-impl AsMutCStr for [i8] {
-    fn as_mut_cstr(&mut self) -> Result<&mut CStr> {
+impl TryAsMut<CStr> for [i8] {
+    fn try_as_mut(&mut self) -> Result<&mut CStr> {
         let bytes: &mut [u8] = self.as_mut();
-        bytes.as_mut_cstr()
+        bytes.try_as_mut()
     }
 }
 

@@ -12,7 +12,6 @@ extern crate lrs_base      as base;
 extern crate lrs_cty       as cty;
 extern crate lrs_str_one   as str_one;
 extern crate lrs_str_two   as str_two;
-extern crate lrs_str_three as str_three;
 extern crate lrs_syscall   as syscall;
 extern crate lrs_fd        as fd;
 extern crate lrs_rmo       as rmo;
@@ -26,16 +25,15 @@ mod std { pub use fmt::std::*; }
 
 use cty::{linux_dirent64, MODE_TYPE_SHIFT, umode_t, PATH_MAX};
 use str_one::{CStr, ByteStr};
-use str_two::{ByteString};
-use str_three::{ToCString};
+use str_two::{ByteString, CString};
 use syscall::{getdents};
 use base::error::{Errno};
 use vec::{Vec};
 use fd::{FdContainer};
 use fmt::{Debug, Write};
 use core::{mem};
-use rmo::{Rmo, ToOwned};
-use alloc::{FbHeap};
+use rmo::{Rmo, ToRmo};
+use alloc::{FbHeap, FcPool, OncePool};
 
 use file::{File, Seek};
 use file::flags::{FILE_ONLY_DIRECTORY, Mode};
@@ -43,6 +41,15 @@ use file::info::{Type, file_type_from_mode};
 
 /// The default buffer size used for reading directory entries.
 pub const DEFAULT_BUF_SIZE: usize = 2048;
+
+type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
+
+fn rmo_cstr<'a, S>(s: &'a S,
+                   buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
+    where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
+{
+    s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::default()))
+}
 
 /// Creates an iterator over the entries in a directory.
 ///
@@ -58,11 +65,10 @@ pub const DEFAULT_BUF_SIZE: usize = 2048;
 /// stored in its place. After the iteration the error variable should be inspected for an
 /// error.
 pub fn iter<'a, S>(path: S, error: Option<&'a mut Result>) -> Iter<'a>
-    where S: ToCString,
+    where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
 {
-
     let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let path: Result<Rmo<_, FbHeap>> = path.rmo_cstr(&mut buf);
+    let path = rmo_cstr(&path, &mut buf);
     match path {
         Ok(p) => Iter::new(&p, error),
         Err(e) => Iter::error_dummy(e, error),
@@ -177,7 +183,7 @@ impl<'a> Iterator for Iter<'a> {
             if name == "." || name == ".." {
                 self.next()
             } else {
-                match AsRef::<ByteStr>::as_ref(name).to_owned() {
+                match AsRef::<ByteStr>::as_ref(name).try_to() {
                     Ok(n) => Some(Entry {
                         inode: ent.d_ino,
                         ty:    ty,

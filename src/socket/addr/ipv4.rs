@@ -208,18 +208,21 @@ impl AsRef<[u8]> for Ipv4SockAddr {
         &self.data
     }
 }
+impl_try_as_ref!([u8], Ipv4SockAddr);
 
 impl AsRef<SockAddr> for Ipv4SockAddr {
     fn as_ref(&self) -> &SockAddr {
         unsafe { mem::cast(self) }
     }
 }
+impl_try_as_ref!(SockAddr, Ipv4SockAddr);
 
 impl AsMut<SockAddr> for Ipv4SockAddr {
     fn as_mut(&mut self) -> &mut SockAddr {
         unsafe { mem::cast(self) }
     }
 }
+impl_try_as_mut!(SockAddr, Ipv4SockAddr);
 
 impl Debug for Ipv4Addr {
     fn fmt<W: Write>(&self, mut w: &mut W) -> Result {

@@ -109,11 +109,27 @@ impl<H> AsRef<[u8]> for ByteString<H>
     }
 }
 
+impl<H> TryAsRef<[u8]> for ByteString<H>
+    where H: MemPool,
+{
+    fn try_as_ref(&self) -> Result<&[u8]> {
+        Ok(&self.data[..])
+    }
+}
+
 impl<H> AsMut<[u8]> for ByteString<H>
     where H: MemPool,
 {
     fn as_mut(&mut self) -> &mut [u8] {
         &mut self.data[..]
+    }
+}
+
+impl<H> TryAsMut<[u8]> for ByteString<H>
+    where H: MemPool,
+{
+    fn try_as_mut(&mut self) -> Result<&mut [u8]> {
+        Ok(&mut self.data[..])
     }
 }
 
@@ -125,6 +141,14 @@ impl<H> AsRef<ByteStr> for ByteString<H>
     }
 }
 
+impl<H> TryAsRef<ByteStr> for ByteString<H>
+    where H: MemPool,
+{
+    fn try_as_ref(&self) -> Result<&ByteStr> {
+        Ok(self.data.as_ref())
+    }
+}
+
 impl<H> AsMut<ByteStr> for ByteString<H>
     where H: MemPool,
 {
@@ -133,11 +157,27 @@ impl<H> AsMut<ByteStr> for ByteString<H>
     }
 }
 
+impl<H> TryAsMut<ByteStr> for ByteString<H>
+    where H: MemPool,
+{
+    fn try_as_mut(&mut self) -> Result<&mut ByteStr> {
+        Ok(self.data.as_mut())
+    }
+}
+
 impl<H> AsMut<Vec<u8, H>> for ByteString<H>
     where H: MemPool,
 {
     fn as_mut(&mut self) -> &mut Vec<u8, H> {
         &mut self.data
+    }
+}
+
+impl<H> TryAsMut<Vec<u8, H>> for ByteString<H>
+    where H: MemPool,
+{
+    fn try_as_mut(&mut self) -> Result<&mut Vec<u8, H>> {
+        Ok(&mut self.data)
     }
 }
 
@@ -155,5 +195,14 @@ impl<H> ToCStr for ByteString<H>
 {
     fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
         self.data.to_cstr(buf)
+    }
+}
+
+impl<H> TryFrom<ByteStr> for ByteString<H>
+    where H: MemPool+Default,
+{
+    fn try_from(c: &ByteStr) -> Result<ByteString<H>> {
+        let bytes: &[u8] = c.as_ref();
+        bytes.try_to().map(|o| ByteString::from_vec(o))
     }
 }

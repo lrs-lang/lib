@@ -15,7 +15,7 @@ extern crate lrs_syscall as syscall;
 extern crate lrs_fd as fd;
 extern crate lrs_rv as rv;
 extern crate lrs_str_one as str_one;
-extern crate lrs_str_three as str_three;
+extern crate lrs_str_two as str_two;
 extern crate lrs_io as io;
 extern crate lrs_alloc as alloc;
 extern crate lrs_rmo as rmo;
@@ -28,18 +28,27 @@ use base::undef::{UndefState};
 use io::{Read};
 use cty::{c_int, c_char, PATH_MAX};
 use core::{mem};
-use alloc::{FbHeap};
-use rmo::{Rmo};
+use alloc::{FbHeap, FcPool, OncePool};
+use rmo::{Rmo, ToRmo};
 use fd::{FdContainer};
 use event::{InodeEvents};
 use flags::{InotifyFlags, WatchFlags};
 use str_one::{CStr};
-use str_three::{ToCString};
+use str_two::{CString};
 
 mod std { pub use fmt::std::*; pub use cty; }
 
 pub mod flags;
 pub mod event;
+
+type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
+
+fn rmo_cstr<'a, S>(s: &'a S,
+                   buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
+    where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
+{
+    s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::default()))
+}
 
 /// An inotify watch.
 ///
@@ -113,10 +122,10 @@ impl Inotify {
     /// * link:man:inotify_add_watch(2)
     pub fn set_watch<P>(&self, path: P, events: InodeEvents,
                         flags: WatchFlags) -> Result<InodeWatch>
-        where P: ToCString,
+        where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let link: Rmo<_, FbHeap> = try!(path.rmo_cstr(&mut buf));
+        let link = try!(rmo_cstr(&path, &mut buf));
         let watch = try!(rv!(inotify_add_watch(self.fd, &link,
                                                events.0 | flags.0), -> c_int));
         Ok(InodeWatch(watch))

@@ -9,24 +9,12 @@ use base::{error};
 use arch_fns::{memrchr, memchr};
 use fmt::{Debug, Display, Write};
 
-use byte_str::{AsByteStr, ByteStr};
+use byte_str::{ByteStr};
 use c_str::{CStr, ToCStr};
 
 /// A byte slice with no null bytes.
 pub struct NoNullStr {
     data: [u8],
-}
-
-/// Objects that can be borrowed as a `NoNullStr`.
-pub trait AsNoNullStr {
-    /// Tries to borrow the object as a `NoNullStr`.
-    fn as_no_null_str(&self) -> Result<&NoNullStr>;
-}
-
-/// Objects that can be borrowed as a mutable `NoNullStr`.
-pub trait AsMutNoNullStr {
-    /// Tries to borrow the object as a `NoNullStr`.
-    fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr>;
 }
 
 impl NoNullStr {
@@ -137,6 +125,7 @@ impl Deref for NoNullStr {
 impl AsRef<[u8]> for NoNullStr {
     fn as_ref(&self) -> &[u8] { &self.data }
 }
+impl_try_as_ref!([u8], NoNullStr);
 
 impl Index<RangeFull> for NoNullStr {
     type Output = NoNullStr;
@@ -201,24 +190,22 @@ impl ToCStr for NoNullStr {
 
 impl Debug for NoNullStr {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
-        Debug::fmt(self.as_byte_str(), w)
+        let bs: &ByteStr = self.as_ref();
+        Debug::fmt(bs, w)
     }
 }
 
 impl Display for NoNullStr {
     fn fmt<W: Write>(&self, w: &mut W) -> Result {
-        Display::fmt(self.as_byte_str(), w)
+        let bs: &ByteStr = self.as_ref();
+        Display::fmt(bs, w)
     }
 }
 
 ///////////////////////////////
 
-impl<'a, T: AsNoNullStr+?Sized> AsNoNullStr for &'a T {
-    fn as_no_null_str(&self) -> Result<&NoNullStr> { (**self).as_no_null_str() }
-}
-
-impl AsNoNullStr for [u8] {
-    fn as_no_null_str(&self) -> Result<&NoNullStr> {
+impl TryAsRef<NoNullStr> for [u8] {
+    fn try_as_ref(&self) -> Result<&NoNullStr> {
         match memchr(self, 0) {
             Some(_) => Err(error::InvalidArgument),
             _ => Ok(unsafe { NoNullStr::from_bytes_unchecked(self) })
@@ -226,28 +213,28 @@ impl AsNoNullStr for [u8] {
     }
 }
 
-impl AsNoNullStr for NoNullStr {
-    fn as_no_null_str(&self) -> Result<&NoNullStr> {
+impl TryAsRef<NoNullStr> for NoNullStr {
+    fn try_as_ref(&self) -> Result<&NoNullStr> {
         Ok(self)
     }
 }
 
-impl AsNoNullStr for [i8] {
-    fn as_no_null_str(&self) -> Result<&NoNullStr> {
+impl TryAsRef<NoNullStr> for [i8] {
+    fn try_as_ref(&self) -> Result<&NoNullStr> {
         let bytes: &[u8] = self.as_ref();
-        bytes.as_no_null_str()
+        bytes.try_as_ref()
     }
 }
 
-impl AsNoNullStr for str {
-    fn as_no_null_str(&self) -> Result<&NoNullStr> {
+impl TryAsRef<NoNullStr> for str {
+    fn try_as_ref(&self) -> Result<&NoNullStr> {
         let bytes: &[u8] = self.as_ref();
-        bytes.as_no_null_str()
+        bytes.try_as_ref()
     }
 }
 
-impl AsMutNoNullStr for [u8] {
-    fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
+impl TryAsMut<NoNullStr> for [u8] {
+    fn try_as_mut(&mut self) -> Result<&mut NoNullStr> {
         match memchr(self, 0) {
             Some(_) => Err(error::InvalidArgument),
             _ => Ok(unsafe { NoNullStr::from_mut_bytes_unchecked(self) })
@@ -255,15 +242,15 @@ impl AsMutNoNullStr for [u8] {
     }
 }
 
-impl AsMutNoNullStr for [i8] {
-    fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
+impl TryAsMut<NoNullStr> for [i8] {
+    fn try_as_mut(&mut self) -> Result<&mut NoNullStr> {
         let bytes: &mut [u8] = self.as_mut();
-        bytes.as_mut_no_null_str()
+        bytes.try_as_mut()
     }
 }
 
-impl AsMutNoNullStr for NoNullStr {
-    fn as_mut_no_null_str(&mut self) -> Result<&mut NoNullStr> {
+impl TryAsMut<NoNullStr> for NoNullStr {
+    fn try_as_mut(&mut self) -> Result<&mut NoNullStr> {
         Ok(self)
     }
 }
