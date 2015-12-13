@@ -12,9 +12,6 @@ use parse::{Parse, Parsable};
 use byte_str::{ByteStr};
 use no_null_str::{NoNullStr};
 
-pub use self::to_cstr::{ToCStr};
-
-mod to_cstr;
 mod index;
 
 /// A byte slice that has exactly one null byte at the very end.

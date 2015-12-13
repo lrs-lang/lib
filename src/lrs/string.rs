@@ -4,6 +4,6 @@
 
 //! String types.
 
-pub use lrs_str_one::{ByteStr, NoNullStr, CStr, ToCStr};
+pub use lrs_str_one::{ByteStr, NoNullStr, CStr};
 pub use lrs_str_two::{CString, String};
 pub use lrs_c_ptr_ptr::{CPtrPtr};

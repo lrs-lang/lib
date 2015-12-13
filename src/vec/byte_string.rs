@@ -7,7 +7,7 @@ use core::{slice, mem};
 use {Vec};
 use alloc::{MemPool};
 use io::{Write, BufWrite, Read};
-use str_one::{ToCStr, ByteStr, CStr};
+use str_one::{ByteStr, CStr};
 
 impl<H: ?Sized> Vec<u8, H>
     where H: MemPool,
@@ -70,21 +70,5 @@ impl<H: ?Sized> BufWrite for Vec<u8, H>
             }
         }
         Ok(len)
-    }
-}
-
-impl<H: ?Sized> ToCStr for Vec<u8, H>
-    where H: MemPool,
-{
-    fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
-        self.deref().to_cstr(buf)
-    }
-
-    fn to_or_as_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<&'a CStr> {
-        self.deref().to_or_as_cstr(buf)
-    }
-
-    fn to_or_as_mut_cstr<'a>(&'a mut self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
-        self.deref_mut().to_or_as_mut_cstr(buf)
     }
 }

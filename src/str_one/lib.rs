@@ -16,7 +16,7 @@ extern crate lrs_fmt as fmt;
 
 pub use byte_str::{ByteStr};
 pub use no_null_str::{NoNullStr};
-pub use c_str::{CStr, ToCStr};
+pub use c_str::{CStr};
 
 mod std { pub use ::base::std::*; }
 
