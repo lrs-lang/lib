@@ -25,7 +25,7 @@ mod std { pub use fmt::std::*; }
 
 use cty::{linux_dirent64, MODE_TYPE_SHIFT, umode_t, PATH_MAX};
 use str_one::{CStr, ByteStr};
-use str_two::{ByteString, CString};
+use str_two::{CString};
 use syscall::{getdents};
 use base::error::{Errno};
 use vec::{Vec};
@@ -48,7 +48,7 @@ fn rmo_cstr<'a, S>(s: &'a S,
                    buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
     where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
 {
-    s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::default()))
+    s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::out_of(())))
 }
 
 /// Creates an iterator over the entries in a directory.
@@ -151,13 +151,13 @@ pub struct Entry {
     /// The type of the entry.
     pub ty:    Type,
     /// The name of the entry.
-    pub name:  ByteString,
+    pub name:  Vec<u8>,
 }
 
 impl Debug for Entry {
     fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
         write!(w, "Entry {{ inode: {}, ty: {:?}, name: {:?} }}",
-               self.inode, self.ty, self.name)
+               self.inode, self.ty, self.name.as_str())
     }
 }
 

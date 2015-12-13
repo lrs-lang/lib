@@ -27,7 +27,7 @@ pub struct GenericMap<Key, Value, Bucket, Hasher = hash::xx_hash::XxHash32, Seed
     where Allocator: alloc::MemPool,
           Bucket: bucket::Bucket<Key, Value>,
           Hasher: hash::Hasher,
-          Seed: To<Hasher::Seed>,
+          Seed: Into<Hasher::Seed>+To,
           Key: Eq + Hash,
 {
     table: OwnedPtr<Bucket>,
@@ -43,16 +43,16 @@ pub struct GenericMap<Key, Value, Bucket, Hasher = hash::xx_hash::XxHash32, Seed
 impl<K, V, B, H, S, A1: ?Sized, A2>
     TryTo<GenericMap<K, V, B, H, S, A2>> for GenericMap<K, V, B, H, S, A1>
     where A1: alloc::MemPool,
-          A2: alloc::MemPool+Default,
+          A2: alloc::MemPool+OutOf,
           B: bucket::Bucket<K, V>,
           H: hash::Hasher,
-          S: To<H::Seed>+To,
+          S: Into<H::Seed>+To,
           K: Eq + Hash + TryTo,
           V: TryTo,
 {
     fn try_to(&self) -> Result<GenericMap<K, V, B, H, S, A2>> {
         let mut new = try!(GenericMap::details(self.size(), self.seed.to(),
-                                               A2::default()));
+                                               A2::out_of(())));
         for (key, val) in self {
             new.set(try!(key.try_to()), try!(val.try_to()));
         }
@@ -62,19 +62,19 @@ impl<K, V, B, H, S, A1: ?Sized, A2>
 
 impl<Key, Value, Bucket, Hasher, Allocator>
     GenericMap<Key, Value, Bucket, Hasher, (), Allocator>
-    where Allocator: alloc::MemPool + Default,
+    where Allocator: alloc::MemPool + OutOf,
           Bucket: bucket::Bucket<Key, Value>,
           Hasher: hash::Hasher,
-          (): To<Hasher::Seed>,
+          (): Into<Hasher::Seed>,
           Key: Eq + Hash,
 {
     /// Creates a new map with the default parameters.
     pub fn new() -> Result<Self> {
-        Self::details(DEFAULT_CAPACITY, (), Allocator::default())
+        Self::details(DEFAULT_CAPACITY, (), Allocator::out_of(()))
     }
 
     pub fn with_capacity(cap: usize) -> Result<Self> {
-        Self::details(cap, (), Allocator::default())
+        Self::details(cap, (), Allocator::out_of(()))
     }
 }
 
@@ -83,7 +83,7 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator>
     where Allocator: alloc::MemPool,
           Bucket: bucket::Bucket<Key, Value>,
           Hasher: hash::Hasher,
-          Seed: To<Hasher::Seed>,
+          Seed: Into<Hasher::Seed>+To,
           Key: Eq + Hash,
 {
     /// Creates a new map.
@@ -128,7 +128,7 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator: ?Sized>
     where Allocator: alloc::MemPool,
           Bucket: bucket::Bucket<Key, Value>,
           Hasher: hash::Hasher,
-          Seed: To<Hasher::Seed>,
+          Seed: Into<Hasher::Seed>+To,
           Key: Eq + Hash,
 {
     /// Searches for a key in the table.
@@ -613,7 +613,7 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator: ?Sized>
     where Allocator: alloc::MemPool,
           Bucket: bucket::Bucket<Key, Value>,
           Hasher: hash::Hasher,
-          Seed: To<Hasher::Seed>,
+          Seed: Into<Hasher::Seed>+To,
           Key: Eq + Hash,
 {
     fn drop(&mut self) {
@@ -639,7 +639,7 @@ impl<'a, Key: 'a, Value: 'a, Bucket, Hasher, Seed, Allocator: ?Sized>
     where Allocator: alloc::MemPool,
           Bucket: bucket::Bucket<Key, Value>,
           Hasher: hash::Hasher,
-          Seed: To<Hasher::Seed>,
+          Seed: Into<Hasher::Seed>+To,
           Key: Eq + Hash,
 {
     type Item = (&'a Key, &'a Value);
@@ -684,7 +684,7 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator: ?Sized>
     where Allocator: alloc::MemPool,
           Bucket: bucket::Bucket<Key, Value>,
           Hasher: hash::Hasher,
-          Seed: To<Hasher::Seed>,
+          Seed: Into<Hasher::Seed>+To,
           Key: Eq + Hash + Debug,
           Value: Debug,
 {

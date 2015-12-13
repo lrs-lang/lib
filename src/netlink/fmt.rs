@@ -24,14 +24,14 @@ impl<'a> NlBuf<NoMem<'a>> {
         let buf = mem::align_for_mut::<u32>(buf);
         NlBuf {
             buf: unsafe {
-                Vec::from_raw_parts(buf.as_mut_ptr(), 0, buf.len(), AlignAlloc::default())
+                Vec::from_raw_parts(buf.as_mut_ptr(), 0, buf.len(), AlignAlloc::out_of(()))
             },
         }
     }
 }
 
 impl<H> NlBuf<H>
-    where H: MemPool+Default,
+    where H: MemPool+OutOf,
 {
     pub fn new() -> NlBuf<H> {
         NlBuf {

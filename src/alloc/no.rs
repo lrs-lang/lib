@@ -14,8 +14,8 @@ use {MemPool};
 /// memory is available.
 pub struct NoMem<'a>(PhantomData<&'a ()>);
 
-impl<'a> Default for NoMem<'a> {
-    fn default() -> NoMem<'a> {
+impl<'a> OutOf for NoMem<'a> {
+    fn out_of(_: ()) -> NoMem<'a> {
         NoMem(PhantomData)
     }
 }

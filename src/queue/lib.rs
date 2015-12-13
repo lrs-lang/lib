@@ -79,9 +79,9 @@ impl<T, H> Queue<T, H>
     ///
     /// The capacity will be increased to the next power of two.
     pub fn new(cap: usize) -> Result<Queue<T, H>>
-        where H: Default,
+        where H: OutOf,
     {
-        Self::with_pool(cap, H::default())
+        Self::with_pool(cap, H::out_of(()))
     }
 
     /// Creates a new queue with allocated memory.

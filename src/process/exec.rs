@@ -8,7 +8,7 @@ use base::{error};
 use syscall::{execveat};
 use cty::{AT_FDCWD, PATH_MAX, c_char};
 use str_one::{CStr};
-use str_two::{NoNullString, CString};
+use str_two::{CString};
 use rt::{raw_env};
 use rmo::{Rmo, ToRmo};
 use alloc::{MemPool, FbHeap, FcPool, OncePool};
@@ -20,7 +20,7 @@ fn rmo_cstr<'a, S>(s: &'a S,
                    buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
     where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
 {
-    s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::default()))
+    s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::out_of(())))
 }
 
 /// Executes a program in place of the current program.
@@ -73,8 +73,7 @@ pub fn exec<P>(path: P, argv: &[*const c_char]) -> Result
     // Try first without allocating
 
     let mut abs_buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let abs_file = NoNullString::with_pool(OncePool::new(&mut abs_buf));
-    match exec_rel(&file, abs_file, argv) {
+    match exec_rel(&file, OncePool::new(&mut abs_buf), argv) {
         Err(error::NoMemory) => { },
         x => return x,
     }
@@ -82,17 +81,17 @@ pub fn exec<P>(path: P, argv: &[*const c_char]) -> Result
     // NoMemory can come from our stuff or execve but we can't distinguish at this point.
     // Let's just try again with dynamic allocations.
 
-    let abs_file: NoNullString<FbHeap> = NoNullString::new();
-    exec_rel(&file, abs_file, argv)
+    exec_rel(&file, FbHeap::out_of(()), argv)
 }
 
-fn exec_rel<H>(rel: &CStr, mut buf: NoNullString<H>, args: &[*const c_char]) -> Result
+fn exec_rel<H>(rel: &CStr, pool: H, args: &[*const c_char]) -> Result
     where H: MemPool,
 {
+    let mut buf = try!(CString::with_pool(pool));
     for path in try!(env::path()) {
         try!(buf.set_path(path));
         try!(buf.push_file(rel));
-        let cstr: &_ = try!(buf.try_as_mut());
+        let cstr = try!(buf.try_as_ref());
         if file::exists(cstr) == Ok(true) {
             // Paths in PATH don't have to start with a /. We pass AT_FDCWD so that such
             // paths are interpreted relative to the cwd.

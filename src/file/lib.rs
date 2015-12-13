@@ -53,7 +53,7 @@ use syscall::{
     fchdir,
 };
 use str_one::{CStr, ByteStr, NoNullStr};
-use str_two::{ByteString, NoNullString, CString};
+use str_two::{CString};
 use arch_fns::{memchr};
 use rv::{retry};
 use cty::alias::{UserId, GroupId};
@@ -83,7 +83,7 @@ fn rmo_cstr<'a, S>(s: &'a S,
                    buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
     where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
 {
-    s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::default()))
+    s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::out_of(())))
 }
 
 /// Retrieves information about a file.
@@ -488,7 +488,7 @@ pub fn read_link_buf<P>(link: P, buf: &mut [u8]) -> Result<&mut NoNullStr>
 /// * link:man:readlinkat(2)
 /// * link:lrs::file::read_link_buf
 /// * link:lrs::file::File::rel_read_link
-pub fn read_link<P>(link: P) -> Result<NoNullString>
+pub fn read_link<P>(link: P) -> Result<CString>
     where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
     File::current_dir().rel_read_link(link)
@@ -2706,7 +2706,7 @@ impl File {
         let mut pbuf: [u8; PATH_MAX] = unsafe { mem::uninit() };
         let link = try!(rmo_cstr(&link, &mut pbuf));
         let len = try!(rv!(readlinkat(self.fd, &link, buf), -> usize));
-        Ok(unsafe { NoNullStr::from_mut_bytes_unchecked(&mut buf[..len]) })
+        Ok(unsafe { mem::cast(&mut buf[..len]) })
     }
 
     /// Reads the target of a symbolic link relative to this file.
@@ -2725,7 +2725,7 @@ impl File {
     /// = See also
     ///
     /// * link:man:readlinkat(2)
-    pub fn rel_read_link<P>(&self, link: P) -> Result<NoNullString>
+    pub fn rel_read_link<P>(&self, link: P) -> Result<CString>
         where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
         let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
@@ -3134,9 +3134,9 @@ pub struct ListAttrIterator {
 }
 
 impl Iterator for ListAttrIterator {
-    type Item = ByteString;
+    type Item = Vec<u8>;
 
-    fn next(&mut self) -> Option<ByteString> {
+    fn next(&mut self) -> Option<Vec<u8>> {
         let buf = &self.buf[self.pos..];
         let len = match memchr(buf, 0) {
             Some(l) => l,

@@ -63,14 +63,14 @@ impl<T, H> AlignAlloc<T, H>
     }
 }
 
-impl<T, H> Default for AlignAlloc<T, H>
+impl<T, H> OutOf for AlignAlloc<T, H>
     where T: 'static,
-          H: MemPool+Default,
+          H: MemPool+OutOf,
 {
-    fn default() -> AlignAlloc<T, H> {
+    fn out_of(_: ()) -> Self {
         AlignAlloc {
             _data: PhantomData,
-            alloc: H::default(),
+            alloc: H::out_of(()),
         }
     }
 }

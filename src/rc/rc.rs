@@ -88,10 +88,10 @@ impl<T: ?Sized, H = alloc::Heap> Rc<T, H>
     /// let arc: Rc<Vec<u8>> = try!(Rc::new()).set(Vec::new());
     /// ----
     pub fn new() -> Result<RcBuf<T, H>>
-        where H: Default,
+        where H: OutOf,
               T: Sized,
     {
-        Self::with_pool(H::default())
+        Self::with_pool(H::out_of(()))
     }
 
     /// Creates a new Rc.
@@ -201,21 +201,21 @@ impl<T: ?Sized, H> Deref for Rc<T, H>
     }
 }
 
-impl<T: ?Sized, H> To for Rc<T, H>
+impl<T: ?Sized, H> From for Rc<T, H>
     where H: MemPool,
           T: Leak,
 {
-    fn to(&self) -> Rc<T, H> {
-        self.add_ref()
+    fn from(t: &Rc<T, H>) -> Self {
+        t.add_ref()
     }
 }
 
-impl<T: ?Sized, H> TryTo for Rc<T, H>
+impl<T: ?Sized, H> TryFrom for Rc<T, H>
     where H: MemPool,
           T: Leak,
 {
-    fn try_to(&self) -> Result<Rc<T, H>> {
-        Ok(self.add_ref())
+    fn try_from(t: &Rc<T, H>) -> Result<Self> {
+        Ok(t.add_ref())
     }
 }
 

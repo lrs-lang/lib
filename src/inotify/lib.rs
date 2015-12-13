@@ -47,7 +47,7 @@ fn rmo_cstr<'a, S>(s: &'a S,
                    buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
     where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
 {
-    s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::default()))
+    s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::out_of(())))
 }
 
 /// An inotify watch.

@@ -18,7 +18,7 @@ extern crate lrs_r_syscall  as r;
 use base::prelude::*;
 use core::{mem};
 use base::{error};
-use str_one::c_str::{CStr};
+use str_one::{CStr};
 use saturating::{SaturatingCast};
 use atomic::{AtomicCInt};
 use cty::{

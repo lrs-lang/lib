@@ -8,24 +8,26 @@
 #![plugin(lrs_core_plugin)]
 #![no_std]
 
-extern crate lrs_base      as base;
-extern crate lrs_str_one   as str_one;
-extern crate lrs_str_two   as str_two;
-extern crate lrs_rt        as rt;
-extern crate lrs_cty       as cty;
-extern crate lrs_rmo       as rmo;
-extern crate lrs_alloc     as alloc;
-extern crate lrs_syscall   as syscall;
+extern crate lrs_base    as base;
+extern crate lrs_str_one as str_one;
+extern crate lrs_str_two as str_two;
+extern crate lrs_rt      as rt;
+extern crate lrs_cty     as cty;
+extern crate lrs_rmo     as rmo;
+extern crate lrs_alloc   as alloc;
+extern crate lrs_vec     as vec;
+extern crate lrs_syscall as syscall;
 
 use base::prelude::*;
 use core::slice::{Split};
 use core::{mem};
 use str_one::{CStr, NoNullStr};
-use str_two::{NoNullString, CString};
+use str_two::{CString};
 use alloc::{MemPool, FbHeap, FcPool, OncePool};
 use rt::{env};
+use vec::{Vec};
 use base::{error};
-use cty::{PATH_MAX, PAGE_SIZE};
+use cty::{PATH_MAX};
 use rmo::{Rmo, ToRmo};
 
 mod std { pub use base::std::*; pub use cty; }
@@ -80,7 +82,7 @@ pub struct PathIter {
 impl Iterator for PathIter {
     type Item = &'static NoNullStr;
     fn next(&mut self) -> Option<&'static NoNullStr> {
-        self.path.next().map(|p| unsafe { NoNullStr::from_bytes_unchecked(p) })
+        self.path.next().map(|p| unsafe { mem::cast(p) })
     }
 }
 
@@ -88,19 +90,31 @@ impl Iterator for PathIter {
 ///
 /// [argument, buf]
 /// The buffer in which the current working directory will be stored.
-pub fn get_cwd<H>(buf: &mut NoNullString<H>) -> Result<&mut NoNullStr>
+pub fn get_cwd<H = alloc::Heap>() -> Result<CString<H>>
+    where H: MemPool+OutOf,
+{
+    get_cwd_pool(H::out_of(()))
+}
+
+/// Retrieves the current working directory.
+///
+/// [argument, buf]
+/// The buffer in which the current working directory will be stored.
+pub fn get_cwd_pool<H>(pool: H) -> Result<CString<H>>
     where H: MemPool,
 {
-    for &res in &[0, 128, 256, 512, 1024, 2048, PAGE_SIZE][..] {
+    let mut buf = Vec::with_pool(pool);
+    for &res in &[32, 128, 256, 512, 1024, 2048, rt::aux::page_size()][..] {
         try!(buf.reserve(res));
         let size = match rv!(syscall::getcwd(buf.unused()), -> usize) {
             Ok(s) => s,
             Err(error::RangeError) => continue,
             Err(e) => return Err(e),
         };
-        let buf_len = buf.len();
-        unsafe { buf.set_len(buf_len + size - 1); }
-        return Ok(&mut buf[buf_len..buf_len+size-1]);
+        unsafe {
+            buf.set_len(size);
+            return Ok(CString::from_bytes_unchecked(buf));
+        }
     }
     // This should never happen because the kernel returns PathTooLong if the cwd doesn't
     // fit in one page which is the last thing we try above.
@@ -115,7 +129,7 @@ fn rmo_cstr<'a, S>(s: &'a S,
                    buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
     where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
 {
-    s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::default()))
+    s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::out_of(())))
 }
 
 /// Sets the current working directory.

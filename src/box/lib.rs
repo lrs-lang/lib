@@ -73,9 +73,9 @@ impl<T, H> Box<T, H>
     ///
     /// * link:lrs::bx::Box::with_pool[with_pool]
     pub fn new() -> Result<BoxBuf<T, H>>
-        where H: Default,
+        where H: OutOf,
     {
-        Self::with_pool(H::default())
+        Self::with_pool(H::out_of(()))
     }
 
     /// Creates a new box.
@@ -99,6 +99,24 @@ impl<T, H> Box<T, H>
             let ptr = try!(alloc::alloc(&mut pool));
             Ok(BoxBuf { data: OwnedPtr::new(ptr), pool: pool })
         }
+    }
+}
+
+impl<T: ?Sized, H> Box<T, H>
+    where H: alloc::MemPool,
+{
+    pub unsafe fn from_raw_parts(ptr: *mut T, pool: H) -> Box<T, H> {
+        Box {
+            pool: pool,
+            data: OwnedPtr::new(ptr),
+        }
+    }
+
+    pub unsafe fn into_raw_parts(self) -> (*mut T, H) {
+        let ptr = *self.data;
+        let pool = ptr::read(&self.pool);
+        mem::unsafe_forget(self);
+        (ptr, pool)
     }
 }
 

@@ -16,8 +16,8 @@ use lrs_libc as libc;
 #[derive(Copy)]
 pub struct Libc;
 
-impl Default for Libc {
-    fn default() -> Libc {
+impl OutOf for Libc {
+    fn out_of(_: ()) -> Libc {
         Libc
     }
 }

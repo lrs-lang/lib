@@ -25,8 +25,8 @@ use {MemPool, MAX_SIZE};
 #[derive(Copy)]
 pub struct Bda;
 
-impl Default for Bda {
-    fn default() -> Bda {
+impl OutOf for Bda {
+    fn out_of(_: ()) -> Bda {
         Bda
     }
 }

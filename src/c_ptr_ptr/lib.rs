@@ -16,9 +16,9 @@ use base::prelude::*;
 use core::ptr::{OwnedPtr};
 use base::{error};
 use cty_base::types::{c_char};
-use core::{slice};
-use str_one::{ToCStr};
+use core::{slice, mem};
 use alloc::{MemPool};
+use str_one::{NoNullStr};
 
 mod std { pub use base::std::*; }
 
@@ -47,9 +47,9 @@ impl<H = alloc::Heap> CPtrPtr<H>
 {
     /// Allocates a new `CPtrPtr`.
     pub fn new() -> Result<Self>
-        where H: Default,
+        where H: OutOf,
     {
-        Self::with_pool(H::default())
+        Self::with_pool(H::out_of(()))
     }
 
     /// Allocates a new `CPtrPtr`.
@@ -102,15 +102,16 @@ impl<H = alloc::Heap> CPtrPtr<H>
         }
     }
 
-    fn push_int<S>(&mut self, s: S) -> Result<usize>
-        where S: ToCStr,
+    fn push_int<S: ?Sized>(&mut self, s: &S) -> Result<usize>
+        where S: TryAsRef<NoNullStr>,
     {
+        let cstr = try!(s.try_as_ref());
         let (next, buf) = try!(self.slot());
-        let buf_addr = buf.as_ptr() as usize;
-        let cstr = try!(s.to_cstr(buf));
-        if cstr.as_ptr() as usize != buf_addr {
-            return Err(error::InvalidArgument);
+        if buf.len() < cstr.len() + 1 {
+            return Err(error::NoMemory);
         }
+        mem::copy(buf, cstr.as_ref());
+        buf[cstr.len()] = 0;
         *next = 1 + usize_align!(cstr.len() + 1) / USIZE_BYTES;
         Ok(*next)
     }
@@ -119,11 +120,11 @@ impl<H = alloc::Heap> CPtrPtr<H>
     ///
     /// [argument, s]
     /// The string to be added.
-    pub fn push<S>(&mut self, s: S) -> Result
-        where S: ToCStr,
+    pub fn push<S: ?Sized>(&mut self, s: &S) -> Result
+        where S: TryAsRef<NoNullStr>,
     {
         loop {
-            match self.push_int(&s) {
+            match self.push_int(s) {
                 Ok(i) => {
                     self.pos += i;
                     self.num += 1;

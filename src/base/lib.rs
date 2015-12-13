@@ -17,31 +17,49 @@ pub mod std {
         pub use core::thread_local::*;
     }
     pub mod conv {
-        pub use default::{Default};
-        pub use into::{Into};
-        pub use to::{To, TryTo};
-        pub use from::{From, TryFrom};
-        pub use as_ref::{AsRef, AsMut, TryAsRef, TryAsMut};
+        pub use conv::as_ref::{AsRef, AsMut, TryAsRef, TryAsMut};
+
+        pub use conv::to::{To, TryTo};
+        pub use conv::from::{From, TryFrom};
+
+        pub use conv::out_of::{OutOf};
+        pub use conv::into::{Into};
+
+        // pub use conv::default::{Default};
+        pub use conv::clone::{Clone};
     }
 }
 
 pub mod result;
 pub mod error;
-pub mod as_ref;
-pub mod into;
-pub mod to;
-pub mod from;
 pub mod undef;
-pub mod default;
+pub mod conv {
+    pub mod as_ref;
+
+    pub mod from;
+    pub mod to;
+
+    pub mod out_of;
+    pub mod into;
+
+    // pub mod default;
+    pub mod clone;
+}
 
 pub mod prelude {
     pub use core::prelude::v1::*;
     pub use core::bool::{BoolExt};
     pub use result::{Result};
     pub use result::Result::{Ok, Err};
-    pub use as_ref::{AsRef, AsMut, TryAsRef, TryAsMut};
-    pub use into::{Into};
-    pub use to::{To, TryTo};
-    pub use from::{From, TryFrom};
-    pub use default::{Default};
+
+    pub use conv::as_ref::{AsRef, AsMut, TryAsRef, TryAsMut};
+
+    pub use conv::from::{From, TryFrom};
+    pub use conv::to::{To, TryTo};
+
+    pub use conv::out_of::{OutOf};
+    pub use conv::into::{Into};
+
+    // pub use conv::default::{Default};
+    pub use conv::clone::{Clone, TryClone};
 }

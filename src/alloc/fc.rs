@@ -36,15 +36,15 @@ pub struct FcPool<P1, P2>
     p2: P2,
 }
 
-impl<P1, P2> Default for FcPool<P1, P2>
-    where P1: MemPool+Default,
-          P2: MemPool+Default,
+impl<P1, P2> OutOf for FcPool<P1, P2>
+    where P1: MemPool+OutOf,
+          P2: MemPool+OutOf,
 {
-    fn default() -> Self {
+    fn out_of(_: ()) -> Self {
         FcPool {
             state: State::None,
-            p1: P1::default(),
-            p2: P2::default(),
+            p1: P1::out_of(()),
+            p2: P2::out_of(()),
         }
     }
 }

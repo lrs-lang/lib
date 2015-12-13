@@ -70,7 +70,7 @@ pub trait Hash {
 /// Objects that can hash other objects.
 pub trait Hasher: Sized {
     /// The type used to seed a hash operation.
-    type Seed: Default;
+    type Seed: OutOf;
     /// The output of the hash operation.
     type Digest: Into<u64>;
 

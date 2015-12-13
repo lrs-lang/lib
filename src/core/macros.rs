@@ -98,13 +98,12 @@ macro_rules! errln {
     };
 }
 
-/// Formats a value into a `ByteString`.
+/// Formats a value into a `Vec<u8, H>`.
 #[macro_export]
 macro_rules! format {
     ($fmt:expr, $($arg:tt)*) => {{
         let mut vec = Vec::new();
-        write!(vec, $fmt, $($arg)*);
-        ::std::string::ByteString::from_vec(vec)
+        write!(vec, $fmt, $($arg)*).map(|_| vec)
     }};
 }
 

@@ -4,11 +4,12 @@
 
 use base::prelude::*;
 use str_one::{CStr, NoNullStr, ByteStr};
-use str_two::{CString, NoNullString, ByteString};
+use core::{mem};
+use str_two::{CString};
 use {Rmo, ToRmo};
 use alloc::{MemPool};
 use vec::{Vec};
-use arch_fns::{memchr, all_bytes};
+use arch_fns::{memchr};
 use base::{error};
 
 impl<D, P> ToRmo<D, CStr, CString<P>> for CStr
@@ -24,8 +25,8 @@ impl<P> ToRmo<P, CStr, CString<P>> for [u8]
 {
     fn to_rmo_with<'a>(&'a self, pool: P) -> Result<Rmo<'a, CStr, CString<P>>> {
         if let Some(idx) = memchr(self, 0) {
-            if idx == self.len() - 1 || all_bytes(&self[idx+1..], 0) {
-                Ok(unsafe { Rmo::Ref(CStr::from_bytes_unchecked(&self[..idx+1])) })
+            if idx == self.len() - 1 {
+                Ok(unsafe { Rmo::Ref(mem::cast(&self[..idx])) })
             } else {
                 Err(error::InvalidArgument)
             }
@@ -69,15 +70,6 @@ impl<P> ToRmo<P, CStr, CString<P>> for NoNullStr
     }
 }
 
-impl<A, P> ToRmo<P, CStr, CString<P>> for NoNullString<A>
-    where A: MemPool,
-          P: MemPool,
-{
-    fn to_rmo_with<'a>(&'a self, pool: P) -> Result<Rmo<'a, CStr, CString<P>>> {
-        self.deref().to_rmo_with(pool)
-    }
-}
-
 impl<P> ToRmo<P, CStr, CString<P>> for ByteStr
     where P: MemPool,
 {
@@ -87,7 +79,7 @@ impl<P> ToRmo<P, CStr, CString<P>> for ByteStr
     }
 }
 
-impl<A, P> ToRmo<P, CStr, CString<P>> for ByteString<A>
+impl<A, P> ToRmo<P, CStr, CString<P>> for Vec<u8, A>
     where A: MemPool,
           P: MemPool,
 {

@@ -42,22 +42,22 @@ impl<T, H> DynRingBuf<T, H>
 {
     /// Creates a new ring buffer.
     pub fn new() -> Self
-        where H: Default,
+        where H: OutOf,
     {
         DynRingBuf {
             ptr: unsafe { OwnedPtr::new(empty_ptr()) },
             left: Wsize(0),
             right: Wsize(0),
             cap: if mem::size_of::<T>() == 0 { !0 >> 1 } else { 0 },
-            pool: H::default(),
+            pool: H::out_of(()),
         }
     }
 
     /// Creates a new ring buffer and reserves a certain amount of space for it.
     pub fn with_capacity(mut cap: usize) -> Result<Self>
-        where H: Default,
+        where H: OutOf,
     {
-        let mut pool = H::default();
+        let mut pool = H::out_of(());
         let size = mem::size_of::<T>();
         if cap == 0 || size == 0 {
             return Ok(DynRingBuf {
@@ -388,7 +388,7 @@ impl<T, H> Debug for DynRingBuf<T, H>
 impl<T, H1, H2> TryTo<DynRingBuf<T, H2>> for DynRingBuf<T, H1>
     where T: TryTo,
           H1: MemPool,
-          H2: MemPool+Default,
+          H2: MemPool+OutOf,
 {
     fn try_to(&self) -> Result<DynRingBuf<T, H2>> {
         let mut vec = try!(DynRingBuf::with_capacity(self.len()));

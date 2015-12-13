@@ -36,7 +36,7 @@ pub struct BufReader<R, Heap = alloc::Heap>
     pool: Heap,
 }
 
-impl<R, H> BufReader<R, H>
+impl<R, H = alloc::Heap> BufReader<R, H>
     where R: Read,
           H: MemPool,
 {
@@ -52,9 +52,9 @@ impl<R, H> BufReader<R, H>
     ///
     /// `size` will be increased to the next power of two.
     pub fn new(read: R, size: usize) -> Result<Self>
-        where H: Default,
+        where H: OutOf,
     {
-        Self::with_pool(read, size, H::default())
+        Self::with_pool(read, size, H::out_of(()))
     }
 
     /// Allocates a new buffered reader.

@@ -4,8 +4,8 @@
 
 #![crate_name = "lrs_str_one"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, associated_consts)]
-#![plugin(lrs_core_plugin)]
+#![feature(no_std)]
+#![allow(mutable_transmutes)]
 #![no_std]
 
 extern crate lrs_cty_base as cty_base;
@@ -18,9 +18,11 @@ pub use byte_str::{ByteStr};
 pub use no_null_str::{NoNullStr};
 pub use c_str::{CStr, ToCStr};
 
-pub mod std { pub use ::base::std::*; }
+mod std { pub use ::base::std::*; }
 
-pub mod byte_str;
-pub mod no_null_str;
-pub mod c_str;
+mod byte_str;
+mod no_null_str;
+mod c_str;
+
 mod cmp;
+mod conv;

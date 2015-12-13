@@ -82,32 +82,32 @@ impl StrInfo {
 
     /// Returns the name of the system.
     pub fn system_name(&self) -> &ByteStr {
-        self.buf.sysname[..self.sysname_len as usize].as_ref()
+        self.buf.sysname[..self.sysname_len as usize].as_ref().as_ref()
     }
 
     /// Returns the hostname of the system.
     pub fn host_name(&self) -> &ByteStr {
-        self.buf.nodename[..self.nodename_len as usize].as_ref()
+        self.buf.nodename[..self.nodename_len as usize].as_ref().as_ref()
     }
 
     /// Returns the kernel release of the system.
     pub fn release(&self) -> &ByteStr {
-        self.buf.release[..self.release_len as usize].as_ref()
+        self.buf.release[..self.release_len as usize].as_ref().as_ref()
     }
 
     /// Returns the kernel version of the system.
     pub fn version(&self) -> &ByteStr {
-        self.buf.version[..self.version_len as usize].as_ref()
+        self.buf.version[..self.version_len as usize].as_ref().as_ref()
     }
 
     /// Returns the machine.
     pub fn machine(&self) -> &ByteStr {
-        self.buf.machine[..self.machine_len as usize].as_ref()
+        self.buf.machine[..self.machine_len as usize].as_ref().as_ref()
     }
 
     /// Returns the domain name of the system.
     pub fn domain_name(&self) -> &ByteStr {
-        self.buf.domainname[..self.domainname_len as usize].as_ref()
+        self.buf.domainname[..self.domainname_len as usize].as_ref().as_ref()
     }
 }
 
@@ -281,7 +281,7 @@ fn rmo_cstr<'a, S>(s: &'a S,
                    buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
     where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
 {
-    s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::default()))
+    s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::out_of(())))
 }
 
 /// Enables process accounting.

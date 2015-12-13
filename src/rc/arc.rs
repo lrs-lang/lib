@@ -88,10 +88,10 @@ impl<T: ?Sized, H = alloc::Heap> Arc<T, H>
     /// let arc: Arc<Vec<u8>> = try!(Arc::new()).set(Vec::new());
     /// ----
     pub fn new() -> Result<ArcBuf<T, H>>
-        where H: Default,
+        where H: OutOf,
               T: Sized,
     {
-        Self::with_pool(H::default())
+        Self::with_pool(H::out_of(()))
     }
 
     /// Creates a new Arc.

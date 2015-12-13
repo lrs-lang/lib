@@ -167,13 +167,13 @@ impl<'a> CMsgBuf<NoMem<'a>> {
             data: unsafe { OwnedPtr::new(buf.as_mut_ptr() as *mut u8) },
             len: 0,
             cap: buf.len() * 8,
-            pool: NoMem::default(),
+            pool: NoMem::out_of(()),
         }
     }
 }
 
 impl<H> CMsgBuf<H>
-    where H: MemPool+Default,
+    where H: MemPool+OutOf,
 {
     /// Creates a new `CMsgBuf` backed by allocated memory.
     ///
@@ -185,7 +185,7 @@ impl<H> CMsgBuf<H>
     /// The buffer will be resized dynamically. This constructor fails if no memory can be
     /// allocated.
     pub fn new() -> Result<CMsgBuf<H>> {
-        let mut pool = H::default();
+        let mut pool = H::out_of(());
         let ptr: *mut usize = unsafe { try!(alloc::alloc_array(&mut pool, 1)) };
         Ok(CMsgBuf {
             data: unsafe { OwnedPtr::new(ptr as *mut u8) },

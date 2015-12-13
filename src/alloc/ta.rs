@@ -19,8 +19,8 @@ pub struct TaPool<'a> {
     _data: PhantomData<&'a ()>,
 }
 
-impl<'a> Default for TaPool<'a> {
-    fn default() -> Self {
+impl<'a> OutOf for TaPool<'a> {
+    fn out_of(_: ()) -> Self {
         static B: &'static [u8] = &[];
         TaPool {
             pool: &B as *const &[u8] as *mut *mut [u8],

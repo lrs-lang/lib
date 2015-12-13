@@ -53,9 +53,9 @@ pub trait ToRmo<D, Ref: ?Sized, Owned>
     fn to_rmo_with<'a>(&'a self, data: D) -> Result<Rmo<'a, Ref, Owned>>;
 
     fn to_rmo<'a>(&'a self) -> Result<Rmo<'a, Ref, Owned>>
-        where D: Default,
+        where D: OutOf,
     {
-        self.to_rmo_with(D::default())
+        self.to_rmo_with(D::out_of(()))
     }
 }
 

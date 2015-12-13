@@ -4,8 +4,7 @@
 
 #![crate_name = "lrs_str_two"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, optin_builtin_traits, associated_consts)]
-#![plugin(lrs_core_plugin)]
+#![feature(no_std)]
 #![no_std]
 
 extern crate lrs_arch_fns as arch_fns;
@@ -14,16 +13,14 @@ extern crate lrs_str_one  as str_one;
 extern crate lrs_alloc    as alloc;
 extern crate lrs_fmt      as fmt;
 extern crate lrs_vec      as vec;
+extern crate lrs_box      as bx;
 
-pub use byte_string::{ByteString};
-pub use no_null_string::{NoNullString};
 pub use c_string::{CString};
 pub use string::{String};
 
 mod std { pub use fmt::std::*; }
 
-pub mod byte_string;
 pub mod c_string;
 pub mod string;
-pub mod no_null_string;
 mod cmp;
+mod conv;

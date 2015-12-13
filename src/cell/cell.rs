@@ -52,10 +52,10 @@ impl<T: ?Sized> Cell<T> {
     pub fn ptr(&self) -> *mut T {
         &self.data as *const T as *mut T
     }
-}
 
-impl<T> Into<T> for Cell<T> {
-    fn into(self) -> T {
+    pub fn into(self) -> T
+        where T: Sized
+    {
         self.data
     }
 }

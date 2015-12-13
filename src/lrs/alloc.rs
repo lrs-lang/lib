@@ -52,7 +52,7 @@
 
 pub use lrs_alloc::{
     MAX_SIZE, empty_ptr, MemPool, Heap, FbHeap, NoMem, TaPool, AlignAlloc,
-    alloc_array, realloc_array, free_array, alloc, free,
+    alloc_array, realloc_array, free_array, alloc, free, OncePool,
 };
 
 #[cfg(not(freestanding))] pub use lrs_alloc::{Bda};

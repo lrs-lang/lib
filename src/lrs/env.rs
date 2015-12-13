@@ -5,7 +5,7 @@
 //! Process environment.
 
 pub use lrs_rt::{args, arg_count, env};
-pub use lrs_env::{var, path, get_cwd, set_cwd};
+pub use lrs_env::{var, path, get_cwd, get_cwd_pool, set_cwd};
 
 pub mod aux {
     pub use lrs_rt::aux::{page_size};

@@ -4,13 +4,13 @@
 
 #![crate_name = "lrs_vec"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, optin_builtin_traits, associated_consts)]
-#![plugin(lrs_core_plugin)]
+#![feature(no_std, optin_builtin_traits)]
 #![no_std]
 
 extern crate lrs_base as base;
 extern crate lrs_str_one as str_one;
 extern crate lrs_io as io;
+extern crate lrs_box as bx;
 extern crate lrs_fmt as fmt;
 extern crate lrs_alloc as alloc;
 
@@ -23,12 +23,14 @@ use base::prelude::*;
 use core::{mem, ptr, cmp, slice};
 use core::ptr::{OwnedPtr};
 use base::undef::{UndefState};
-use core::ops::{Eq, Range};
 use core::iter::{IntoIterator};
-use io::{Read, Write, BufWrite};
-use fmt::{Debug};
+use fmt::{Write, Debug};
 use alloc::{MemPool, empty_ptr};
-use str_one::{ByteStr, CStr, ToCStr, NoNullStr};
+
+mod conv;
+mod cmp_;
+mod drain;
+mod byte_string;
 
 /// A vector.
 pub struct Vec<T, Pool: ?Sized = alloc::Heap>
@@ -45,16 +47,16 @@ impl<T, H = alloc::Heap> Vec<T, H>
 {
     /// Creates a new allocating vector.
     pub fn new() -> Vec<T, H>
-        where H: Default,
+        where H: OutOf,
     {
-        Self::with_pool(H::default())
+        Self::with_pool(H::out_of(()))
     }
 
     /// Creates a new allocating vector and reserves a certain amount of space for it.
     pub fn with_capacity(cap: usize) -> Result<Vec<T, H>>
-        where H: Default,
+        where H: OutOf,
     {
-        let mut pool = H::default();
+        let mut pool = H::out_of(());
         if cap == 0 || mem::size_of::<T>() == 0 {
             let ptr = unsafe { OwnedPtr::new(empty_ptr()) };
             return Ok(Vec { ptr: ptr, len: 0, cap: cap, pool: pool });
@@ -95,6 +97,15 @@ impl<T, H = alloc::Heap> Vec<T, H>
             cap: cap,
             pool: pool,
         }
+    }
+
+    pub unsafe fn into_raw_parts(self) -> (*mut T, usize, usize, H) {
+        let ptr = *self.ptr;
+        let len = self.len;
+        let cap = self.cap;
+        let pool = ptr::read(&self.pool);
+        mem::unsafe_forget(self);
+        (ptr, len, cap, pool)
     }
 }
 
@@ -137,6 +148,10 @@ impl<T, H: ?Sized = alloc::Heap> Vec<T, H>
 
     /// Minimizes the amount of used memory.
     pub fn shrink_to_fit(&mut self) -> Result {
+        if mem::size_of::<T>() == 0 {
+            self.cap = self.len;
+            return Ok(());
+        }
         if self.len < self.cap {
             let ptr = unsafe {
                 alloc::realloc_array(&mut self.pool, *self.ptr, self.cap, self.len)
@@ -264,51 +279,20 @@ impl<T, H: ?Sized = alloc::Heap> Vec<T, H>
         self.len = len;
     }
 
-    /// Removes a range from a vector, making its elements available through an iterator.
-    ///
-    /// [argument, range]
-    /// The range to remove.
-    ///
-    /// [return_value]
-    /// Returns an iterator over the elements of the range.
-    ///
-    /// = Remarks
-    ///
-    /// If the range is not increasing or goes beyond the bounds of the vector, the
-    /// process is aborted.
-    pub fn drain<'a, R>(&mut self, range: R) -> Drainer<'a, T>
-        where R: Into<Range<Option<usize>>>,
-    {
-        let Range { start, end } = range.into();
-        let (start, end) = match (start, end) {
-            (Some(s), Some(e)) => (s, e),
-            (Some(s), None) => (s, self.len()),
-            (None, Some(e)) => (0, e),
-            (None, None) => (0, self.len()),
-        };
-        if start > end || end > self.len() {
-            abort!();
-        }
-        let old_len = self.len();
-        self.len -= end - start;
-        if mem::size_of::<T>() != 0 {
+    pub fn insert(&mut self, pos: usize, val: T) {
+        let len = self.len();
+        if pos == len {
+            self.push(val);
+        } else if pos <= len {
+            self.reserve(1).unwrap();
             unsafe {
-                Drainer {
-                    start: self.ptr.add(start),
-                    cur: self.ptr.add(start),
-                    end: self.ptr.add(end),
-                    vec_end: self.ptr.add(old_len),
-                    _data: PhantomData,
-                }
+                self.set_len(len + 1);
+                ptr::memmove(self.as_mut_ptr().add(pos + 1), self.as_ptr().add(pos),
+                             len - pos);
+                ptr::write(self.as_mut_ptr().add(pos), val);
             }
         } else {
-            Drainer {
-                start: start as *const T,
-                cur: start as *const T,
-                end: end as *const T,
-                vec_end: old_len as *const T,
-                _data: PhantomData,
-            }
+            abort!();
         }
     }
 }
@@ -324,33 +308,6 @@ unsafe impl<T, H> UndefState for Vec<T, H>
 
     unsafe fn is_undef(val: *const Vec<T, H>, n: usize) -> bool {
         <OwnedPtr<T> as UndefState>::is_undef(&(*val).ptr, n)
-    }
-}
-
-impl<H: ?Sized> BufWrite for Vec<u8, H>
-    where H: MemPool,
-{
-    fn read_to_eof<R>(&mut self, mut r: R) -> Result<usize>
-        where R: Read,
-    {
-        const BUF_READ_STEP_SIZE: usize = 4096;
-
-        let mut len = 0;
-        loop {
-            let self_len = self.len();
-            try!(self.reserve(BUF_READ_STEP_SIZE));
-            unsafe { self.set_len(self_len + BUF_READ_STEP_SIZE); }
-            match r.read_all(&mut self[self_len..self_len+BUF_READ_STEP_SIZE]) {
-                Ok(BUF_READ_STEP_SIZE) => len += BUF_READ_STEP_SIZE,
-                Ok(n) => {
-                    unsafe { self.set_len(self_len + n); }
-                    len += n;
-                    break;
-                }
-                Err(e) => return Err(e),
-            }
-        }
-        Ok(len)
     }
 }
 
@@ -371,31 +328,6 @@ impl<T, H: ?Sized> Drop for Vec<T, H>
                 alloc::free_array(&mut self.pool, *self.ptr, self.cap);
             }
         }
-    }
-}
-
-impl<T, H1: ?Sized, H2: ?Sized> Eq<Vec<T, H1>> for Vec<T, H2>
-    where T: Eq,
-          H1: MemPool,
-          H2: MemPool,
-{
-    fn eq(&self, other: &Vec<T, H1>) -> bool {
-        self.deref().eq(other.deref())
-    }
-    fn ne(&self, other: &Vec<T, H1>) -> bool {
-        self.deref().ne(other.deref())
-    }
-}
-
-impl<T, H: ?Sized> Eq<[T]> for Vec<T, H>
-    where T: Eq,
-          H: MemPool,
-{
-    fn eq(&self, other: &[T]) -> bool {
-        self.deref().eq(other)
-    }
-    fn ne(&self, other: &[T]) -> bool {
-        self.deref().ne(other)
     }
 }
 
@@ -425,29 +357,6 @@ impl<T, H: ?Sized> Debug for Vec<T, H>
     }
 }
 
-impl<T, H2: ?Sized, U = T, H1 = H2> TryFrom<Vec<T, H2>> for Vec<U, H1>
-    where T: TryTo<U>,
-          H2: MemPool,
-          H1: MemPool + Default,
-{
-    fn try_from(v: &Vec<T, H2>) -> Result<Vec<U, H1>> {
-        (**v).try_to()
-    }
-}
-
-impl<T, H, U = T> TryFrom<[T]> for Vec<U, H>
-    where T: TryTo<U>,
-          H: MemPool + Default,
-{
-    fn try_from(ts: &[T]) -> Result<Vec<U, H>> {
-        let mut vec = try!(Vec::with_capacity(ts.len()));
-        for t in ts {
-            vec.push(try!(t.try_to()));
-        }
-        Ok(vec)
-    }
-}
-
 impl<'a, T, H: ?Sized> IntoIterator for &'a Vec<T, H>
     where H: MemPool,
 {
@@ -462,201 +371,4 @@ impl<'a, T, H: ?Sized> IntoIterator for &'a mut Vec<T, H>
     type Item = &'a mut T;
     type IntoIter = slice::MutItems<'a, T>;
     fn into_iter(self) -> slice::MutItems<'a, T> { self.iter_mut() }
-}
-
-impl<T, H: ?Sized> AsRef<[T]> for Vec<T, H>
-    where H: MemPool,
-{
-    fn as_ref(&self) -> &[T] {
-        self.deref()
-    }
-}
-
-impl<T, H: ?Sized> TryAsRef<[T]> for Vec<T, H>
-    where H: MemPool,
-{
-    fn try_as_ref(&self) -> Result<&[T]> {
-        Ok(self.deref())
-    }
-}
-
-impl<T, H: ?Sized> AsMut<[T]> for Vec<T, H>
-    where H: MemPool,
-{
-    fn as_mut(&mut self) -> &mut [T] {
-        self.deref_mut()
-    }
-}
-
-impl<T, H: ?Sized> TryAsMut<[T]> for Vec<T, H>
-    where H: MemPool,
-{
-    fn try_as_mut(&mut self) -> Result<&mut [T]> {
-        Ok(self.deref_mut())
-    }
-}
-
-impl<H: ?Sized> AsRef<ByteStr> for Vec<u8, H>
-    where H: MemPool,
-{
-    fn as_ref(&self) -> &ByteStr {
-        self.deref().as_ref()
-    }
-}
-
-impl<H: ?Sized> TryAsRef<ByteStr> for Vec<u8, H>
-    where H: MemPool,
-{
-    fn try_as_ref(&self) -> Result<&ByteStr> {
-        Ok(self.deref().as_ref())
-    }
-}
-
-impl<H: ?Sized> AsMut<ByteStr> for Vec<u8, H>
-    where H: MemPool,
-{
-    fn as_mut(&mut self) -> &mut ByteStr {
-        self.deref_mut().as_mut()
-    }
-}
-
-impl<H: ?Sized> TryAsMut<ByteStr> for Vec<u8, H>
-    where H: MemPool,
-{
-    fn try_as_mut(&mut self) -> Result<&mut ByteStr> {
-        Ok(self.deref_mut().as_mut())
-    }
-}
-
-impl<H: ?Sized> TryAsRef<CStr> for Vec<u8, H>
-    where H: MemPool,
-{
-    fn try_as_ref(&self) -> Result<&CStr> {
-        self.deref().try_as_ref()
-    }
-}
-
-impl<H: ?Sized> TryAsMut<CStr> for Vec<u8, H>
-    where H: MemPool,
-{
-    fn try_as_mut(&mut self) -> Result<&mut CStr> {
-        self.deref_mut().try_as_mut()
-    }
-}
-
-impl<H: ?Sized> ToCStr for Vec<u8, H>
-    where H: MemPool,
-{
-    fn to_cstr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
-        self.deref().to_cstr(buf)
-    }
-
-    fn to_or_as_cstr<'a>(&'a self, buf: &'a mut [u8]) -> Result<&'a CStr> {
-        self.deref().to_or_as_cstr(buf)
-    }
-
-    fn to_or_as_mut_cstr<'a>(&'a mut self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
-        self.deref_mut().to_or_as_mut_cstr(buf)
-    }
-}
-
-impl<H: ?Sized> TryAsRef<NoNullStr> for Vec<u8, H>
-    where H: MemPool,
-{
-    fn try_as_ref(&self) -> Result<&NoNullStr> {
-        self.deref().try_as_ref()
-    }
-}
-
-impl<H: ?Sized> TryAsMut<NoNullStr> for Vec<u8, H>
-    where H: MemPool,
-{
-    fn try_as_mut(&mut self) -> Result<&mut NoNullStr> {
-        self.deref_mut().try_as_mut()
-    }
-}
-
-impl<H: ?Sized> Write for Vec<u8, H>
-    where H: MemPool,
-{
-    fn write(&mut self, buf: &[u8]) -> Result<usize> {
-        try!(self.reserve(buf.len()));
-        let len = self.len();
-        unsafe { self.set_len(len + buf.len()); }
-        mem::copy(&mut self[len..], buf);
-        Ok(buf.len())
-    }
-
-    fn gather_write(&mut self, mut buf: &[&[u8]]) -> Result<usize> {
-        let mut sum = 0;
-        while buf.len() > 0 {
-            sum += try!(self.write(&buf[0]));
-            buf = &buf[1..];
-        }
-        Ok(sum)
-    }
-}
-
-impl<H: ?Sized> Vec<u8, H>
-    where H: MemPool,
-{
-    pub fn unused(&mut self) -> &mut [u8] {
-        unsafe { slice::from_ptr(self.ptr.add(self.len), self.cap - self.len) }
-    }
-}
-
-/// An iterator over the elements of a subrange of the vector.
-pub struct Drainer<'a, T> {
-    start: *const T,
-    cur: *const T,
-    end: *const T,
-    vec_end: *const T,
-    _data: PhantomData<(&'a (), T)>,
-}
-
-impl<'a, T> !core::marker::Leak for Drainer<'a, T> { }
-
-impl<'a, T> Iterator for Drainer<'a, T> {
-    type Item = T;
-    fn next(&mut self) -> Option<T> {
-        if self.cur != self.end {
-            if mem::size_of::<T>() != 0 {
-                unsafe {
-                    self.cur = self.cur.add(1);
-                    Some(ptr::read(self.cur.sub(1)))
-                }
-            } else {
-                self.cur = (self.cur as usize + 1) as *const _;
-                unsafe { Some(mem::unsafe_zeroed()) }
-            }
-        } else {
-            None
-        }
-    }
-}
-
-impl<'a, T> Drop for Drainer<'a, T> {
-    fn drop(&mut self) {
-        if mem::needs_drop::<T>() {
-            if mem::size_of::<T>() != 0 {
-                while self.cur != self.end {
-                    unsafe {
-                        ptr::drop(self.cur as *mut T);
-                        self.cur = self.cur.add(1);
-                    }
-                }
-            } else {
-                for _ in 0..(self.end as usize - self.cur as usize) {
-                    unsafe { drop(mem::unsafe_zeroed::<T>()); }
-                }
-            }
-        }
-
-        if mem::size_of::<T>() != 0 {
-            let len = (self.vec_end as usize - self.end as usize) / mem::size_of::<T>();
-            if len != 0 {
-                unsafe { ptr::memmove(self.start as *mut _, self.end, len); }
-            }
-        }
-    }
 }

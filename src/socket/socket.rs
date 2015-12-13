@@ -29,7 +29,7 @@ use syscall::{
     sendmsg, recvfrom, recvmsg, getsockopt, setsockopt, ioctl_siocgstampns, ioctl_siocinq,
     ioctl_siocoutq, accept4,
 };
-use str_one::{ToCStr, CStr};
+use str_one::{CStr, NoNullStr};
 use fd::{FdContainer};
 use rv::{retry};
 use saturating::{SaturatingCast};
@@ -788,12 +788,18 @@ impl Socket {
     ///
     /// * link:man:socket(7) and SO_BINDTODEVICE therein
     /// * link:lrs::socket::Socket::device
-    pub fn bind_to_device<D>(&self, device: D) -> Result
-        where D: ToCStr,
+    pub fn bind_to_device<D: ?Sized>(&self, device: &D) -> Result
+        where D: TryAsRef<NoNullStr>,
     {
         let mut buf = [0; IFNAMSIZ];
-        let cstr = try!(device.to_cstr(&mut buf));
-        rv!(setsockopt(self.fd, SOL_SOCKET, SO_BINDTODEVICE, cstr.as_ref()))
+        let cstr = try!(device.try_as_ref());
+        if buf.len() < cstr.len() + 1 {
+            return Err(error::InvalidArgument);
+        }
+        mem::copy(&mut buf, cstr.as_ref());
+        buf[cstr.len()] = 0;
+        let cstr = unsafe { mem::cast(&buf[..cstr.len()]) };
+        rv!(setsockopt(self.fd, SOL_SOCKET, SO_BINDTODEVICE, cstr))
     }
 
     /// Retrieves the name of the device this socket is bound to, if any.

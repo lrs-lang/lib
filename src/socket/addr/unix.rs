@@ -5,7 +5,7 @@
 use base::prelude::*;
 use core::{mem};
 use arch_fns::{memchr};
-use str_one::{ToCStr, CStr, ByteStr};
+use str_one::{CStr, ByteStr, NoNullStr};
 use cty::{
     BYTES_PER_SHORT, AF_UNIX, sa_family_t, UNIX_PATH_MAX,
 };
@@ -29,13 +29,13 @@ pub fn validate(data: &[u8]) -> Result<usize> {
 
     // path
     match memchr(&data[BYTES_PER_SHORT..], 0) {
-        Some(p) => Ok(BYTES_PER_SHORT + p + 1),
+        Some(p) if BYTES_PER_SHORT + p + 1 == data.len() => Ok(data.len()),
         _ => Err(error::InvalidArgument),
     }
 }
 
 /// A Unix socket address.
-pub struct UnixSockAddr { data: [u8] }
+pub struct UnixSockAddr([u8]);
 
 /// The type of a unix socket address.
 ///
@@ -129,33 +129,28 @@ impl UnixSockAddr {
     ///
     /// [argument, path]
     /// The path of the socket address.
-    pub fn from_path<T>(buf: &mut [u8], path: T) -> Result<&mut UnixSockAddr>
-        where T: ToCStr,
+    pub fn from_path<'a, T: ?Sized>(buf: &'a mut [u8],
+                                    path: &T) -> Result<&'a mut UnixSockAddr>
+        where T: TryAsRef<NoNullStr>,
     {
-        if buf.len() < BYTES_PER_SHORT {
+        let path = try!(path.try_as_ref());
+        let len = BYTES_PER_SHORT + path.len() + 1;
+        if buf.len() < len {
             return Err(error::NoMemory);
         }
-        mem::copy(buf, (AF_UNIX as sa_family_t).as_ref());
-        let len = BYTES_PER_SHORT + 1 + {
-            let buf = &mut buf[BYTES_PER_SHORT..];
-            let buf_addr = buf.as_ptr() as usize;
-            let cstr = try!(path.to_cstr(buf));
-            if cstr.as_ptr() as usize != buf_addr {
-                return Err(error::InvalidArgument);
-            }
-            cstr.len()
-        };
-        if len == BYTES_PER_SHORT + 1 || len > BYTES_PER_SHORT + UNIX_PATH_MAX {
-            Err(error::InvalidArgument)
-        } else {
-            Ok(unsafe { mem::cast(&mut buf[..len]) })
+        if path.len() == 0 || path.len() >= UNIX_PATH_MAX {
+            return Err(error::InvalidArgument)
         }
+        mem::copy(buf, (AF_UNIX as sa_family_t).as_ref());
+        mem::copy(&mut buf[BYTES_PER_SHORT..], path.as_ref());
+        buf[len - 1] = 0;
+        Ok(unsafe { mem::cast(&mut buf[..len]) })
     }
 
     /// Returns the address type of the socket address.
     pub fn addr_type(&self) -> UnixAddrType {
-        if self.data.len() == BYTES_PER_SHORT { return UnixAddrType::Unnamed; }
-        if self.data[BYTES_PER_SHORT] == 0 { return UnixAddrType::Abstract; }
+        if self.0.len() == BYTES_PER_SHORT { return UnixAddrType::Unnamed; }
+        if self.0[BYTES_PER_SHORT] == 0 { return UnixAddrType::Abstract; }
         UnixAddrType::Path
     }
 
@@ -163,7 +158,7 @@ impl UnixSockAddr {
     pub fn as_path(&self) -> Result<&CStr> {
         match self.addr_type() {
             UnixAddrType::Path => Ok(unsafe {
-                CStr::from_bytes_unchecked(&self.data[BYTES_PER_SHORT..])
+                mem::cast(&self.0[BYTES_PER_SHORT..self.0.len()-1])
             }),
             _ => Err(error::InvalidArgument),
         }
@@ -171,34 +166,26 @@ impl UnixSockAddr {
 
     /// Returns the mutable path of a path Unix socket address.
     pub fn as_mut_path(&mut self) -> Result<&mut CStr> {
-        match self.addr_type() {
-            UnixAddrType::Path => Ok(unsafe {
-                CStr::from_mut_bytes_unchecked(&mut self.data[BYTES_PER_SHORT..])
-            }),
-            _ => Err(error::InvalidArgument),
-        }
+        unsafe { mem::cast(self.as_path()) }
     }
 
     /// Returns the abstract address of an abstract Unix socket address.
     pub fn as_abstract(&self) -> Result<&[u8]> {
         match self.addr_type() {
-            UnixAddrType::Abstract => Ok(&self.data[BYTES_PER_SHORT + 1..]),
+            UnixAddrType::Abstract => Ok(&self.0[BYTES_PER_SHORT+1..]),
             _ => Err(error::InvalidArgument),
         }
     }
 
     /// Returns the mutable abstract address of an abstract Unix socket address.
     pub fn as_mut_abstract(&mut self) -> Result<&mut [u8]> {
-        match self.addr_type() {
-            UnixAddrType::Abstract => Ok(&mut self.data[BYTES_PER_SHORT + 1..]),
-            _ => Err(error::InvalidArgument),
-        }
+        unsafe { mem::cast(self.as_abstract()) }
     }
 }
 
 impl AsRef<[u8]> for UnixSockAddr {
     fn as_ref(&self) -> &[u8] {
-        &self.data
+        &self.0
     }
 }
 impl_try_as_ref!([u8], UnixSockAddr);

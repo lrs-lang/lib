@@ -13,8 +13,8 @@ pub struct OncePool<'a> {
     _data: PhantomData<&'a ()>,
 }
 
-impl<'a> Default for OncePool<'a> {
-    fn default() -> Self {
+impl<'a> OutOf for OncePool<'a> {
+    fn out_of(_: ()) -> Self {
         OncePool {
             ptr: 0 as *mut _,
             len: 0,

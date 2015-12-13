@@ -3,8 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use core::{slice, mem};
+use {error};
 use result::{Result};
-use result::Result::{Ok};
+use result::Result::{Ok, Err};
 
 /// Objects that can be immutably borrowed.
 pub trait AsRef<Target: ?Sized>: TryAsRef<Target> {
@@ -103,10 +104,14 @@ impl AsRef<[u8]> for str {
         self.as_bytes()
     }
 }
+impl_try_as_ref!([u8], str);
 
-impl TryAsRef<[u8]> for str {
-    fn try_as_ref(&self) -> Result<&[u8]> {
-        Ok(self.as_bytes())
+impl TryAsRef<str> for [u8] {
+    fn try_as_ref(&self) -> Result<&str> {
+        match str::from_bytes(self) {
+            Some(s) => Ok(s),
+            _ => Err(error::InvalidArgument),
+        }
     }
 }
 
