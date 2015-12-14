@@ -110,12 +110,14 @@ let
         deps = [lrs],
     };
 
+    default_target = if freestanding then lrs else libtest;
+
     not_null = val: alt: if val != null then val else alt;
 
     target = if std.path ? 1 && std.path.0 == "src" && objs ? (std.path.1) then
-        not_null objs.(std.path.1) libtest
+        not_null objs.(std.path.1) default_target
     else
-        libtest;
+        default_target;
 
     ccfg = c: cfg: if c then [cfg] else [];
 

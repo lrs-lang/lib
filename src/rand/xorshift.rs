@@ -4,7 +4,8 @@
 
 use base::prelude::*;
 use core::{mem, slice};
-use {Rng, kernel, GetUrandom, DevUrandom};
+use {Rng};
+#[cfg(not(freestanding))] use {kernel, GetUrandom, DevUrandom};
 use io::{Read};
 
 #[derive(Pod, Eq)]
