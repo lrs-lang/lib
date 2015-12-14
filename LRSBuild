@@ -90,6 +90,7 @@ let
                                         ++ hdep [file]),
         dir = hobj "dir" [core, base, cty, str_one, str_two, syscall, fd, fmt, file, vec,
                           rmo, alloc],
+        rand = obj "rand" ([core, base, io, fmt] ++ hdep [cty, syscall, rv, kernel, file]),
         // user_group = hobj "user_group" [core, base, arch_fns, io, buf_reader, fmt,
         //                                 str_one, str_two, cty, parse, file, vec, rmo,
         //                                 iter, alloc],

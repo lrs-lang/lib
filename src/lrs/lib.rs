@@ -46,6 +46,7 @@ extern crate lrs_vec;
 extern crate lrs_c_ptr_ptr;
 extern crate lrs_tree;
 extern crate lrs_lock;
+extern crate lrs_rand;
 
 #[cfg(not(freestanding))] extern crate lrs_r_syscall;
 #[cfg(not(freestanding))] extern crate lrs_syscall;
@@ -110,6 +111,7 @@ pub mod rc;
 pub mod undef;
 pub mod cmp;
 pub mod bx;
+pub mod rand;
 
 #[cfg(not(freestanding))]
 pub use hosted::{
