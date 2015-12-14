@@ -30,7 +30,7 @@ use alloc::{MemPool, empty_ptr};
 mod conv;
 mod cmp_;
 mod drain;
-mod byte_string;
+mod byte_vec;
 
 /// A vector.
 pub struct Vec<T, Pool: ?Sized = alloc::Heap>
@@ -52,6 +52,15 @@ impl<T, H = alloc::Heap> Vec<T, H>
         Self::with_pool(H::out_of(()))
     }
 
+    /// Creates a new allocating vector with a memory pool.
+    ///
+    /// [argument, pool]
+    /// The pool to draw memory from.
+    pub fn with_pool(pool: H) -> Vec<T, H> {
+        let ptr = unsafe { OwnedPtr::new(empty_ptr()) };
+        Vec { ptr: ptr, len: 0, cap: 0, pool: pool }
+    }
+
     /// Creates a new allocating vector and reserves a certain amount of space for it.
     pub fn with_capacity(cap: usize) -> Result<Vec<T, H>>
         where H: OutOf,
@@ -61,18 +70,9 @@ impl<T, H = alloc::Heap> Vec<T, H>
             let ptr = unsafe { OwnedPtr::new(empty_ptr()) };
             return Ok(Vec { ptr: ptr, len: 0, cap: cap, pool: pool });
         }
-        let ptr = unsafe { try!(alloc::alloc_array(&mut pool, cap)) };
+        let (ptr, cap) = unsafe { try!(alloc::alloc_array(&mut pool, cap)) };
         let ptr = unsafe { OwnedPtr::new(ptr) };
         Ok(Vec { ptr: ptr, len: 0, cap: cap, pool: pool })
-    }
-
-    /// Creates a new allocating vector with a memory pool.
-    ///
-    /// [argument, pool]
-    /// The pool to draw memory from.
-    pub fn with_pool(pool: H) -> Vec<T, H> {
-        let ptr = unsafe { OwnedPtr::new(empty_ptr()) };
-        Vec { ptr: ptr, len: 0, cap: 0, pool: pool }
     }
 
     /// Creates a new vector from its raw parts.
@@ -136,12 +136,14 @@ impl<T, H: ?Sized = alloc::Heap> Vec<T, H>
         }
 
         let new_cap = self.len + cmp::max(n, self.cap / 2 + 1);
-        let ptr = if *self.ptr == empty_ptr() {
-            unsafe { alloc::alloc_array(&mut self.pool, new_cap) }
-        } else {
-            unsafe { alloc::realloc_array(&mut self.pool, *self.ptr, self.cap, new_cap) }
+        let (ptr, new_cap) = unsafe {
+            if *self.ptr == empty_ptr() {
+                try!(alloc::alloc_array(&mut self.pool, new_cap))
+            } else {
+                try!(alloc::realloc_array(&mut self.pool, *self.ptr, self.cap, new_cap))
+            }
         };
-        self.ptr = unsafe { OwnedPtr::new(try!(ptr)) };
+        self.ptr = unsafe { OwnedPtr::new(ptr) };
         self.cap = new_cap;
         Ok(())
     }
@@ -153,11 +155,11 @@ impl<T, H: ?Sized = alloc::Heap> Vec<T, H>
             return Ok(());
         }
         if self.len < self.cap {
-            let ptr = unsafe {
-                alloc::realloc_array(&mut self.pool, *self.ptr, self.cap, self.len)
+            let (ptr, cap) = unsafe {
+                try!(alloc::realloc_array(&mut self.pool, *self.ptr, self.cap, self.len))
             };
-            self.ptr = unsafe { OwnedPtr::new(try!(ptr)) };
-            self.cap = self.len;
+            self.ptr = unsafe { OwnedPtr::new(ptr) };
+            self.cap = cap;
         }
         Ok(())
     }

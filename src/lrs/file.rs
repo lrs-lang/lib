@@ -7,11 +7,11 @@
 pub use lrs_file::{
     File, Seek, Advice, info_no_follow, exists, can_access, set_len, link, TimeChange,
     set_times, set_times_no_follow, exchange, rename, create_dir, remove, symlink,
-    read_link_buf, read_link, change_owner, change_owner_no_follow, change_mode,
+    read_link_pool, read_link, change_owner, change_owner_no_follow, change_mode,
     create_file, create_device, set_attr, set_attr_no_follow, get_attr_buf,
     get_attr_no_follow_buf, get_attr, get_attr_no_follow, remove_attr,
-    remove_attr_no_follow, list_attr_size, list_attr_size_no_follow, list_attr_buf,
-    list_attr_buf_no_follow, list_attr, list_attr_no_follow, real_path_buf, real_path,
+    remove_attr_no_follow, list_attr_size, list_attr_size_no_follow, list_attr_pool,
+    list_attr_no_follow_pool, list_attr, list_attr_no_follow, real_path_pool, real_path,
 };
 pub use lrs_file::_info as info;
 pub use lrs_file::flags::{FileFlags, Mode, AccessMode, MemfdFlags, FileSeals};

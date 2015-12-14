@@ -103,7 +103,7 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator>
                            .checked_mul(2).unwrap_or(!0);
 
         let table = unsafe {
-            let table: *mut Bucket = try!(alloc::alloc_array(&mut pool, buckets));
+            let table: *mut Bucket = try!(alloc::alloc_array(&mut pool, buckets)).0;
             for i in 0..buckets {
                 (&mut *table.add(i)).set_empty();
             }
@@ -397,7 +397,7 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator: ?Sized>
                                     .checked_mul(2).unwrap_or(!0);
 
         unsafe {
-            let new_table = try!(alloc::alloc_array(&mut self.pool, new_buckets));
+            let new_table = try!(alloc::alloc_array(&mut self.pool, new_buckets)).0;
             self.copy_table(new_table, new_buckets);
 
             let old_table = mem::replace(&mut self.table, OwnedPtr::new(new_table));

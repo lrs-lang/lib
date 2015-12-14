@@ -73,7 +73,7 @@ impl<R, H = alloc::Heap> BufReader<R, H>
             Some(n) => n,
             _ => return Err(error::NoMemory),
         };
-        let ptr = unsafe { try!(alloc::alloc_array(&mut pool, size)) };
+        let ptr = unsafe { try!(alloc::alloc_array(&mut pool, size)).0 };
         let ptr = unsafe { OwnedPtr::new(ptr) };
         Ok(BufReader {
             data: ptr,

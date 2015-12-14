@@ -156,6 +156,21 @@ pub trait MemPool: Leak {
     /// This function always succeeds and the pointer argument must no longer be used
     /// after this call.
     unsafe fn free(&mut self, ptr: *mut u8, size: usize, alignment: usize);
+
+    unsafe fn realloc_in_place(&mut self, ptr: *mut u8, oldsize: usize,
+                               newsize: usize, alignment: usize) -> Result {
+        let _ = ptr;
+        let _ = oldsize;
+        let _ = newsize;
+        let _ = alignment;
+        Err(error::NoMemory)
+    }
+
+    unsafe fn usable_size(&self, ptr: *mut u8, size: usize, alignment: usize) -> usize {
+        let _ = ptr;
+        let _ = alignment;
+        size
+    }
 }
 
 impl<'a, T: MemPool> MemPool for &'a mut T {
@@ -209,14 +224,21 @@ pub unsafe fn alloc<T, M: ?Sized>(pool: &mut M) -> Result<*mut T>
 ///
 /// If `T` has size `0`, a call to this function behaves like a call to `empty_ptr`.
 /// Otherwise, if `num` is `0`, the behavior is undefined.
-pub unsafe fn alloc_array<T, M: ?Sized>(pool: &mut M, num: usize) -> Result<*mut T>
+pub unsafe fn alloc_array<T, M: ?Sized>(pool: &mut M,
+                                        num: usize) -> Result<(*mut T, usize)>
     where M: MemPool,
 {
-    if mem::size_of::<T>() == 0 {
-        Ok(empty_ptr())
+    let size = mem::size_of::<T>();
+    if size == 0 {
+        Ok((empty_ptr(), 0))
     } else {
-        match num.checked_mul(mem::size_of::<T>()) {
-            Some(size) => pool.alloc(size, mem::align_of::<T>()).map(|r| r as *mut T),
+        match num.checked_mul(size) {
+            Some(buf_size) => {
+                let align = mem::align_of::<T>();
+                let ptr = try!(pool.alloc(buf_size, align));
+                let num = pool.usable_size(ptr, buf_size, align) / size;
+                Ok((ptr as *mut T, num))
+            },
             _ => Err(error::InvalidArgument),
         }
     }
@@ -255,15 +277,22 @@ pub unsafe fn alloc_array<T, M: ?Sized>(pool: &mut M, num: usize) -> Result<*mut
 /// If this function returns successfully, the old pointer becomes invalid and must no
 /// longer be used. Otherwise the old pointer can continued to be used.
 pub unsafe fn realloc_array<T, M: ?Sized>(pool: &mut M, ptr: *mut T, oldnum: usize,
-                                          newnum: usize) -> Result<*mut T>
+                                          newnum: usize) -> Result<(*mut T, usize)>
     where M: MemPool,
 {
-    if mem::size_of::<T>() == 0 {
-        Ok(empty_ptr())
+    let size = mem::size_of::<T>();
+    if size == 0 {
+        Ok((empty_ptr(), 0))
     } else {
-        match newnum.checked_mul(mem::size_of::<T>()) {
-            Some(size) => pool.realloc(ptr as *mut u8, oldnum * mem::size_of::<T>(), size,
-                                       mem::align_of::<T>()).map(|r| r as *mut T),
+        match newnum.checked_mul(size) {
+            Some(buf_size) => {
+                let align = mem::align_of::<T>();
+                let old_ptr = ptr as *mut u8;
+                let old_size = oldnum * size;
+                let new_ptr = try!(pool.realloc(old_ptr, old_size, size, align));
+                let num = pool.usable_size(new_ptr, buf_size, align) / size;
+                Ok((new_ptr as *mut T, num))
+            },
             _ => Err(error::InvalidArgument),
         }
     }

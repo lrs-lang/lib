@@ -106,7 +106,7 @@ pub fn get_cwd_pool<H>(pool: H) -> Result<CString<H>>
     let mut buf = Vec::with_pool(pool);
     for &res in &[32, 128, 256, 512, 1024, 2048, rt::aux::page_size()][..] {
         try!(buf.reserve(res));
-        let size = match rv!(syscall::getcwd(buf.unused()), -> usize) {
+        let size = match rv!(syscall::getcwd(unsafe { buf.unused() }), -> usize) {
             Ok(s) => s,
             Err(error::RangeError) => continue,
             Err(e) => return Err(e),

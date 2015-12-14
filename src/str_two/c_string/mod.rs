@@ -4,6 +4,7 @@
 
 use base::prelude::*;
 use core::{mem};
+use core::marker::{Leak};
 use base::undef::{UndefState};
 use str_one::{CStr, NoNullStr};
 use fmt::{Debug, Display, Write};
@@ -61,6 +62,15 @@ impl<H> CString<H>
     pub unsafe fn from_bytes_unchecked(mut bytes: Vec<u8, H>) -> Self {
         bytes.pop();
         CString(bytes)
+    }
+
+    pub fn leak<'a>(mut self) -> &'a mut CStr
+        where Self: Leak,
+              H: 'a,
+    {
+        let p = unsafe { mem::cast(self.deref_mut()) };
+        mem::forget(self);
+        p
     }
 }
 

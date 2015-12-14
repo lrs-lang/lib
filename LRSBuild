@@ -77,7 +77,7 @@ let
         poll = hobj "poll" [core, base, cty, syscall, fd, rv, saturating, fmt, time_base],
         dev = hobj "dev" [core, base, fmt, cty],
         file = hobj "file" [core, base, io, cty, fmt, int, syscall, str_one, str_two,
-                            arch_fns, rv, parse, fd, dev, fs, time_base, vec, rmo],
+                            arch_fns, rv, parse, fd, dev, fs, time_base, vec, rmo, cell],
         mqueue = hobj "mqueue" [core, base, cty, fmt, syscall, fd, file, rmo, alloc,
                                 time_base, rv, str_one, str_two],
         tty = hobj "tty" [core, base, syscall, cty, fd, file, signal, dev, fmt],

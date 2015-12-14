@@ -4,13 +4,14 @@
 
 use base::prelude::*;
 use core::{mem};
+use core::marker::{Leak};
 use base::undef::{UndefState};
 use fmt::{Debug, Display, Write};
 use vec::{Vec};
 use alloc::{self, MemPool};
 
 /// An owned UTF-8 string.
-pub struct String<Heap: MemPool = alloc::Heap>(Vec<u8, Heap>);
+pub struct String<Heap: MemPool+?Sized = alloc::Heap>(Vec<u8, Heap>);
 
 impl<H> String<H>
     where H: MemPool, 
@@ -43,6 +44,19 @@ impl<H> String<H>
         String(Vec::with_pool(pool))
     }
 
+    pub fn leak<'a>(self) -> &'a str
+        where Self: Leak,
+              H: 'a,
+    {
+        let p = unsafe { mem::cast(self.deref()) };
+        mem::forget(self);
+        p
+    }
+}
+
+impl<H: ?Sized> String<H>
+    where H: MemPool, 
+{
     /// Returns the capacity of the string.
     pub fn capacity(&self) -> usize {
         self.0.capacity()

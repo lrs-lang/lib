@@ -5,6 +5,7 @@ doc.json
 target
 dragons
 .*
+*.d
 *.html
 !.gitignore
 config.mk

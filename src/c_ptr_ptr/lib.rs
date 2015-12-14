@@ -56,7 +56,7 @@ impl<H = alloc::Heap> CPtrPtr<H>
     pub fn with_pool(mut pool: H) -> Result<Self> {
         const DEFAULT_CAP: usize = 32;
         let buf = unsafe {
-            OwnedPtr::new(try!(alloc::alloc_array(&mut pool, DEFAULT_CAP)))
+            OwnedPtr::new(try!(alloc::alloc_array(&mut pool, DEFAULT_CAP)).0)
         };
         Ok(CPtrPtr {
             buf: buf,
@@ -71,7 +71,7 @@ impl<H = alloc::Heap> CPtrPtr<H>
         let new_cap = self.cap + self.cap / 2 + 1;
         self.buf = unsafe {
             OwnedPtr::new(try!(alloc::realloc_array(&mut self.pool, *self.buf, self.cap,
-                                                    new_cap)))
+                                                    new_cap)).0)
         };
         self.cap = new_cap;
         Ok(())

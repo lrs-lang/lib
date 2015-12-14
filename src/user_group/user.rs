@@ -10,7 +10,6 @@ use buf_reader::{BufReader};
 use fmt::{Debug, Write};
 use base::error::{self};
 use str_one::{ByteStr};
-use str_two::{ByteString};
 use cty::alias::{UserId, GroupId};
 use parse::{Parse};
 use file::{File};
@@ -100,17 +99,17 @@ impl<'a> Debug for Info<'a> {
 pub struct Information<H = alloc::Heap>
     where H: MemPool,
 {
-    name:     ByteString<H>,
-    password: ByteString<H>,
+    name:     Vec<u8, H>,
+    password: Vec<u8, H>,
     user_id:  UserId,
     group_id: GroupId,
-    comment:  ByteString<H>,
-    home:     ByteString<H>,
-    shell:    ByteString<H>,
+    comment:  Vec<u8, H>,
+    home:     Vec<u8, H>,
+    shell:    Vec<u8, H>,
 }
 
 impl<H> Information<H>
-    where H: MemPool+Default+Copy,
+    where H: MemPool+OutOf+Copy,
 {
     /// Retrieves user info of the user with a certain id.
     ///
@@ -118,7 +117,7 @@ impl<H> Information<H>
     /// The id of the user.
     pub fn from_user_id(id: UserId) -> Result<Information<H>> {
         let mut buf = [0; INFO_BUF_SIZE];
-        Info::from_user_id(&mut buf, id).chain(|i| i.try_to())
+        Info::from_user_id(&mut buf, id).chain(|i| i.to_owned())
     }
 
     /// Retrieves user info of the user with a certain name.
@@ -129,7 +128,7 @@ impl<H> Information<H>
         where S: AsRef<ByteStr>
     {
         let mut buf = [0; INFO_BUF_SIZE];
-        Info::from_user_name(&mut buf, name).chain(|i| i.try_to())
+        Info::from_user_name(&mut buf, name).chain(|i| i.to_owned())
     }
 
     /// Finds the first user that satisfies the predicate.
@@ -140,7 +139,7 @@ impl<H> Information<H>
         where F: Fn(&Info) -> bool,
     {
         let mut buf = [0; INFO_BUF_SIZE];
-        Info::find_by(&mut buf, pred).chain(|i| i.try_to())
+        Info::find_by(&mut buf, pred).chain(|i| i.to_owned())
     }
 }
 
@@ -194,13 +193,13 @@ impl<H> Information<H>
     /// Borrows the information.
     pub fn to_info<'a>(&'a self) -> Info<'a> {
         Info {
-            name:     &self.name,
-            password: &self.password,
-            user_id:  self.user_id,
-            group_id: self.group_id,
-            comment:  &self.comment,
-            home:     &self.home,
-            shell:    &self.shell,
+                name:     self.name.as_ref(),
+                password: self.password.as_ref(),
+                user_id:  self.user_id,
+                group_id: self.group_id,
+                comment:  self.comment.as_ref(),
+                home:     self.home.as_ref(),
+                shell:    self.shell.as_ref(),
         }
     }
 }
@@ -211,8 +210,9 @@ impl<H> Debug for Information<H>
     fn fmt<W: Write>(&self, mut w: &mut W) -> Result {
         write!(w, "Information {{ name: {:?}, password: {:?}, user_id: {:?}, \
                     group_id: {:?}, comment: {:?}, home: {:?}, shell: {:?} }}",
-                    self.name, self.password, self.user_id, self.group_id, self.comment,
-                    self.home, self.shell)
+                    self.name.as_str(), self.password.as_str(), self.user_id,
+                    self.group_id, self.comment.as_str(), self.home.as_str(),
+                    self.shell.as_str())
     }
 }
 
@@ -245,13 +245,13 @@ impl<'a> UserInfo for Info<'a> {
 }
 
 impl UserInfo for Information {
-    fn name(&self)     -> &ByteStr { &self.name     }
-    fn password(&self) -> &ByteStr { &self.password }
-    fn user_id(&self)  -> UserId    { self.user_id   }
-    fn group_id(&self) -> GroupId   { self.group_id  }
-    fn comment(&self)  -> &ByteStr { &self.comment  }
-    fn home(&self)     -> &ByteStr { &self.home     }
-    fn shell(&self)    -> &ByteStr { &self.shell    }
+    fn name(&self)     -> &ByteStr { self.name.as_ref()     }
+    fn password(&self) -> &ByteStr { self.password.as_ref() }
+    fn user_id(&self)  -> UserId   { self.user_id           }
+    fn group_id(&self) -> GroupId  { self.group_id          }
+    fn comment(&self)  -> &ByteStr { self.comment.as_ref()  }
+    fn home(&self)     -> &ByteStr { self.home.as_ref()     }
+    fn shell(&self)    -> &ByteStr { self.shell.as_ref()    }
 }
 
 /// Returns an allocating iterator over the users in `/etc/passwd`.
@@ -327,13 +327,13 @@ impl<'a> Iterator for InformationIter<'a> {
                 }
             };
             Some(Information {
-                name:     ByteString::from_vec(parts[0].to_owned().unwrap()),
-                password: ByteString::from_vec(parts[1].to_owned().unwrap()),
+                name:     parts[0].try_to().unwrap(),
+                password: parts[1].try_to().unwrap(),
                 user_id:  uid,
                 group_id: gid,
-                comment:  ByteString::from_vec(parts[4].to_owned().unwrap()),
-                home:     ByteString::from_vec(parts[5].to_owned().unwrap()),
-                shell:    ByteString::from_vec(parts[6].to_owned().unwrap()),
+                comment:  parts[4].try_to().unwrap(),
+                home:     parts[5].try_to().unwrap(),
+                shell:    parts[6].try_to().unwrap(),
             })
         } else {
             None

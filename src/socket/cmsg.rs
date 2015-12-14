@@ -186,7 +186,7 @@ impl<H> CMsgBuf<H>
     /// allocated.
     pub fn new() -> Result<CMsgBuf<H>> {
         let mut pool = H::out_of(());
-        let ptr: *mut usize = unsafe { try!(alloc::alloc_array(&mut pool, 1)) };
+        let ptr: *mut usize = unsafe { try!(alloc::alloc_array(&mut pool, 1)).0 };
         Ok(CMsgBuf {
             data: unsafe { OwnedPtr::new(ptr as *mut u8) },
             len: 0,
@@ -210,7 +210,7 @@ impl<H> CMsgBuf<H>
             let new_cap = pad_ptr!(self.cap * 2 + n) / usize::bytes();
             let ptr = unsafe {
                 try!(alloc::realloc_array(&mut self.pool, *self.data as *mut usize, cap,
-                                          new_cap))
+                                          new_cap)).0
             };
             self.data = unsafe { OwnedPtr::new(ptr as *mut u8) };
             self.cap = new_cap * usize::bytes();

@@ -4,10 +4,11 @@
 
 use base::prelude::*;
 use core::{slice, mem};
+use core::marker::{Leak};
 use {Vec};
 use alloc::{MemPool};
 use io::{Write, BufWrite, Read};
-use str_one::{ByteStr, CStr};
+use str_one::{ByteStr};
 
 impl<H: ?Sized> Vec<u8, H>
     where H: MemPool,
@@ -20,8 +21,17 @@ impl<H: ?Sized> Vec<u8, H>
         self.deref_mut().as_mut()
     }
 
-    pub fn unused(&mut self) -> &mut [u8] {
-        unsafe { slice::from_ptr(self.ptr.add(self.len), self.cap - self.len) }
+    pub unsafe fn unused(&mut self) -> &mut [u8] {
+        slice::from_ptr(self.ptr.add(self.len), self.cap - self.len)
+    }
+
+    pub fn leak<'a>(mut self) -> &'a mut ByteStr
+        where Self: Leak+Sized,
+              H: 'a,
+    {
+        let p = unsafe { mem::cast(self.as_mut_str()) };
+        mem::forget(self);
+        p
     }
 }
 

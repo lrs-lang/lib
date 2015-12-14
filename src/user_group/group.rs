@@ -9,12 +9,10 @@ use buf_reader::{BufReader};
 use fmt::{Debug, Write};
 use base::error::{self};
 use str_one::{ByteStr};
-use str_two::{ByteString};
 use cty::alias::{GroupId};
 use parse::{Parse};
 use file::{File};
 use vec::{Vec};
-use rmo::{ToOwned};
 use iter::{IteratorExt};
 
 use {LineReader};
@@ -86,13 +84,13 @@ impl<'a> Info<'a> {
     pub fn to_owned(&self) -> Result<Information> {
         let mut members = Vec::new();
         for member in self.members() {
-            let member = try!(member.to_owned());
+            let member = try!(member.try_to());
             try!(members.reserve(1));
             members.push(member);
         }
         Ok(Information {
-            name:     try!(self.name.to_owned()),
-            password: try!(self.password.to_owned()),
+            name:     try!(self.name.try_to()),
+            password: try!(self.password.try_to()),
             id:       self.id,
             members:  members,
         })
@@ -134,10 +132,10 @@ impl<'a> Debug for Info<'a> {
 /// Struct holding allocated group info.
 #[derive(TryTo, Eq)]
 pub struct Information {
-    name:     ByteString,
-    password: ByteString,
+    name:     Vec<u8>,
+    password: Vec<u8>,
     id:       GroupId,
-    members:  Vec<ByteString>,
+    members:  Vec<Vec<u8>>,
 }
 
 impl Information {
@@ -228,8 +226,8 @@ impl<'a> Iterator for InfoMemberIter<'a> {
 impl<'a> GroupInfo<'a> for Information {
     type Iterator = InformationMemberIter<'a>;
 
-    fn name(&self)     -> &ByteStr { &self.name }
-    fn password(&self) -> &ByteStr { &self.password }
+    fn name(&self)     -> &ByteStr { self.name.as_str() }
+    fn password(&self) -> &ByteStr { self.password.as_str() }
     fn id(&self)       -> GroupId { self.id }
 
     fn members(&'a self) -> InformationMemberIter<'a> {
@@ -239,7 +237,7 @@ impl<'a> GroupInfo<'a> for Information {
 
 /// Iterator over the members in allocated group data.
 pub struct InformationMemberIter<'a> {
-    iter: slice::Items<'a, ByteString>,
+    iter: slice::Items<'a, Vec<u8>>,
 }
 
 impl<'a> Iterator for InformationMemberIter<'a> {
@@ -325,23 +323,23 @@ impl<'a> Iterator for InformationIter<'a> {
                 };
                 let mut members = Vec::new();
                 for member in parts[3].split(|&c| c == b',') {
-                    match members.reserve(1).chain(|_| member.to_owned()) {
-                        Ok(m) => members.push(ByteString::from_vec(m)),
+                    match members.reserve(1).chain(|_| member.try_to()) {
+                        Ok(m) => members.push(m),
                         Err(e) => {
                             self.set_err(e);
                             return None;
                         }
                     }
                 }
-                let name = match parts[0].to_owned() {
-                    Ok(n) => ByteString::from_vec(n),
+                let name = match parts[0].try_to() {
+                    Ok(n) => n,
                     Err(e) => {
                         self.set_err(e);
                         return None;
                     }
                 };
-                let password = match parts[0].to_owned() {
-                    Ok(p) => ByteString::from_vec(p),
+                let password = match parts[0].try_to() {
+                    Ok(p) => p,
                     Err(e) => {
                         self.set_err(e);
                         return None;

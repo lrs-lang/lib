@@ -102,7 +102,7 @@ impl<T, H> Queue<T, H>
         };
         let buf = match mem::size_of::<T>() {
             0 => empty_ptr(),
-            _ => unsafe { try!(alloc::alloc_array(&mut pool, cap)) },
+            _ => unsafe { try!(alloc::alloc_array(&mut pool, cap)).0 },
         };
         Ok(Queue {
             buf: unsafe { OwnedPtr::new(buf) },

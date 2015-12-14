@@ -69,7 +69,7 @@ impl<T, H> DynRingBuf<T, H>
             });
         }
         cap = cap.checked_next_power_of_two().unwrap_or(!0);
-        let ptr = unsafe { OwnedPtr::new(try!(alloc::alloc_array(&mut pool, cap))) };
+        let ptr = unsafe { OwnedPtr::new(try!(alloc::alloc_array(&mut pool, cap)).0) };
         Ok(DynRingBuf {
             ptr: ptr,
             left: Wsize(0),
@@ -135,7 +135,7 @@ impl<T, H> DynRingBuf<T, H>
         } else {
             unsafe { alloc::realloc_array(&mut self.pool, *self.ptr, self.cap, new_cap) }
         };
-        self.ptr = unsafe { OwnedPtr::new(try!(ptr)) };
+        self.ptr = unsafe { OwnedPtr::new(try!(ptr).0) };
 
         let len = self.len();
         self.left = self.left & self.cap_mask();

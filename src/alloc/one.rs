@@ -63,4 +63,8 @@ impl<'a> MemPool for OncePool<'a> {
             Err(error::NoMemory)
         }
     }
+
+    unsafe fn usable_size(&self, _: *mut u8, _: usize, _: usize) -> usize {
+        self.len
+    }
 }
