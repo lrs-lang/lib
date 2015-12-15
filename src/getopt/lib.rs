@@ -4,8 +4,7 @@
 
 #![crate_name = "lrs_getopt"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, custom_derive)]
-#![plugin(lrs_core_plugin)]
+#![feature(no_std, custom_derive)]
 #![no_std]
 
 extern crate lrs_base as base;
@@ -237,7 +236,7 @@ impl<'a, I> Iterator for Getopt<'a, I>
             self.cur = &self.cur[1..];
             return Some((rv, None));
         }
-        
+
         if let Some(next) = self.args.next() {
             if next.len() < 2 || next[0] != b'-' {
                 return None;

@@ -26,12 +26,12 @@ use core::ptr::{OwnedPtr};
 /// ----
 /// unsafe impl UndefState for char {
 ///     fn num() -> usize { 0xE000 - 0xD800 }
-/// 
+///
 ///     unsafe fn set_undef(val: *mut char, n: usize) {
 ///         assert!(n < Self::num());
 ///         *(val as *mut u32) = n as u32 + 0xE000;
 ///     }
-/// 
+///
 ///     unsafe fn is_undef(val: *const char, n: usize) -> bool {
 ///         assert!(n < Self::num());
 ///         *(val as *const u32) == n as u32 + 0xE000

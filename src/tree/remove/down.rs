@@ -85,7 +85,7 @@ pub fn left<'a, F>(cur: &'a Node, left: &'a Node, mut push: F, push2: bool) -> &
             //                    |rll|   <-- black
             //                    +---+
             //
-            // Solution: 
+            // Solution:
             //
             //                              +---+
             //                              |r_l|   <-- red
@@ -137,7 +137,7 @@ pub fn left<'a, F>(cur: &'a Node, left: &'a Node, mut push: F, push2: bool) -> &
     //   black -->   |l_l|     |r_l|   <-- black
     //               +---+     +---+
     //
-    // Solution: 
+    // Solution:
     //
     //                         +---+
     //                         |cur|   <-- black

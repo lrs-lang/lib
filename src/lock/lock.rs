@@ -106,7 +106,7 @@ impl<'a> Lock {
 
 unsafe impl UndefState for Lock {
     fn num() -> usize { c_uint::max() as usize - 2 }
-    
+
     unsafe fn set_undef(val: *mut Lock, n: usize) {
         assert!(n < Self::num());
         assert!(mem::size_of::<Lock>() == mem::size_of::<c_uint>());

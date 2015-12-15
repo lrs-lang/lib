@@ -4,10 +4,9 @@
 
 #![crate_name = "lrs_netlink"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, custom_derive)]
-#![plugin(lrs_core_plugin)]
+#![feature(no_std, custom_derive)]
 #![no_std]
-#![allow(non_upper_case_globals)] 
+#![allow(non_upper_case_globals)]
 
 extern crate lrs_base       as base;
 extern crate lrs_cty        as cty;

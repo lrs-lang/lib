@@ -89,7 +89,7 @@ impl !Sync for NoInterrupt { }
 /// = Remarks
 ///
 /// For example, types using a thread-local allocator are often `Sync` but never `Send`
-/// because they must be destroyed in the thread they were created in. 
+/// because they must be destroyed in the thread they were created in.
 pub unsafe trait Send { }
 
 unsafe impl Send for .. { }
@@ -181,18 +181,18 @@ impl !Send for NoSend { }
 ///
 /// ----
 /// struct T;
-/// 
+///
 /// impl Drop for T {
 ///     fn drop(&mut self) {
 ///         println!("dropped");
 ///     }
 /// }
-/// 
+///
 /// struct X<T> {
 ///     _t: T,
 ///     rc: Option<Rc<RefCell<X<T>>>>,
 /// }
-/// 
+///
 /// fn main() {
 ///     let rc = Rc::new(RefCell::new(X { _t: T, rc: None }));
 ///     rc.borrow_mut().rc = Some(rc.clone());
@@ -225,7 +225,7 @@ impl !Send for NoSend { }
 ///     data: *mut Inner<T>,
 /// }
 /// ----
-/// 
+///
 /// where `Inner<T>` is an allocated object that contains the `T` and the reference count.
 ///
 /// The simple criterion is as follows:

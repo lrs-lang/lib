@@ -69,7 +69,7 @@ pub fn exec<P>(path: P, argv: &[*const c_char]) -> Result
             return rv!(execveat(AT_FDCWD, &file, argv.as_ptr(), raw_env(), 0));
         }
     }
-    
+
     // Try first without allocating
 
     let mut abs_buf: [u8; PATH_MAX] = unsafe { mem::uninit() };

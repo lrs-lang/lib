@@ -81,7 +81,7 @@ impl<T: ?Sized, H = alloc::Heap> Rc<T, H>
     /// This function first creates an `RcBuf` which can then be used to create a real
     /// `Rc` as shown in the example. The function does not take a value argument itself
     /// since this would complicate handling the case where allocating memory fails.
-    /// 
+    ///
     /// = Examples
     ///
     /// ----
@@ -101,7 +101,7 @@ impl<T: ?Sized, H = alloc::Heap> Rc<T, H>
     /// This function first creates an `RcBuf` which can then be used to create a real
     /// `Rc` as shown in the example. The function does not take a value argument itself
     /// since this would complicate handling the case where allocating memory fails.
-    /// 
+    ///
     /// = Examples
     ///
     /// ----

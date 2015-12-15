@@ -100,7 +100,7 @@ pub fn explode(zone: &Zone, time: i64) -> DateTime {
 
     let weekday = ((((EPOCH_WEEK_DAY as i64) + ((year - EPOCH_YEAR) % DAYS_PER_WEEK) *
                     (DAYS_PER_NORMAL_YEAR % DAYS_PER_WEEK) + leap_years_to(year - 1) -
-                    leap_years_to(EPOCH_YEAR - 1) + days) % DAYS_PER_WEEK) + 
+                    leap_years_to(EPOCH_YEAR - 1) + days) % DAYS_PER_WEEK) +
                     DAYS_PER_WEEK) % DAYS_PER_WEEK;
     let weekday = match weekday {
         0 => Weekday::Monday,

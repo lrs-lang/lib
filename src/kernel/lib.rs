@@ -4,8 +4,7 @@
 
 #![crate_name = "lrs_kernel"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, custom_derive)]
-#![plugin(lrs_core_plugin)]
+#![feature(no_std, custom_derive)]
 #![no_std]
 
 extern crate lrs_base as base;
@@ -33,7 +32,7 @@ fn init() {
     if STATUS.load_weak() == 2 {
         return;
     }
-    
+
     if STATUS.compare_exchange(0, 1) == 0 {
         let mut name = mem::zeroed();
         if uname(&mut name) == 0 {

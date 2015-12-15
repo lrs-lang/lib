@@ -5,18 +5,18 @@
 
 // Copyright (C) 2012-2014, Yann Collet.
 // BSD 2-Clause License (http://www.opensource.org/licenses/bsd-license.php)
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
-// 
+//
 // * Redistributions of source code must retain the above copyright
 // notice, this list of conditions and the following disclaimer.
 // * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
 // distribution.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 // LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -365,12 +365,12 @@ pub fn u64hash_u64(input: u64, seed: u64) -> u64 {
 
 #[cfg(target_pointer_width = "32")]
 pub fn u32hash_usize(input: usize, seed: u32) -> u32 {
-    u32hash_u32(input as u32, seed) 
+    u32hash_u32(input as u32, seed)
 }
 
 #[cfg(target_pointer_width = "64")]
 pub fn u32hash_usize(input: usize, seed: u32) -> u32 {
-    u32hash_u64(input as u64, seed) 
+    u32hash_u64(input as u64, seed)
 }
 
 #[cfg(target_pointer_width = "32")]
@@ -410,7 +410,7 @@ impl<T: Pod> FourBuf<T> {
     ///     \____  ____/
     ///          \/
     ///    returned slice
-    ///       
+    ///
     fn complete(&self) -> &[T] {
         unsafe { self.buf.unchecked_slice_to(self.len / mem::size_of::<T>()) }
     }
@@ -422,7 +422,7 @@ impl<T: Pod> FourBuf<T> {
     ///     [xxxx][xxxx][xxx_][____]
     ///                  \_/
     ///             returned slice
-    ///       
+    ///
     fn incomplete(&self) -> &[u8] {
         unsafe {
             self.buf.as_bytes().unchecked_slice(self.len & !(mem::size_of::<T>() - 1),
@@ -438,7 +438,7 @@ impl<T: Pod> FourBuf<T> {
     ///                     \__  __/
     ///                        \/
     ///                  returned slice
-    ///       
+    ///
     fn unused(&self) -> &[u8] {
         unsafe { self.buf.as_bytes().unchecked_slice_from(self.len) }
     }

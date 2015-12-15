@@ -80,7 +80,7 @@ create! {
     #[doc = ""]
     #[doc = "This can be used whenever no special flags are required."]
     flag MSG_NONE = 0;
-    
+
     #[doc = "Informs the link-layer that we're receiving messages from the peer."]
     #[doc = ""]
     #[doc = "= Remarks"]

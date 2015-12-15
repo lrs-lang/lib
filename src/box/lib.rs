@@ -4,10 +4,9 @@
 
 #![crate_name = "lrs_box"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, custom_derive)]
-#![plugin(lrs_core_plugin)]
+#![feature(no_std, custom_derive)]
 #![no_std]
-#![allow(non_upper_case_globals)] 
+#![allow(non_upper_case_globals)]
 
 extern crate lrs_base  as base;
 extern crate lrs_alloc as alloc;
@@ -68,7 +67,7 @@ impl<T, H> Box<T, H>
     where H: alloc::MemPool,
 {
     /// Creates a new box.
-    /// 
+    ///
     /// = See also
     ///
     /// * link:lrs::bx::Box::with_pool[with_pool]
@@ -88,7 +87,7 @@ impl<T, H> Box<T, H>
     /// This function first creates an `BoxBuf` which can then be used to create a real
     /// `Box` as shown in the example. The function does not take a value argument itself
     /// since this would complicate handling the case where allocating memory fails.
-    /// 
+    ///
     /// = Examples
     ///
     /// ----

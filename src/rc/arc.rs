@@ -81,7 +81,7 @@ impl<T: ?Sized, H = alloc::Heap> Arc<T, H>
     /// This function first creates an `ArcBuf` which can then be used to create a real
     /// `Arc` as shown in the example. The function does not take a value argument itself
     /// since this would complicate handling the case where allocating memory fails.
-    /// 
+    ///
     /// = Examples
     ///
     /// ----
@@ -101,7 +101,7 @@ impl<T: ?Sized, H = alloc::Heap> Arc<T, H>
     /// This function first creates an `ArcBuf` which can then be used to create a real
     /// `Arc` as shown in the example. The function does not take a value argument itself
     /// since this would complicate handling the case where allocating memory fails.
-    /// 
+    ///
     /// = Examples
     ///
     /// ----

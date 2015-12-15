@@ -61,7 +61,7 @@ pub fn at_exit<F>(f: F) -> Result
 
     at_exit.len += needed;
 
-    Ok(()) 
+    Ok(())
 }
 
 #[repr(C)]

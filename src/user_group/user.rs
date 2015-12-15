@@ -372,7 +372,7 @@ impl<'a> InfoIter<'a> {
     ///
     /// The same buffer must be used for each call to `next`, otherwise the function can
     /// abort, return errors, or return nonsense results.
-    pub fn next<'b>(&mut self, buf: &'b mut [u8]) -> Option<Info<'b>> { 
+    pub fn next<'b>(&mut self, buf: &'b mut [u8]) -> Option<Info<'b>> {
         let buf = self.reader.fill(buf);
         if buf.len() == 0 {
             return None;

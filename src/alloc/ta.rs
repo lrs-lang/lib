@@ -76,7 +76,7 @@ impl<'a> MemPool for TaPool<'a> {
             if ptr.add(oldsize) == pool.as_mut_ptr() {
                 if oldsize > newsize {
                     let len = oldsize - newsize + pool.len();
-                    *pool = slice::from_ptr(ptr.add(newsize), len); 
+                    *pool = slice::from_ptr(ptr.add(newsize), len);
                 } else if newsize - oldsize <= pool.len() {
                     *pool = &mut mem::replace(pool, &mut [])[newsize - oldsize..];
                 } else {

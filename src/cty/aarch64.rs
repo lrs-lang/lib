@@ -497,7 +497,7 @@ pub use ::gen::{
 /////////////////////////////////////////
 
 // const SIZE_OF_SIGSET: usize = 8;
-// 
+//
 // #[repr(C)]
 // #[derive(Pod, Eq)]
 // pub struct ucontext {

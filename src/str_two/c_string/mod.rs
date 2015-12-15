@@ -185,7 +185,7 @@ impl<H: ?Sized> CString<H>
 }
 
 unsafe impl<H> UndefState for CString<H>
-    where H: MemPool, 
+    where H: MemPool,
 {
     fn num() -> usize { <Vec<u8, H> as UndefState>::num() }
 

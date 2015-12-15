@@ -136,86 +136,86 @@ create! {
     #[doc = "= See also"]
     #[doc = "* link:man:mount(2) and MS_RDONLY therein"]
     flag MOUNT_READ_ONLY = MS_RDONLY;
-    
+
     #[doc = "Don't respect set-user-id and set-group-id flags on the filesystem.\n"]
     #[doc = "= See also"]
     #[doc = "* link:man:mount(2) and MS_NOSUID therein"]
     flag MOUNT_NO_SET_ID = MS_NOSUID;
-    
+
     #[doc = "Don't allow access to devices on this filesystem.\n"]
     #[doc = "= See also"]
     #[doc = "* link:man:mount(2) and MS_NODEV therein"]
     flag MOUNT_NO_DEVICE_ACCESS = MS_NODEV;
-    
+
     #[doc = "Don't allow execution of programs on this filesystem.\n"]
     #[doc = "= See also"]
     #[doc = "* link:man:mount(2) and MS_NOEXEC therein"]
     flag MOUNT_NO_EXEC = MS_NOEXEC;
-    
+
     #[doc = "Flush all data and meta-data changes to this filesystem to the disk \
              immediately.\n"]
     #[doc = "= See also"]
     #[doc = "* link:man:mount(2) and MS_SYNCHRONOUS therein"]
     flag MOUNT_SYNC = MS_SYNCHRONOUS;
-    
+
     #[doc = "Perform a remount operation.\n"]
     #[doc = "= See also"]
     #[doc = "* link:man:mount(2) and MS_REMOUNT therein"]
     flag MOUNT_REMOUNT = MS_REMOUNT;
-    
+
     #[doc = "Allow mandatory locking on the monut point.\n"]
     #[doc = "= See also"]
     #[doc = "* link:man:mount(2) and MS_MANBLOCK therein"]
     flag MOUNT_MANDATORY_LOCKING = MS_MANDLOCK;
-    
+
     #[doc = "Make directory changes on this filesystem synchonous.\n"]
     #[doc = "= See also"]
     #[doc = "* link:man:mount(2) and MS_DIRSYNC therein"]
     flag MOUNT_DIR_SYNC = MS_DIRSYNC;
-    
+
     #[doc = "Don't update the access times of files on this filesystem.\n"]
     #[doc = "= See also"]
     #[doc = "* link:man:mount(2) and MS_NOATIME therein"]
     flag MOUNT_NO_ACCESS_TIME = MS_NOATIME;
-    
+
     #[doc = "Don't update the access times of directories on this filesystem.\n"]
     #[doc = "= See also"]
     #[doc = "* link:man:mount(2) and MS_NODIRATIME therein"]
     flag MOUNT_NO_DIR_ACCESS_TIME = MS_NODIRATIME;
-    
+
     #[doc = "Perform a bind operation.\n"]
     #[doc = "= See also"]
     #[doc = "* link:man:mount(2) and MS_BIND therein"]
     flag MOUNT_BIND = MS_BIND;
-    
+
     #[doc = "Atomically move a mount to another mount point.\n"]
     #[doc = "= See also"]
     #[doc = "* link:man:mount(2) and MS_MOVE therein"]
     flag MOUNT_MOVE = MS_MOVE;
-    
+
     #[doc = "Not documented."]
     flag MOUNT_REC = MS_REC;
-    
+
     #[doc = "Omit certain warning messages from the kernel log.\n"]
     #[doc = "= See also"]
     #[doc = "* link:man:mount(2) and MS_SILENT therein"]
     flag MOUNT_SILENT = MS_SILENT;
-    
+
     #[doc = "Not documented."]
     flag MOUNT_POSIX_ACL = MS_POSIXACL;
-    
+
     #[doc = "Not documented."]
     flag MOUNT_UNBINDABLE = MS_UNBINDABLE;
-    
+
     #[doc = "Not documented."]
     flag MOUNT_PRIVATE = MS_PRIVATE;
-    
+
     #[doc = "Not documented."]
     flag MOUNT_SLAVE = MS_SLAVE;
-    
+
     #[doc = "Not documented."]
     flag MOUNT_SHARED = MS_SHARED;
-    
+
     #[doc = "Perform an access time update after every access.\n"]
     #[doc = "= See also"]
     #[doc = "* link:man:mount(2) and MS_STRICTATIME therein"]

@@ -14,7 +14,7 @@ use alloc::{self, MemPool};
 pub struct String<Heap: MemPool+?Sized = alloc::Heap>(Vec<u8, Heap>);
 
 impl<H> String<H>
-    where H: MemPool, 
+    where H: MemPool,
 {
     pub unsafe fn from_bytes_unchecked(bytes: Vec<u8, H>) -> String<H> {
         String(bytes)
@@ -55,7 +55,7 @@ impl<H> String<H>
 }
 
 impl<H: ?Sized> String<H>
-    where H: MemPool, 
+    where H: MemPool,
 {
     /// Returns the capacity of the string.
     pub fn capacity(&self) -> usize {
@@ -92,7 +92,7 @@ impl<H: ?Sized> String<H>
 }
 
 unsafe impl<H> UndefState for String<H>
-    where H: MemPool, 
+    where H: MemPool,
 {
     fn num() -> usize { <Vec<u8, H> as UndefState>::num() }
 

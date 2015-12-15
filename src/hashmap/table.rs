@@ -389,7 +389,7 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator: ?Sized>
             Ok(false)
         }
     }
-    
+
     fn resize(&mut self, n: usize) -> Result<bool> {
         let new_buckets = (self.elements - self.deleted + 1)
                                     .checked_add(n).unwrap_or(!0)

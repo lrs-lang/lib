@@ -131,7 +131,7 @@ impl Builder {
     pub fn spawn<F>(self, f: F) -> Result
         where F: FnOnce() + Send + 'static
     {
-        unsafe { 
+        unsafe {
             match self.spawn_inner(&f) {
                 Err(e) => Err(e),
                 Ok(o) => {
@@ -154,7 +154,7 @@ impl Builder {
     pub fn scoped<'a, F>(self, f: F) -> Result<JoinGuard<'a>>
         where F: FnOnce() + Send + 'a
     {
-        unsafe { 
+        unsafe {
             match self.spawn_inner(&f) {
                 Err(e) => Err(e),
                 ok => {

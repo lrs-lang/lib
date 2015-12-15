@@ -233,11 +233,11 @@ pub unsafe fn getegid() -> gid_t {
 }
 
 pub unsafe fn geteuid() -> uid_t {
-    call!(cty::__NR_geteuid) as uid_t 
+    call!(cty::__NR_geteuid) as uid_t
 }
 
 pub unsafe fn getgid() -> gid_t {
-    call!(cty::__NR_getgid) as gid_t 
+    call!(cty::__NR_getgid) as gid_t
 }
 
 pub unsafe fn getgroups(gidsetsize: k_int, grouplist: *mut gid_t) -> k_int {
@@ -258,11 +258,11 @@ pub unsafe fn getpgid(pid: pid_t) -> pid_t {
 }
 
 pub unsafe fn getpid() -> pid_t {
-    call!(cty::__NR_getpid) as pid_t 
+    call!(cty::__NR_getpid) as pid_t
 }
 
 pub unsafe fn getppid() -> pid_t {
-    call!(cty::__NR_getppid) as pid_t 
+    call!(cty::__NR_getppid) as pid_t
 }
 
 pub unsafe fn getpriority(which: k_int, who: k_int) -> k_int {
@@ -301,7 +301,7 @@ pub unsafe fn getsid(pid: pid_t) -> pid_t {
 }
 
 pub unsafe fn gettid() -> pid_t {
-    call!(cty::__NR_gettid) as pid_t 
+    call!(cty::__NR_gettid) as pid_t
 }
 
 pub unsafe fn gettimeofday(tv: *mut timeval, tz: *mut timezone) -> k_int {
@@ -309,7 +309,7 @@ pub unsafe fn gettimeofday(tv: *mut timeval, tz: *mut timezone) -> k_int {
 }
 
 pub unsafe fn getuid() -> uid_t {
-    call!(cty::__NR_getuid) as uid_t 
+    call!(cty::__NR_getuid) as uid_t
 }
 
 pub unsafe fn getxattr(pathname: *const c_char, name: *const c_char, value: *mut c_void,
@@ -528,7 +528,7 @@ pub unsafe fn msync(start: k_ulong, len: size_t, flags: k_int) -> k_int {
 }
 
 pub unsafe fn munlockall() -> k_int {
-    call!(cty::__NR_munlockall) as k_int 
+    call!(cty::__NR_munlockall) as k_int
 }
 
 pub unsafe fn munlock(start: k_ulong, len: size_t) -> k_int {
@@ -566,7 +566,7 @@ pub unsafe fn open_by_handle_at(mountdirfd: k_int, handle: *mut file_handle,
 //                              buf: *mut c_void) -> k_int {
 //     call!(cty::__NR_pciconfig_read, bus, dfn, off, len, buf) as k_int
 // }
-// 
+//
 // pub unsafe fn pciconfig_write(bus: k_ulong, dfn: k_ulong, off: k_ulong, len: k_ulong,
 //                               buf: *mut c_void) -> k_int {
 //     call!(cty::__NR_pciconfig_write, bus, dfn, off, len, buf) as k_int
@@ -687,7 +687,7 @@ pub unsafe fn request_key(_type: *const c_char, _description: *const c_char,
 }
 
 pub unsafe fn restart_syscall() -> k_int {
-    call!(cty::__NR_restart_syscall) as k_int 
+    call!(cty::__NR_restart_syscall) as k_int
 }
 
 pub unsafe fn rt_sigaction(sig: k_int, act: *const sigaction, oact: *mut sigaction,
@@ -775,7 +775,7 @@ pub unsafe fn sched_setscheduler(pid: pid_t, policy: k_int,
 }
 
 pub unsafe fn sched_yield() -> k_int {
-    call!(cty::__NR_sched_yield) as k_int 
+    call!(cty::__NR_sched_yield) as k_int
 }
 
 pub unsafe fn seccomp(op: k_uint, flags: k_uint, uargs: *const c_char) -> k_int {
@@ -1015,7 +1015,7 @@ pub unsafe fn sendfile64(out_fd: k_int, in_fd: k_int, offset: *mut loff_t,
 }
 
 pub unsafe fn vhangup() -> k_int {
-    call!(cty::__NR_vhangup) as k_int 
+    call!(cty::__NR_vhangup) as k_int
 }
 
 pub unsafe fn vmsplice(fd: k_int, iov: *const iovec, nr_segs: k_ulong,
@@ -1090,7 +1090,7 @@ mod new_calls {
                              flag: k_int) -> k_int {
         call!(cty::__NR_newfstatat, dfd, filename, statbuf, flag) as k_int
     }
-    
+
     pub unsafe fn newfstat(fd: k_uint, statbuf: *mut stat) -> k_int {
         call!(cty::__NR_newfstat, fd, statbuf) as k_int
     }
@@ -1269,7 +1269,7 @@ mod sock_one {
             socketcall!($nr, $a1, $a2, $a3, $a4, $a5, 0)
         };
         ($nr:expr, $a1:expr, $a2:expr, $a3:expr, $a4:expr, $a5:expr, $a6:expr) => {{
-            let args = [$a1 as k_ulong,  $a2 as k_ulong, $a3 as k_ulong, 
+            let args = [$a1 as k_ulong,  $a2 as k_ulong, $a3 as k_ulong,
                         $a4 as k_ulong,  $a5 as k_ulong, $a6 as k_ulong];
             call!($nr, args.as_ptr())
         }};
@@ -1543,11 +1543,11 @@ mod deprecated {
     }
 
     pub unsafe fn geteuid16() -> old_uid_t {
-        call!(cty::__NR_geteuid16) as old_uid_t 
+        call!(cty::__NR_geteuid16) as old_uid_t
     }
 
     pub unsafe fn getgid16() -> old_gid_t {
-        call!(cty::__NR_getgid16) as old_gid_t 
+        call!(cty::__NR_getgid16) as old_gid_t
     }
 
     pub unsafe fn getgroups16(gidsetsize: k_int, grouplist: *mut old_gid_t) -> k_int {
@@ -1565,7 +1565,7 @@ mod deprecated {
     }
 
     pub unsafe fn getuid16() -> old_uid_t {
-        call!(cty::__NR_getuid16) as old_uid_t 
+        call!(cty::__NR_getuid16) as old_uid_t
     }
 
     pub unsafe fn lchown16(filename: *const c_char, user: old_uid_t,
@@ -1686,7 +1686,7 @@ mod deprecated {
     }
 
     pub unsafe fn sgetmask() -> k_long {
-        call!(cty::__NR_sgetmask) as k_long 
+        call!(cty::__NR_sgetmask) as k_long
     }
 
     pub unsafe fn ssetmask(newmask: k_int) -> k_long {
@@ -1744,11 +1744,11 @@ mod deprecated {
     pub unsafe fn alarm(seconds: k_uint) -> k_uint {
         call!(cty::__NR_alarm, seconds) as k_uint
     }
-    
+
     pub unsafe fn newlstat(filename: *const c_char, statbuf: *mut stat) -> k_int {
         call!(cty::__NR_newlstat, filename, statbuf) as k_int
     }
-    
+
     pub unsafe fn newstat(filename: *const c_char, statbuf: *mut stat) -> k_int {
         call!(cty::__NR_newstat, filename, statbuf) as k_int
     }
@@ -1795,7 +1795,7 @@ mod deprecated {
     }
 
     pub unsafe fn fork() -> pid_t {
-        call!(cty::__NR_fork) as pid_t 
+        call!(cty::__NR_fork) as pid_t
     }
 
     pub unsafe fn futimesat(dfd: k_int, filename: *const c_char,
@@ -1808,11 +1808,11 @@ mod deprecated {
     }
 
     pub unsafe fn getpgrp() -> pid_t {
-        call!(cty::__NR_getpgrp) as pid_t 
+        call!(cty::__NR_getpgrp) as pid_t
     }
 
     pub unsafe fn inotify_init() -> k_int {
-        call!(cty::__NR_inotify_init) as k_int 
+        call!(cty::__NR_inotify_init) as k_int
     }
 
     pub unsafe fn lchown(filename: *const c_char, user: uid_t, group: gid_t) -> k_int {
@@ -1836,7 +1836,7 @@ mod deprecated {
     }
 
     pub unsafe fn pause() -> k_int {
-        call!(cty::__NR_pause) as k_int 
+        call!(cty::__NR_pause) as k_int
     }
 
     pub unsafe fn pipe(fildes: *mut k_int) -> k_int {
@@ -1886,6 +1886,6 @@ mod deprecated {
     }
 
     pub unsafe fn vfork() -> pid_t {
-        call!(cty::__NR_vfork) as pid_t 
+        call!(cty::__NR_vfork) as pid_t
     }
 }

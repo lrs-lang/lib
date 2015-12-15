@@ -9,7 +9,7 @@ use {Parsable};
 macro_rules! parse {
     ($name:ident, $base:expr, [$($range:pat, {$min:expr, $skip:expr})|+]) => {
         fn $name(bytes: &[u8], max: u64) -> Result<(u64, usize)> {
-            let mut val = 0u64; 
+            let mut val = 0u64;
             for i in 0..bytes.len() {
                 match bytes[i] {
                     $(
