@@ -233,10 +233,10 @@ pub unsafe fn alloc_array<T, M: ?Sized>(pool: &mut M,
         Ok((empty_ptr(), 0))
     } else {
         match num.checked_mul(size) {
-            Some(buf_size) => {
+            Some(total_size) => {
                 let align = mem::align_of::<T>();
-                let ptr = try!(pool.alloc(buf_size, align));
-                let num = pool.usable_size(ptr, buf_size, align) / size;
+                let ptr = try!(pool.alloc(total_size, align));
+                let num = pool.usable_size(ptr, total_size, align) / size;
                 Ok((ptr as *mut T, num))
             },
             _ => Err(error::InvalidArgument),
@@ -276,22 +276,22 @@ pub unsafe fn alloc_array<T, M: ?Sized>(pool: &mut M,
 ///
 /// If this function returns successfully, the old pointer becomes invalid and must no
 /// longer be used. Otherwise the old pointer can continued to be used.
-pub unsafe fn realloc_array<T, M: ?Sized>(pool: &mut M, ptr: *mut T, oldnum: usize,
-                                          newnum: usize) -> Result<(*mut T, usize)>
+pub unsafe fn realloc_array<T, M: ?Sized>(pool: &mut M, old_ptr: *mut T, old_num: usize,
+                                          new_num: usize) -> Result<(*mut T, usize)>
     where M: MemPool,
 {
     let size = mem::size_of::<T>();
     if size == 0 {
         Ok((empty_ptr(), 0))
     } else {
-        match newnum.checked_mul(size) {
-            Some(buf_size) => {
+        match new_num.checked_mul(size) {
+            Some(new_size) => {
                 let align = mem::align_of::<T>();
-                let old_ptr = ptr as *mut u8;
-                let old_size = oldnum * size;
-                let new_ptr = try!(pool.realloc(old_ptr, old_size, size, align));
-                let num = pool.usable_size(new_ptr, buf_size, align) / size;
-                Ok((new_ptr as *mut T, num))
+                let old_ptr = old_ptr as *mut u8;
+                let old_size = old_num * size;
+                let new_ptr = try!(pool.realloc(old_ptr, old_size, new_size, align));
+                let new_num = pool.usable_size(new_ptr, new_size, align) / size;
+                Ok((new_ptr as *mut T, new_num))
             },
             _ => Err(error::InvalidArgument),
         }
