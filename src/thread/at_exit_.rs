@@ -8,7 +8,8 @@ use core::{ptr, mem};
 use {rt};
 use rt::{AtExit};
 use lock::{SingleThreadMutexGuard};
-use alloc::{Bda, MemPool};
+use mmem::{MemMap};
+use mmem::flags::{PROT_WRITE, PROT_READ, MMAP_NONE, MREMAP_MAY_MOVE};
 
 pub fn at_exit<F>(f: F) -> Result
     where F: FnOnce() + 'static,
@@ -44,9 +45,13 @@ pub fn at_exit<F>(f: F) -> Result
         let new_cap = align!(at_exit.cap + needed, [%] ps);
         unsafe {
             at_exit.ptr = if at_exit.ptr.is_null() {
-                try!(Bda.alloc(new_cap, ps))
+                let map = try!(MemMap::anon(new_cap, PROT_READ | PROT_WRITE, false,
+                                            MMAP_NONE));
+                map.into_raw_parts().0
             } else {
-                try!(Bda.realloc(at_exit.ptr, (*at_exit).cap, new_cap, ps))
+                let mut map = MemMap::from_raw_parts(at_exit.ptr, (*at_exit).cap);
+                try!(map.resize(new_cap, MREMAP_MAY_MOVE));
+                map.into_raw_parts().0
             };
         }
         at_exit.cap = new_cap;
@@ -80,7 +85,7 @@ pub unsafe fn run() {
         let mut at_exit = at_exit.lock();
         if pos == at_exit.len {
             if pos != 0 {
-                Bda.free(at_exit.ptr, at_exit.cap, 1);
+                MemMap::from_raw_parts(at_exit.ptr, at_exit.cap);
                 at_exit.ptr = 0 as *mut u8;
                 at_exit.len = 0;
                 at_exit.cap = 0;

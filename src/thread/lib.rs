@@ -21,7 +21,6 @@ extern crate lrs_fd as fd;
 extern crate lrs_mem as mmem;
 extern crate lrs_rt as rt;
 extern crate lrs_atomic as atomic;
-extern crate lrs_alloc as alloc;
 extern crate lrs_signal as signal;
 
 use base::prelude::*;

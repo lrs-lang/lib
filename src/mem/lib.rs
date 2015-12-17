@@ -61,6 +61,20 @@ impl MemMap {
         }
     }
 
+    pub unsafe fn from_raw_parts(ptr: *mut u8, size: usize) -> MemMap {
+        MemMap {
+            ptr: ptr,
+            len: size,
+        }
+    }
+
+    pub fn into_raw_parts(self) -> (*mut u8, usize) {
+        let ptr = self.ptr;
+        let size = self.len;
+        mem::forget(self);
+        (ptr, size)
+    }
+
     /// Creates an memory mapping which is not backed by a file.
     ///
     /// [argument, len]

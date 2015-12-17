@@ -14,7 +14,7 @@ use cty::alias::{ProcessId, UserId, GroupId};
 use io::{BufRead};
 use fmt::{Debug, Write};
 use time_base::{self, Time};
-use alloc::{self, NoMem, MemPool};
+use alloc::{self, Dummy, MemPool};
 
 const PTR_MASK: usize = usize::bytes() - 1;
 
@@ -157,17 +157,17 @@ pub struct CMsgBuf<Heap = alloc::Heap>
     pool: Heap,
 }
 
-impl<'a> CMsgBuf<NoMem<'a>> {
+impl<'a> CMsgBuf<Dummy<'a>> {
     /// Creates a new `CMsgBuf` backed by borrowed memory.
     ///
     /// [argument, buf]
     /// The buffer in which the control messages will be created.
-    pub fn buffered(buf: &'a mut [u64]) -> CMsgBuf<NoMem<'a>> {
+    pub fn buffered(buf: &'a mut [u64]) -> CMsgBuf<Dummy<'a>> {
         CMsgBuf {
             data: unsafe { OwnedPtr::new(buf.as_mut_ptr() as *mut u8) },
             len: 0,
             cap: buf.len() * 8,
-            pool: NoMem::out_of(()),
+            pool: Dummy::out_of(()),
         }
     }
 }

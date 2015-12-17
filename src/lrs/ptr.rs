@@ -8,3 +8,7 @@ pub use lrs_core::ptr::{
     read, write, drop, memcpy, memmove, NonZeroPtr, OwnedPtr, volatile_load,
     volatile_store,
 };
+
+pub use lrs_arch_fns::{
+    memcpy_aligned_16_64, memcpy_aligned_16_16,
+};

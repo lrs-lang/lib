@@ -6,7 +6,7 @@ use base::prelude::*;
 use alloc::{self};
 use core::{mem};
 use cty::{nlmsghdr, nlattr};
-use alloc::{NoMem, MemPool, AlignAlloc};
+use alloc::{Dummy, MemPool, AlignAlloc};
 use vec::{Vec};
 use kind::{self};
 use flags::{self};
@@ -19,8 +19,8 @@ pub struct NlBuf<H = alloc::Heap>
     buf: Vec<u8, AlignAlloc<u32, H>>,
 }
 
-impl<'a> NlBuf<NoMem<'a>> {
-    pub fn buffered(buf: &'a mut [u8]) -> NlBuf<NoMem<'a>> {
+impl<'a> NlBuf<Dummy<'a>> {
+    pub fn buffered(buf: &'a mut [u8]) -> NlBuf<Dummy<'a>> {
         let buf = mem::align_for_mut::<u32>(buf);
         NlBuf {
             buf: unsafe {

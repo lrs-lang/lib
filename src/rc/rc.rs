@@ -13,7 +13,7 @@ use cell::{Cell};
 use fmt::{Debug, Write};
 use alloc::{self, MemPool};
 
-struct Inner<T: ?Sized, H = alloc::Heap>
+struct Inner<T: ?Sized, H = alloc::ThreadHeap>
     where H: MemPool,
 {
     count: Cell<usize>,
@@ -22,7 +22,7 @@ struct Inner<T: ?Sized, H = alloc::Heap>
 }
 
 /// A buffer used when creating a new `Rc`.
-pub struct RcBuf<T, Heap = alloc::Heap>
+pub struct RcBuf<T, Heap = alloc::ThreadHeap>
     where Heap: MemPool,
           T: Leak,
 {
@@ -63,14 +63,14 @@ impl<T, H> Drop for RcBuf<T, H>
 }
 
 /// A single-threaded reference-counted container.
-pub struct Rc<T: ?Sized, Heap = alloc::Heap>
+pub struct Rc<T: ?Sized, Heap = alloc::ThreadHeap>
     where Heap: MemPool,
           T: Leak,
 {
     data: OwnedPtr<Inner<T, Heap>>,
 }
 
-impl<T: ?Sized, H = alloc::Heap> Rc<T, H>
+impl<T: ?Sized, H = alloc::ThreadHeap> Rc<T, H>
     where H: MemPool,
           T: Leak,
 {

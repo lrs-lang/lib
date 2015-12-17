@@ -152,3 +152,57 @@ pub fn spin() {
 
     spin_int();
 }
+
+/// Copies aligned bytes.
+///
+/// [argument, dst]
+/// The destination to which the bytes will be copied. Aligned to an 16 byte boundary.
+///
+/// [argument, src]
+/// The source frome which the bytes will be copied. Aligned to an 16 byte boundary.
+/// Does not overlap with `dst`.
+///
+/// [argument, len]
+/// The number of bytes to copy. A multiple of 16.
+pub unsafe fn memcpy_aligned_16_16(dst: *mut u8, src: *const u8, len: usize) {
+    let (div, mut rem) = (len / 64, len % 64);
+    let mut dst = dst as *mut u64;
+    let mut src = src as *const u64;
+    while rem > 0 {
+        *dst = *src;
+        *dst.add(1) = *src.add(1);
+        dst = dst.add(2);
+        src = src.add(2);
+        rem -= 16;
+    }
+    memcpy_aligned_16_64(dst as *mut _, src as *mut _, div * 64);
+}
+
+/// Copies aligned bytes.
+///
+/// [argument, dst]
+/// The destination to which the bytes will be copied. Aligned to an 16 byte boundary.
+///
+/// [argument, src]
+/// The source frome which the bytes will be copied. Aligned to an 16 byte boundary.
+/// Does not overlap with `dst`.
+///
+/// [argument, len]
+/// The number of bytes to copy. A multiple of 64.
+pub unsafe fn memcpy_aligned_16_64(dst: *mut u8, src: *const u8, len: usize) {
+    let mut dst = dst as *mut u64;
+    let mut src = src as *const u64;
+    let dst_end = dst.add(len / 8);
+    while dst != dst_end {
+        *dst = *src;
+        *dst.add(1) = *src.add(1);
+        *dst.add(2) = *src.add(2);
+        *dst.add(3) = *src.add(3);
+        *dst.add(4) = *src.add(4);
+        *dst.add(5) = *src.add(5);
+        *dst.add(6) = *src.add(6);
+        *dst.add(7) = *src.add(7);
+        dst = dst.add(8);
+        src = src.add(8);
+    }
+}

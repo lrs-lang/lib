@@ -231,7 +231,7 @@ pub struct NonZeroPtr<T: ?Sized>(*const T);
 impl<T: ?Sized> Copy for NonZeroPtr<T> { }
 
 impl<T: ?Sized> NonZeroPtr<T> {
-    pub unsafe fn new(ptr: *const T) -> NonZeroPtr<T> {
+    pub const unsafe fn new(ptr: *const T) -> NonZeroPtr<T> {
         NonZeroPtr(ptr)
     }
 }

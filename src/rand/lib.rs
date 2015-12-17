@@ -19,6 +19,7 @@ extern crate lrs_fmt as fmt;
 use base::prelude::*;
 use base::{error};
 use core::{mem};
+use core::cmp::{Ordering};
 use io::{Read};
 
 #[cfg(not(freestanding))] pub use getrandom::{GetRandom, GetUrandom};
@@ -55,5 +56,16 @@ pub trait Rng: Read {
 
     fn next_u32(&mut self) -> Result<u32> {
         self.gen()
+    }
+
+    fn shuffle<T>(&mut self, s: &mut [T]) {
+        s.sort_by(|_, _| {
+            let val = self.next_u32().unwrap();
+            match val % 3 {
+                0 => Ordering::Less,
+                1 => Ordering::Equal,
+                _ => Ordering::Greater,
+            }
+        });
     }
 }

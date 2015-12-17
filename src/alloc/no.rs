@@ -12,15 +12,15 @@ use {MemPool};
 ///
 /// This allocator does not inspect the arguments passed to it and always returns that no
 /// memory is available.
-pub struct NoMem<'a>(PhantomData<&'a ()>);
+pub struct Dummy<'a>(PhantomData<&'a ()>);
 
-impl<'a> OutOf for NoMem<'a> {
-    fn out_of(_: ()) -> NoMem<'a> {
-        NoMem(PhantomData)
+impl<'a> OutOf for Dummy<'a> {
+    fn out_of(_: ()) -> Dummy<'a> {
+        Dummy(PhantomData)
     }
 }
 
-impl<'a> MemPool for NoMem<'a> {
+impl<'a> MemPool for Dummy<'a> {
     unsafe fn alloc(&mut self, _: usize, _: usize) -> Result<*mut u8> {
         Err(error::NoMemory)
     }

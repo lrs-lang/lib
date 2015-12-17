@@ -4,12 +4,14 @@
 
 #![crate_name = "lrs_alloc"]
 #![crate_type = "lib"]
-#![feature(no_std, const_fn, link_llvm_intrinsics)]
+#![feature(no_std, const_fn, link_llvm_intrinsics, optin_builtin_traits)]
 #![no_std]
 
 extern crate lrs_base as base;
 extern crate lrs_cty as cty;
 #[cfg(not(freestanding))] extern crate lrs_syscall as syscall;
+#[cfg(not(freestanding))] extern crate lrs_tlalc as tlalc;
+#[cfg(not(freestanding))] extern crate lrs_lock as lock;
 #[cfg(not(no_libc))] extern crate lrs_libc;
 
 use base::prelude::*;
@@ -17,13 +19,14 @@ use core::marker::{Leak};
 use core::{mem};
 use base::{error};
 
-pub use no::{NoMem};
+pub use no::{Dummy};
 pub use ta::{TaPool};
 pub use fc::{FcPool};
 pub use one::{OncePool};
 pub use align::{AlignAlloc};
 #[cfg(not(no_libc))] pub use libc::{Libc};
 #[cfg(not(freestanding))] pub use bda::{Bda};
+#[cfg(not(freestanding))] pub use tl::{TlAlc};
 
 #[cfg(jemalloc)]
 pub use jemalloc::{JeMalloc};
@@ -37,20 +40,27 @@ mod one;
 mod fc;
 #[cfg(not(no_libc))] mod libc;
 #[cfg(not(freestanding))] mod bda;
+#[cfg(not(freestanding))] mod tl;
 
 #[cfg(jemalloc)]
 mod jemalloc;
 
 // NOTE: The default allocator should be `Default`, `Copy`, `Send`, `Sync`, etc.
 
-/// The default allocator
+/// The default allocator.
 #[cfg(not(no_libc))] pub type Heap = Libc;
 
-/// The default allocator
+/// The default allocator.
 #[cfg(all(no_libc, not(freestanding)))] pub type Heap = Bda;
 
-/// The default allocator
-#[cfg(all(no_libc, freestanding))] pub type Heap = NoMem<'static>;
+/// The default allocator.
+#[cfg(all(no_libc, freestanding))] pub type Heap = Dummy<'static>;
+
+/// The default thread-local allocator.
+#[cfg(not(freestanding))] pub type ThreadHeap = TlAlc;
+
+/// The default thread-local allocator.
+#[cfg(freestanding)] pub type ThreadHeap = Dummy<'static>;
 
 pub type FbHeap = Heap;
 

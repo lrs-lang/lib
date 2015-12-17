@@ -9,11 +9,9 @@
 #![no_std]
 
 extern crate lrs_base as base;
-extern crate lrs_vec as vec;
 
 use base::prelude::*;
 use core::ops::{Add};
-use vec::{Vec};
 
 /// Returns an iterator which yields a value indefinitely.
 ///
@@ -39,17 +37,6 @@ impl<T: Iterator> IteratorExt for T { }
 
 /// Extensions for the `Iterator` trait.
 pub trait IteratorExt : Iterator+Sized {
-    /// Collects all elements of the iterator into a vector.
-    ///
-    /// = Remarks
-    ///
-    /// If no space can be allocated for the elements, the process is aborted.
-    fn collect(self) -> Vec<Self::Item> {
-        let mut vec = Vec::new();
-        vec.extend(self);
-        vec
-    }
-
     /// Sums all elements in the iterator.
     ///
     /// [argument, start]
