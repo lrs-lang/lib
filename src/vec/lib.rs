@@ -39,6 +39,7 @@ pub struct Vec<T, Pool: ?Sized = alloc::Heap>
     ptr: NoAliasMemPtr<T>,
     len: usize,
     cap: usize,
+    _marker: PhantomData<T>,
     pool: Pool,
 }
 
@@ -58,7 +59,13 @@ impl<T, H = alloc::Heap> Vec<T, H>
     /// The pool to draw memory from.
     pub fn with_pool(pool: H) -> Vec<T, H> {
         let ptr = unsafe { NoAliasMemPtr::new(empty_ptr()) };
-        Vec { ptr: ptr, len: 0, cap: 0, pool: pool }
+        Vec {
+            ptr: ptr,
+            len: 0,
+            cap: 0,
+            pool: pool,
+            _marker: PhantomData,
+        }
     }
 
     /// Creates a new allocating vector and reserves a certain amount of space for it.
@@ -68,11 +75,23 @@ impl<T, H = alloc::Heap> Vec<T, H>
         let mut pool = H::out_of(());
         if cap == 0 || mem::size_of::<T>() == 0 {
             let ptr = unsafe { NoAliasMemPtr::new(empty_ptr()) };
-            return Ok(Vec { ptr: ptr, len: 0, cap: cap, pool: pool });
+            return Ok(Vec {
+                ptr: ptr,
+                len: 0,
+                cap: cap,
+                pool: pool,
+                _marker: PhantomData,
+            });
         }
         let (ptr, cap) = unsafe { try!(alloc::alloc_array(&mut pool, cap)) };
         let ptr = unsafe { NoAliasMemPtr::new(ptr) };
-        Ok(Vec { ptr: ptr, len: 0, cap: cap, pool: pool })
+        Ok(Vec {
+            ptr: ptr,
+            len: 0,
+            cap: cap,
+            pool: pool,
+            _marker: PhantomData,
+        })
     }
 
     /// Creates a new vector from its raw parts.
@@ -96,6 +115,7 @@ impl<T, H = alloc::Heap> Vec<T, H>
             len: len,
             cap: cap,
             pool: pool,
+            _marker: PhantomData,
         }
     }
 

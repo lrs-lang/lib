@@ -34,6 +34,7 @@ pub struct DynRingBuf<T, Heap = alloc::Heap>
     right: Wsize,
     cap: usize,
     pool: Heap,
+    _marker: PhantomData<T>,
 }
 
 impl<T, H> DynRingBuf<T, H>
@@ -49,6 +50,7 @@ impl<T, H> DynRingBuf<T, H>
             right: Wsize(0),
             cap: if mem::size_of::<T>() == 0 { !0 >> 1 } else { 0 },
             pool: H::out_of(()),
+            _marker: PhantomData,
         }
     }
 
@@ -64,7 +66,8 @@ impl<T, H> DynRingBuf<T, H>
                 left: Wsize(0),
                 right: Wsize(0),
                 cap: if size == 0 { !0 >> 1 } else { 0 },
-                pool: pool
+                pool: pool,
+                _marker: PhantomData,
             });
         }
         cap = cap.checked_next_power_of_two().unwrap_or(!0);
@@ -76,7 +79,8 @@ impl<T, H> DynRingBuf<T, H>
             left: Wsize(0),
             right: Wsize(0),
             cap: cap,
-            pool: pool
+            pool: pool,
+            _marker: PhantomData,
         })
     }
 
@@ -91,6 +95,7 @@ impl<T, H> DynRingBuf<T, H>
             right: Wsize(0),
             cap: if mem::size_of::<T>() == 0 { !0 >> 1 } else { 0 },
             pool: pool,
+            _marker: PhantomData,
         }
     }
 

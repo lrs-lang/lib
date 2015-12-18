@@ -65,6 +65,8 @@ pub struct Queue<T, Heap = alloc::Heap>
     sleep_lock: Lock,
 
     pool: Heap,
+
+    _marker: PhantomData<Cell<T>>,
 }
 
 impl<T, H> Queue<T, H>
@@ -123,6 +125,8 @@ impl<T, H> Queue<T, H>
             sleep_lock: LOCK_INIT,
 
             pool: pool,
+
+            _marker: PhantomData,
         })
     }
 

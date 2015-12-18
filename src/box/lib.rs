@@ -44,7 +44,8 @@ impl<T, H> BoxBuf<T, H>
             ptr::write(data, val);
             Box {
                 data: NoAliasMutObjPtr::new(data),
-                pool: pool
+                pool: pool,
+                _marker: PhantomData,
             }
         }
     }
@@ -63,6 +64,7 @@ pub struct Box<T: ?Sized, Heap = alloc::Heap>
     where Heap: alloc::MemPool,
 {
     pool: Heap,
+    _marker: PhantomData<T>,
     data: NoAliasMutObjPtr<T>,
 }
 
@@ -111,6 +113,7 @@ impl<T: ?Sized, H> Box<T, H>
         Box {
             pool: pool,
             data: NoAliasMutObjPtr::new(ptr),
+            _marker: PhantomData,
         }
     }
 
