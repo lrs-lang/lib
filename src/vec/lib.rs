@@ -21,7 +21,7 @@ pub mod std {
 
 use base::prelude::*;
 use core::{mem, ptr, cmp, slice};
-use core::ptr::{OwnedPtr};
+use core::ptr::{NoAliasMemPtr};
 use base::undef::{UndefState};
 use core::iter::{IntoIterator};
 use fmt::{Write, Debug};
@@ -36,7 +36,7 @@ mod byte_vec;
 pub struct Vec<T, Pool: ?Sized = alloc::Heap>
     where Pool: MemPool,
 {
-    ptr: OwnedPtr<T>,
+    ptr: NoAliasMemPtr<T>,
     len: usize,
     cap: usize,
     pool: Pool,
@@ -57,7 +57,7 @@ impl<T, H = alloc::Heap> Vec<T, H>
     /// [argument, pool]
     /// The pool to draw memory from.
     pub fn with_pool(pool: H) -> Vec<T, H> {
-        let ptr = unsafe { OwnedPtr::new(empty_ptr()) };
+        let ptr = unsafe { NoAliasMemPtr::new(empty_ptr()) };
         Vec { ptr: ptr, len: 0, cap: 0, pool: pool }
     }
 
@@ -67,11 +67,11 @@ impl<T, H = alloc::Heap> Vec<T, H>
     {
         let mut pool = H::out_of(());
         if cap == 0 || mem::size_of::<T>() == 0 {
-            let ptr = unsafe { OwnedPtr::new(empty_ptr()) };
+            let ptr = unsafe { NoAliasMemPtr::new(empty_ptr()) };
             return Ok(Vec { ptr: ptr, len: 0, cap: cap, pool: pool });
         }
         let (ptr, cap) = unsafe { try!(alloc::alloc_array(&mut pool, cap)) };
-        let ptr = unsafe { OwnedPtr::new(ptr) };
+        let ptr = unsafe { NoAliasMemPtr::new(ptr) };
         Ok(Vec { ptr: ptr, len: 0, cap: cap, pool: pool })
     }
 
@@ -92,7 +92,7 @@ impl<T, H = alloc::Heap> Vec<T, H>
     pub unsafe fn from_raw_parts(ptr: *mut T, len: usize, cap: usize,
                                  pool: H) -> Vec<T, H> {
         Vec {
-            ptr: OwnedPtr::new(ptr),
+            ptr: NoAliasMemPtr::new(ptr),
             len: len,
             cap: cap,
             pool: pool,
@@ -100,7 +100,7 @@ impl<T, H = alloc::Heap> Vec<T, H>
     }
 
     pub unsafe fn into_raw_parts(self) -> (*mut T, usize, usize, H) {
-        let ptr = *self.ptr;
+        let ptr = self.ptr.get();
         let len = self.len;
         let cap = self.cap;
         let pool = ptr::read(&self.pool);
@@ -137,13 +137,14 @@ impl<T, H: ?Sized = alloc::Heap> Vec<T, H>
 
         let new_cap = self.len + cmp::max(n, self.cap / 2 + 1);
         let (ptr, new_cap) = unsafe {
-            if *self.ptr == empty_ptr() {
+            if self.ptr.get() == empty_ptr() {
                 try!(alloc::alloc_array(&mut self.pool, new_cap))
             } else {
-                try!(alloc::realloc_array(&mut self.pool, *self.ptr, self.cap, new_cap))
+                try!(alloc::realloc_array(&mut self.pool, self.ptr.get(),
+                                          self.cap, new_cap))
             }
         };
-        self.ptr = unsafe { OwnedPtr::new(ptr) };
+        self.ptr = unsafe { NoAliasMemPtr::new(ptr) };
         self.cap = new_cap;
         Ok(())
     }
@@ -156,9 +157,10 @@ impl<T, H: ?Sized = alloc::Heap> Vec<T, H>
         }
         if self.len < self.cap {
             let (ptr, cap) = unsafe {
-                try!(alloc::realloc_array(&mut self.pool, *self.ptr, self.cap, self.len))
+                try!(alloc::realloc_array(&mut self.pool, self.ptr.get(), self.cap,
+                                          self.len))
             };
-            self.ptr = unsafe { OwnedPtr::new(ptr) };
+            self.ptr = unsafe { NoAliasMemPtr::new(ptr) };
             self.cap = cap;
         }
         Ok(())
@@ -177,7 +179,7 @@ impl<T, H: ?Sized = alloc::Heap> Vec<T, H>
         if self.cap == self.len {
             self.reserve(1).unwrap();
         }
-        unsafe { ptr::write(self.ptr.add(self.len), val); }
+        unsafe { ptr::write(self.ptr.get().add(self.len), val); }
         self.len += 1;
     }
 
@@ -189,7 +191,7 @@ impl<T, H: ?Sized = alloc::Heap> Vec<T, H>
         if self.cap == self.len {
             try!(self.reserve(1));
         }
-        unsafe { ptr::write(self.ptr.add(self.len), val); }
+        unsafe { ptr::write(self.ptr.get().add(self.len), val); }
         self.len += 1;
         Ok(())
     }
@@ -218,7 +220,7 @@ impl<T, H: ?Sized = alloc::Heap> Vec<T, H>
     /// operation.
     pub unsafe fn try_unsafe_push_all(&mut self, vals: &[T]) -> Result {
         try!(self.reserve(vals.len()));
-        let tail = slice::from_ptr(self.ptr.add(self.len), vals.len());
+        let tail = slice::from_ptr(self.ptr.get().add(self.len), vals.len());
         mem::unsafe_copy(tail, vals);
         self.len += vals.len();
         Ok(())
@@ -245,7 +247,7 @@ impl<T, H: ?Sized = alloc::Heap> Vec<T, H>
             0 => None,
             _ => {
                 self.len -= 1;
-                unsafe { Some(ptr::read(self.ptr.add(self.len))) }
+                unsafe { Some(ptr::read(self.ptr.get().add(self.len))) }
             },
         }
     }
@@ -262,7 +264,7 @@ impl<T, H: ?Sized = alloc::Heap> Vec<T, H>
         assert!(len <= self.len);
         if mem::needs_drop::<T>() {
             for i in len..self.len {
-                unsafe { ptr::drop(self.ptr.add(i)); }
+                unsafe { ptr::drop(self.ptr.get().add(i)); }
             }
         }
         self.len = len;
@@ -302,14 +304,14 @@ impl<T, H: ?Sized = alloc::Heap> Vec<T, H>
 unsafe impl<T, H> UndefState for Vec<T, H>
     where H: MemPool,
 {
-    fn num() -> usize { <OwnedPtr<T> as UndefState>::num() }
+    fn num() -> usize { <NoAliasMemPtr<T> as UndefState>::num() }
 
     unsafe fn set_undef(val: *mut Vec<T, H>, n: usize) {
-        <OwnedPtr<T> as UndefState>::set_undef(&mut (*val).ptr, n);
+        <NoAliasMemPtr<T> as UndefState>::set_undef(&mut (*val).ptr, n);
     }
 
     unsafe fn is_undef(val: *const Vec<T, H>, n: usize) -> bool {
-        <OwnedPtr<T> as UndefState>::is_undef(&(*val).ptr, n)
+        <NoAliasMemPtr<T> as UndefState>::is_undef(&(*val).ptr, n)
     }
 }
 
@@ -322,12 +324,12 @@ impl<T, H: ?Sized> Drop for Vec<T, H>
     fn drop(&mut self) {
         if mem::needs_drop::<T>() {
             for i in 0..self.len {
-                unsafe { ptr::drop(self.ptr.add(i)); }
+                unsafe { ptr::drop(self.ptr.get().add(i)); }
             }
         }
-        if *self.ptr != empty_ptr() {
+        if self.ptr.get() != empty_ptr() {
             unsafe {
-                alloc::free_array(&mut self.pool, *self.ptr, self.cap);
+                alloc::free_array(&mut self.pool, self.ptr.get(), self.cap);
             }
         }
     }
@@ -338,7 +340,7 @@ impl<T, H: ?Sized> Deref for Vec<T, H>
 {
     type Target = [T];
     fn deref(&self) -> &[T] {
-        unsafe { slice::from_ptr(*self.ptr, self.len) }
+        unsafe { slice::from_ptr(self.ptr.get(), self.len) }
     }
 }
 
@@ -346,7 +348,7 @@ impl<T, H: ?Sized> DerefMut for Vec<T, H>
     where H: MemPool,
 {
     fn deref_mut(&mut self) -> &mut [T] {
-        unsafe { slice::from_ptr(*self.ptr, self.len) }
+        unsafe { slice::from_ptr(self.ptr.get(), self.len) }
     }
 }
 

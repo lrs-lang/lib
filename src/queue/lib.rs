@@ -16,7 +16,7 @@ extern crate lrs_lock as lock;
 extern crate lrs_alloc as alloc;
 
 use base::prelude::*;
-use core::ptr::{OwnedPtr};
+use core::ptr::{NoAliasMemPtr};
 use base::{error};
 use alloc::{MemPool, empty_ptr};
 use arch_fns::{spin};
@@ -36,7 +36,7 @@ pub struct Queue<T, Heap = alloc::Heap>
     where Heap: MemPool,
 {
     // The buffer we store the massages in.
-    buf: OwnedPtr<Cell<T>>,
+    buf: NoAliasMemPtr<Cell<T>>,
     // One less than the capacity of the channel. Note that the capacity is a power of
     // two.
     cap_mask: usize,
@@ -105,7 +105,7 @@ impl<T, H> Queue<T, H>
             _ => unsafe { try!(alloc::alloc_array(&mut pool, cap)).0 },
         };
         Ok(Queue {
-            buf: unsafe { OwnedPtr::new(buf) },
+            buf: unsafe { NoAliasMemPtr::new(buf) },
             cap_mask: cap - 1,
 
             read_start: AtomicUsize::new(0),
@@ -162,7 +162,7 @@ impl<T, H> Queue<T, H>
 
     fn set_mem(&self, pos: usize, val: T) {
         unsafe {
-            ptr::write(self.buf.add(pos & self.cap_mask), Cell::new(val));
+            ptr::write(self.buf.get().add(pos & self.cap_mask), Cell::new(val));
         }
     }
 
@@ -257,7 +257,7 @@ impl<T, H> Queue<T, H>
             // ptr::read(ptr::read(self.buf.add(pos & self.cap_mask)).ptr())
             //
             // wew, lad
-            ptr::read(self.buf.add(pos & self.cap_mask)).into()
+            ptr::read(self.buf.get().add(pos & self.cap_mask)).into()
         }
     }
 
@@ -329,7 +329,7 @@ impl<T, H> Drop for Queue<T, H>
             }
 
             if mem::size_of::<T>() > 0 {
-                alloc::free_array(&mut self.pool, *self.buf, self.cap_mask + 1);
+                alloc::free_array(&mut self.pool, self.buf.get(), self.cap_mask + 1);
             }
         }
     }

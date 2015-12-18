@@ -5,7 +5,7 @@
 use base::prelude::*;
 use base::{error};
 use core::{mem, slice, ptr};
-use core::ptr::{OwnedPtr};
+use core::ptr::{NoAliasMemPtr};
 use cty::{
     cmsghdr, c_int, SCM_RIGHTS, SCM_CREDENTIALS, SOL_SOCKET, user_size_t,
     SO_TIMESTAMPNS, timespec, IPPROTO_IP, IP_OPTIONS,
@@ -31,10 +31,10 @@ macro_rules! msg_space { ($val:expr) => { hdr_space!() + pad_ptr!($val) } }
 macro_rules! msg_len { ($val:expr) => { hdr_space!() + $val } }
 
 // pointer to the current cmsg header in a CMsgBuf
-macro_rules! hdr_ptr { ($slf:expr) => { $slf.data.add($slf.len) as *mut cmsghdr } }
+macro_rules! hdr_ptr { ($slf:expr) => { $slf.data.get().add($slf.len) as *mut cmsghdr } }
 
 // pointer to the current data section in a CMsgBuf
-macro_rules! data_ptr { ($slf:expr) => { $slf.data.add($slf.len + hdr_space!()) } }
+macro_rules! data_ptr { ($slf:expr) => { $slf.data.get().add($slf.len + hdr_space!()) } }
 
 /// Process credentials.
 ///
@@ -151,7 +151,7 @@ impl<'a> Debug for CMsg<'a> {
 pub struct CMsgBuf<Heap = alloc::Heap>
     where Heap: MemPool,
 {
-    data: OwnedPtr<u8>,
+    data: NoAliasMemPtr<u8>,
     len: usize,
     cap: usize,
     pool: Heap,
@@ -164,7 +164,7 @@ impl<'a> CMsgBuf<Dummy<'a>> {
     /// The buffer in which the control messages will be created.
     pub fn buffered(buf: &'a mut [u64]) -> CMsgBuf<Dummy<'a>> {
         CMsgBuf {
-            data: unsafe { OwnedPtr::new(buf.as_mut_ptr() as *mut u8) },
+            data: unsafe { NoAliasMemPtr::new(buf.as_mut_ptr() as *mut u8) },
             len: 0,
             cap: buf.len() * 8,
             pool: Dummy::out_of(()),
@@ -188,7 +188,7 @@ impl<H> CMsgBuf<H>
         let mut pool = H::out_of(());
         let ptr: *mut usize = unsafe { try!(alloc::alloc_array(&mut pool, 1)).0 };
         Ok(CMsgBuf {
-            data: unsafe { OwnedPtr::new(ptr as *mut u8) },
+            data: unsafe { NoAliasMemPtr::new(ptr as *mut u8) },
             len: 0,
             cap: usize::bytes(),
             pool: pool,
@@ -209,10 +209,10 @@ impl<H> CMsgBuf<H>
             let cap = self.cap / usize::bytes();
             let new_cap = pad_ptr!(self.cap * 2 + n) / usize::bytes();
             let ptr = unsafe {
-                try!(alloc::realloc_array(&mut self.pool, *self.data as *mut usize, cap,
-                                          new_cap)).0
+                try!(alloc::realloc_array(&mut self.pool, self.data.get() as *mut usize,
+                                          cap, new_cap)).0
             };
-            self.data = unsafe { OwnedPtr::new(ptr as *mut u8) };
+            self.data = unsafe { NoAliasMemPtr::new(ptr as *mut u8) };
             self.cap = new_cap * usize::bytes();
         }
         Ok(())
@@ -251,7 +251,7 @@ impl<H> CMsgBuf<H>
 
     /// Creates an iterator over the messages.
     pub fn iter<'b>(&'b self) -> CMsgIter<'b> {
-        CMsgIter { data: unsafe { slice::from_ptr(*self.data, self.len) } }
+        CMsgIter { data: unsafe { slice::from_ptr(self.data.get(), self.len) } }
     }
 }
 
@@ -260,7 +260,7 @@ impl<H> Drop for CMsgBuf<H>
 {
     fn drop(&mut self) {
         unsafe {
-            alloc::free_array(&mut self.pool, *self.data as *mut usize,
+            alloc::free_array(&mut self.pool, self.data.get() as *mut usize,
                               self.cap / usize::bytes());
         }
     }
@@ -270,7 +270,7 @@ impl<H> AsRef<[u8]> for CMsgBuf<H>
     where H: MemPool,
 {
     fn as_ref(&self) -> &[u8] {
-        unsafe { slice::from_ptr(*self.data, self.len) }
+        unsafe { slice::from_ptr(self.data.get(), self.len) }
     }
 }
 

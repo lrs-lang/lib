@@ -6,14 +6,14 @@ use base::prelude::*;
 use core::{mem};
 
 use {sys};
-use p::{P, POpt};
+use p::{P};
 use {
     BLOCK_SIZE, CHUNK_SIZE, BLOCKS_PER_CHUNK, CHUNK_MASK, BLOCK_SHIFT, BLOCK_MASK,
 };
 use util::{slots_per_class};
 
 pub struct Slot {
-    pub next: POpt<Slot>,
+    pub next: Option<P<Slot>>,
 }
 
 #[repr(C)]
@@ -23,26 +23,26 @@ pub struct RawBlock {
 
 #[repr(C)]
 pub struct FreeBlock {
-    next: POpt<FreeBlock>,
+    next: Option<P<FreeBlock>>,
     mem: *mut u8,
     _unused: [usize; 3],
 }
 
 #[repr(C)]
 pub struct BusyBlock {
-    next: POpt<BusyBlock>,
-    prev: POpt<BusyBlock>,
+    next: Option<P<BusyBlock>>,
+    prev: Option<P<BusyBlock>>,
     slot: P<Slot>,
     last: P<Slot>,
     live_slots: usize,
 }
 
 pub struct Chunk {
-    pub next: POpt<Chunk>,
-    pub prev: POpt<Chunk>,
+    pub next: Option<P<Chunk>>,
+    pub prev: Option<P<Chunk>>,
     live_blocks: usize,
-    free_block: POpt<FreeBlock>,
-    cache: [POpt<BusyBlock>; 20],
+    free_block: Option<P<FreeBlock>>,
+    cache: [Option<P<BusyBlock>>; 20],
     blocks: [RawBlock; BLOCKS_PER_CHUNK],
 }
 
@@ -61,12 +61,12 @@ impl Chunk {
         let mut cur_header = first_header.ptr();
         while cur_block != last_block {
             let next_header = cur_header.add(1);
-            (*cur_header).next = POpt::some(next_header);
+            (*cur_header).next = Some(P::new(next_header));
             (*cur_header).mem = cur_block;
             cur_header = next_header;
             cur_block = cur_block.add(BLOCK_SIZE);
         }
-        (*cur_header).next = POpt::none();
+        (*cur_header).next = None;
         (*cur_header).mem = cur_block;
 
         chunk.free_block = first_header.to_opt();
@@ -84,12 +84,12 @@ impl Chunk {
     pub unsafe fn alloc(&mut self, size: usize,
                         class: usize) -> Option<(P<Slot>, P<Slot>, usize)> {
         let mut rsize = 0;
-        let mut first = POpt::none();
-        let mut last = POpt::none();
+        let mut first = None;
+        let mut last = None;
         let slots_per_class = slots_per_class(class);
 
         while rsize < BLOCK_SIZE {
-            if let Some(mut block) = *self.cache[class] {
+            if let Some(mut block) = self.cache[class] {
                 self.cache[class] = block.next;
                 rsize += size * (slots_per_class - block.live_slots);
                 block.live_slots = 0;
@@ -103,8 +103,8 @@ impl Chunk {
             }
         }
 
-        if let Some(mut block) = *self.cache[class] {
-            block.prev = POpt::none();
+        if let Some(mut block) = self.cache[class] {
+            block.prev = None;
         }
 
         if rsize < BLOCK_SIZE {
@@ -137,7 +137,7 @@ impl Chunk {
     /// Returns the first and last slot in the block.
     unsafe fn split_block(&mut self, size: usize,
                           class: usize) -> Option<(P<Slot>, P<Slot>)> {
-        let mem = match *self.free_block {
+        let mem = match self.free_block {
             Some(block) => {
                 self.live_blocks += 1;
                 self.free_block = block.next;
@@ -159,7 +159,7 @@ impl Chunk {
             (*cur_slot).next = mem::cast(next_slot);
             cur_slot = next_slot;
         }
-        last_slot.next = POpt::none();
+        last_slot.next = None;
 
         Some((first_slot, last_slot))
     }
@@ -190,12 +190,12 @@ impl Chunk {
             block.live_slots = slots_per_class(class) - 1;
 
             if likely!(block.live_slots > 0) {
-                slot.next = POpt::none();
+                slot.next = None;
 
                 block.next = self.cache[class];
-                block.prev = POpt::none();
+                block.prev = None;
                 block.last = slot;
-                if let Some(mut next) = *block.next {
+                if let Some(mut next) = block.next {
                     next.prev = block.to_opt();
                 }
                 self.cache[class] = block.to_opt();
@@ -203,12 +203,12 @@ impl Chunk {
                 return false
             }
         } else {
-            if let Some(mut prev) = *block.prev {
+            if let Some(mut prev) = block.prev {
                 prev.next = block.next;
             } else {
                 self.cache[class] = block.next;
             }
-            if let Some(mut next) = *block.next {
+            if let Some(mut next) = block.next {
                 next.prev = block.prev
             }
         }

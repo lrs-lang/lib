@@ -3,27 +3,39 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use base::prelude::*;
-use core::ptr::{NonZeroPtr};
+use core::ptr::{AliasMutObjPtr};
 use core::{mem};
 
-pub struct P<T>(pub NonZeroPtr<T>);
+/// A aliasing raw pointer wrapper.
+///
+/// = Remarks
+///
+/// This can be used to conveniently access raw pointers without having to worry about
+/// aliasing. Careful not to create references, always pass the value instead of creating
+/// a reference. Otherwise you have to take care not to violate the noalias rules.
+pub struct P<T>(AliasMutObjPtr<T>);
 
 impl<T> Copy for P<T> { }
 
 impl<T> P<T> {
+    /// Creates a new `P`.
+    ///
+    /// [argument, ptr]
+    /// The pointer that will be wrapped.
     pub const unsafe fn new(ptr: *const T) -> P<T> {
-        P(NonZeroPtr::new(ptr))
+        P(AliasMutObjPtr::new(ptr as *mut T))
     }
 
+    /// Creates a new `P` wrapping a zero value.
     pub const unsafe fn zero() -> P<T> {
-        P(NonZeroPtr::new(0 as *const T))
+        P(AliasMutObjPtr::new(0 as *mut T))
     }
 
     pub fn ptr(self) -> *mut T {
         unsafe { mem::cast(self) }
     }
 
-    pub fn to_opt(self) -> POpt<T> {
+    pub fn to_opt(self) -> Option<P<T>> {
         unsafe { mem::cast(self) }
     }
 }
@@ -31,39 +43,12 @@ impl<T> P<T> {
 impl<T> Deref for P<T> {
     type Target = T;
     fn deref(&self) -> &T {
-        unsafe { &**self.0 }
+        &self.0
     }
 }
 
 impl<T> DerefMut for P<T> {
     fn deref_mut(&mut self) -> &mut T {
-        unsafe { &mut *(*self.0 as *mut T) }
-    }
-}
-
-pub struct POpt<T>(pub Option<P<T>>);
-
-impl<T> Copy for POpt<T> { }
-
-impl<T> POpt<T> {
-    pub unsafe fn some(ptr: *const T) -> POpt<T> {
-        mem::cast(ptr)
-    }
-
-    pub const fn none() -> POpt<T> {
-        POpt(None)
-    }
-}
-
-impl<T> Deref for POpt<T> {
-    type Target = Option<P<T>>;
-    fn deref(&self) -> &Option<P<T>> {
-        unsafe { mem::cast(self) }
-    }
-}
-
-impl<T> DerefMut for POpt<T> {
-    fn deref_mut(&mut self) -> &mut Option<P<T>> {
-        unsafe { mem::cast(self) }
+        &mut self.0
     }
 }

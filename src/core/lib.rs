@@ -31,6 +31,7 @@ pub mod repr;
 pub mod slice;
 pub mod str;
 pub mod thread_local;
+pub mod non_zero;
 
 mod sort;
 

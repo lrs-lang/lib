@@ -7,7 +7,7 @@ use {thread, arch_fns};
 
 use {sys};
 use chunk::{Chunk, Slot};
-use p::{P, POpt};
+use p::{P};
 use {
     CACHE_SIZE, LARGE_CLASS_SHIFT, CHUNK_SIZE, MAX_SMALL, CHUNK_MASK, BLOCK_SIZE,
     MIN_ALLOC,
@@ -15,9 +15,9 @@ use {
 
 pub struct Cache {
     cache_size: [usize; 20],
-    cache: [POpt<Slot>; 20],
+    cache: [Option<P<Slot>>; 20],
     chunk: P<Chunk>,
-    free_chunk: POpt<Chunk>,
+    free_chunk: Option<P<Chunk>>,
     init: bool,
 }
 
@@ -25,9 +25,9 @@ impl Cache {
     pub const fn new() -> Cache {
         Cache {
             cache_size: [0; 20],
-            cache: [POpt::none(); 20],
+            cache: [None; 20],
             chunk: unsafe { P::zero() },
-            free_chunk: POpt::none(),
+            free_chunk: None,
             init: false,
         }
     }
@@ -189,14 +189,14 @@ impl Cache {
                 last.next = self.cache[class];
                 self.cache[class] = first.to_opt();
             } else {
-                if let Some(c) = *chunk.next {
+                if let Some(c) = chunk.next {
                     chunk = c;
                 } else {
                     chunk = match self.free_chunk.take() {
                         Some(c) => c,
                         _ => try!(Chunk::new()),
                     };
-                    chunk.prev = POpt::none();
+                    chunk.prev = None;
                     chunk.next = self.chunk.to_opt();
                     self.chunk.prev = chunk.to_opt();
                     self.chunk = chunk;
@@ -228,11 +228,11 @@ impl Cache {
         let res = thread::at_exit(move || {
             let cache = &mut *ptr;
             let mut chunk = cache.chunk.to_opt();
-            while let Some(c) = *chunk {
+            while let Some(c) = chunk {
                 chunk = c.next;
                 sys::unmap(c.ptr(), CHUNK_SIZE);
             }
-            if let Some(c) = *cache.free_chunk {
+            if let Some(c) = cache.free_chunk {
                 sys::unmap(c.ptr(), CHUNK_SIZE);
             }
         });
@@ -270,6 +270,7 @@ impl Cache {
     }
 
     #[cold]
+    #[inline(never)]
     unsafe fn trim_cache(&mut self, size: usize, class: usize) {
         while self.cache_size[class] > CACHE_SIZE + size {
             let slot = self.cache[class].unwrap();
@@ -278,10 +279,10 @@ impl Cache {
 
             let mut chunk = P::new((slot.ptr() as usize & !CHUNK_MASK) as *mut Chunk);
             if unlikely!(chunk.free(slot, class)) {
-                if let Some(mut prev) = *chunk.prev {
+                if let Some(mut prev) = chunk.prev {
                     prev.next = chunk.next;
                 }
-                if let Some(mut next) = *chunk.next {
+                if let Some(mut next) = chunk.next {
                     next.prev = chunk.prev;
                 }
                 if self.free_chunk.is_none() {

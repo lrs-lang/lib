@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use base::prelude::*;
-use core::ptr::{OwnedPtr};
+use core::ptr::{NoAliasMemPtr, NoAliasObjPtr};
 use core::iter::{IntoIterator};
 use core::marker::{Leak, Unsize};
 use core::ops::{CoerceUnsized};
@@ -26,7 +26,7 @@ pub struct RcBuf<T, Heap = alloc::ThreadHeap>
     where Heap: MemPool,
           T: Leak,
 {
-    data: OwnedPtr<Inner<T, Heap>>,
+    data: NoAliasMemPtr<Inner<T, Heap>>,
 }
 
 impl<T, H> RcBuf<T, H>
@@ -39,10 +39,10 @@ impl<T, H> RcBuf<T, H>
     /// The value to be stored in the buffer.
     pub fn set(self, val: T) -> Rc<T, H> {
         unsafe {
-            let data = self.data;
+            let data = self.data.get();
             intrinsics::forget(self);
-            ptr::write(&mut (**data).val, val);
-            Rc { data: data }
+            ptr::write(&mut (*data).val, val);
+            Rc { data: NoAliasObjPtr::new(data) }
         }
     }
 }
@@ -56,8 +56,8 @@ impl<T, H> Drop for RcBuf<T, H>
 {
     fn drop(&mut self) {
         unsafe {
-            let mut pool = ptr::read(&(**self.data).pool);
-            alloc::free(&mut pool, *self.data);
+            let mut pool = ptr::read(&(*self.data.get()).pool);
+            alloc::free(&mut pool, self.data.get());
         }
     }
 }
@@ -67,7 +67,7 @@ pub struct Rc<T: ?Sized, Heap = alloc::ThreadHeap>
     where Heap: MemPool,
           T: Leak,
 {
-    data: OwnedPtr<Inner<T, Heap>>,
+    data: NoAliasObjPtr<Inner<T, Heap>>,
 }
 
 impl<T: ?Sized, H = alloc::ThreadHeap> Rc<T, H>
@@ -114,26 +114,24 @@ impl<T: ?Sized, H = alloc::ThreadHeap> Rc<T, H>
             let data_ptr = try!(alloc::alloc::<Inner<T, H>, _>(&mut pool));
             ptr::write(&mut (*data_ptr).pool, pool);
             (*data_ptr).count.set(1);
-            Ok(RcBuf { data: OwnedPtr::new(data_ptr) })
+            Ok(RcBuf { data: NoAliasMemPtr::new(data_ptr) })
         }
     }
 
     /// Returns a mutable reference to the contained data if this is the only reference.
     pub fn as_mut(&mut self) -> Option<&mut T> {
-        let data = unsafe { &mut **self.data };
-        match data.count.get() {
-            1 => Some(&mut data.val),
-            _ => None,
+        unsafe {
+            match self.data.count.get() {
+                1 => Some(&mut (*self.data.get()).val),
+                _ => None,
+            }
         }
     }
 
     /// Adds a new reference, returning an `Rc` that points to the same data.
     pub fn add_ref(&self) -> Rc<T, H> {
-        unsafe {
-            let data = &mut **self.data;
-            data.count.set(data.count.get() + 1);
-            Rc { data: self.data }
-        }
+        self.data.count.set(self.data.count.get() + 1);
+        Rc { data: self.data }
     }
 }
 
@@ -157,14 +155,14 @@ unsafe impl<T, H> UndefState for Rc<T, H>
     where H: MemPool,
           T: Leak,
 {
-    fn num() -> usize { <OwnedPtr<Inner<T, H>> as UndefState>::num() }
+    fn num() -> usize { <NoAliasObjPtr<Inner<T, H>> as UndefState>::num() }
 
     unsafe fn set_undef(val: *mut Rc<T, H>, n: usize) {
-        <OwnedPtr<Inner<T, H>> as UndefState>::set_undef(&mut (*val).data, n);
+        <NoAliasObjPtr<Inner<T, H>> as UndefState>::set_undef(&mut (*val).data, n);
     }
 
     unsafe fn is_undef(val: *const Rc<T, H>, n: usize) -> bool {
-        <OwnedPtr<Inner<T, H>> as UndefState>::is_undef(&(*val).data, n)
+        <NoAliasObjPtr<Inner<T, H>> as UndefState>::is_undef(&(*val).data, n)
     }
 }
 
@@ -176,15 +174,14 @@ impl<T: ?Sized, H> Drop for Rc<T, H>
 {
     fn drop(&mut self) {
         unsafe {
-            let data = &mut **self.data;
-            let count = data.count.get();
-            data.count.set(count - 1);
+            let count = self.data.count.get();
+            self.data.count.set(count - 1);
             if count == 1 {
                 if mem::needs_drop::<T>() {
-                    ptr::drop(&mut data.val);
+                    ptr::drop(&mut (*self.data.get()).val);
                 }
-                let mut pool = ptr::read(&data.pool);
-                alloc::free(&mut pool, *self.data);
+                let mut pool = ptr::read(&self.data.pool);
+                alloc::free(&mut pool, self.data.get());
             }
         }
     }
@@ -197,7 +194,7 @@ impl<T: ?Sized, H> Deref for Rc<T, H>
     type Target = T;
 
     fn deref(&self) -> &T {
-        unsafe { &(&**self.data).val }
+        &self.data.val
     }
 }
 

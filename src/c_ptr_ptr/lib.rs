@@ -13,7 +13,7 @@ extern crate lrs_alloc as alloc;
 extern crate lrs_str_one as str_one;
 
 use base::prelude::*;
-use core::ptr::{OwnedPtr};
+use core::ptr::{NoAliasMemPtr};
 use base::{error};
 use cty_base::types::{c_char};
 use core::{slice, mem};
@@ -35,7 +35,7 @@ pub type SCPtrPtr<Heap = alloc::Heap> = CPtrPtr<Heap>;
 pub struct CPtrPtr<Heap = alloc::Heap>
     where Heap: MemPool,
 {
-    buf: OwnedPtr<usize>,
+    buf: NoAliasMemPtr<usize>,
     pos: usize,
     cap: usize,
     num: usize,
@@ -56,7 +56,7 @@ impl<H = alloc::Heap> CPtrPtr<H>
     pub fn with_pool(mut pool: H) -> Result<Self> {
         const DEFAULT_CAP: usize = 32;
         let buf = unsafe {
-            OwnedPtr::new(try!(alloc::alloc_array(&mut pool, DEFAULT_CAP)).0)
+            NoAliasMemPtr::new(try!(alloc::alloc_array(&mut pool, DEFAULT_CAP)).0)
         };
         Ok(CPtrPtr {
             buf: buf,
@@ -70,8 +70,8 @@ impl<H = alloc::Heap> CPtrPtr<H>
     fn double(&mut self) -> Result {
         let new_cap = self.cap + self.cap / 2 + 1;
         self.buf = unsafe {
-            OwnedPtr::new(try!(alloc::realloc_array(&mut self.pool, *self.buf, self.cap,
-                                                    new_cap)).0)
+            NoAliasMemPtr::new(try!(alloc::realloc_array(&mut self.pool, self.buf.get(),
+                                                         self.cap, new_cap)).0)
         };
         self.cap = new_cap;
         Ok(())
@@ -82,7 +82,7 @@ impl<H = alloc::Heap> CPtrPtr<H>
             try!(self.double());
         }
         unsafe {
-            let usize_ptr = self.buf.add(self.pos);
+            let usize_ptr = self.buf.get().add(self.pos);
             let slice_ptr = usize_ptr.add(1) as *mut u8;
             let slice = slice::from_ptr(slice_ptr,
                                         USIZE_BYTES * (self.cap - self.pos - 1));
@@ -96,9 +96,9 @@ impl<H = alloc::Heap> CPtrPtr<H>
         }
         assert!(self.cap - self.pos > self.num);
         unsafe {
-            let slice_ptr = self.buf.add(self.pos) as *mut *const c_char;
+            let slice_ptr = self.buf.get().add(self.pos) as *mut *const c_char;
             let slice = slice::from_ptr(slice_ptr, self.num + 1);
-            Ok((*self.buf, slice))
+            Ok((self.buf.get(), slice))
         }
     }
 
@@ -166,7 +166,7 @@ impl<Heap> Drop for CPtrPtr<Heap>
 {
     fn drop(&mut self) {
         unsafe {
-            alloc::free_array(&mut self.pool, *self.buf, self.cap)
+            alloc::free_array(&mut self.pool, self.buf.get(), self.cap)
         }
     }
 }

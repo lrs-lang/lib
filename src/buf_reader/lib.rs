@@ -4,8 +4,7 @@
 
 #![crate_name = "lrs_buf_reader"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, optin_builtin_traits)]
-#![plugin(lrs_core_plugin)]
+#![feature(no_std)]
 #![no_std]
 
 extern crate lrs_arch_fns as arch_fns;
@@ -15,7 +14,7 @@ extern crate lrs_alloc as alloc;
 
 use base::prelude::*;
 use core::{slice, cmp};
-use core::ptr::{OwnedPtr};
+use core::ptr::{NoAliasMemPtr};
 use base::{error};
 use alloc::{MemPool};
 use io::{Read, BufRead, Write};
@@ -28,7 +27,7 @@ pub struct BufReader<R, Heap = alloc::Heap>
     where R: Read,
           Heap: MemPool,
 {
-    data: OwnedPtr<u8>,
+    data: NoAliasMemPtr<u8>,
     cap: usize,
     start: usize,
     end: usize,
@@ -74,7 +73,7 @@ impl<R, H = alloc::Heap> BufReader<R, H>
             _ => return Err(error::NoMemory),
         };
         let ptr = unsafe { try!(alloc::alloc_array(&mut pool, size)).0 };
-        let ptr = unsafe { OwnedPtr::new(ptr) };
+        let ptr = unsafe { NoAliasMemPtr::new(ptr) };
         Ok(BufReader {
             data: ptr,
             cap: size,
@@ -112,11 +111,11 @@ impl<R, H = alloc::Heap> BufReader<R, H>
         let end = self.end % self.cap;
         let slices: [&[u8]; 2] = unsafe {
             if start <= end && self.end.wrapping_sub(self.start) != self.cap {
-                [slice::from_ptr(self.data.add(start), end - start),
+                [slice::from_ptr(self.data.get().add(start), end - start),
                  &[][..]]
             } else {
-                [slice::from_ptr(self.data.add(start), self.cap - start),
-                 slice::from_ptr(*self.data, end)]
+                [slice::from_ptr(self.data.get().add(start), self.cap - start),
+                 slice::from_ptr(self.data.get(), end)]
             }
         };
         (&mut self.start, slices)
@@ -127,10 +126,10 @@ impl<R, H = alloc::Heap> BufReader<R, H>
         let end = self.end % self.cap;
         let slices = unsafe {
             if start <= end {
-                [slice::from_ptr(self.data.add(end), self.cap - end),
-                 slice::from_ptr(*self.data, start)]
+                [slice::from_ptr(self.data.get().add(end), self.cap - end),
+                 slice::from_ptr(self.data.get(), start)]
             } else {
-                [slice::from_ptr(self.data.add(end), start - end),
+                [slice::from_ptr(self.data.get().add(end), start - end),
                  &mut [][..]]
             }
         };
@@ -179,7 +178,7 @@ impl<R, H> Drop for BufReader<R, H>
           H: MemPool,
 {
     fn drop(&mut self) {
-        unsafe { alloc::free_array(&mut self.pool, *self.data, self.cap); }
+        unsafe { alloc::free_array(&mut self.pool, self.data.get(), self.cap); }
     }
 }
 

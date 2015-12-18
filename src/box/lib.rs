@@ -13,7 +13,7 @@ extern crate lrs_alloc as alloc;
 extern crate lrs_fmt   as fmt;
 
 use base::prelude::*;
-use core::ptr::{OwnedPtr};
+use core::ptr::{NoAliasMutObjPtr, NoAliasMemPtr};
 use core::{ptr, mem, intrinsics};
 use fmt::{Debug, Write};
 use core::marker::{Unsize};
@@ -26,7 +26,7 @@ pub struct BoxBuf<T, Heap = alloc::Heap>
     where Heap: alloc::MemPool,
 {
     pool: Heap,
-    data: OwnedPtr<T>,
+    data: NoAliasMemPtr<T>,
 }
 
 impl<T, H> BoxBuf<T, H>
@@ -38,11 +38,14 @@ impl<T, H> BoxBuf<T, H>
     /// The value to be stored in the buffer.
     pub fn set(self, val: T) -> Box<T, H> {
         unsafe {
-            let data = self.data;
+            let data = self.data.get();
             let pool = ptr::read(&self.pool);
             intrinsics::forget(self);
-            ptr::write(*data, val);
-            Box { data: data, pool: pool }
+            ptr::write(data, val);
+            Box {
+                data: NoAliasMutObjPtr::new(data),
+                pool: pool
+            }
         }
     }
 }
@@ -51,7 +54,7 @@ impl<T, H> Drop for BoxBuf<T, H>
     where H: alloc::MemPool,
 {
     fn drop(&mut self) {
-        unsafe { alloc::free(&mut self.pool, *self.data); }
+        unsafe { alloc::free(&mut self.pool, self.data.get()); }
     }
 }
 
@@ -60,7 +63,7 @@ pub struct Box<T: ?Sized, Heap = alloc::Heap>
     where Heap: alloc::MemPool,
 {
     pool: Heap,
-    data: OwnedPtr<T>,
+    data: NoAliasMutObjPtr<T>,
 }
 
 impl<T, H> Box<T, H>
@@ -96,7 +99,7 @@ impl<T, H> Box<T, H>
     pub fn with_pool(mut pool: H) -> Result<BoxBuf<T, H>> {
         unsafe {
             let ptr = try!(alloc::alloc(&mut pool));
-            Ok(BoxBuf { data: OwnedPtr::new(ptr), pool: pool })
+            Ok(BoxBuf { data: NoAliasMemPtr::new(ptr), pool: pool })
         }
     }
 }
@@ -107,12 +110,12 @@ impl<T: ?Sized, H> Box<T, H>
     pub unsafe fn from_raw_parts(ptr: *mut T, pool: H) -> Box<T, H> {
         Box {
             pool: pool,
-            data: OwnedPtr::new(ptr),
+            data: NoAliasMutObjPtr::new(ptr),
         }
     }
 
     pub unsafe fn into_raw_parts(self) -> (*mut T, H) {
-        let ptr = *self.data;
+        let ptr = self.data.get();
         let pool = ptr::read(&self.pool);
         mem::unsafe_forget(self);
         (ptr, pool)
@@ -124,7 +127,7 @@ impl<T: ?Sized, H> Deref for Box<T, H>
 {
     type Target = T;
     fn deref(&self) -> &T {
-        unsafe { &**self.data }
+        &self.data
     }
 }
 
@@ -132,7 +135,7 @@ impl<T: ?Sized, H> DerefMut for Box<T, H>
     where H: alloc::MemPool,
 {
     fn deref_mut(&mut self) -> &mut T {
-        unsafe { &mut **self.data }
+        &mut self.data
     }
 }
 
@@ -142,9 +145,9 @@ impl<T: ?Sized, H> Drop for Box<T, H>
     fn drop(&mut self) {
         unsafe {
             if mem::needs_drop::<T>() {
-                ptr::drop(*self.data);
+                ptr::drop(self.data.get());
             }
-            alloc::free(&mut self.pool, *self.data);
+            alloc::free(&mut self.pool, self.data.get());
         }
     }
 }

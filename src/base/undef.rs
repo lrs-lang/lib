@@ -5,7 +5,7 @@
 use core::marker::{Sized};
 use core::{mem};
 use core::repr::{Slice};
-use core::ptr::{OwnedPtr};
+use core::ptr::{self};
 
 /// Types that are not valid when they contain certain bit patterns.
 ///
@@ -148,19 +148,30 @@ unsafe impl<'a, T> UndefState for &'a mut T {
     }
 }
 
-unsafe impl<T> UndefState for OwnedPtr<T> {
-    fn num() -> usize { PAGE_SIZE }
+macro_rules! ptr {
+    ($name:ident) => {
+        unsafe impl<T> UndefState for ptr::$name<T> {
+            fn num() -> usize { PAGE_SIZE }
 
-    unsafe fn set_undef(val: *mut OwnedPtr<T>, n: usize) {
-        assert!(n < Self::num());
-        *val = OwnedPtr::new(n as *const T);
-    }
+            unsafe fn set_undef(val: *mut Self, n: usize) {
+                assert!(n < Self::num());
+                *val = Self::new(n as *mut T);
+            }
 
-    unsafe fn is_undef(val: *const OwnedPtr<T>, n: usize) -> bool {
-        assert!(n < Self::num());
-        **val as usize == n
+            unsafe fn is_undef(val: *const Self, n: usize) -> bool {
+                assert!(n < Self::num());
+                (*val).get() as usize == n
+            }
+        }
     }
 }
+
+ptr!(NoAliasMemPtr);
+ptr!(NoAliasMutObjPtr);
+ptr!(NoAliasObjPtr);
+ptr!(AliasMemPtr);
+ptr!(AliasMutObjPtr);
+ptr!(AliasObjPtr);
 
 unsafe impl<'a, T> UndefState for &'a [T] {
     fn num() -> usize { PAGE_SIZE }

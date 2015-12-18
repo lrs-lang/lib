@@ -5,8 +5,9 @@
 //! Pointer manipulation.
 
 pub use lrs_core::ptr::{
-    read, write, drop, memcpy, memmove, NonZeroPtr, OwnedPtr, volatile_load,
-    volatile_store,
+    read, write, drop, memcpy, memmove, NonZeroPtr, volatile_load, volatile_store,
+    NoAliasMemPtr, AliasMemPtr, NoAliasObjPtr, AliasObjPtr, NoAliasMutObjPtr,
+    AliasMutObjPtr,
 };
 
 pub use lrs_arch_fns::{

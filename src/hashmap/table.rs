@@ -4,7 +4,7 @@
 
 use base::prelude::*;
 use core::{mem, ptr, slice};
-use core::ptr::{OwnedPtr};
+use core::ptr::{NoAliasMemPtr};
 use core::ops::{Eq};
 use core::iter::{IntoIterator};
 use hash::{self, Hash};
@@ -30,7 +30,7 @@ pub struct GenericMap<Key, Value, Bucket, Hasher = hash::xx_hash::XxHash32, Seed
           Seed: Into<Hasher::Seed>+To,
           Key: Eq + Hash,
 {
-    table: OwnedPtr<Bucket>,
+    table: NoAliasMemPtr<Bucket>,
     /// Invariant: Power of two.
     buckets: usize,
     elements: usize,
@@ -107,7 +107,7 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator>
             for i in 0..buckets {
                 (&mut *table.add(i)).set_empty();
             }
-            OwnedPtr::new(table)
+            NoAliasMemPtr::new(table)
         };
 
         let map = GenericMap {
@@ -400,11 +400,11 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator: ?Sized>
             let new_table = try!(alloc::alloc_array(&mut self.pool, new_buckets)).0;
             self.copy_table(new_table, new_buckets);
 
-            let old_table = mem::replace(&mut self.table, OwnedPtr::new(new_table));
+            let old_table = mem::replace(&mut self.table, NoAliasMemPtr::new(new_table));
             let old_buckets = mem::replace(&mut self.buckets, new_buckets);
             self.elements -= self.deleted;
             self.deleted = 0;
-            alloc::free_array(&mut self.pool, *old_table, old_buckets);
+            alloc::free_array(&mut self.pool, old_table.get(), old_buckets);
         }
 
         Ok(true)
@@ -436,7 +436,7 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator: ?Sized>
         }
 
         let mut elements = self.elements - self.deleted;
-        let mut bucketp = *self.table;
+        let mut bucketp = self.table.get();
 
         // There will be far fewer elements in the table than there are buckets. We only
         // copy until we've copied all elements.
@@ -543,7 +543,7 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator: ?Sized>
     /// This is unsafe because the validity of `n` is not checked.
     unsafe fn get_bucket(&self, n: usize) -> &Bucket {
         debug_assert!(n < self.buckets);
-        &*self.table.add(n)
+        &*self.table.get().add(n)
     }
 
     /// Returns a mutable reference to a bucket.
@@ -556,7 +556,7 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator: ?Sized>
     /// This is unsafe because the validity of `n` is not checked.
     unsafe fn get_mut_bucket(&mut self, n: usize) -> &mut Bucket {
         debug_assert!(n < self.buckets);
-        &mut *self.table.add(n)
+        &mut *self.table.get().add(n)
     }
 
     /// Returns mutable references to a bucket and the deleted counter.
@@ -570,7 +570,7 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator: ?Sized>
     unsafe fn get_mut_bucket_and_deleted(&mut self,
                                          n: usize) -> (&mut Bucket, &mut usize) {
         debug_assert!(n < self.buckets);
-        (&mut *self.table.add(n), &mut self.deleted)
+        (&mut *self.table.get().add(n), &mut self.deleted)
     }
 
     /// Returns a reference to an non-empty / non-deleted bucket.
@@ -619,7 +619,7 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator: ?Sized>
     fn drop(&mut self) {
         unsafe {
             let mut elements = self.elements - self.deleted;
-            let mut bucket = *self.table;
+            let mut bucket = self.table.get();
 
             while elements > 0 {
                 if (&*bucket).is_set() {
@@ -629,7 +629,7 @@ impl<Key, Value, Bucket, Hasher, Seed, Allocator: ?Sized>
                 bucket = bucket.add(1);
             }
 
-            alloc::free_array(&mut self.pool, *self.table, self.buckets);
+            alloc::free_array(&mut self.pool, self.table.get(), self.buckets);
         }
     }
 }
@@ -646,7 +646,7 @@ impl<'a, Key: 'a, Value: 'a, Bucket, Hasher, Seed, Allocator: ?Sized>
     type IntoIter = MapIter<'a, Key, Value, Bucket>;
     fn into_iter(self) -> MapIter<'a, Key, Value, Bucket> {
         MapIter {
-            table: unsafe { slice::from_ptr(*self.table, self.buckets) },
+            table: unsafe { slice::from_ptr(self.table.get(), self.buckets) },
             _marker: PhantomData,
         }
     }

@@ -4,10 +4,11 @@
 
 use intrinsics::{self};
 use mem::{self};
-use ops::{Eq, PartialOrd, Ordering, Deref, CoerceUnsized};
+use ops::{Eq, PartialOrd, Ordering, Deref, DerefMut, CoerceUnsized};
 use cmp::{Ord};
 use option::{Option};
-use marker::{Sized, PhantomData, Sync, Send, Copy, Unsize, Pod};
+use marker::{Sized, Copy, Unsize, Pod};
+use non_zero::{NonZero};
 
 /// Reads a value from a pointer.
 ///
@@ -71,6 +72,44 @@ pub unsafe fn memcpy<T>(dst: *mut T, src: *const T, n: usize) {
 /// The number of elements that will be copied.
 pub unsafe fn memmove<T>(dst: *mut T, src: *const T, n: usize) {
     intrinsics::copy(src, dst, n);
+}
+
+/// Performs a volatile load.
+///
+/// [argument, src]
+/// The source to load from.
+///
+/// [return_value]
+/// Returns the loaded value.
+///
+/// = Remarks
+///
+/// This is unsafe because the pointer might not be valid.
+///
+/// = See also
+///
+/// * link:lrs::mem::volatile_load
+pub unsafe fn volatile_load<T>(src: *const T) -> T {
+    intrinsics::volatile_load(src)
+}
+
+/// Performs a volatile store.
+///
+/// [argument, dst]
+/// The destination to write to.
+///
+/// [argument, val]
+/// The value to write.
+///
+/// = Remarks
+///
+/// This is unsafe because the pointer might not be valid.
+///
+/// = See also
+///
+/// * link:lrs::mem::volatile_store
+pub unsafe fn volatile_store<T>(dst: *mut T, val: T) {
+    intrinsics::volatile_store(dst, val);
 }
 
 #[lang = "const_ptr"]
@@ -225,39 +264,39 @@ impl<T> Ord for *mut T {
     }
 }
 
-#[lang = "non_zero"]
-pub struct NonZeroPtr<T: ?Sized>(*const T);
+pub struct NonZeroPtr<T: ?Sized>(NonZero<*const T>);
 
 impl<T: ?Sized> Copy for NonZeroPtr<T> { }
 
 impl<T: ?Sized> NonZeroPtr<T> {
     pub const unsafe fn new(ptr: *const T) -> NonZeroPtr<T> {
-        NonZeroPtr(ptr)
+        NonZeroPtr(NonZero::new(ptr))
     }
-}
 
-impl<T: ?Sized> Deref for NonZeroPtr<T> {
-    type Target = *const T;
-    fn deref(&self) -> &*const T {
-        &self.0
+    pub const fn get(self) -> *const T {
+        self.0.into()
+    }
+
+    pub unsafe fn set(&mut self, val: *const T) {
+        self.0.set(val);
     }
 }
 
 impl<T> Eq for NonZeroPtr<T> {
     fn eq(&self, other: &NonZeroPtr<T>) -> bool {
-        **self == **other
+        self.0.into() == other.0.into()
     }
 }
 
 impl<T> PartialOrd for NonZeroPtr<T> {
     fn partial_cmp(&self, other: &NonZeroPtr<T>) -> Option<Ordering> {
-        (**self).partial_cmp(&**other)
+        self.0.into().partial_cmp(&other.0.into())
     }
 }
 
 impl<T> Ord for NonZeroPtr<T> {
     fn cmp(&self, other: &NonZeroPtr<T>) -> Ordering {
-        (**self).cmp(&**other)
+        self.0.into().cmp(&other.0.into())
     }
 }
 
@@ -265,88 +304,126 @@ impl<T: ?Sized, U: ?Sized> CoerceUnsized<NonZeroPtr<U>> for NonZeroPtr<T>
     where T: Unsize<U>,
 {}
 
-pub struct OwnedPtr<T: ?Sized> {
-    ptr: NonZeroPtr<T>,
-    _marker: PhantomData<T>,
+// == Examples:
+//
+//         | mutable memory | mutable object | immutable object |
+// --------+----------------+----------------+------------------+
+// noalias | Vec            | Box            | Rc               |
+// --------+----------------+----------------+------------------+
+// alias   | <unused>       | <unused>       | <unused>         |
+// --------+----------------+----------------+------------------+
+//
+// == Copy:
+//
+//         | mutable memory | mutable object | immutable object |
+// --------+----------------+----------------+------------------+
+// noalias | <no>           | <no>           | Copy             |
+// --------+----------------+----------------+------------------+
+// alias   | Copy           | Copy           | Copy             |
+// --------+----------------+----------------+------------------+
+//
+// == Deref:
+//
+//         | mutable memory | mutable object | immutable object |
+// --------+----------------+----------------+------------------+
+// noalias | <impossible>   | Deref/DerefMut | Deref            |
+// --------+----------------+----------------+------------------+
+// alias   | <impossible>   | <dangerous>    | <dangerous>      |
+// --------+----------------+----------------+------------------+
+//
+// == Wrapper
+//
+//         | mutable memory | mutable object   | immutable object |
+// --------+----------------+------------------+------------------+
+// noalias | NoAliasMemPtr  | NoAliasMutObjPtr | NoAliasObjPtr    |
+// --------+----------------+------------------+------------------+
+// alias   | AliasMemPtr    | AliasMutObjPtr   | AliasObjPtr      |
+// --------+----------------+------------------+------------------+
+
+macro_rules! pointer_wrapper {
+    ($name:ident, $raw_ty:ty) => {
+        pub struct $name<T: ?Sized>(NonZeroPtr<T>);
+
+        impl<T: ?Sized> $name<T> {
+            pub const unsafe fn new(ptr: $raw_ty) -> Self {
+                $name(NonZeroPtr::new(ptr))
+            }
+
+            pub unsafe fn set(&mut self, ptr: $raw_ty) {
+                self.0.set(ptr);
+            }
+
+            pub const fn get(&self) -> *mut T {
+                self.0.get() as *mut T
+            }
+        }
+
+        impl<T> Eq for $name<T> {
+            fn eq(&self, other: &Self) -> bool {
+                self.0 == other.0
+            }
+        }
+
+        impl<T> PartialOrd for $name<T> {
+            fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+                self.0.partial_cmp(&other.0)
+            }
+        }
+
+        impl<T> Ord for $name<T> {
+            fn cmp(&self, other: &Self) -> Ordering {
+                self.0.cmp(&other.0)
+            }
+        }
+
+        impl<T: ?Sized, U: ?Sized> CoerceUnsized<$name<U>> for $name<T>
+            where T: Unsize<U>,
+        {}
+    }
 }
 
-impl<T: ?Sized> Copy for OwnedPtr<T> { }
+pointer_wrapper!(NoAliasMemPtr, *mut T);
+pointer_wrapper!(NoAliasMutObjPtr, *mut T);
+pointer_wrapper!(NoAliasObjPtr, *const T);
+pointer_wrapper!(AliasMemPtr, *mut T);
+pointer_wrapper!(AliasMutObjPtr, *mut T);
+pointer_wrapper!(AliasObjPtr, *const T);
 
-impl<T: ?Sized> OwnedPtr<T> {
-    pub unsafe fn new(ptr: *const T) -> OwnedPtr<T> {
-        OwnedPtr {
-            ptr: NonZeroPtr::new(ptr),
-            _marker: PhantomData,
+macro_rules! deref {
+    ($name:ident) => {
+        impl<T: ?Sized> Deref for $name<T> {
+            type Target = T;
+            fn deref(&self) -> &T {
+                unsafe { &*self.get() }
+            }
         }
     }
 }
 
-impl<T: ?Sized> Deref for OwnedPtr<T> {
-    type Target = *mut T;
-    fn deref(&self) -> &*mut T {
-        unsafe { mem::cast(&*self.ptr) }
+macro_rules! deref_mut {
+    ($name:ident) => {
+        deref!($name);
+        impl<T: ?Sized> DerefMut for $name<T> {
+            fn deref_mut(&mut self) -> &mut T {
+                unsafe { &mut *self.get() }
+            }
+        }
     }
 }
 
-impl<T> Eq for OwnedPtr<T> {
-    fn eq(&self, other: &OwnedPtr<T>) -> bool {
-        **self == **other
+deref!(NoAliasObjPtr);
+deref_mut!(NoAliasMutObjPtr);
+// XXX: Dangerous
+deref!(AliasObjPtr);
+deref_mut!(AliasMutObjPtr);
+
+macro_rules! copy {
+    ($name:ident) => {
+        impl<T: ?Sized> Copy for $name<T> { }
     }
 }
 
-impl<T> PartialOrd for OwnedPtr<T> {
-    fn partial_cmp(&self, other: &OwnedPtr<T>) -> Option<Ordering> {
-        (**self).partial_cmp(&**other)
-    }
-}
-
-impl<T> Ord for OwnedPtr<T> {
-    fn cmp(&self, other: &OwnedPtr<T>) -> Ordering {
-        (**self).cmp(&**other)
-    }
-}
-
-unsafe impl<T: Sync + ?Sized> Sync for OwnedPtr<T> { }
-unsafe impl<T: Send + ?Sized> Send for OwnedPtr<T> { }
-
-impl<T: ?Sized, U: ?Sized> CoerceUnsized<OwnedPtr<U>> for OwnedPtr<T>
-    where T: Unsize<U>,
-{}
-
-/// Performs a volatile load.
-///
-/// [argument, src]
-/// The source to load from.
-///
-/// [return_value]
-/// Returns the loaded value.
-///
-/// = Remarks
-///
-/// This is unsafe because the pointer might not be valid.
-///
-/// = See also
-///
-/// * link:lrs::mem::volatile_load
-pub unsafe fn volatile_load<T>(src: *const T) -> T {
-    intrinsics::volatile_load(src)
-}
-
-/// Performs a volatile store.
-///
-/// [argument, dst]
-/// The destination to write to.
-///
-/// [argument, val]
-/// The value to write.
-///
-/// = Remarks
-///
-/// This is unsafe because the pointer might not be valid.
-///
-/// = See also
-///
-/// * link:lrs::mem::volatile_store
-pub unsafe fn volatile_store<T>(dst: *mut T, val: T) {
-    intrinsics::volatile_store(dst, val);
-}
+copy!(NoAliasObjPtr);
+copy!(AliasMemPtr);
+copy!(AliasMutObjPtr);
+copy!(AliasObjPtr);

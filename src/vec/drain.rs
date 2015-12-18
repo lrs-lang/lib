@@ -42,10 +42,10 @@ impl<T, H: ?Sized> Vec<T, H>
         if mem::size_of::<T>() != 0 {
             unsafe {
                 Drainer {
-                    start: self.ptr.add(start),
-                    cur: self.ptr.add(start),
-                    end: self.ptr.add(end),
-                    vec_end: self.ptr.add(old_len),
+                    start: self.ptr.get().add(start),
+                    cur: self.ptr.get().add(start),
+                    end: self.ptr.get().add(end),
+                    vec_end: self.ptr.get().add(old_len),
                     _data: PhantomData,
                 }
             }

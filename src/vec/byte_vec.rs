@@ -22,7 +22,7 @@ impl<H: ?Sized> Vec<u8, H>
     }
 
     pub unsafe fn unused(&mut self) -> &mut [u8] {
-        slice::from_ptr(self.ptr.add(self.len), self.cap - self.len)
+        slice::from_ptr(self.ptr.get().add(self.len), self.cap - self.len)
     }
 
     pub fn leak<'a>(mut self) -> &'a mut ByteStr

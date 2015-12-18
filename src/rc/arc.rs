@@ -4,7 +4,7 @@
 
 use base::prelude::*;
 use core::{mem, ptr, intrinsics};
-use core::ptr::{OwnedPtr};
+use core::ptr::{NoAliasMemPtr, NoAliasObjPtr};
 use core::iter::{IntoIterator};
 use core::marker::{Leak, Unsize};
 use core::ops::{CoerceUnsized};
@@ -26,7 +26,7 @@ pub struct ArcBuf<T, Heap = alloc::Heap>
     where Heap: MemPool,
           T: Leak,
 {
-    data: OwnedPtr<Inner<T, Heap>>,
+    data: NoAliasMemPtr<Inner<T, Heap>>,
 }
 
 impl<T, H> ArcBuf<T, H>
@@ -39,10 +39,10 @@ impl<T, H> ArcBuf<T, H>
     /// The value to be stored in the buffer.
     pub fn set(self, val: T) -> Arc<T, H> {
         unsafe {
-            let data = self.data;
+            let data = self.data.get();
             intrinsics::forget(self);
-            ptr::write(&mut (**data).val, val);
-            Arc { data: data }
+            ptr::write(&mut (*data).val, val);
+            Arc { data: NoAliasObjPtr::new(data) }
         }
     }
 }
@@ -56,8 +56,8 @@ impl<T, H> Drop for ArcBuf<T, H>
 {
     fn drop(&mut self) {
         unsafe {
-            let mut pool = ptr::read(&(**self.data).pool);
-            alloc::free(&mut pool, *self.data);
+            let mut pool = ptr::read(&(*self.data.get()).pool);
+            alloc::free(&mut pool, self.data.get());
         }
     }
 }
@@ -67,7 +67,7 @@ pub struct Arc<T: ?Sized, Heap = alloc::Heap>
     where Heap: MemPool,
           T: Leak,
 {
-    data: OwnedPtr<Inner<T, Heap>>,
+    data: NoAliasObjPtr<Inner<T, Heap>>,
 }
 
 impl<T: ?Sized, H = alloc::Heap> Arc<T, H>
@@ -114,26 +114,24 @@ impl<T: ?Sized, H = alloc::Heap> Arc<T, H>
             let data_ptr = try!(alloc::alloc::<Inner<T, H>, _>(&mut pool));
             ptr::write(&mut (*data_ptr).pool, pool);
             (*data_ptr).count.store(1);
-            Ok(ArcBuf { data: OwnedPtr::new(data_ptr) })
+            Ok(ArcBuf { data: NoAliasMemPtr::new(data_ptr) })
         }
     }
 
     /// Returns a mutable reference to the contained data if this is the only reference.
     pub fn as_mut(&mut self) -> Option<&mut T> {
-        let data = unsafe { &mut **self.data };
-        match data.count.load() {
-            1 => Some(&mut data.val),
-            _ => None,
+        unsafe {
+            match self.data.count.load() {
+                1 => Some(&mut (*self.data.get()).val),
+                _ => None,
+            }
         }
     }
 
     /// Adds a new reference, returning an `Arc` that points to the same data.
     pub fn add_ref(&self) -> Arc<T, H> {
-        unsafe {
-            let data = &mut **self.data;
-            data.count.add(1);
-            Arc { data: self.data }
-        }
+        self.data.count.add(1);
+        Arc { data: self.data }
     }
 }
 
@@ -157,14 +155,14 @@ unsafe impl<T, H> UndefState for Arc<T, H>
     where H: MemPool,
           T: Leak,
 {
-    fn num() -> usize { <OwnedPtr<Inner<T, H>> as UndefState>::num() }
+    fn num() -> usize { <NoAliasObjPtr<Inner<T, H>> as UndefState>::num() }
 
     unsafe fn set_undef(val: *mut Arc<T, H>, n: usize) {
-        <OwnedPtr<Inner<T, H>> as UndefState>::set_undef(&mut (*val).data, n);
+        <NoAliasObjPtr<Inner<T, H>> as UndefState>::set_undef(&mut (*val).data, n);
     }
 
     unsafe fn is_undef(val: *const Arc<T, H>, n: usize) -> bool {
-        <OwnedPtr<Inner<T, H>> as UndefState>::is_undef(&(*val).data, n)
+        <NoAliasObjPtr<Inner<T, H>> as UndefState>::is_undef(&(*val).data, n)
     }
 }
 
@@ -177,13 +175,12 @@ impl<T: ?Sized, H> Drop for Arc<T, H>
 {
     fn drop(&mut self) {
         unsafe {
-            let data = &mut **self.data;
-            if data.count.sub(1) == 1 {
+            if self.data.count.sub(1) == 1 {
                 if mem::needs_drop::<T>() {
-                    ptr::drop(&mut data.val);
+                    ptr::drop(&mut (*self.data.get()).val);
                 }
-                let mut pool = ptr::read(&data.pool);
-                alloc::free(&mut pool, *self.data);
+                let mut pool = ptr::read(&self.data.pool);
+                alloc::free(&mut pool, self.data.get());
             }
         }
     }
@@ -196,7 +193,7 @@ impl<T: ?Sized, H> Deref for Arc<T, H>
     type Target = T;
 
     fn deref(&self) -> &T {
-        unsafe { &(&**self.data).val }
+        &self.data.val
     }
 }
 

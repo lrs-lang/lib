@@ -4,8 +4,7 @@
 
 #![crate_name = "lrs_ringbuf"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, optin_builtin_traits, associated_consts)]
-#![plugin(lrs_core_plugin)]
+#![feature(no_std)]
 #![no_std]
 
 extern crate lrs_base as base;
@@ -17,7 +16,7 @@ mod std { pub use fmt::std::*; }
 
 use base::prelude::*;
 use core::{mem, ptr};
-use core::ptr::{OwnedPtr};
+use core::ptr::{NoAliasMemPtr};
 use wrapping::{Wsize};
 use base::undef::{UndefState};
 use base::{error};
@@ -30,7 +29,7 @@ use alloc::{MemPool, empty_ptr};
 pub struct DynRingBuf<T, Heap = alloc::Heap>
     where Heap: MemPool,
 {
-    ptr: OwnedPtr<T>,
+    ptr: NoAliasMemPtr<T>,
     left: Wsize,
     right: Wsize,
     cap: usize,
@@ -45,7 +44,7 @@ impl<T, H> DynRingBuf<T, H>
         where H: OutOf,
     {
         DynRingBuf {
-            ptr: unsafe { OwnedPtr::new(empty_ptr()) },
+            ptr: unsafe { NoAliasMemPtr::new(empty_ptr()) },
             left: Wsize(0),
             right: Wsize(0),
             cap: if mem::size_of::<T>() == 0 { !0 >> 1 } else { 0 },
@@ -61,7 +60,7 @@ impl<T, H> DynRingBuf<T, H>
         let size = mem::size_of::<T>();
         if cap == 0 || size == 0 {
             return Ok(DynRingBuf {
-                ptr: unsafe { OwnedPtr::new(empty_ptr()) },
+                ptr: unsafe { NoAliasMemPtr::new(empty_ptr()) },
                 left: Wsize(0),
                 right: Wsize(0),
                 cap: if size == 0 { !0 >> 1 } else { 0 },
@@ -69,7 +68,9 @@ impl<T, H> DynRingBuf<T, H>
             });
         }
         cap = cap.checked_next_power_of_two().unwrap_or(!0);
-        let ptr = unsafe { OwnedPtr::new(try!(alloc::alloc_array(&mut pool, cap)).0) };
+        let ptr = unsafe {
+            NoAliasMemPtr::new(try!(alloc::alloc_array(&mut pool, cap)).0)
+        };
         Ok(DynRingBuf {
             ptr: ptr,
             left: Wsize(0),
@@ -85,7 +86,7 @@ impl<T, H> DynRingBuf<T, H>
     /// The pool to draw memory from.
     pub fn with_pool(pool: H) -> Self {
         DynRingBuf {
-            ptr: unsafe { OwnedPtr::new(empty_ptr()) },
+            ptr: unsafe { NoAliasMemPtr::new(empty_ptr()) },
             left: Wsize(0),
             right: Wsize(0),
             cap: if mem::size_of::<T>() == 0 { !0 >> 1 } else { 0 },
@@ -130,18 +131,22 @@ impl<T, H> DynRingBuf<T, H>
         let new_cap = self.len().checked_add(n).unwrap_or(!0)
                                 .checked_next_power_of_two().unwrap_or(!0);
 
-        let ptr = if *self.ptr == empty_ptr() {
+        let ptr = if self.ptr.get() == empty_ptr() {
             unsafe { alloc::alloc_array(&mut self.pool, new_cap) }
         } else {
-            unsafe { alloc::realloc_array(&mut self.pool, *self.ptr, self.cap, new_cap) }
+            unsafe {
+                alloc::realloc_array(&mut self.pool, self.ptr.get(), self.cap, new_cap)
+            }
         };
-        self.ptr = unsafe { OwnedPtr::new(try!(ptr).0) };
+        self.ptr = unsafe { NoAliasMemPtr::new(try!(ptr).0) };
 
         let len = self.len();
         self.left = self.left & self.cap_mask();
         self.right = self.right & self.cap_mask();
         if len > 0 && self.right <= self.left {
-            unsafe { ptr::memcpy(self.ptr.add(self.cap), *self.ptr, self.right.0); }
+            unsafe {
+                ptr::memcpy(self.ptr.get().add(self.cap), self.ptr.get(), self.right.0);
+            }
             self.right = self.right + self.capacity();
         }
 
@@ -151,7 +156,7 @@ impl<T, H> DynRingBuf<T, H>
 
     unsafe fn push_right_inner(&mut self, val: T) {
         let idx = self.right & self.cap_mask();
-        ptr::write(self.ptr.add(idx.0), val);
+        ptr::write(self.ptr.get().add(idx.0), val);
         self.right = self.right + 1;
     }
 
@@ -188,7 +193,7 @@ impl<T, H> DynRingBuf<T, H>
             _ => {
                 self.right = self.right - 1;
                 let idx = self.right & self.cap_mask();
-                unsafe { Some(ptr::read(self.ptr.add(idx.0))) }
+                unsafe { Some(ptr::read(self.ptr.get().add(idx.0))) }
             },
         }
     }
@@ -196,7 +201,7 @@ impl<T, H> DynRingBuf<T, H>
     unsafe fn push_left_inner(&mut self, val: T) {
         self.left = self.left - 1;
         let idx = self.left & self.cap_mask();
-        ptr::write(self.ptr.add(idx.0), val);
+        ptr::write(self.ptr.get().add(idx.0), val);
     }
 
     /// Appends an element to the left end of the ring buffer.
@@ -232,7 +237,7 @@ impl<T, H> DynRingBuf<T, H>
             _ => {
                 let idx = self.left & self.cap_mask();
                 self.left = self.left + 1;
-                unsafe { Some(ptr::read(self.ptr.add(idx.0))) }
+                unsafe { Some(ptr::read(self.ptr.get().add(idx.0))) }
             },
         }
     }
@@ -240,7 +245,7 @@ impl<T, H> DynRingBuf<T, H>
     /// Creates an iterator over the elements in the ringbuffer.
     pub fn iter<'a>(&'a self) -> RingBufIter<'a, T> {
         RingBufIter {
-            ptr: *self.ptr,
+            ptr: self.ptr.get(),
             cap_mask: self.cap - 1,
             left: self.left,
             right: self.right,
@@ -252,7 +257,7 @@ impl<T, H> DynRingBuf<T, H>
         if mem::needs_drop::<T>() {
             let mut i = self.left;
             while i != self.right {
-                unsafe { ptr::drop(self.ptr.add(i.0 & self.cap_mask())) };
+                unsafe { ptr::drop(self.ptr.get().add(i.0 & self.cap_mask())) };
                 i = i + 1;
             }
         }
@@ -272,14 +277,14 @@ impl<'a, T: 'a, H> IntoIterator for &'a DynRingBuf<T, H>
 unsafe impl<T, H> UndefState for DynRingBuf<T, H>
     where H: MemPool,
 {
-    fn num() -> usize { <OwnedPtr<T> as UndefState>::num() }
+    fn num() -> usize { <NoAliasMemPtr<T> as UndefState>::num() }
 
     unsafe fn set_undef(val: *mut DynRingBuf<T, H>, n: usize) {
-        <OwnedPtr<T> as UndefState>::set_undef(&mut (*val).ptr, n);
+        <NoAliasMemPtr<T> as UndefState>::set_undef(&mut (*val).ptr, n);
     }
 
     unsafe fn is_undef(val: *const DynRingBuf<T, H>, n: usize) -> bool {
-        <OwnedPtr<T> as UndefState>::is_undef(&(*val).ptr, n)
+        <NoAliasMemPtr<T> as UndefState>::is_undef(&(*val).ptr, n)
     }
 }
 
@@ -292,8 +297,8 @@ impl<T, H> Drop for DynRingBuf<T, H>
     fn drop(&mut self) {
         self.clear();
         unsafe {
-            if *self.ptr != empty_ptr() {
-                alloc::free_array(&mut self.pool, *self.ptr, self.cap);
+            if self.ptr.get() != empty_ptr() {
+                alloc::free_array(&mut self.pool, self.ptr.get(), self.cap);
             }
         }
     }
@@ -306,7 +311,7 @@ impl<T, H> Index<usize> for DynRingBuf<T, H>
     fn index(&self, idx: usize) -> &T {
         assert!(idx < self.len());
         let idx = (self.left + idx).0 & self.cap_mask();
-        unsafe { &*(self.ptr.add(idx)) }
+        unsafe { &*(self.ptr.get().add(idx)) }
     }
 }
 
@@ -316,7 +321,7 @@ impl<T, H> IndexMut<usize> for DynRingBuf<T, H>
     fn index_mut(&mut self, idx: usize) -> &mut T {
         assert!(idx < self.len());
         let idx = (self.left + idx).0 & self.cap_mask();
-        unsafe { &mut *(self.ptr.add(idx)) }
+        unsafe { &mut *(self.ptr.get().add(idx)) }
     }
 }
 
