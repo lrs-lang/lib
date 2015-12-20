@@ -4,8 +4,7 @@
 
 #![crate_name = "lrs_wrapping"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, const_fn)]
-#![plugin(lrs_core_plugin)]
+#![feature(const_fn)]
 #![no_std]
 
 use core::ops::{

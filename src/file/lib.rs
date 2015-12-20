@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_file"]
 #![crate_type = "lib"]
-#![feature(no_std, custom_derive)]
+#![feature(custom_derive)]
 #![no_std]
 
 extern crate lrs_base      as base;
@@ -58,7 +58,7 @@ pub mod flags;
 pub mod info;
 mod file;
 
-type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
+pub type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
 
 fn rmo_cstr<'a, S>(s: &'a S,
                    buf: &'a mut [d8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>

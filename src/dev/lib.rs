@@ -4,8 +4,6 @@
 
 #![crate_name = "lrs_dev"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std)]
-#![plugin(lrs_core_plugin)]
 #![no_std]
 #![allow(trivial_numeric_casts)]
 

@@ -1,22 +1,18 @@
-use ast::{MetaItem, Expr, ExprRet, TokenTree, LifetimeDef, Ident};
+use syntax::ast::{MetaItem, Expr, ExprRet, TokenTree, LifetimeDef, Ident, Item_};
+use syntax::codemap::{Span};
+use syntax::util::small_vector::{SmallVector};
+use syntax::ext::base::{ExtCtxt, MacEager, MacResult, DummyResult, Annotatable};
+use syntax::ext::build::{AstBuilder};
+use syntax::ptr::{P};
+use syntax::parse::token::{InternedString, Eof, Token, BinOpToken};
 
-use codemap::{Span};
-
-use util::small_vector::{SmallVector};
-
-use ext::base::{ExtCtxt, MacEager, MacResult, DummyResult, Annotatable};
-use ext::deriving::generic::{
+use syntax_ext::deriving::generic::{
     TraitDef, MethodDef, Substructure, combine_substructure, FieldInfo, Struct,
     EnumMatching, EnumNonMatchingCollapsed, StaticEnum, StaticStruct,
 };
-use ext::deriving::generic::ty::{
+use syntax_ext::deriving::generic::ty::{
     LifetimeBounds, borrowed_explicit_self, Ty, Path,
 };
-use ext::build::{AstBuilder};
-
-use ptr::{P};
-
-use parse::token::{InternedString, Eof, Token, BinOpToken};
 
 fn expr_ok(cx: &ExtCtxt, sp: Span, expr: P<Expr>) -> P<Expr> {
     let ok = vec!(
@@ -282,8 +278,8 @@ pub fn derive_to_for_copy(cx: &mut ExtCtxt, span: Span, _mitem: &MetaItem,
     };
 
     let generics = match item.node {
-        ::ast::ItemStruct(_, ref generics) => generics,
-        ::ast::ItemEnum(_, ref generics) => generics,
+        Item_::ItemStruct(_, ref generics) => generics,
+        Item_::ItemEnum(_, ref generics) => generics,
         _ => cx.bug("expected ItemStruct or ItemEnum in #[derive(Copy)]"),
     };
 
@@ -293,20 +289,20 @@ pub fn derive_to_for_copy(cx: &mut ExtCtxt, span: Span, _mitem: &MetaItem,
     impl<'a> Lts<'a> {
         fn to_tokens(&self, _cx: &ExtCtxt) -> Vec<TokenTree> {
             let mut vec = Vec::new();
-            vec.push(TokenTree::TtToken(self.1, Token::Lt));
+            vec.push(TokenTree::Token(self.1, Token::Lt));
             for lt in self.0 {
-                vec.push(TokenTree::TtToken(self.1, Token::Lifetime(Ident::with_empty_ctxt(lt.lifetime.name))));
+                vec.push(TokenTree::Token(self.1, Token::Lifetime(Ident::with_empty_ctxt(lt.lifetime.name))));
                 if lt.bounds.len() > 0 {
-                    vec.push(TokenTree::TtToken(self.1, Token::Colon));
-                    vec.push(TokenTree::TtToken(self.1, Token::Lifetime(Ident::with_empty_ctxt(lt.bounds[0].name))));
+                    vec.push(TokenTree::Token(self.1, Token::Colon));
+                    vec.push(TokenTree::Token(self.1, Token::Lifetime(Ident::with_empty_ctxt(lt.bounds[0].name))));
                     for lt in &lt.bounds[1..] {
-                        vec.push(TokenTree::TtToken(self.1, Token::BinOp(BinOpToken::Plus)));
-                        vec.push(TokenTree::TtToken(self.1, Token::Lifetime(Ident::with_empty_ctxt(lt.name))));
+                        vec.push(TokenTree::Token(self.1, Token::BinOp(BinOpToken::Plus)));
+                        vec.push(TokenTree::Token(self.1, Token::Lifetime(Ident::with_empty_ctxt(lt.name))));
                     }
                 }
-                vec.push(TokenTree::TtToken(self.1, Token::Comma));
+                vec.push(TokenTree::Token(self.1, Token::Comma));
             }
-            vec.push(TokenTree::TtToken(self.1, Token::Gt));
+            vec.push(TokenTree::Token(self.1, Token::Gt));
             vec
         }
     }
@@ -344,7 +340,13 @@ pub fn derive_copy_to_for<'cx>(cx: &'cx mut ExtCtxt, sp: Span,
         cx.span_err(sp, "requires a target");
         return DummyResult::expr(sp);
     }
-    let dest = p.parse_expr();
+    let dest = match p.parse_expr() {
+        Ok(d) => d,
+        _ => {
+            cx.span_err(sp, "could not parse");
+            return DummyResult::expr(sp);
+        },
+    };
     let item = quote_item!(cx,
         #[automatically_derived]
         #[inline(always)]

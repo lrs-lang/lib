@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_alloc"]
 #![crate_type = "lib"]
-#![feature(no_std, const_fn, link_llvm_intrinsics, optin_builtin_traits)]
+#![feature(const_fn, link_llvm_intrinsics, optin_builtin_traits)]
 #![no_std]
 
 extern crate lrs_base as base;

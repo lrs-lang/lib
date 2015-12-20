@@ -4,8 +4,7 @@
 
 #![crate_name = "lrs_r_syscall"]
 #![crate_type = "lib"]
-#![feature(asm, plugin, no_std, slice_patterns)]
-#![plugin(lrs_core_plugin)]
+#![feature(asm, slice_patterns)]
 #![no_std]
 #![allow(dead_code)]
 

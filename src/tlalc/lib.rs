@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_tlalc"]
 #![crate_type = "lib"]
-#![feature(no_std, link_llvm_intrinsics, thread_local, const_fn)]
+#![feature(link_llvm_intrinsics, thread_local, const_fn)]
 #![no_std]
 
 //! The tlalc allocator.

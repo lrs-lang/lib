@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_base"]
 #![crate_type = "lib"]
-#![feature(no_std, custom_derive, default_type_parameter_fallback)]
+#![feature(custom_derive, default_type_parameter_fallback)]
 #![no_std]
 
 extern crate lrs_wrapping as wrapping;

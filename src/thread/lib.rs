@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_thread"]
 #![crate_type = "lib"]
-#![feature(no_std, optin_builtin_traits, custom_derive, negate_unsigned, const_fn,
+#![feature(optin_builtin_traits, custom_derive, negate_unsigned, const_fn,
            thread_local)]
 #![no_std]
 

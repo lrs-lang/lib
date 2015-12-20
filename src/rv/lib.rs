@@ -4,8 +4,6 @@
 
 #![crate_name = "lrs_rv"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std)]
-#![plugin(lrs_core_plugin)]
 #![no_std]
 
 extern crate lrs_base as base;

@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_arch_fns"]
 #![crate_type = "lib"]
-#![feature(no_std, asm, lang_items)]
+#![feature(asm, lang_items)]
 #![no_std]
 
 #[cfg(not(no_libc))] extern crate lrs_libc as libc;

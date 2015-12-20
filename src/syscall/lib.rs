@@ -4,8 +4,6 @@
 
 #![crate_name = "lrs_syscall"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std)]
-#![plugin(lrs_core_plugin)]
 #![no_std]
 
 extern crate lrs_saturating as saturating;

@@ -4,8 +4,6 @@
 
 #![crate_name = "lrs_int"]
 #![crate_type = "lib"]
-#![feature(plugin, prelude_import, no_std)]
-#![plugin(lrs_core_plugin)]
 #![no_std]
 
 use core::ops::{Range, RangeTo};

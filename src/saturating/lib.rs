@@ -4,8 +4,6 @@
 
 #![crate_name = "lrs_saturating"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std)]
-#![plugin(lrs_core_plugin)]
 #![no_std]
 
 /// Objects that can be cast to another object in a saturating way.

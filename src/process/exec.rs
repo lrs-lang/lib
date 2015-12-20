@@ -14,7 +14,7 @@ use rmo::{Rmo, ToRmo};
 use alloc::{MemPool, FbHeap, FcPool, OncePool};
 use {env, file};
 
-type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
+pub type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
 
 fn rmo_cstr<'a, S>(s: &'a S,
                    buf: &'a mut [d8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>

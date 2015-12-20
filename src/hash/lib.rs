@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_hash"]
 #![crate_type = "lib"]
-#![feature(const_fn, custom_derive, no_std)]
+#![feature(const_fn, custom_derive)]
 #![no_std]
 
 extern crate lrs_base as base;

@@ -4,8 +4,7 @@
 
 #![crate_name = "lrs_pipe"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, custom_derive, associated_consts)]
-#![plugin(lrs_core_plugin)]
+#![feature(custom_derive, associated_consts)]
 #![no_std]
 
 extern crate lrs_base as base;

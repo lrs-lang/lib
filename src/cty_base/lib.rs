@@ -4,8 +4,6 @@
 
 #![crate_name = "lrs_cty_base"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std)]
-#![plugin(lrs_core_plugin)]
 #![no_std]
 #![allow(non_upper_case_globals, non_camel_case_types)]
 

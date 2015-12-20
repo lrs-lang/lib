@@ -11,16 +11,17 @@
 use self::ArgumentType::*;
 use self::Position::*;
 
-use ast;
-use codemap::{Span, respan};
-use ext::base::*;
-use ext::base;
-use ext::build::AstBuilder;
+use syntax::ast;
+use syntax::codemap::{Span, respan};
+use syntax::ext::base::*;
+use syntax::ext::base;
+use syntax::ext::build::AstBuilder;
+use syntax::fold::Folder;
+use syntax::parse::token::special_idents;
+use syntax::parse::token;
+use syntax::ptr::P;
+
 use fmt_macros as parse;
-use fold::Folder;
-use parse::token::special_idents;
-use parse::token;
-use ptr::P;
 
 use std::collections::HashMap;
 
@@ -88,7 +89,7 @@ fn parse_args(ecx: &mut ExtCtxt, sp: Span, tts: &[ast::TokenTree])
         ecx.span_err(sp, "requires a writer");
         return None;
     }
-    let writer = p.parse_expr();
+    let writer = panictry!(p.parse_expr());
 
     if !panictry!(p.eat(&token::Comma)) {
         ecx.span_err(sp, "expected token: `,`");
@@ -100,7 +101,7 @@ fn parse_args(ecx: &mut ExtCtxt, sp: Span, tts: &[ast::TokenTree])
         ecx.span_err(sp, "requires a writer");
         return None;
     }
-    let fmtstr = p.parse_expr();
+    let fmtstr = panictry!(p.parse_expr());
 
     let mut named = false;
     while p.token != token::Eof {
@@ -133,7 +134,7 @@ fn parse_args(ecx: &mut ExtCtxt, sp: Span, tts: &[ast::TokenTree])
             let name = &interned_name[..];
 
             panictry!(p.expect(&token::Eq));
-            let e = p.parse_expr();
+            let e = panictry!(p.parse_expr());
             match names.get(name) {
                 None => {}
                 Some(prev) => {
@@ -147,7 +148,7 @@ fn parse_args(ecx: &mut ExtCtxt, sp: Span, tts: &[ast::TokenTree])
             order.push(name.to_string());
             names.insert(name.to_string(), e);
         } else {
-            args.push(p.parse_expr());
+            args.push(panictry!(p.parse_expr()));
         }
     }
     Some((writer, fmtstr, args, order, names))
@@ -523,6 +524,7 @@ impl<'a, 'b> Context<'a, 'b> {
             init: ex,
             id: ast::DUMMY_NODE_ID,
             span: sp,
+            attrs: None,
         });
         let decl = respan(sp, ast::DeclLocal(local));
         P(respan(sp, ast::StmtDecl(P(decl), ast::DUMMY_NODE_ID)))

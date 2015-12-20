@@ -4,8 +4,7 @@
 
 #![crate_name = "lrs_inotify"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, custom_derive, associated_consts)]
-#![plugin(lrs_core_plugin)]
+#![feature(custom_derive, associated_consts)]
 #![no_std]
 
 extern crate lrs_base as base;
@@ -41,7 +40,7 @@ mod std { pub use fmt::std::*; pub use cty; }
 pub mod flags;
 pub mod event;
 
-type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
+pub type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
 
 fn rmo_cstr<'a, S>(s: &'a S,
                    buf: &'a mut [d8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>

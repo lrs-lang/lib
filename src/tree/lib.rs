@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_tree"]
 #![crate_type = "lib"]
-#![feature(no_std, lang_items, optin_builtin_traits, const_fn, associated_type_defaults)]
+#![feature(lang_items, optin_builtin_traits, const_fn, associated_type_defaults)]
 #![no_std]
 
 extern crate lrs_base as base;

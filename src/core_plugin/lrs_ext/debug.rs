@@ -1,12 +1,13 @@
-use ast;
-use ast::{MetaItem, Expr,};
-use codemap::Span;
-use ext::base::{ExtCtxt, Annotatable};
-use ext::build::AstBuilder;
-use ext::deriving::generic::*;
-use ext::deriving::generic::ty::*;
-use parse::token;
-use ptr::P;
+use syntax::ast;
+use syntax::ast::{MetaItem, Expr,};
+use syntax::codemap::Span;
+use syntax::ext::base::{ExtCtxt, Annotatable};
+use syntax::ext::build::AstBuilder;
+use syntax::parse::token;
+use syntax::ptr::P;
+
+use syntax_ext::deriving::generic::*;
+use syntax_ext::deriving::generic::ty::*;
 
 pub fn derive_debug(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Annotatable,
                     push: &mut FnMut(Annotatable)) {

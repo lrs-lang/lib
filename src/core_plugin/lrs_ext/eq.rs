@@ -1,19 +1,16 @@
-use ast::{self, MetaItem, Expr};
+use syntax::ast::{self, MetaItem, Expr};
+use syntax::codemap::{Span};
+use syntax::ext::base::{ExtCtxt, Annotatable};
+use syntax::ext::build::{AstBuilder};
+use syntax::ptr::{P};
+use syntax::parse::token::{InternedString};
 
-use codemap::{Span};
-
-use ext::base::{ExtCtxt, Annotatable};
-use ext::deriving::generic::{
+use syntax_ext::deriving::generic::{
     TraitDef, MethodDef, Substructure, cs_fold, combine_substructure,
 };
-use ext::deriving::generic::ty::{
+use syntax_ext::deriving::generic::ty::{
     LifetimeBounds, Literal, borrowed_self, borrowed_explicit_self,
 };
-use ext::build::{AstBuilder};
-
-use ptr::{P};
-
-use parse::token::{InternedString};
 
 pub fn derive_eq(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Annotatable,
                  push: &mut FnMut(Annotatable)) {

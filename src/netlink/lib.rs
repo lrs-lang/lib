@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_netlink"]
 #![crate_type = "lib"]
-#![feature(no_std, custom_derive)]
+#![feature(custom_derive)]
 #![no_std]
 #![allow(non_upper_case_globals)]
 

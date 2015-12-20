@@ -4,8 +4,7 @@
 
 #![crate_name = "lrs_queue"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, optin_builtin_traits)]
-#![plugin(lrs_core_plugin)]
+#![feature(optin_builtin_traits)]
 #![no_std]
 
 extern crate lrs_base as base;

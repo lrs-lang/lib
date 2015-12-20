@@ -4,8 +4,6 @@
 
 #![crate_name = "lrs_env"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std)]
-#![plugin(lrs_core_plugin)]
 #![no_std]
 
 extern crate lrs_base    as base;
@@ -123,7 +121,7 @@ pub fn get_cwd_pool<H>(pool: H) -> Result<CString<H>>
     abort!();
 }
 
-type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
+pub type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
 
 fn rmo_cstr<'a, S>(s: &'a S,
                    buf: &'a mut [d8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>

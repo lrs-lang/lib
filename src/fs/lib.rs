@@ -4,8 +4,7 @@
 
 #![crate_name = "lrs_fs"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, custom_derive)]
-#![plugin(lrs_core_plugin)]
+#![feature(custom_derive)]
 #![no_std]
 #![allow(trivial_numeric_casts)]
 
@@ -34,7 +33,7 @@ pub mod info;
 pub mod mount;
 pub mod unmount;
 
-type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
+pub type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
 
 fn rmo_cstr<'a, S>(s: &'a S,
                    buf: &'a mut [d8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>

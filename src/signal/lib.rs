@@ -4,8 +4,7 @@
 
 #![crate_name = "lrs_signal"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, optin_builtin_traits, custom_derive, associated_consts)]
-#![plugin(lrs_core_plugin)]
+#![feature(optin_builtin_traits, custom_derive, associated_consts)]
 #![no_std]
 
 extern crate lrs_base as base;

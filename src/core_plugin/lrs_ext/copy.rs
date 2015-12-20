@@ -1,12 +1,11 @@
 use std::cell::{RefCell};
 
-use ast::{self, MetaItem, VariantData};
+use syntax::ast::{self, MetaItem, VariantData};
+use syntax::codemap::{Span};
+use syntax::ext::base::{ExtCtxt, Annotatable};
 
-use codemap::{Span};
-
-use ext::base::{ExtCtxt, Annotatable};
-use ext::deriving::generic::{TraitDef, MethodDef};
-use ext::deriving::generic::ty::{Path, LifetimeBounds, Ty};
+use syntax_ext::deriving::generic::{TraitDef, MethodDef};
+use syntax_ext::deriving::generic::ty::{Path, LifetimeBounds, Ty};
 
 pub fn derive_copy(cx: &mut ExtCtxt, span: Span, mitem: &MetaItem, item: &Annotatable,
                    push: &mut FnMut(Annotatable)) {

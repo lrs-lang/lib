@@ -4,8 +4,7 @@
 
 #![crate_name = "lrs_sys"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, custom_derive)]
-#![plugin(lrs_core_plugin)]
+#![feature(custom_derive)]
 #![no_std]
 
 extern crate lrs_base as base;
@@ -25,7 +24,7 @@ mod std { pub use fmt::std::*; pub use {cty}; }
 
 use core::{mem};
 use core::ops::{Eq};
-use fmt::{Debug, Write};
+use fmt::{Write};
 use cty::{
     new_utsname, sysinfo, GRND_NONBLOCK, PATH_MAX, LINUX_REBOOT_CMD_CAD_OFF,
     LINUX_REBOOT_CMD_CAD_ON, LINUX_REBOOT_CMD_HALT, LINUX_REBOOT_CMD_KEXEC,
@@ -281,7 +280,7 @@ pub fn get_random_non_blocking(buf: &mut [d8]) -> Result<&mut [u8]> {
     unsafe { Ok(buf[..num as usize].as_mut_bytes()) }
 }
 
-type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
+pub type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
 
 fn rmo_cstr<'a, S>(s: &'a S,
                    buf: &'a mut [d8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>

@@ -4,8 +4,7 @@
 
 #![crate_name = "lrs_dir"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, negate_unsigned, custom_derive)]
-#![plugin(lrs_core_plugin)]
+#![feature(negate_unsigned, custom_derive)]
 #![no_std]
 
 extern crate lrs_base      as base;
@@ -42,7 +41,7 @@ use file::info::{Type, file_type_from_mode};
 /// The default buffer size used for reading directory entries.
 pub const DEFAULT_BUF_SIZE: usize = 2048;
 
-type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
+pub type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
 
 fn rmo_cstr<'a, S>(s: &'a S,
                    buf: &'a mut [d8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>

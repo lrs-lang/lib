@@ -4,7 +4,6 @@
 
 #![crate_name = "lrs_buf_reader"]
 #![crate_type = "lib"]
-#![feature(no_std)]
 #![no_std]
 
 extern crate lrs_arch_fns as arch_fns;

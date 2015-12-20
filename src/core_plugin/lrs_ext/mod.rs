@@ -14,13 +14,13 @@ macro_rules! pathvec {
 
 macro_rules! path {
     ($($x:tt)*) => (
-        ::ext::deriving::generic::ty::Path::new( pathvec!( $($x)* ) )
+        ::syntax_ext::deriving::generic::ty::Path::new( pathvec!( $($x)* ) )
     )
 }
 
 macro_rules! path_local {
     ($x:ident) => (
-        ::ext::deriving::generic::ty::Path::new_local(stringify!($x))
+        ::syntax_ext::deriving::generic::ty::Path::new_local(stringify!($x))
     )
 }
 
@@ -36,7 +36,7 @@ macro_rules! pathvec_std {
 
 macro_rules! path_std {
     ($($x:tt)*) => (
-        ::ext::deriving::generic::ty::Path::new( pathvec_std!( $($x)* ) )
+        ::syntax_ext::deriving::generic::ty::Path::new( pathvec_std!( $($x)* ) )
     )
 }
 

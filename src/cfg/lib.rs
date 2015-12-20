@@ -4,7 +4,6 @@
 
 #![crate_name = "lrs_cfg"]
 #![crate_type = "lib"]
-#![feature(no_std)]
 #![no_std]
 
 /// Whether lrs was compiled with the `no_libc` configuration.

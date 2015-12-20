@@ -4,8 +4,7 @@
 
 #![crate_name = "lrs_rc"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, optin_builtin_traits, associated_consts, thread_local)]
-#![plugin(lrs_core_plugin)]
+#![feature(optin_builtin_traits, associated_consts, thread_local)]
 #![no_std]
 
 extern crate lrs_base as base;

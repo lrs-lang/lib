@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_getopt"]
 #![crate_type = "lib"]
-#![feature(no_std, custom_derive)]
+#![feature(custom_derive)]
 #![no_std]
 
 extern crate lrs_base as base;

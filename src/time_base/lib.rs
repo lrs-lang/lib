@@ -4,8 +4,7 @@
 
 #![crate_name = "lrs_time_base"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, custom_derive)]
-#![plugin(lrs_core_plugin)]
+#![feature(custom_derive)]
 #![no_std]
 #![allow(trivial_numeric_casts)]
 

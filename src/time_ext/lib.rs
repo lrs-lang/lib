@@ -4,8 +4,7 @@
 
 #![crate_name = "lrs_time_ext"]
 #![crate_type = "lib"]
-#![feature(plugin, no_std, negate_unsigned, custom_derive)]
-#![plugin(lrs_core_plugin)]
+#![feature(negate_unsigned, custom_derive)]
 #![no_std]
 
 extern crate lrs_base as base;

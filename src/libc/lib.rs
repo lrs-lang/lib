@@ -4,9 +4,8 @@
 
 #![crate_name = "lrs_libc"]
 #![crate_type = "lib"]
-#![feature(plugin, lang_items, no_std, const_fn)]
+#![feature(lang_items, const_fn)]
 #![no_std]
-#![plugin(lrs_core_plugin)]
 #![allow(non_camel_case_types)]
 
 use core::marker::{Pod, Copy};

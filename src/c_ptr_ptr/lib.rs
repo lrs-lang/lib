@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_c_ptr_ptr"]
 #![crate_type = "lib"]
-#![feature(no_std, const_fn)]
+#![feature(const_fn)]
 #![no_std]
 
 extern crate lrs_cty_base as cty_base;

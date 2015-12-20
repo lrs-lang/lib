@@ -4,7 +4,6 @@
 
 #![crate_name = "lrs_str_one"]
 #![crate_type = "lib"]
-#![feature(no_std)]
 #![allow(mutable_transmutes)]
 #![no_std]
 

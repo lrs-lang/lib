@@ -21,16 +21,7 @@ macro_rules! int_impls {
         as_u=$as_u:ident;
         $width:expr;
         $as_str:expr;
-        signed=$signed:expr;
-        $ctpop:ident;
-        pop_ty=$pop_ty:ident;
-        $ctlz:ident;
-        $cttz:ident;
-        $bswap:ident;
-        size_t=$size_t:ident;
-        $checked_add:ident;
-        $checked_sub:ident;
-        $checked_mul:ident;
+        signed=$signed:expr
      ) => {
         #[lang = $as_str]
         impl $t {
@@ -79,8 +70,8 @@ macro_rules! int_impls {
             /// Returns the sum if no overflow occurred, `None` otherwise.
             pub fn checked_add(self, other: $t) -> Option<$t> {
                 unsafe {
-                    match intrinsics::$checked_add(self as $size_t, other as $size_t) {
-                        (val, false) => Some(val as $t),
+                    match intrinsics::add_with_overflow(self, other) {
+                        (val, false) => Some(val),
                         _ => None,
                     }
                 }
@@ -96,8 +87,8 @@ macro_rules! int_impls {
             /// Returns the difference if no overflow occurred, `None` otherwise.
             pub fn checked_sub(self, other: $t) -> Option<$t> {
                 unsafe {
-                    match intrinsics::$checked_sub(self as $size_t, other as $size_t) {
-                        (val, false) => Some(val as $t),
+                    match intrinsics::sub_with_overflow(self, other) {
+                        (val, false) => Some(val),
                         _ => None,
                     }
                 }
@@ -113,8 +104,8 @@ macro_rules! int_impls {
             /// Returns the product if no overflow occurred, `None` otherwise.
             pub fn checked_mul(self, other: $t) -> Option<$t> {
                 unsafe {
-                    match intrinsics::$checked_mul(self as $size_t, other as $size_t) {
-                        (val, false) => Some(val as $t),
+                    match intrinsics::mul_with_overflow(self, other) {
+                        (val, false) => Some(val),
                         _ => None,
                     }
                 }
@@ -223,7 +214,7 @@ macro_rules! int_impls {
 
             /// Counts the set bits in this integer.
             pub fn count_ones(self) -> usize {
-                unsafe { intrinsics::$ctpop(self as $pop_ty) as usize }
+                unsafe { intrinsics::ctpop(self) as usize }
             }
 
             /// Counts the unset bits in this integer.
@@ -240,7 +231,7 @@ macro_rules! int_impls {
             /// Returns the length of longest sequence of unset bits starting at the most
             /// significant bit.
             pub fn leading_zeros(self) -> usize {
-                unsafe { intrinsics::$ctlz(self as $pop_ty) as usize }
+                unsafe { intrinsics::ctlz(self) as usize }
             }
 
             /// Returns the length of longest sequence of set bits starting at the least
@@ -252,12 +243,12 @@ macro_rules! int_impls {
             /// Returns the length of longest sequence of unset bits starting at the least
             /// significant bit.
             pub fn trailing_zeros(self) -> usize {
-                unsafe { intrinsics::$cttz(self as $pop_ty) as usize }
+                unsafe { intrinsics::cttz(self) as usize }
             }
 
             /// Swaps the bytes in this integer.
             pub fn swap(self) -> $t {
-                unsafe { intrinsics::$bswap(self as $pop_ty) as $t }
+                unsafe { intrinsics::bswap(self) }
             }
 
             /// Interprets this integer as a value in big-endian representation and
@@ -273,7 +264,7 @@ macro_rules! int_impls {
             /// ----
             #[cfg(target_endian = "little")]
             pub fn from_be(self) -> $t {
-                unsafe { intrinsics::$bswap(self as $pop_ty) as $t }
+                unsafe { intrinsics::bswap(self) }
             }
 
             /// Interprets this integer as a value in big-endian representation and
@@ -317,14 +308,14 @@ macro_rules! int_impls {
             /// ----
             #[cfg(target_endian = "big")]
             pub fn from_le(self) -> $t {
-                unsafe { intrinsics::$bswap(self as $pop_ty) as $t }
+                unsafe { intrinsics::bswap(self) }
             }
 
             /// Interprets this integer as a value in host-endian representation and
             /// returns the value in big-endian representation.
             #[cfg(target_endian = "little")]
             pub fn to_be(self) -> $t {
-                unsafe { intrinsics::$bswap(self as $pop_ty) as $t }
+                unsafe { intrinsics::bswap(self) }
             }
 
             /// Interprets this integer as a value in host-endian representation and
@@ -341,7 +332,7 @@ macro_rules! int_impls {
             /// returns the value in little-endian representation.
             #[cfg(target_endian = "big")]
             pub fn to_le(self) -> $t {
-                unsafe { intrinsics::$bswap(self as $pop_ty) as $t }
+                unsafe { intrinsics::bswap(self) }
             }
 
             /// Divides this integer by another one and returns both the quotient and the
@@ -713,19 +704,19 @@ macro_rules! int_impls {
     }
 }
 
-int_impls!(i8    ; as_i=i8    ; as_u=u8    ; 8  ; "i8"    ; signed=true  ; ctpop8  ; pop_ty=u8  ; ctlz8  ; cttz8  ; bswap8  ; size_t=i8  ; i8_add_with_overflow  ; i8_sub_with_overflow   ; i8_mul_with_overflow ; );
-int_impls!(u8    ; as_i=i8    ; as_u=u8    ; 8  ; "u8"    ; signed=false ; ctpop8  ; pop_ty=u8  ; ctlz8  ; cttz8  ; bswap8  ; size_t=u8  ; u8_add_with_overflow  ; u8_sub_with_overflow   ; u8_mul_with_overflow ; );
-int_impls!(i16   ; as_i=i16   ; as_u=u16   ; 16 ; "i16"   ; signed=true  ; ctpop16 ; pop_ty=u16 ; ctlz16 ; cttz16 ; bswap16 ; size_t=i16 ; i16_add_with_overflow ; i16_sub_with_overflow  ; i16_mul_with_overflow; );
-int_impls!(u16   ; as_i=i16   ; as_u=u16   ; 16 ; "u16"   ; signed=false ; ctpop16 ; pop_ty=u16 ; ctlz16 ; cttz16 ; bswap16 ; size_t=u16 ; u16_add_with_overflow ; u16_sub_with_overflow  ; u16_mul_with_overflow; );
-int_impls!(i32   ; as_i=i32   ; as_u=u32   ; 32 ; "i32"   ; signed=true  ; ctpop32 ; pop_ty=u32 ; ctlz32 ; cttz32 ; bswap32 ; size_t=i32 ; i32_add_with_overflow ; i32_sub_with_overflow  ; i32_mul_with_overflow; );
-int_impls!(u32   ; as_i=i32   ; as_u=u32   ; 32 ; "u32"   ; signed=false ; ctpop32 ; pop_ty=u32 ; ctlz32 ; cttz32 ; bswap32 ; size_t=u32 ; u32_add_with_overflow ; u32_sub_with_overflow  ; u32_mul_with_overflow; );
-int_impls!(i64   ; as_i=i64   ; as_u=u64   ; 64 ; "i64"   ; signed=true  ; ctpop64 ; pop_ty=u64 ; ctlz64 ; cttz64 ; bswap64 ; size_t=i64 ; i64_add_with_overflow ; i64_sub_with_overflow  ; i64_mul_with_overflow; );
-int_impls!(u64   ; as_i=i64   ; as_u=u64   ; 64 ; "u64"   ; signed=false ; ctpop64 ; pop_ty=u64 ; ctlz64 ; cttz64 ; bswap64 ; size_t=u64 ; u64_add_with_overflow ; u64_sub_with_overflow  ; u64_mul_with_overflow; );
+int_impls!(i8    ; as_i=i8    ; as_u=u8    ; 8  ; "i8"    ; signed=true  );
+int_impls!(u8    ; as_i=i8    ; as_u=u8    ; 8  ; "u8"    ; signed=false );
+int_impls!(i16   ; as_i=i16   ; as_u=u16   ; 16 ; "i16"   ; signed=true  );
+int_impls!(u16   ; as_i=i16   ; as_u=u16   ; 16 ; "u16"   ; signed=false );
+int_impls!(i32   ; as_i=i32   ; as_u=u32   ; 32 ; "i32"   ; signed=true  );
+int_impls!(u32   ; as_i=i32   ; as_u=u32   ; 32 ; "u32"   ; signed=false );
+int_impls!(i64   ; as_i=i64   ; as_u=u64   ; 64 ; "i64"   ; signed=true  );
+int_impls!(u64   ; as_i=i64   ; as_u=u64   ; 64 ; "u64"   ; signed=false );
 #[cfg(target_pointer_width = "64")]
-int_impls!(isize ; as_i=isize ; as_u=usize ; 64 ; "isize" ; signed=true  ; ctpop64 ; pop_ty=u64 ; ctlz64 ; cttz64 ; bswap64 ; size_t=i64 ; i64_add_with_overflow ; i64_sub_with_overflow  ; i64_mul_with_overflow; );
+int_impls!(isize ; as_i=isize ; as_u=usize ; 64 ; "isize" ; signed=true  );
 #[cfg(target_pointer_width = "64")]
-int_impls!(usize ; as_i=isize ; as_u=usize ; 64 ; "usize" ; signed=false ; ctpop64 ; pop_ty=u64 ; ctlz64 ; cttz64 ; bswap64 ; size_t=u64 ; u64_add_with_overflow ; u64_sub_with_overflow  ; u64_mul_with_overflow; );
+int_impls!(usize ; as_i=isize ; as_u=usize ; 64 ; "usize" ; signed=false );
 #[cfg(target_pointer_width = "32")]
-int_impls!(isize ; as_i=isize ; as_u=usize ; 32 ; "isize" ; signed=true  ; ctpop32 ; pop_ty=u32 ; ctlz32 ; cttz32 ; bswap32 ; size_t=i32 ; i32_add_with_overflow ; i32_sub_with_overflow  ; i32_mul_with_overflow; );
+int_impls!(isize ; as_i=isize ; as_u=usize ; 32 ; "isize" ; signed=true  );
 #[cfg(target_pointer_width = "32")]
-int_impls!(usize ; as_i=isize ; as_u=usize ; 32 ; "usize" ; signed=false ; ctpop32 ; pop_ty=u32 ; ctlz32 ; cttz32 ; bswap32 ; size_t=u32 ; u32_add_with_overflow ; u32_sub_with_overflow  ; u32_mul_with_overflow; );
+int_impls!(usize ; as_i=isize ; as_u=usize ; 32 ; "usize" ; signed=false );
