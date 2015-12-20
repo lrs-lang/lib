@@ -13,8 +13,7 @@ impl<H> ToOwned<H> for NoNullStr
 {
     type Owned = NoNullString<H>;
     fn to_owned_with_pool(&self, pool: H) -> Result<NoNullString<H>> {
-        let bytes: &[u8] = self.as_ref();
-        bytes.to_owned_with_pool(pool).map(|o| unsafe {
+        (self.as_ref():&[u8]).to_owned_with_pool(pool).map(|o| unsafe {
             NoNullString::from_bytes_unchecked(o)
         })
     }

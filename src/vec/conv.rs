@@ -190,8 +190,7 @@ impl<H> TryFrom<ByteStr> for Vec<u8, H>
     where H: MemPool + OutOf,
 {
     fn try_from(ts: &ByteStr) -> Result<Vec<u8, H>> {
-        let bytes: &[u8] = ts.as_ref();
-        bytes.try_to()
+        (ts.as_ref():&[u8]).try_to()
     }
 }
 
@@ -199,8 +198,7 @@ impl<H> TryFrom<CStr> for Vec<u8, H>
     where H: MemPool + OutOf,
 {
     fn try_from(ts: &CStr) -> Result<Vec<u8, H>> {
-        let bytes: &[u8] = ts.as_ref();
-        bytes.try_to()
+        (ts.as_ref():&[u8]).try_to()
     }
 }
 
@@ -208,8 +206,7 @@ impl<H> TryFrom<NoNullStr> for Vec<u8, H>
     where H: MemPool + OutOf,
 {
     fn try_from(ts: &NoNullStr) -> Result<Vec<u8, H>> {
-        let bytes: &[u8] = ts.as_ref();
-        bytes.try_to()
+        (ts.as_ref():&[u8]).try_to()
     }
 }
 

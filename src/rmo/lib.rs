@@ -4,6 +4,7 @@
 
 #![crate_name = "lrs_rmo"]
 #![crate_type = "lib"]
+#![feature(type_ascription)]
 #![no_std]
 
 extern crate lrs_base     as base;

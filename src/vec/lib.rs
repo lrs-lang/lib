@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_vec"]
 #![crate_type = "lib"]
-#![feature(optin_builtin_traits)]
+#![feature(type_ascription, optin_builtin_traits)]
 #![no_std]
 
 extern crate lrs_base as base;

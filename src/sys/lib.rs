@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_sys"]
 #![crate_type = "lib"]
-#![feature(custom_derive)]
+#![feature(type_ascription, custom_derive)]
 #![no_std]
 
 extern crate lrs_base as base;
@@ -70,49 +70,43 @@ impl StrInfo {
     /// Retrieves information from the system and stores it in the object.
     pub fn update(&mut self) -> Result {
         try!(rv!(uname(&mut self.buf)));
-        self.sysname_len    = try!(TryAsRef::<CStr>::try_as_ref(&self.buf.sysname[..])).len()    as u8;
-        self.nodename_len   = try!(TryAsRef::<CStr>::try_as_ref(&self.buf.nodename[..])).len()   as u8;
-        self.release_len    = try!(TryAsRef::<CStr>::try_as_ref(&self.buf.release[..])).len()    as u8;
-        self.version_len    = try!(TryAsRef::<CStr>::try_as_ref(&self.buf.version[..])).len()    as u8;
-        self.machine_len    = try!(TryAsRef::<CStr>::try_as_ref(&self.buf.machine[..])).len()    as u8;
-        self.domainname_len = try!(TryAsRef::<CStr>::try_as_ref(&self.buf.domainname[..])).len() as u8;
+        self.sysname_len    = (try!(self.buf.sysname[..].try_as_ref()):&CStr).len()    as u8;
+        self.nodename_len   = (try!(self.buf.nodename[..].try_as_ref()):&CStr).len()   as u8;
+        self.release_len    = (try!(self.buf.release[..].try_as_ref()):&CStr).len()    as u8;
+        self.version_len    = (try!(self.buf.version[..].try_as_ref()):&CStr).len()    as u8;
+        self.machine_len    = (try!(self.buf.machine[..].try_as_ref()):&CStr).len()    as u8;
+        self.domainname_len = (try!(self.buf.domainname[..].try_as_ref()):&CStr).len() as u8;
         Ok(())
     }
 
     /// Returns the name of the system.
     pub fn system_name(&self) -> &ByteStr {
-        let bytes: &[u8] = self.buf.sysname[..self.sysname_len as usize].as_ref();
-        bytes.as_ref()
+        (self.buf.sysname[..self.sysname_len as usize].as_ref():&[u8]).as_ref()
     }
 
     /// Returns the hostname of the system.
     pub fn host_name(&self) -> &ByteStr {
-        let bytes: &[u8] = self.buf.nodename[..self.nodename_len as usize].as_ref();
-        bytes.as_ref()
+        (self.buf.nodename[..self.nodename_len as usize].as_ref():&[u8]).as_ref()
     }
 
     /// Returns the kernel release of the system.
     pub fn release(&self) -> &ByteStr {
-        let bytes: &[u8] = self.buf.release[..self.release_len as usize].as_ref();
-        bytes.as_ref()
+        (self.buf.release[..self.release_len as usize].as_ref():&[u8]).as_ref()
     }
 
     /// Returns the kernel version of the system.
     pub fn version(&self) -> &ByteStr {
-        let bytes: &[u8] = self.buf.version[..self.version_len as usize].as_ref();
-        bytes.as_ref()
+        (self.buf.version[..self.version_len as usize].as_ref():&[u8]).as_ref()
     }
 
     /// Returns the machine.
     pub fn machine(&self) -> &ByteStr {
-        let bytes: &[u8] = self.buf.machine[..self.machine_len as usize].as_ref();
-        bytes.as_ref()
+        (self.buf.machine[..self.machine_len as usize].as_ref():&[u8]).as_ref()
     }
 
     /// Returns the domain name of the system.
     pub fn domain_name(&self) -> &ByteStr {
-        let bytes: &[u8] = self.buf.domainname[..self.domainname_len as usize].as_ref();
-        bytes.as_ref()
+        (self.buf.domainname[..self.domainname_len as usize].as_ref():&[u8]).as_ref()
     }
 }
 

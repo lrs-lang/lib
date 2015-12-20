@@ -65,8 +65,7 @@ impl TryAsRef<CStr> for [u8] {
 
 impl TryAsRef<CStr> for [i8] {
     fn try_as_ref(&self) -> Result<&CStr> {
-        let bytes: &[u8] = self.as_ref();
-        bytes.try_as_ref()
+        (self.as_ref():&[u8]).try_as_ref()
     }
 }
 
@@ -89,8 +88,7 @@ impl TryAsMut<NoNullStr> for [u8] {
 
 impl TryAsMut<CStr> for [i8] {
     fn try_as_mut(&mut self) -> Result<&mut CStr> {
-        let bytes: &mut [u8] = self.as_mut();
-        bytes.try_as_mut()
+        (self.as_mut():&mut [u8]).try_as_mut()
     }
 }
 
@@ -107,23 +105,20 @@ impl TryAsMut<CStr> for [u8] {
 
 impl AsRef<ByteStr> for str {
     fn as_ref(&self) -> &ByteStr {
-        let bytes: &[u8] = self.as_ref();
-        bytes.as_ref()
+        (self.as_ref():&[u8]).as_ref()
     }
 }
 impl_try_as_ref!(ByteStr, str);
 
 impl TryAsRef<NoNullStr> for str {
     fn try_as_ref(&self) -> Result<&NoNullStr> {
-        let bytes: &[u8] = self.as_ref();
-        bytes.try_as_ref()
+        (self.as_ref():&[u8]).try_as_ref()
     }
 }
 
 impl TryAsRef<CStr> for str {
     fn try_as_ref(&self) -> Result<&CStr> {
-        let bytes: &[u8] = self.as_ref();
-        bytes.try_as_ref()
+        (self.as_ref():&[u8]).try_as_ref()
     }
 }
 
@@ -136,22 +131,19 @@ impl_try_as_ref!([u8], ByteStr);
 
 impl TryAsRef<str> for ByteStr {
     fn try_as_ref(&self) -> Result<&str> {
-        let bytes: &[u8] = self.as_ref();
-        bytes.try_as_ref()
+        (self.as_ref():&[u8]).try_as_ref()
     }
 }
 
 impl TryAsRef<NoNullStr> for ByteStr {
     fn try_as_ref(&self) -> Result<&NoNullStr> {
-        let bytes: &[u8] = self.as_ref();
-        bytes.try_as_ref()
+        (self.as_ref():&[u8]).try_as_ref()
     }
 }
 
 impl TryAsRef<CStr> for ByteStr {
     fn try_as_ref(&self) -> Result<&CStr> {
-        let bytes: &[u8] = self.as_ref();
-        bytes.try_as_ref()
+        (self.as_ref():&[u8]).try_as_ref()
     }
 }
 
@@ -164,15 +156,13 @@ impl_try_as_mut!([u8], ByteStr);
 
 impl TryAsMut<NoNullStr> for ByteStr {
     fn try_as_mut(&mut self) -> Result<&mut NoNullStr> {
-        let bytes: &mut [u8] = self.as_mut();
-        bytes.try_as_mut()
+        (self.as_mut():&mut [u8]).try_as_mut()
     }
 }
 
 impl TryAsMut<CStr> for ByteStr {
     fn try_as_mut(&mut self) -> Result<&mut CStr> {
-        let bytes: &mut [u8] = self.as_mut();
-        bytes.try_as_mut()
+        (self.as_mut():&mut [u8]).try_as_mut()
     }
 }
 
@@ -185,16 +175,14 @@ impl_try_as_ref!([u8], NoNullStr);
 
 impl AsRef<ByteStr> for NoNullStr {
     fn as_ref(&self) -> &ByteStr {
-        let bytes: &[u8] = self.as_ref();
-        bytes.as_ref()
+        (self.as_ref():&[u8]).as_ref()
     }
 }
 impl_try_as_ref!(ByteStr, NoNullStr);
 
 impl TryAsRef<str> for NoNullStr {
     fn try_as_ref(&self) -> Result<&str> {
-        let bytes: &[u8] = self.as_ref();
-        bytes.try_as_ref()
+        (self.as_ref():&[u8]).try_as_ref()
     }
 }
 
@@ -207,8 +195,7 @@ impl_try_as_ref!([u8], CStr);
 
 impl AsRef<ByteStr> for CStr {
     fn as_ref(&self) -> &ByteStr {
-        let bytes: &[u8] = self.as_ref();
-        bytes.as_ref()
+        (self.as_ref():&[u8]).as_ref()
     }
 }
 impl_try_as_ref!(ByteStr, CStr);
@@ -222,8 +209,7 @@ impl_try_as_ref!(NoNullStr, CStr);
 
 impl TryAsRef<str> for CStr {
     fn try_as_ref(&self) -> Result<&str> {
-        let bytes: &[u8] = self.as_ref();
-        bytes.try_as_ref()
+        (self.as_ref():&[u8]).try_as_ref()
     }
 }
 

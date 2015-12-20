@@ -4,6 +4,7 @@
 
 #![crate_name = "lrs_str_two"]
 #![crate_type = "lib"]
+#![feature(type_ascription)]
 #![no_std]
 
 extern crate lrs_arch_fns as arch_fns;

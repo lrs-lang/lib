@@ -44,8 +44,7 @@ impl<P> ToRmo<P, CStr, CString<P>> for [i8]
     where P: MemPool,
 {
     fn to_rmo_with<'a>(&'a self, pool: P) -> Result<Rmo<'a, CStr, CString<P>>> {
-        let bytes: &[u8] = self.as_ref();
-        bytes.to_rmo_with(pool)
+        (self.as_ref():&[u8]).to_rmo_with(pool)
     }
 }
 
@@ -53,8 +52,7 @@ impl<P> ToRmo<P, CStr, CString<P>> for str
     where P: MemPool,
 {
     fn to_rmo_with<'a>(&'a self, pool: P) -> Result<Rmo<'a, CStr, CString<P>>> {
-        let bytes: &[u8] = self.as_ref();
-        bytes.to_rmo_with(pool)
+        (self.as_ref():&[u8]).to_rmo_with(pool)
     }
 }
 
@@ -74,8 +72,7 @@ impl<P> ToRmo<P, CStr, CString<P>> for ByteStr
     where P: MemPool,
 {
     fn to_rmo_with<'a>(&'a self, pool: P) -> Result<Rmo<'a, CStr, CString<P>>> {
-        let bytes: &[u8] = self.as_ref();
-        bytes.to_rmo_with(pool)
+        (self.as_ref():&[u8]).to_rmo_with(pool)
     }
 }
 

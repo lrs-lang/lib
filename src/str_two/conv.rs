@@ -86,8 +86,7 @@ impl<H> TryAsRef<NoNullStr> for String<H>
     where H: MemPool,
 {
     fn try_as_ref(&self) -> Result<&NoNullStr> {
-        let bytes: &[u8] = self.as_ref();
-        bytes.try_as_ref()
+        (self.as_ref():&[u8]).try_as_ref()
     }
 }
 
@@ -95,8 +94,7 @@ impl<H> TryAsRef<CStr> for String<H>
     where H: MemPool,
 {
     fn try_as_ref(&self) -> Result<&CStr> {
-        let bytes: &[u8] = self.as_ref();
-        bytes.try_as_ref()
+        (self.as_ref():&[u8]).try_as_ref()
     }
 }
 
@@ -209,8 +207,7 @@ impl<T: ?Sized, H> TryFrom<T> for String<H>
           T: TryAsRef<str>,
 {
     fn try_from(t: &T) -> Result<String<H>> {
-        let bytes: &[u8] = try!(t.try_as_ref()).as_ref();
-        let vec = try!(bytes.try_to());
+        let vec = try!((try!(t.try_as_ref()).as_ref():&[u8]).try_to());
         unsafe { Ok(String::from_bytes_unchecked(vec)) }
     }
 }
