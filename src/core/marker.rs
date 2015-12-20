@@ -4,44 +4,28 @@
 
 use ops::{Eq};
 
-/// Objects whose size known at compile time.
-///
-/// = Remarks
-///
-/// This includes `&[T]` and `&Trait` but not `[T]` or `Trait`.
+/// Sized types.
 #[lang = "sized"]
 #[fundamental]
 pub trait Sized { }
 
 impl Sized for .. { }
 
-/// Objects that are safe to use if they contain a random bit pattern.
-///
-/// = Remarks
-///
-/// That is, types without invariants. For example, immutable slices are not `Pod` for the
-/// same reason `slice::from_ptr` is not safe. Note that only structs and primitives can
-/// be `Pod`.
+/// Plain old data types.
 #[fundamental]
-pub unsafe trait Pod : Copy {
+pub unsafe trait Pod {
     fn _assert_pod() { }
 }
 
-/// Objects that can safely be copied via `memcpy`.
-///
-/// = Remarks
-///
-/// That is, objects which you can copy and use both the copy and the original. For
-/// example, immutable slices are `Copy`. This is a weaker form of `Pod`.
+unsafe impl<T: Pod> Pod for [T] { }
+
+/// Types whose values are not moved when bound to another name.
 #[lang = "copy"]
 #[fundamental]
 pub trait Copy { }
 
-/// Objects that allow immutable access from threads other than their owning thread.
-///
-/// = Remarks
-///
-/// For example, `RefCell` is `!Sync`.
+/// Types whose values can be placed into immutable variables accessible by multiple
+/// threads in parallel.
 #[lang = "sync"]
 #[rustc_on_unimplemented = "`{Self}` cannot be shared safely between threads"]
 pub unsafe trait Sync: Interrupt { }
@@ -51,20 +35,12 @@ unsafe impl Sync for .. { }
 impl<T> !Sync for *const T { }
 impl<T> !Sync for *mut T { }
 
-/// A dummy object that is `!Sync`.
-///
-/// = Remarks
-///
-/// This can be embedded in other objects to make them `!Sync`.
+/// A zero sized value that is `!Sync`.
 pub struct NoSync;
 
 impl !Sync for NoSync { }
 
-/// Objects that allow immutable access from signal handlers.
-///
-/// = Remarks
-///
-/// For example, `RefCell` is `!Interrupt`.
+/// Types whose values can be placed into immutable thread-local storage.
 #[rustc_on_unimplemented = "`{Self}` cannot be used safely in signal handlers"]
 pub unsafe trait Interrupt { }
 
@@ -74,22 +50,13 @@ unsafe impl<T: Sync> Interrupt for T { }
 impl<T> !Interrupt for *const T { }
 impl<T> !Interrupt for *mut T { }
 
-/// A dummy object that is `!Interrupt`.
-///
-/// = Remarks
-///
-/// This can be embedded in other objects to make them `!Interrupt`.
+/// A zero sized value that is `!Interrupt`.
 pub struct NoInterrupt;
 
 impl !Interrupt for NoInterrupt { }
 impl !Sync for NoInterrupt { }
 
-/// Objects whose ownership can be moved from one thread to another.
-///
-/// = Remarks
-///
-/// For example, types using a thread-local allocator are often `Sync` but never `Send`
-/// because they must be destroyed in the thread they were created in.
+/// Types whose values can be moved between threads.
 pub unsafe trait Send { }
 
 unsafe impl Send for .. { }
@@ -97,16 +64,12 @@ unsafe impl Send for .. { }
 impl<T> !Send for *const T { }
 impl<T> !Send for *mut T { }
 
-/// A dummy object that is `!Send`
-///
-/// = Remarks
-///
-/// This can be embedded in other objects to make them `!Send`.
+/// A zero sized value that is `!Send`.
 pub struct NoSend;
 
 impl !Send for NoSend { }
 
-/// Objects that can be leaked without causing memory unsafety.
+/// Types whose values are leakable.
 ///
 /// = Remarks
 ///
@@ -258,6 +221,6 @@ pub struct PhantomData<T: ?Sized>;
 impl<T: ?Sized> Copy for PhantomData<T> { }
 impl<T: ?Sized> Eq for PhantomData<T> { fn eq(&self, _: &PhantomData<T>) -> bool { true } }
 
-/// Objects that can be converted to an unsized type.
+/// Types whose values can be interpreted as the values of an unsized type.
 #[lang="unsize"]
 pub trait Unsize<T: ?Sized> { }

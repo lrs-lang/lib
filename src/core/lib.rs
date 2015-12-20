@@ -32,6 +32,7 @@ pub mod slice;
 pub mod str;
 pub mod thread_local;
 pub mod non_zero;
+pub mod data;
 
 mod sort;
 
@@ -49,14 +50,11 @@ pub mod prelude {
             Sized, Copy, Pod, Send, Sync, NoSend, NoSync, Interrupt, NoInterrupt,
             PhantomData,
         };
-
         pub use option::{Option};
         pub use option::Option::{Some, None};
-
         pub use ops::{Fn, FnOnce, FnMut, Drop, Deref, DerefMut};
-
         pub use mem::{drop};
-
         pub use iter::{Iterator};
+        pub use data::{d8, DataSlice};
     }
 }

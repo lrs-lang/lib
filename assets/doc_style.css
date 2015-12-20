@@ -62,3 +62,13 @@ code {
 .no_break {
     White-space: nowrap;
 }
+
+.info_head {
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.informative {
+    padding: 5pt;
+    border: 2px solid #BBB;
+}

@@ -48,12 +48,12 @@ impl Rng for Xorshift {
 }
 
 impl Read for Xorshift {
-    fn scatter_read(&mut self, buf: &mut [&mut [u8]]) -> Result<usize> {
+    fn scatter_read(&mut self, buf: &mut [&mut [d8]]) -> Result<usize> {
         self.read(buf[0])
     }
 
     #[cfg(target_arch = "arm")]
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+    fn read(&mut self, buf: &mut [d8]) -> Result<usize> {
         let mut t = self.x ^ (self.x << 11);
         let mut x = self.y;
         let mut y = self.z;
@@ -82,9 +82,9 @@ impl Read for Xorshift {
     }
 
     #[cfg(any(target_arch = "aarch64", target_arch = "x86", target_arch = "x86_64"))]
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+    fn read(&mut self, buf: &mut [d8]) -> Result<usize> {
         if buf.len() < 4 {
-            let base: [u8; 4] = unsafe { mem::cast(self.next_u32().unwrap()) };
+            let base: [d8; 4] = unsafe { mem::cast(self.next_u32().unwrap()) };
             if buf.len() > 2 { buf[2] = base[2]; }
             if buf.len() > 1 { buf[1] = base[1]; }
             if buf.len() > 0 { buf[0] = base[0]; }

@@ -44,7 +44,7 @@ pub mod flags;
 type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
 
 fn rmo_cstr<'a, S>(s: &'a S,
-                   buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
+                   buf: &'a mut [d8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
     where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
 {
     s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::out_of(())))
@@ -129,7 +129,7 @@ impl MsgQueue {
                    attr: Option<MqAttr>) -> Result<MsgQueue>
         where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf: [u8; NAME_MAX] = unsafe { mem::uninit() };
+        let mut buf: [d8; NAME_MAX] = unsafe { mem::uninit() };
         let path = try!(rmo_cstr(&path, &mut buf));
         let attr = attr.map(|a| a.to_native());
         let fd = try!(rv!(mq_open(&path, flags.0, mode.0, attr.as_ref()), -> c_int));
@@ -152,7 +152,7 @@ impl MsgQueue {
     ///
     /// * link:man:mq_timedsend(2)
     pub fn send(&self, msg: &[u8], priority: u16) -> Result {
-        retry(|| mq_timedsend(self.fd, msg, priority as c_uint, None)).ignore_ok()
+        retry(|| mq_timedsend(self.fd, msg.as_ref(), priority as c_uint, None)).ignore_ok()
     }
 
     /// Sends a message over the message queue with a timeout.
@@ -185,7 +185,7 @@ impl MsgQueue {
     /// * link:man:mq_timedsend(2)
     pub fn send_timeout(&self, msg: &[u8], priority: u16, timeout: Time) -> Result {
         let timeout = time_to_timespec(timeout);
-        retry(|| mq_timedsend(self.fd, msg, priority as c_uint,
+        retry(|| mq_timedsend(self.fd, msg.as_ref(), priority as c_uint,
                               Some(&timeout))).ignore_ok()
     }
 
@@ -202,7 +202,7 @@ impl MsgQueue {
     /// * link:man:mq_timedreceive(2)
     pub fn recv<'a>(&self, buf: &'a mut [u8]) -> Result<(&'a mut [u8], u16)> {
         let mut prio = 0;
-        let len = try!(retry(|| mq_timedreceive(self.fd, buf, Some(&mut prio),
+        let len = try!(retry(|| mq_timedreceive(self.fd, buf.as_mut(), Some(&mut prio),
                                                 None))) as usize;
         Ok((&mut buf[..len], prio as u16))
     }
@@ -232,7 +232,7 @@ impl MsgQueue {
                             timeout: Time) -> Result<(&'a mut [u8], u16)> {
         let timeout = time_to_timespec(timeout);
         let mut prio = 0;
-        let len = try!(retry(|| mq_timedreceive(self.fd, buf, Some(&mut prio),
+        let len = try!(retry(|| mq_timedreceive(self.fd, buf.as_mut(), Some(&mut prio),
                                                 Some(&timeout)))) as usize;
         Ok((&mut buf[..len], prio as u16))
     }
@@ -321,7 +321,7 @@ impl FdContainer for MsgQueue {
 pub fn remove<P>(path: P) -> Result
     where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
-    let mut buf: [u8; NAME_MAX] = unsafe { mem::uninit() };
+    let mut buf: [d8; NAME_MAX] = unsafe { mem::uninit() };
     let path = try!(rmo_cstr(&path, &mut buf));
     rv!(mq_unlink(&path))
 }

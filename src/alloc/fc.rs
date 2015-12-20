@@ -66,7 +66,7 @@ impl<P1, P2> MemPool for FcPool<P1, P2>
     where P1: MemPool,
           P2: MemPool,
 {
-    unsafe fn alloc(&mut self, size: usize, align: usize) -> Result<*mut u8> {
+    unsafe fn alloc(&mut self, size: usize, align: usize) -> Result<*mut d8> {
         if expect(self.state.none(), false) {
             if let Ok(ptr) = self.p1.alloc(size, align) {
                 self.state = State::First;
@@ -84,7 +84,7 @@ impl<P1, P2> MemPool for FcPool<P1, P2>
         }
     }
 
-    unsafe fn free(&mut self, ptr: *mut u8, size: usize, align: usize) {
+    unsafe fn free(&mut self, ptr: *mut d8, size: usize, align: usize) {
         if let State::First = self.state {
             self.p1.free(ptr, size, align)
         } else {
@@ -92,8 +92,8 @@ impl<P1, P2> MemPool for FcPool<P1, P2>
         }
     }
 
-    unsafe fn realloc(&mut self, ptr: *mut u8, oldsize: usize, newsize: usize,
-                      align: usize) -> Result<*mut u8> {
+    unsafe fn realloc(&mut self, ptr: *mut d8, oldsize: usize, newsize: usize,
+                      align: usize) -> Result<*mut d8> {
         if let State::First = self.state {
             self.p1.realloc(ptr, oldsize, newsize, align)
         } else {

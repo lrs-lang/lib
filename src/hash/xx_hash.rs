@@ -393,7 +393,7 @@ struct FourBuf<T: Pod> {
                 // conversions below
 }
 
-impl<T: Pod> FourBuf<T> {
+impl<T: Pod+Copy> FourBuf<T> {
     /// Returns an empty FourBuf
     fn empty() -> FourBuf<T> {
         FourBuf {
@@ -425,8 +425,8 @@ impl<T: Pod> FourBuf<T> {
     ///
     fn incomplete(&self) -> &[u8] {
         unsafe {
-            self.buf.as_bytes().unchecked_slice(self.len & !(mem::size_of::<T>() - 1),
-                                                self.len)
+            self.buf.as_data().as_bytes().unchecked_slice(self.len & !(mem::size_of::<T>() - 1),
+                                                          self.len)
         }
     }
 
@@ -440,13 +440,13 @@ impl<T: Pod> FourBuf<T> {
     ///                  returned slice
     ///
     fn unused(&self) -> &[u8] {
-        unsafe { self.buf.as_bytes().unchecked_slice_from(self.len) }
+        unsafe { self.buf.as_data().as_bytes().unchecked_slice_from(self.len) }
     }
 
     /// Appends data to the buffer. Returns the number of bytes appended.
     fn append(&mut self, data: &[u8]) -> usize {
         unsafe {
-            let res = mem::copy(self.buf.as_mut_bytes().unchecked_mut_slice_from(self.len),
+            let res = mem::copy(self.buf.as_mut_data().as_mut_bytes().unchecked_mut_slice_from(self.len),
                                 data);
             self.len += res;
             res
@@ -757,16 +757,16 @@ macro_rules! impl_hasher {
             fn reset<S: Into<$digest>>(&mut self, seed: S) { self.data.reset(seed.into()); }
 
             fn write_bytes (&mut self, val: &[u8] ) { self.data.write_bytes(val); }
-            fn write_u8    (&mut self, val: u8    ) { self.write_bytes(mem::as_bytes(&val)); }
-            fn write_u16   (&mut self, val: u16   ) { self.write_bytes(mem::as_bytes(&val)); }
-            fn write_u32   (&mut self, val: u32   ) { self.write_bytes(mem::as_bytes(&val)); }
-            fn write_u64   (&mut self, val: u64   ) { self.write_bytes(mem::as_bytes(&val)); }
-            fn write_usize (&mut self, val: usize ) { self.write_bytes(mem::as_bytes(&val)); }
-            fn write_i8    (&mut self, val: i8    ) { self.write_bytes(mem::as_bytes(&val)); }
-            fn write_i16   (&mut self, val: i16   ) { self.write_bytes(mem::as_bytes(&val)); }
-            fn write_i32   (&mut self, val: i32   ) { self.write_bytes(mem::as_bytes(&val)); }
-            fn write_i64   (&mut self, val: i64   ) { self.write_bytes(mem::as_bytes(&val)); }
-            fn write_isize (&mut self, val: isize ) { self.write_bytes(mem::as_bytes(&val)); }
+            fn write_u8    (&mut self, val: u8    ) { self.write_bytes(val.as_ref()); }
+            fn write_u16   (&mut self, val: u16   ) { self.write_bytes(val.as_ref()); }
+            fn write_u32   (&mut self, val: u32   ) { self.write_bytes(val.as_ref()); }
+            fn write_u64   (&mut self, val: u64   ) { self.write_bytes(val.as_ref()); }
+            fn write_usize (&mut self, val: usize ) { self.write_bytes(val.as_ref()); }
+            fn write_i8    (&mut self, val: i8    ) { self.write_bytes(val.as_ref()); }
+            fn write_i16   (&mut self, val: i16   ) { self.write_bytes(val.as_ref()); }
+            fn write_i32   (&mut self, val: i32   ) { self.write_bytes(val.as_ref()); }
+            fn write_i64   (&mut self, val: i64   ) { self.write_bytes(val.as_ref()); }
+            fn write_isize (&mut self, val: isize ) { self.write_bytes(val.as_ref()); }
 
             fn digest(&self) -> Self::Digest { self.data.digest() }
 

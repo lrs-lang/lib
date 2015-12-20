@@ -17,20 +17,20 @@ use str_one::{CStr, NoNullStr, ByteStr};
 // Vec<T, H> -> Box<[T], H>
 // Box<[T], H> -> Vec<T, H>
 //
-// &Vec<u8, H> -> &ByteStr
-// &Vec<u8, H> -> Result<&str>
-// &Vec<u8, H> -> Result<&NoNullStr>
-// &Vec<u8, H> -> Result<&CStr>
+// &Vec<u8, H>     -> &ByteStr
+// &Vec<u8, H>     -> Result<&str>
+// &Vec<u8, H>     -> Result<&NoNullStr>
+// &Vec<u8, H>     -> Result<&CStr>
 // &mut Vec<u8, H> -> &mut ByteStr
 // &mut Vec<u8, H> -> Result<&mut NoNullStr>
 // &mut Vec<u8, H> -> Result<&mut CStr>
 //
-// &[T] -> Result<Vec<T, H>>
+// &[T]        -> Result<Vec<T,  H>>
 // &Vec<T, H2> -> Result<Vec<u8, H>>
-// &str -> Result<Vec<u8, H>>
-// &ByteStr -> Result<Vec<u8, H>>
-// &NoNullStr -> Result<Vec<u8, H>>
-// &CStr -> Result<Vec<u8, H>>
+// &str        -> Result<Vec<u8, H>>
+// &ByteStr    -> Result<Vec<u8, H>>
+// &NoNullStr  -> Result<Vec<u8, H>>
+// &CStr       -> Result<Vec<u8, H>>
 
 impl<T, H: ?Sized> AsRef<[T]> for Vec<T, H>
     where H: MemPool,

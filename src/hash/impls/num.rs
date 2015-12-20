@@ -14,7 +14,7 @@ macro_rules! impl_num {
             }
 
             fn stateful_hash_slice<H: Hasher>(val: &[Self], h: &mut H) {
-                h.write_bytes(val.as_bytes());
+                h.write_bytes(val.as_ref());
             }
 
             fn hash<H: Hasher, S: Into<H::Seed>>(&self, seed: S) -> H::Digest {
@@ -23,7 +23,7 @@ macro_rules! impl_num {
 
             fn hash_slice<H: Hasher, S: Into<H::Seed>>(val: &[Self],
                                                        seed: S) -> H::Digest {
-                H::hash_bytes(val.as_bytes(), seed)
+                H::hash_bytes(val.as_ref(), seed)
             }
         }
     }
@@ -50,7 +50,7 @@ macro_rules! impl_wnum {
             fn stateful_hash_slice<H: Hasher>(val: &[Self], h: &mut H)
                 where Self: Sized
             {
-                h.write_bytes(val.as_bytes());
+                h.write_bytes(val.as_ref());
             }
 
             fn hash<H: Hasher, S: Into<H::Seed>>(&self, seed: S) -> H::Digest {
@@ -61,7 +61,7 @@ macro_rules! impl_wnum {
                                                        seed: S) -> H::Digest
                 where Self: Sized
             {
-                H::hash_bytes(val.as_bytes(), seed)
+                H::hash_bytes(val.as_ref(), seed)
             }
         }
     }

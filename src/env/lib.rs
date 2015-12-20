@@ -106,7 +106,7 @@ pub fn get_cwd_pool<H>(pool: H) -> Result<CString<H>>
     let mut buf = Vec::with_pool(pool);
     for &res in &[32, 128, 256, 512, 1024, 2048, rt::aux::page_size()][..] {
         try!(buf.reserve(res));
-        let size = match rv!(syscall::getcwd(unsafe { buf.unused() }), -> usize) {
+        let size = match rv!(syscall::getcwd(buf.unused()), -> usize) {
             Ok(s) => s,
             Err(error::RangeError) => continue,
             Err(e) => return Err(e),
@@ -126,7 +126,7 @@ pub fn get_cwd_pool<H>(pool: H) -> Result<CString<H>>
 type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
 
 fn rmo_cstr<'a, S>(s: &'a S,
-                   buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
+                   buf: &'a mut [d8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
     where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
 {
     s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::out_of(())))
@@ -139,7 +139,7 @@ fn rmo_cstr<'a, S>(s: &'a S,
 pub fn set_cwd<P>(path: P) -> Result
     where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
-    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
     let path = try!(rmo_cstr(&path, &mut buf));
     rv!(syscall::chdir(&path))
 }

@@ -21,12 +21,12 @@ impl<'a> OutOf for Dummy<'a> {
 }
 
 impl<'a> MemPool for Dummy<'a> {
-    unsafe fn alloc(&mut self, _: usize, _: usize) -> Result<*mut u8> {
+    unsafe fn alloc(&mut self, _: usize, _: usize) -> Result<*mut d8> {
         Err(error::NoMemory)
     }
-    unsafe fn free(&mut self, _: *mut u8, _: usize, _: usize) { }
-    unsafe fn realloc(&mut self, _: *mut u8, _: usize, _: usize,
-                      _: usize) -> Result<*mut u8> {
+    unsafe fn free(&mut self, _: *mut d8, _: usize, _: usize) { }
+    unsafe fn realloc(&mut self, _: *mut d8, _: usize, _: usize,
+                      _: usize) -> Result<*mut d8> {
         Err(error::NoMemory)
     }
 }

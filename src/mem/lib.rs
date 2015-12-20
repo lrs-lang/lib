@@ -409,6 +409,6 @@ pub fn availability(range: Range<usize>, buf: &mut [u8]) -> Result<&mut [Availab
     }
     let len = range.end - range.start;
     let pages = (buf.len() + PAGE_SIZE - 1) / PAGE_SIZE;
-    try!(rv!(mincore(range.start, len, buf)));
+    try!(rv!(mincore(range.start, len, buf.as_mut())));
     Ok(unsafe { mem::cast(&mut buf[..pages]) })
 }

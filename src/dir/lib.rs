@@ -45,7 +45,7 @@ pub const DEFAULT_BUF_SIZE: usize = 2048;
 type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
 
 fn rmo_cstr<'a, S>(s: &'a S,
-                   buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
+                   buf: &'a mut [d8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
     where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
 {
     s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::out_of(())))
@@ -67,7 +67,7 @@ fn rmo_cstr<'a, S>(s: &'a S,
 pub fn iter<'a, S>(path: S, error: Option<&'a mut Result>) -> Iter<'a>
     where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
 {
-    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
     let path = rmo_cstr(&path, &mut buf);
     match path {
         Ok(p) => Iter::new(&p, error),
@@ -78,7 +78,7 @@ pub fn iter<'a, S>(path: S, error: Option<&'a mut Result>) -> Iter<'a>
 /// An iterator over the entries in a directory.
 pub struct Iter<'a> {
     dir: File,
-    buf: Vec<u8>,
+    buf: Vec<d8>,
     buf_pos: usize,
     err: Option<&'a mut Result>,
 }

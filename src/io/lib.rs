@@ -34,7 +34,7 @@ pub trait Read {
     /// to the next one. A `0` return value usually signals end-of-file unless the
     /// implementation documentation says something else. Many functions and structures
     /// will assume the `0` <-> end-of-file equivalence.
-    fn scatter_read(&mut self, buf: &mut [&mut [u8]]) -> Result<usize>;
+    fn scatter_read(&mut self, buf: &mut [&mut [d8]]) -> Result<usize>;
 
     /// Reads from the byte-stream into a buffer.
     ///
@@ -56,7 +56,7 @@ pub trait Read {
     /// = See also
     ///
     /// * {scatter}
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+    fn read(&mut self, buf: &mut [d8]) -> Result<usize> {
         self.scatter_read(&mut [buf])
     }
 
@@ -80,7 +80,7 @@ pub trait Read {
     /// = See also
     ///
     /// * {read}
-    fn read_all(&mut self, mut buf: &mut [u8]) -> Result<usize> {
+    fn read_all(&mut self, mut buf: &mut [d8]) -> Result<usize> {
         let mut read = 0;
         while buf.len() > 0 {
             match self.read(buf) {
@@ -236,13 +236,13 @@ pub trait BufWrite : Write {
 }
 
 impl<'a> Read for &'a [u8] {
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
-        let n = mem::copy(buf, *self);
+    fn read(&mut self, buf: &mut [d8]) -> Result<usize> {
+        let n = mem::copy(buf, (**self).as_ref());
         *self = &self[n..];
         Ok(n)
     }
 
-    fn scatter_read(&mut self, mut buf: &mut [&mut [u8]]) -> Result<usize> {
+    fn scatter_read(&mut self, mut buf: &mut [&mut [d8]]) -> Result<usize> {
         let mut sum = 0;
         while self.len() > 0 && buf.len() > 0 {
             sum += self.read(&mut buf[0]).unwrap();
@@ -298,16 +298,36 @@ impl<'a> Write for &'a mut [u8] {
     }
 }
 
+impl<'a> Write for &'a mut [d8] {
+    fn write(&mut self, buf: &[u8]) -> Result<usize> {
+        let n = mem::copy(*self, buf.as_ref());
+        unsafe {
+            // Compiler bug.
+            *self = mem::cast::<&mut [d8], &'a mut [d8]>(&mut self[n..]);
+        }
+        Ok(n)
+    }
+
+    fn gather_write(&mut self, mut buf: &[&[u8]]) -> Result<usize> {
+        let mut sum = 0;
+        while self.len() > 0 && buf.len() > 0 {
+            sum += self.write(&buf[0]).unwrap();
+            buf = &buf[1..];
+        }
+        Ok(sum)
+    }
+}
+
 impl<'a, T: Read+?Sized> Read for &'a mut T {
-    fn scatter_read(&mut self, buf: &mut [&mut [u8]]) -> Result<usize> {
+    fn scatter_read(&mut self, buf: &mut [&mut [d8]]) -> Result<usize> {
         (**self).scatter_read(buf)
     }
 
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+    fn read(&mut self, buf: &mut [d8]) -> Result<usize> {
         (**self).read(buf)
     }
 
-    fn read_all(&mut self, mut buf: &mut [u8]) -> Result<usize> {
+    fn read_all(&mut self, mut buf: &mut [d8]) -> Result<usize> {
         (**self).read_all(buf)
     }
 }

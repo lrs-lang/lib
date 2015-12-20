@@ -198,7 +198,7 @@ impl File {
     pub fn memory<N>(name: N, flags: MemfdFlags) -> Result<File>
         where N: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf: [u8; NAME_MAX] = unsafe { mem::uninit() };
+        let mut buf: [d8; NAME_MAX] = unsafe { mem::uninit() };
         let name = try!(rmo_cstr(&name, &mut buf));
         let fd = try!(rv!(memfd_create(&name, flags.0), -> c_int));
         Ok(File::from_owned(fd))
@@ -260,7 +260,7 @@ impl File {
     /// * link:lrs::file::File::read_at
     /// * link:lrs::file::File::scatter_read
     /// * link:lrs::file::File::scatter_read_at
-    pub fn read(&self, buf: &mut [u8]) -> Result<usize> {
+    pub fn read(&self, buf: &mut [d8]) -> Result<usize> {
         retry(|| read(self.fd, buf)).map(|r| r as usize)
     }
 
@@ -284,7 +284,7 @@ impl File {
     /// * link:lrs::file::File::gather_write
     /// * link:lrs::file::File::gather_write_at
     pub fn write(&self, buf: &[u8]) -> Result<usize> {
-        retry(|| write(self.fd, buf)).map(|r| r as usize)
+        retry(|| write(self.fd, buf.as_ref())).map(|r| r as usize)
     }
 
     /// Closes the file.
@@ -429,7 +429,7 @@ impl File {
     /// * link:lrs::file::File::read
     /// * link:lrs::file::File::scatter_read
     /// * link:lrs::file::File::scatter_read_at
-    pub fn read_at(&self, buf: &mut [u8], off: i64) -> Result<usize> {
+    pub fn read_at(&self, buf: &mut [d8], off: i64) -> Result<usize> {
         retry(|| pread(self.fd, buf, off as loff_t)).map(|r| r as usize)
     }
 
@@ -458,7 +458,7 @@ impl File {
     /// * link:lrs::file::File::gather_write
     /// * link:lrs::file::File::gather_write_at
     pub fn write_at(&self, buf: &[u8], off: i64) -> Result<usize> {
-        retry(|| pwrite(self.fd, buf, off as loff_t)).map(|r| r as usize)
+        retry(|| pwrite(self.fd, buf.as_ref(), off as loff_t)).map(|r| r as usize)
     }
 
     /// Reads from the file into multiple buffers.
@@ -486,7 +486,7 @@ impl File {
     /// * link:lrs::file::File::read
     /// * link:lrs::file::File::read_at
     /// * link:lrs::file::File::scatter_read_at
-    pub fn scatter_read(&self, bufs: &mut [&mut [u8]]) -> Result<usize> {
+    pub fn scatter_read(&self, bufs: &mut [&mut [d8]]) -> Result<usize> {
         retry(|| readv(self.fd, bufs)).map(|r| r as usize)
     }
 
@@ -513,7 +513,7 @@ impl File {
     /// * link:lrs::file::File::write_at
     /// * link:lrs::file::File::gather_write_at
     pub fn gather_write(&self, bufs: &[&[u8]]) -> Result<usize> {
-        retry(|| writev(self.fd, bufs)).map(|r| r as usize)
+        retry(|| writev(self.fd, bufs.as_ref())).map(|r| r as usize)
     }
 
     /// Reads from a position in the file into multiple buffers.
@@ -546,7 +546,7 @@ impl File {
     /// * link:lrs::file::File::read
     /// * link:lrs::file::File::read_at
     /// * link:lrs::file::File::scatter_read
-    pub fn scatter_read_at(&self, bufs: &mut [&mut [u8]], off: i64) -> Result<usize> {
+    pub fn scatter_read_at(&self, bufs: &mut [&mut [d8]], off: i64) -> Result<usize> {
         retry(|| preadv(self.fd, bufs, off as loff_t)).map(|r| r as usize)
     }
 
@@ -578,7 +578,7 @@ impl File {
     /// * link:lrs::file::File::write_at
     /// * link:lrs::file::File::gather_write
     pub fn gather_write_at(&self, bufs: &[&[u8]], off: i64) -> Result<usize> {
-        retry(|| pwritev(self.fd, bufs, off as loff_t)).map(|r| r as usize)
+        retry(|| pwritev(self.fd, bufs.as_ref(), off as loff_t)).map(|r| r as usize)
     }
 
     /// Changes the length of the file.
@@ -702,7 +702,7 @@ impl File {
     pub fn link<P>(&self, path: P) -> Result
         where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let path = try!(rmo_cstr(&path, &mut buf));
         rv!(linkat(self.fd, CStr::empty(), AT_FDCWD, &path, AT_EMPTY_PATH))
     }
@@ -728,7 +728,7 @@ impl File {
     pub fn link_rel_to<P>(&self, dir: &File, path: P) -> Result
         where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let path = try!(rmo_cstr(&path, &mut buf));
         rv!(linkat(self.fd, CStr::empty(), dir.fd, &path, AT_EMPTY_PATH))
     }
@@ -774,7 +774,7 @@ impl File {
     pub fn filename_pool<P>(&self, pool: P) -> Result<CString<P>>
         where P: MemPool,
     {
-        let mut proc_buf: [u8; 36] = unsafe { mem::uninit() };
+        let mut proc_buf: [d8; 36] = unsafe { mem::uninit() };
         let mut proc_ = Vec::with_pool(OncePool::new(&mut proc_buf));
         write!(&mut proc_, "/proc/self/fd/{}", self.fd);
         let cstr = try!(proc_.try_as_ref());
@@ -784,7 +784,7 @@ impl File {
 
         while buf.capacity() < len {
             try!(buf.reserve(len));
-            len = try!(rv!(readlinkat(self.fd, cstr, unsafe { buf.unused() }), -> usize));
+            len = try!(rv!(readlinkat(self.fd, cstr, buf.unused()), -> usize));
         }
 
         unsafe { buf.set_len(len); }
@@ -805,7 +805,7 @@ impl File {
     pub fn filename<P = alloc::Heap>(&self) -> Result<CString<P>>
         where P: MemPool+OutOf,
     {
-        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let res = try!(self.filename_pool(OncePool::new(&mut buf)));
         res.try_to()
     }
@@ -944,9 +944,9 @@ impl File {
     /// * link:man:fsetxattr(2)
     pub fn set_attr<S, V: ?Sized>(&self, name: S, val: &V) -> Result
         where S: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
-              V: AsRef<[u8]>,
+              V: AsRef<[d8]>,
     {
-        let mut buf: [u8; 128] = unsafe { mem::uninit() };
+        let mut buf: [d8; 128] = unsafe { mem::uninit() };
         let name = try!(rmo_cstr(&name, &mut buf));
         rv!(fsetxattr(self.fd, &name, val.as_ref(), 0))
     }
@@ -965,10 +965,10 @@ impl File {
     /// = See also
     ///
     /// * link:man:fgetxattr(2)
-    pub fn get_attr_buf<S>(&self, name: S, val: &mut [u8]) -> Result<usize>
+    pub fn get_attr_buf<S>(&self, name: S, val: &mut [d8]) -> Result<usize>
         where S: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf: [u8; 128] = unsafe { mem::uninit() };
+        let mut buf: [d8; 128] = unsafe { mem::uninit() };
         let name = try!(rmo_cstr(&name, &mut buf));
         rv!(fgetxattr(self.fd, &name, val), -> usize)
     }
@@ -987,7 +987,7 @@ impl File {
     pub fn get_attr<S>(&self, name: S) -> Result<Vec<u8>>
         where S: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf: [u8; 128] = unsafe { mem::uninit() };
+        let mut buf: [d8; 128] = unsafe { mem::uninit() };
         let name = try!(rmo_cstr(&name, &mut buf));
         get_attr_common(|buf| fgetxattr(self.fd, &name, buf))
     }
@@ -1003,7 +1003,7 @@ impl File {
     pub fn remove_attr<S>(&self, name: S) -> Result
         where S: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf: [u8; 128] = unsafe { mem::uninit() };
+        let mut buf: [d8; 128] = unsafe { mem::uninit() };
         let name = try!(rmo_cstr(&name, &mut buf));
         rv!(fremovexattr(self.fd, &name))
     }
@@ -1177,7 +1177,7 @@ impl File {
     pub fn rel_open<P>(&self, path: P, flags: FileFlags, mode: Mode) -> Result<File>
         where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let path = try!(rmo_cstr(&path, &mut buf));
         let fd = match retry(|| openat(self.fd, &path, flags.0, mode.0)) {
             Ok(fd) => fd,
@@ -1213,7 +1213,7 @@ impl File {
     pub fn rel_info<P>(&self, path: P) -> Result<Info>
         where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let path = try!(rmo_cstr(&path, &mut buf));
         let mut stat = mem::zeroed();
         try!(rv!(fstatat(self.fd, &path, &mut stat, 0)));
@@ -1239,7 +1239,7 @@ impl File {
     pub fn rel_info_no_follow<P>(&self, path: P) -> Result<Info>
         where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let path = try!(rmo_cstr(&path, &mut buf));
         let mut stat = mem::zeroed();
         try!(rv!(fstatat(self.fd, &path, &mut stat, AT_SYMLINK_NOFOLLOW)));
@@ -1264,7 +1264,7 @@ impl File {
     pub fn rel_exists<P>(&self, path: P) -> Result<bool>
         where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let path = try!(rmo_cstr(&path, &mut buf));
         let res = faccessat(self.fd, &path, 0);
         if res >= 0 {
@@ -1299,7 +1299,7 @@ impl File {
     pub fn rel_can_access<P>(&self, path: P, mode: AccessMode) -> Result<bool>
         where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let path = try!(rmo_cstr(&path, &mut buf));
         let res = faccessat(self.fd, &path, mode.0);
         if res >= 0 {
@@ -1339,7 +1339,7 @@ impl File {
                             modification: TimeChange) -> Result
         where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let path = try!(rmo_cstr(&path, &mut buf));
         let times = [time_change_to_timespec(access),
                      time_change_to_timespec(modification)];
@@ -1370,7 +1370,7 @@ impl File {
                                       modification: TimeChange) -> Result
         where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let path = try!(rmo_cstr(&path, &mut buf));
         let times = [time_change_to_timespec(access),
                      time_change_to_timespec(modification)];
@@ -1402,8 +1402,8 @@ impl File {
         where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
               Q: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf1: [d8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf2: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let one = try!(rmo_cstr(&one, &mut buf1));
         let two = try!(rmo_cstr(&two, &mut buf2));
         rv!(renameat2(self.fd, &one, self.fd, &two, RENAME_EXCHANGE))
@@ -1437,8 +1437,8 @@ impl File {
         where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
               Q: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf1: [d8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf2: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let one = try!(rmo_cstr(&from, &mut buf1));
         let two = try!(rmo_cstr(&to, &mut buf2));
         let flag = if replace { 0 } else { RENAME_NOREPLACE };
@@ -1464,7 +1464,7 @@ impl File {
     pub fn rel_create_dir<P>(&self, path: P, mode: Mode) -> Result
         where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let path = try!(rmo_cstr(&path, &mut buf));
         rv!(mkdirat(self.fd, &path, mode.0))
     }
@@ -1486,7 +1486,7 @@ impl File {
     pub fn rel_remove<P>(&self, path: P) -> Result
         where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let path = try!(rmo_cstr(&path, &mut buf));
         let mut ret = unlinkat(self.fd, &path, 0);
         if Errno(-ret) == error::IsADirectory {
@@ -1515,8 +1515,8 @@ impl File {
         where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
               Q: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
-        let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf1: [d8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf2: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let target = try!(rmo_cstr(&target, &mut buf1));
         let link = try!(rmo_cstr(&link, &mut buf2));
         rv!(symlinkat(&target, self.fd, &link))
@@ -1545,7 +1545,7 @@ impl File {
         where L: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
               P: MemPool,
     {
-        let mut pbuf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut pbuf: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let link = try!(rmo_cstr(&link, &mut pbuf));
 
         let mut buf = Vec::with_pool(pool);
@@ -1553,7 +1553,7 @@ impl File {
 
         while buf.capacity() < len {
             try!(buf.reserve(len));
-            len = try!(rv!(readlinkat(self.fd, &link, unsafe { buf.unused() }), -> usize));
+            len = try!(rv!(readlinkat(self.fd, &link, buf.unused()), -> usize));
         }
 
         unsafe { buf.set_len(len); }
@@ -1582,7 +1582,7 @@ impl File {
         where L: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
               P: MemPool+OutOf,
     {
-        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let res = try!(self.rel_read_link_pool(link, OncePool::new(&mut buf)));
         res.try_to()
     }
@@ -1611,7 +1611,7 @@ impl File {
     pub fn rel_change_owner<P>(&self, path: P, user: UserId, group: GroupId) -> Result
         where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let path = try!(rmo_cstr(&path, &mut buf));
         rv!(fchownat(self.fd, &path, user, group, 0))
     }
@@ -1639,7 +1639,7 @@ impl File {
                                          group: GroupId) -> Result
         where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let path = try!(rmo_cstr(&path, &mut buf));
         rv!(fchownat(self.fd, &path, user, group, AT_SYMLINK_NOFOLLOW))
     }
@@ -1663,7 +1663,7 @@ impl File {
     pub fn rel_change_mode<P>(&self, path: P, mode: Mode) -> Result
         where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let path = try!(rmo_cstr(&path, &mut buf));
         rv!(fchmodat(self.fd, &path, mode.0))
     }
@@ -1696,7 +1696,7 @@ impl File {
             Type::File | Type::FIFO | Type::Socket => { },
             _ => return Err(error::InvalidArgument),
         }
-        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let path = try!(rmo_cstr(&path, &mut buf));
         rv!(mknodat(self.fd, &path, file_type_to_mode(ty) | mode.0, 0))
     }
@@ -1727,7 +1727,7 @@ impl File {
             DeviceType::Character => Type::CharDevice,
             DeviceType::Block     => Type::BlockDevice,
         };
-        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let path = try!(rmo_cstr(&path, &mut buf));
         rv!(mknodat(self.fd, &path, file_type_to_mode(ty) | mode.0, dev.id()))
     }
@@ -1785,14 +1785,14 @@ impl File {
         where L: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
               P: MemPool+OutOf,
     {
-        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let res = try!(self.rel_real_path_pool(path, OncePool::new(&mut buf)));
         res.try_to()
     }
 }
 
 impl Read for File {
-    fn scatter_read(&mut self, buf: &mut [&mut [u8]]) -> Result<usize> {
+    fn scatter_read(&mut self, buf: &mut [&mut [d8]]) -> Result<usize> {
         File::scatter_read(self, buf)
     }
 }
@@ -1804,7 +1804,7 @@ impl Write for File {
 }
 
 impl<'a> Read for &'a File {
-    fn scatter_read(&mut self, buf: &mut [&mut [u8]]) -> Result<usize> {
+    fn scatter_read(&mut self, buf: &mut [&mut [d8]]) -> Result<usize> {
         File::scatter_read(*self, buf)
     }
 }

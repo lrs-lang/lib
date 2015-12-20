@@ -8,7 +8,7 @@ use {MemPool};
 
 #[derive(Copy)]
 pub struct OncePool<'a> {
-    ptr: *mut u8,
+    ptr: *mut d8,
     len: usize,
     _data: PhantomData<&'a ()>,
 }
@@ -24,7 +24,7 @@ impl<'a> OutOf for OncePool<'a> {
 }
 
 impl<'a> OncePool<'a> {
-    pub fn new(pool: &'a mut [u8]) -> OncePool<'a> {
+    pub fn new(pool: &'a mut [d8]) -> OncePool<'a> {
         OncePool {
             ptr: pool.as_mut_ptr(),
             len: pool.len(),
@@ -34,7 +34,7 @@ impl<'a> OncePool<'a> {
 }
 
 impl<'a> MemPool for OncePool<'a> {
-    unsafe fn alloc(&mut self, size: usize, align: usize) -> Result<*mut u8> {
+    unsafe fn alloc(&mut self, size: usize, align: usize) -> Result<*mut d8> {
         if self.ptr.is_null() {
             return Err(error::NoMemory);
         }
@@ -53,10 +53,10 @@ impl<'a> MemPool for OncePool<'a> {
         Err(error::NoMemory)
     }
 
-    unsafe fn free(&mut self, _: *mut u8, _: usize, _: usize) { }
+    unsafe fn free(&mut self, _: *mut d8, _: usize, _: usize) { }
 
-    unsafe fn realloc(&mut self, ptr: *mut u8, _: usize, newsize: usize,
-                      _: usize) -> Result<*mut u8> {
+    unsafe fn realloc(&mut self, ptr: *mut d8, _: usize, newsize: usize,
+                      _: usize) -> Result<*mut d8> {
         if newsize <= self.len {
             Ok(ptr)
         } else {
@@ -64,7 +64,7 @@ impl<'a> MemPool for OncePool<'a> {
         }
     }
 
-    unsafe fn usable_size(&self, _: *mut u8, _: usize, _: usize) -> usize {
+    unsafe fn usable_size(&self, _: *mut d8, _: usize, _: usize) -> usize {
         self.len
     }
 }

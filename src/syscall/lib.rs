@@ -42,7 +42,7 @@ pub use r::{StatType, StatfsType};
 
 mod std { pub use base::std::*; pub use cty; }
 
-// XXX: iovec _MUST_ be the same as &mut [u8]
+// XXX: iovec _MUST_ be the same as &mut [d8]
 //      We now have a test for that.
 //
 // TODO: Audit ioctl
@@ -500,7 +500,7 @@ pub fn readahead(fd: c_int, offset: loff_t, count: size_t) -> ssize_t {
 /// = See also
 ///
 /// * link:man:read(2)
-pub fn read(fd: c_int, buf: &mut [u8]) -> ssize_t {
+pub fn read(fd: c_int, buf: &mut [d8]) -> ssize_t {
     unsafe {
         r::read(fd as k_uint, buf.as_mut_ptr() as *mut _, buf.len().saturating_cast())
     }
@@ -520,7 +520,7 @@ pub fn read(fd: c_int, buf: &mut [u8]) -> ssize_t {
 /// = See also
 ///
 /// * link:man:write(2)
-pub fn write(fd: c_int, buf: &[u8]) -> ssize_t {
+pub fn write(fd: c_int, buf: &[d8]) -> ssize_t {
     unsafe {
         r::write(fd as k_uint, buf.as_ptr() as *const _, buf.len().saturating_cast())
     }
@@ -543,7 +543,7 @@ pub fn write(fd: c_int, buf: &[u8]) -> ssize_t {
 /// = See also
 ///
 /// * link:man:pread(2)
-pub fn pread(fd: c_int, buf: &mut [u8], offset: loff_t) -> ssize_t {
+pub fn pread(fd: c_int, buf: &mut [d8], offset: loff_t) -> ssize_t {
     unsafe {
         r::pread(fd as k_uint, buf.as_mut_ptr() as *mut _, buf.len().saturating_cast(),
                  offset)
@@ -568,7 +568,7 @@ pub fn pread(fd: c_int, buf: &mut [u8], offset: loff_t) -> ssize_t {
 /// = See also
 ///
 /// * link:man:pwrite(2)
-pub fn pwrite(fd: c_int, buf: &[u8], offset: loff_t) -> ssize_t {
+pub fn pwrite(fd: c_int, buf: &[d8], offset: loff_t) -> ssize_t {
     unsafe {
         r::pwrite(fd as k_uint, buf.as_ptr() as *const _, buf.len().saturating_cast(),
                   offset)
@@ -589,7 +589,7 @@ pub fn pwrite(fd: c_int, buf: &[u8], offset: loff_t) -> ssize_t {
 /// = See also
 ///
 /// * link:man:readv(2)
-pub fn readv(fd: c_int, bufs: &mut [&mut [u8]]) -> ssize_t {
+pub fn readv(fd: c_int, bufs: &mut [&mut [d8]]) -> ssize_t {
     unsafe {
         r::readv(fd as k_ulong, bufs.as_mut_ptr() as *mut _, bufs.len().saturating_cast())
     }
@@ -609,7 +609,7 @@ pub fn readv(fd: c_int, bufs: &mut [&mut [u8]]) -> ssize_t {
 /// = See also
 ///
 /// * link:man:writev(2)
-pub fn writev(fd: c_int, bufs: &[&[u8]]) -> ssize_t {
+pub fn writev(fd: c_int, bufs: &[&[d8]]) -> ssize_t {
     unsafe {
         r::writev(fd as k_ulong, bufs.as_ptr() as *const _, bufs.len().saturating_cast())
     }
@@ -632,7 +632,7 @@ pub fn writev(fd: c_int, bufs: &[&[u8]]) -> ssize_t {
 /// = See also
 ///
 /// * link:man:preadv(2)
-pub fn preadv(fd: c_int, bufs: &mut [&mut [u8]], offset: loff_t) -> ssize_t {
+pub fn preadv(fd: c_int, bufs: &mut [&mut [d8]], offset: loff_t) -> ssize_t {
     let lo = ((offset as u64) & 0xFFFF_FFFF) as k_ulong;
     let hi = ((offset as u64) > 32) as k_ulong;
     unsafe {
@@ -658,7 +658,7 @@ pub fn preadv(fd: c_int, bufs: &mut [&mut [u8]], offset: loff_t) -> ssize_t {
 /// = See also
 ///
 /// * link:man:pwritev(2)
-pub fn pwritev(fd: c_int, bufs: &[&[u8]], offset: loff_t) -> ssize_t {
+pub fn pwritev(fd: c_int, bufs: &[&[d8]], offset: loff_t) -> ssize_t {
     let lo = ((offset as u64) & 0xFFFF_FFFF) as k_ulong;
     let hi = ((offset as u64) > 32) as k_ulong;
     unsafe {
@@ -816,7 +816,7 @@ pub fn prlimit(pid: pid_t, res: c_int, new: Option<&rlimit64>,
 /// = See also
 ///
 /// * link:man:getdents(2)
-pub fn getdents(fd: c_int, buf: &mut [u8]) -> c_int {
+pub fn getdents(fd: c_int, buf: &mut [d8]) -> c_int {
     unsafe {
         r::getdents(fd as k_uint, buf.as_mut_ptr() as *mut _, buf.len().saturating_cast())
     }
@@ -1057,7 +1057,7 @@ pub fn symlinkat(target: &CStr, dir: c_int, link: &CStr) -> c_int {
 /// = See also
 ///
 /// * link:man:readlinkat(2)
-pub fn readlinkat(dir: c_int, path: &CStr, buf: &mut [u8]) -> ssize_t {
+pub fn readlinkat(dir: c_int, path: &CStr, buf: &mut [d8]) -> ssize_t {
     unsafe { r::readlinkat(dir, path.as_ptr(), buf.as_mut_ptr() as *mut c_char,
                           buf.len().saturating_cast()) }
 }
@@ -1155,7 +1155,7 @@ pub fn mknodat(dir: c_int, path: &CStr, mode: umode_t, dev: dev_t) -> c_int {
 /// = See also
 ///
 /// * link:man:setxattr(2)
-pub fn setxattr(path: &CStr, name: &CStr, val: &[u8], flags: c_int) -> c_int {
+pub fn setxattr(path: &CStr, name: &CStr, val: &[d8], flags: c_int) -> c_int {
     unsafe { r::setxattr(path.as_ptr(), name.as_ptr(), val.as_ptr() as *const c_void,
                         val.len().saturating_cast(), flags) }
 }
@@ -1180,7 +1180,7 @@ pub fn setxattr(path: &CStr, name: &CStr, val: &[u8], flags: c_int) -> c_int {
 /// = See also
 ///
 /// * link:man:lsetxattr(2)
-pub fn lsetxattr(path: &CStr, name: &CStr, val: &[u8], flags: c_int) -> c_int {
+pub fn lsetxattr(path: &CStr, name: &CStr, val: &[d8], flags: c_int) -> c_int {
     unsafe { r::lsetxattr(path.as_ptr(), name.as_ptr(), val.as_ptr() as *const c_void,
                          val.len().saturating_cast(), flags) }
 }
@@ -1205,7 +1205,7 @@ pub fn lsetxattr(path: &CStr, name: &CStr, val: &[u8], flags: c_int) -> c_int {
 /// = See also
 ///
 /// * link:man:fsetxattr(2)
-pub fn fsetxattr(fd: c_int, name: &CStr, val: &[u8], flags: c_int) -> c_int {
+pub fn fsetxattr(fd: c_int, name: &CStr, val: &[d8], flags: c_int) -> c_int {
     unsafe { r::fsetxattr(fd, name.as_ptr(), val.as_ptr() as *const c_void,
                          val.len().saturating_cast(), flags) }
 }
@@ -1227,7 +1227,7 @@ pub fn fsetxattr(fd: c_int, name: &CStr, val: &[u8], flags: c_int) -> c_int {
 /// = See also
 ///
 /// * link:man:getxattr(2)
-pub fn getxattr(path: &CStr, name: &CStr, val: &mut [u8]) -> ssize_t {
+pub fn getxattr(path: &CStr, name: &CStr, val: &mut [d8]) -> ssize_t {
     unsafe { r::getxattr(path.as_ptr(), name.as_ptr(), val.as_mut_ptr() as *mut c_void,
                         val.len().saturating_cast()) }
 }
@@ -1249,7 +1249,7 @@ pub fn getxattr(path: &CStr, name: &CStr, val: &mut [u8]) -> ssize_t {
 /// = See also
 ///
 /// * link:man:lgetxattr(2)
-pub fn lgetxattr(path: &CStr, name: &CStr, val: &mut [u8]) -> ssize_t {
+pub fn lgetxattr(path: &CStr, name: &CStr, val: &mut [d8]) -> ssize_t {
     unsafe { r::lgetxattr(path.as_ptr(), name.as_ptr(), val.as_mut_ptr() as *mut c_void,
                          val.len().saturating_cast()) }
 }
@@ -1271,7 +1271,7 @@ pub fn lgetxattr(path: &CStr, name: &CStr, val: &mut [u8]) -> ssize_t {
 /// = See also
 ///
 /// * link:man:fgetxattr(2)
-pub fn fgetxattr(fd: c_int, name: &CStr, val: &mut [u8]) -> ssize_t {
+pub fn fgetxattr(fd: c_int, name: &CStr, val: &mut [d8]) -> ssize_t {
     unsafe { r::fgetxattr(fd, name.as_ptr(), val.as_mut_ptr() as *mut c_void,
                          val.len().saturating_cast()) }
 }
@@ -1344,7 +1344,7 @@ pub fn fremovexattr(fd: c_int, name: &CStr) -> c_int {
 /// = See also
 ///
 /// * link:man:listxattr(2)
-pub fn listxattr(path: &CStr, list: &mut [u8]) -> ssize_t {
+pub fn listxattr(path: &CStr, list: &mut [d8]) -> ssize_t {
     unsafe { r::listxattr(path.as_ptr(), list.as_mut_ptr() as *mut c_char,
                          list.len().saturating_cast()) }
 }
@@ -1363,7 +1363,7 @@ pub fn listxattr(path: &CStr, list: &mut [u8]) -> ssize_t {
 /// = See also
 ///
 /// * link:man:llistxattr(2)
-pub fn llistxattr(path: &CStr, list: &mut [u8]) -> ssize_t {
+pub fn llistxattr(path: &CStr, list: &mut [d8]) -> ssize_t {
     unsafe { r::llistxattr(path.as_ptr(), list.as_mut_ptr() as *mut c_char,
                           list.len().saturating_cast()) }
 }
@@ -1382,7 +1382,7 @@ pub fn llistxattr(path: &CStr, list: &mut [u8]) -> ssize_t {
 /// = See also
 ///
 /// * link:man:flistxattr(2)
-pub fn flistxattr(fd: c_int, list: &mut [u8]) -> ssize_t {
+pub fn flistxattr(fd: c_int, list: &mut [d8]) -> ssize_t {
     unsafe {
         r::flistxattr(fd, list.as_mut_ptr() as *mut c_char, list.len().saturating_cast())
     }
@@ -1591,7 +1591,7 @@ pub fn epoll_pwait(epfd: c_int, events: &mut [epoll_event], timeout: c_int,
 /// = See also
 ///
 /// * link:man:sched_getaffinity(2)
-pub fn sched_getaffinity(tid: pid_t, set: &mut [u8]) -> c_int {
+pub fn sched_getaffinity(tid: pid_t, set: &mut [d8]) -> c_int {
     unsafe {
         r::sched_getaffinity(tid, set.len().saturating_cast(), set.as_mut_ptr() as *mut _)
     }
@@ -1611,7 +1611,7 @@ pub fn sched_getaffinity(tid: pid_t, set: &mut [u8]) -> c_int {
 /// = See also
 ///
 /// * link:man:sched_setaffinity(2)
-pub fn sched_setaffinity(tid: pid_t, set: &[u8]) -> c_int {
+pub fn sched_setaffinity(tid: pid_t, set: &[d8]) -> c_int {
     unsafe {
         r::sched_setaffinity(tid, set.len().saturating_cast(), set.as_ptr() as *mut _)
     }
@@ -1661,7 +1661,7 @@ pub fn sysinfo(buf: &mut sysinfo) -> c_int {
 /// = See also
 ///
 /// * link:man:getrandom(2)
-pub fn getrandom(buf: &mut [u8], flags: c_uint) -> c_int {
+pub fn getrandom(buf: &mut [d8], flags: c_uint) -> c_int {
     unsafe { r::getrandom(buf.as_ptr() as *mut c_char, buf.len() as size_t, flags) }
 }
 
@@ -1740,7 +1740,7 @@ pub fn umount(dst: &CStr, flags: c_int) -> c_int {
 /// = See also
 ///
 /// * link:man:sethostname(2)
-pub fn sethostname(name: &[u8]) -> c_int {
+pub fn sethostname(name: &[d8]) -> c_int {
     unsafe { r::sethostname(name.as_ptr() as *mut c_char, name.len().saturating_cast()) }
 }
 
@@ -1755,7 +1755,7 @@ pub fn sethostname(name: &[u8]) -> c_int {
 /// = See also
 ///
 /// * link:man:setdomainname(2)
-pub fn setdomainname(name: &[u8]) -> c_int {
+pub fn setdomainname(name: &[d8]) -> c_int {
     unsafe { r::setdomainname(name.as_ptr() as *mut c_char, name.len().saturating_cast()) }
 }
 
@@ -1802,7 +1802,7 @@ pub fn socket(domain: c_int, mut ty: c_int, proto: c_int) -> c_int {
 /// = See also
 ///
 /// * link:man:connect(2)
-pub fn connect(sockfd: c_int, addr: &[u8]) -> c_int {
+pub fn connect(sockfd: c_int, addr: &[d8]) -> c_int {
     unsafe {
         r::connect(sockfd, addr.as_ptr() as *mut sockaddr, addr.len().saturating_cast())
     }
@@ -1828,7 +1828,7 @@ pub fn connect(sockfd: c_int, addr: &[u8]) -> c_int {
 /// = See also
 ///
 /// * link:man:accept4(2)
-pub fn accept4(sockfd: c_int, addr: Option<&mut [u8]>, addrlen: &mut usize,
+pub fn accept4(sockfd: c_int, addr: Option<&mut [d8]>, addrlen: &mut usize,
                flags: c_int) -> c_int {
     let addr = addr.unwrap_or(&mut []);
     let mut len = addr.len().saturating_cast();
@@ -1862,7 +1862,7 @@ pub fn accept4(sockfd: c_int, addr: Option<&mut [u8]>, addrlen: &mut usize,
 /// = See also
 ///
 /// * link:man:recvfrom(2)
-pub fn recvfrom(sockfd: c_int, buf: &mut [u8], flags: c_int, src_addr: Option<&mut [u8]>,
+pub fn recvfrom(sockfd: c_int, buf: &mut [d8], flags: c_int, src_addr: Option<&mut [d8]>,
                 addrlen: &mut usize) -> ssize_t {
     let src_addr = src_addr.unwrap_or(&mut []);
     let mut len = src_addr.len().saturating_cast();
@@ -1952,11 +1952,11 @@ pub fn recvmmsg(sockfd: c_int, msgvec: &mut [mmsghdr], flags: c_uint,
 /// = See also
 ///
 /// * link:man:sendto(2)
-pub fn sendto(sockfd: c_int, buf: &[u8], flags: c_int,
-              dst_addr: Option<&[u8]>) -> ssize_t {
+pub fn sendto(sockfd: c_int, buf: &[d8], flags: c_int,
+              dst_addr: Option<&[d8]>) -> ssize_t {
     let (dst_ptr, dst_len) = match dst_addr {
         Some(addr) => (addr.as_ptr(), addr.len()),
-        _ => (0 as *const u8, 0),
+        _ => (0 as *const d8, 0),
     };
     unsafe {
         r::sendto(sockfd, buf.as_ptr() as *mut c_void, buf.len().saturating_cast(),
@@ -2041,7 +2041,7 @@ pub fn shutdown(sockfd: c_int, how: c_int) -> c_int {
 /// = See also
 ///
 /// * link:man:bind(2)
-pub fn bind(sockfd: c_int, addr: &[u8]) -> c_int {
+pub fn bind(sockfd: c_int, addr: &[d8]) -> c_int {
     unsafe {
         r::bind(sockfd, addr.as_ptr() as *mut sockaddr, addr.len().saturating_cast())
     }
@@ -2082,7 +2082,7 @@ pub fn listen(sockfd: c_int, backlog: u32) -> c_int {
 /// = See also
 ///
 /// * link:man:getsockname(2)
-pub fn getsockname(sockfd: c_int, addr: &mut [u8], addrlen: &mut usize) -> c_int {
+pub fn getsockname(sockfd: c_int, addr: &mut [d8], addrlen: &mut usize) -> c_int {
     let mut len = addr.len().saturating_cast();
     let res = unsafe {
         r::getsockname(sockfd, addr.as_mut_ptr() as *mut sockaddr, &mut len)
@@ -2108,7 +2108,7 @@ pub fn getsockname(sockfd: c_int, addr: &mut [u8], addrlen: &mut usize) -> c_int
 /// = See also
 ///
 /// * link:man:getpeername(2)
-pub fn getpeername(sockfd: c_int, addr: &mut [u8], addrlen: &mut usize) -> c_int {
+pub fn getpeername(sockfd: c_int, addr: &mut [d8], addrlen: &mut usize) -> c_int {
     let mut len = addr.len().saturating_cast();
     let res = unsafe {
         r::getpeername(sockfd, addr.as_mut_ptr() as *mut sockaddr, &mut len)
@@ -2161,7 +2161,7 @@ pub fn socketpair(domain: c_int, ty: c_int, proto: c_int, sv: &mut [c_int; 2]) -
 /// = See also
 ///
 /// * link:man:setsockopt(2)
-pub fn setsockopt(sockfd: c_int, level: c_int, optname: c_int, optval: &[u8]) -> c_int {
+pub fn setsockopt(sockfd: c_int, level: c_int, optname: c_int, optval: &[d8]) -> c_int {
     unsafe {
         r::setsockopt(sockfd, level, optname, optval.as_ptr() as *mut c_char,
                       optval.len().saturating_cast())
@@ -2191,7 +2191,7 @@ pub fn setsockopt(sockfd: c_int, level: c_int, optname: c_int, optval: &[u8]) ->
 /// = See also
 ///
 /// * link:man:getsockopt(2)
-pub fn getsockopt(sockfd: c_int, level: c_int, optname: c_int, optval: &mut [u8],
+pub fn getsockopt(sockfd: c_int, level: c_int, optname: c_int, optval: &mut [d8],
                   optlen: &mut usize) -> c_int {
     let mut len = optval.len().saturating_cast();
     let res = unsafe {
@@ -2422,7 +2422,7 @@ pub fn waitid(which: c_int, upid: pid_t, infop: &mut siginfo_t, options: c_int,
 /// = See also
 ///
 /// * link:man:getcwd(2)
-pub fn getcwd(buf: &mut [u8]) -> c_int {
+pub fn getcwd(buf: &mut [d8]) -> c_int {
     unsafe { r::getcwd(buf.as_mut_ptr() as *mut c_char, buf.len() as k_ulong) }
 }
 
@@ -3111,12 +3111,12 @@ pub fn munlockall() -> c_int {
 /// = See also
 ///
 /// * link:man:mincore(2)
-pub fn mincore(addr: usize, length: usize, buf: &mut [u8]) -> c_int {
+pub fn mincore(addr: usize, length: usize, buf: &mut [d8]) -> c_int {
     let pages = (buf.len() + PAGE_SIZE - 1) / PAGE_SIZE;
     if pages > buf.len() {
         return -error::InvalidArgument.0;
     }
-    unsafe { r::mincore(addr as k_ulong, length as size_t, buf.as_mut_ptr()) }
+    unsafe { r::mincore(addr as k_ulong, length as size_t, buf.as_mut_ptr() as *mut u8) }
 }
 
 /// Create a new session.
@@ -3722,7 +3722,7 @@ pub fn mq_unlink(name: &CStr) -> c_int {
 /// = See also
 ///
 /// * link:man:mq_timedsend(2)
-pub fn mq_timedsend(mq: c_int, msg: &[u8], prio: c_uint,
+pub fn mq_timedsend(mq: c_int, msg: &[d8], prio: c_uint,
                     timeout: Option<&timespec>) -> c_int {
     let timeout = timeout.map(|a| a as *const _).unwrap_or(0 as *const _);
     unsafe {
@@ -3748,7 +3748,7 @@ pub fn mq_timedsend(mq: c_int, msg: &[u8], prio: c_uint,
 /// = See also
 ///
 /// * link:man:mq_timedreceive(2)
-pub fn mq_timedreceive(mq: c_int, msg: &mut [u8], prio: Option<&mut c_uint>,
+pub fn mq_timedreceive(mq: c_int, msg: &mut [d8], prio: Option<&mut c_uint>,
                        timeout: Option<&timespec>) -> ssize_t {
     let prio = prio.map(|a| a as *mut _).unwrap_or(0 as *mut _);
     let timeout = timeout.map(|a| a as *const _).unwrap_or(0 as *const _);

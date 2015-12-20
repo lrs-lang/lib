@@ -44,7 +44,7 @@ pub mod event;
 type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
 
 fn rmo_cstr<'a, S>(s: &'a S,
-                   buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
+                   buf: &'a mut [d8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
     where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
 {
     s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::out_of(())))
@@ -124,7 +124,7 @@ impl Inotify {
                         flags: WatchFlags) -> Result<InodeWatch>
         where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let link = try!(rmo_cstr(&path, &mut buf));
         let watch = try!(rv!(inotify_add_watch(self.fd, &link,
                                                events.0 | flags.0), -> c_int));
@@ -152,10 +152,10 @@ impl Inotify {
     ///
     /// The buffer will be aligned for `u32` data, meaning that up to 3 bytes of buffer
     /// space are lost.
-    pub fn events<'a>(&self, buf: &'a mut [u8]) -> Result<InodeDataIter<'a>> {
-        let buf = mem::align_for_mut::<InodeData>(buf);
+    pub fn events<'a>(&self, buf: &'a mut [d8]) -> Result<InodeDataIter<'a>> {
+        let buf = buf.align_for_mut::<InodeData>();
         let len = try!(self.as_fdio().read(buf));
-        Ok(InodeDataIter { buf: &mut buf[..len] })
+        unsafe { Ok(InodeDataIter { buf: buf[..len].as_mut_bytes() }) }
     }
 
     /// Returns the number of bytes available for reading.

@@ -284,7 +284,7 @@ impl Socket {
     /// * link:man:getsockname(2)
     pub fn get_addr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut SockAddr> {
         let mut len = 0;
-        try!(rv!(getsockname(self.fd, buf, &mut len)));
+        try!(rv!(getsockname(self.fd, buf.as_mut(), &mut len)));
         if addr::type_supported(buf) {
             Ok(unsafe { SockAddr::from_mut_bytes_unchecked(&mut buf[..len]) })
         } else {
@@ -305,7 +305,7 @@ impl Socket {
     /// * link:man:getpeername(2)
     pub fn get_peer_addr<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut SockAddr> {
         let mut len = 0;
-        try!(rv!(getpeername(self.fd, buf, &mut len)));
+        try!(rv!(getpeername(self.fd, buf.as_mut(), &mut len)));
         if addr::type_supported(buf) {
             Ok(unsafe { SockAddr::from_mut_bytes_unchecked(&mut buf[..len]) })
         } else {
@@ -329,7 +329,7 @@ impl Socket {
     pub fn connect<A: ?Sized>(&self, addr: &A) -> Result
         where A: AsRef<[u8]>,
     {
-        rv!(connect(self.fd, addr.as_ref()))
+        rv!(connect(self.fd, addr.as_ref().as_ref()))
     }
 
     /// Disconnects a connected, connection-less socket.
@@ -432,7 +432,7 @@ impl Socket {
     pub fn accept_addr<'a>(&self, addr: &'a mut [u8],
                         flags: SockFlags) -> Result<(Result<&'a mut SockAddr>, Socket)> {
         let mut len = 0;
-        let fd = try!(rv!(accept4(self.fd, Some(addr), &mut len, flags.0), -> c_int));
+        let fd = try!(rv!(accept4(self.fd, Some(addr.as_mut()), &mut len, flags.0), -> c_int));
         let sock = Socket { fd: fd, owned: true };
         if len > addr.len() {
             Ok((Err(error::NoMemory), sock))
@@ -458,7 +458,7 @@ impl Socket {
     /// * link:man:send(2)
     pub fn send(&self, buf: &[u8], flags: MsgFlags) -> Result<usize> {
         let flags = flags.0 | MSG_NOSIGNAL;
-        retry(|| sendto(self.fd, buf, flags, None)).map(|v| v as usize)
+        retry(|| sendto(self.fd, buf.as_ref(), flags, None)).map(|v| v as usize)
     }
 
     /// Sends a message on a connection-less socket.
@@ -483,7 +483,7 @@ impl Socket {
         where A: AsRef<[u8]>,
     {
         let flags = flags.0 | MSG_NOSIGNAL;
-        retry(|| sendto(self.fd, buf, flags, Some(addr.as_ref()))).map(|v| v as usize)
+        retry(|| sendto(self.fd, buf.as_ref(), flags, Some(addr.as_ref().as_ref()))).map(|v| v as usize)
     }
 
     /// Gathers a message from multiple sources and sends it on a connected socket.
@@ -624,7 +624,7 @@ impl Socket {
     /// * link:man:recv(2)
     pub fn recv<'a>(&self, buf: &'a mut [u8], flags: MsgFlags) -> Result<usize> {
         let mut addr_len = 0;
-        retry(|| recvfrom(self.fd, buf, flags.0, None,
+        retry(|| recvfrom(self.fd, buf.as_mut(), flags.0, None,
                           &mut addr_len)).map(|v| v as usize)
     }
 
@@ -648,7 +648,8 @@ impl Socket {
     pub fn recv_from<'a>(&self, buf: &mut [u8], addr_buf: &'a mut [u8],
                          flags: MsgFlags) -> Result<(usize, Option<&'a mut SockAddr>)> {
         let mut addr_len = 0;
-        let buf_len = try!(retry(|| recvfrom(self.fd, buf, flags.0, Some(addr_buf),
+        let buf_len = try!(retry(|| recvfrom(self.fd, buf.as_mut(), flags.0,
+                                             Some(addr_buf.as_mut()),
                                              &mut addr_len)).map(|v| v as usize));
         let addr_buf = &mut addr_buf[..addr_len];
         let addr = match addr::type_supported(addr_buf) {
@@ -816,7 +817,7 @@ impl Socket {
     /// * link:lrs::socket::Socket::bind_to_device
     pub fn device<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut CStr> {
         let mut len = 0;
-        try!(rv!(getsockopt(self.fd, SOL_SOCKET, SO_BINDTODEVICE, buf, &mut len)));
+        try!(rv!(getsockopt(self.fd, SOL_SOCKET, SO_BINDTODEVICE, buf.as_mut(), &mut len)));
         buf[..len].try_as_mut()
     }
 
@@ -983,8 +984,7 @@ impl Socket {
     /// * link:lrs::socket::Socket::set_linger
     pub fn linger(&self) -> Result<Option<u32>> {
         let mut linger: linger = mem::zeroed();
-        try!(rv!(getsockopt(self.fd, SOL_SOCKET, SO_LINGER,
-                            mem::as_mut_bytes(&mut linger), &mut 0)));
+        try!(rv!(getsockopt(self.fd, SOL_SOCKET, SO_LINGER, linger.as_mut(), &mut 0)));
         if linger.l_onoff != 0 {
             Ok(Some(linger.l_linger as u32))
         } else {
@@ -1014,7 +1014,7 @@ impl Socket {
             l_onoff: seconds.is_some() as k_int,
             l_linger: seconds.unwrap_or(0).saturating_cast(),
         };
-        rv!(setsockopt(self.fd, SOL_SOCKET, SO_LINGER, mem::as_bytes(&linger)))
+        rv!(setsockopt(self.fd, SOL_SOCKET, SO_LINGER, linger.as_ref()))
     }
 
     /// Retrieves the mark of the packets sent over this socket.
@@ -1168,9 +1168,8 @@ impl Socket {
     ///
     /// * link:man:socket(7) and SO_PEEKCRED therein
     pub fn peer_credentials(&self) -> Result<Credentials> {
-        let mut val = mem::zeroed();
-        try!(rv!(getsockopt(self.fd, SOL_SOCKET, SO_PEERCRED, mem::as_mut_bytes(&mut val),
-                            &mut 0)));
+        let mut val: Credentials = mem::zeroed();
+        try!(rv!(getsockopt(self.fd, SOL_SOCKET, SO_PEERCRED, val.as_mut(), &mut 0)));
         Ok(val)
     }
 
@@ -1296,8 +1295,7 @@ impl Socket {
 
     fn common_timeout(&self, ty: c_int) -> Result<Option<Time>> {
         let mut time: timeval = mem::zeroed();
-        try!(rv!(getsockopt(self.fd, SOL_SOCKET, ty, mem::as_mut_bytes(&mut time),
-                            &mut 0)));
+        try!(rv!(getsockopt(self.fd, SOL_SOCKET, ty, time.as_mut(), &mut 0)));
         if time.tv_sec == 0 && time.tv_usec == 0 {
             Ok(None)
         } else {
@@ -1317,7 +1315,7 @@ impl Socket {
             tv_sec: val.seconds.saturating_cast(),
             tv_usec: (val.nanoseconds / 1000).saturating_cast(),
         };
-        rv!(setsockopt(self.fd, SOL_SOCKET, ty, mem::as_bytes(&time)))
+        rv!(setsockopt(self.fd, SOL_SOCKET, ty, time.as_ref()))
     }
 
     /// Retrieves the timeout option of receiving operations.
@@ -1659,7 +1657,7 @@ impl Socket {
     /// * link::lrs::socket::Socket::ipv4_set_options
     pub fn ipv4_options<'a>(&self, buf: &'a mut [u8]) -> Result<&'a mut [u8]> {
         let mut len = 0;
-        try!(rv!(getsockopt(self.fd, IPPROTO_IP, IP_OPTIONS, buf, &mut len)));
+        try!(rv!(getsockopt(self.fd, IPPROTO_IP, IP_OPTIONS, buf.as_mut(), &mut len)));
         Ok(&mut buf[..len])
     }
 
@@ -1677,7 +1675,7 @@ impl Socket {
     /// * link:man:ip(7) and IP_OPTIONS therein
     /// * link::lrs::socket::Socket::ipv4_options
     pub fn ipv4_set_options(&self, options: &[u8]) -> Result {
-        rv!(setsockopt(self.fd, IPPROTO_IP, IP_OPTIONS, options))
+        rv!(setsockopt(self.fd, IPPROTO_IP, IP_OPTIONS, options.as_ref()))
     }
 
     /// Retrieves whether all received messages are accompanied by an options control
@@ -1854,7 +1852,7 @@ impl Socket {
             imr_address: in_addr { s_addr: local_addr.to_be() },
             imr_ifindex: interface,
         };
-        rv!(setsockopt(self.fd, IPPROTO_IP, ty, mem::as_bytes(&mreqn)))
+        rv!(setsockopt(self.fd, IPPROTO_IP, ty, mreqn.as_ref()))
     }
 
     /// Joins a multicast group.
@@ -1921,7 +1919,7 @@ impl Socket {
             imr_interface: local_addr.to_be(),
             imr_sourceaddr: source_addr.to_be(),
         };
-        rv!(setsockopt(self.fd, IPPROTO_IP, ty, mem::as_bytes(&mreq_src)))
+        rv!(setsockopt(self.fd, IPPROTO_IP, ty, mreq_src.as_ref()))
     }
 
     /// Sets the socket up to accept multicast messages from a particular source.
@@ -2086,7 +2084,7 @@ impl Socket {
             ipv6mr_multiaddr: in6_addr { u6_addr16: multi_addr.to_be_bytes() },
             ipv6mr_ifindex: interface,
         };
-        rv!(setsockopt(self.fd, IPPROTO_IPV6, ty, mem::as_bytes(&mreq)))
+        rv!(setsockopt(self.fd, IPPROTO_IPV6, ty, mreq.as_ref()))
     }
 
 

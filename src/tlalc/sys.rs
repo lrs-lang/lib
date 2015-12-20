@@ -3,8 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use base::prelude::*;
-use cty::{PROT_READ, PROT_WRITE, MAP_ANONYMOUS, MAP_PRIVATE, c_int};
-use syscall::{mmap, munmap};
+use cty::{PROT_READ, PROT_WRITE, MAP_ANONYMOUS, MAP_PRIVATE, c_int, MREMAP_MAYMOVE};
+use syscall::{mmap, munmap, mremap};
 use base::error::{Errno};
 
 use chunk::{Chunk};
@@ -12,6 +12,15 @@ use {CHUNK_SIZE, CHUNK_MASK};
 
 pub unsafe fn map<T>(size: usize) -> Result<*mut T> {
     let ptr = mmap(0, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    if ptr < 0 && -ptr < 4096 {
+        Err(Errno(-ptr as c_int))
+    } else {
+        Ok(ptr as usize as *mut T)
+    }
+}
+
+pub unsafe fn remap<T>(ptr: *mut T, old_size: usize, new_size: usize) -> Result<*mut T> {
+    let ptr = mremap(ptr as usize, old_size, new_size, MREMAP_MAYMOVE, 0);
     if ptr < 0 && -ptr < 4096 {
         Err(Errno(-ptr as c_int))
     } else {

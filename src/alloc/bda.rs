@@ -32,7 +32,7 @@ impl OutOf for Bda {
 }
 
 impl MemPool for Bda {
-    unsafe fn alloc(&mut self, size: usize, alignment: usize) -> Result<*mut u8> {
+    unsafe fn alloc(&mut self, size: usize, alignment: usize) -> Result<*mut d8> {
         let _ = alignment;
         if size > MAX_SIZE {
             return Err(error::InvalidArgument);
@@ -42,17 +42,17 @@ impl MemPool for Bda {
         if ptr < 0 && -ptr < 4096 {
             Err(Errno(-ptr as c_int))
         } else {
-            Ok(ptr as usize as *mut u8)
+            Ok(ptr as usize as *mut d8)
         }
     }
 
-    unsafe fn free(&mut self, ptr: *mut u8, size: usize, alignment: usize) {
+    unsafe fn free(&mut self, ptr: *mut d8, size: usize, alignment: usize) {
         let _ = alignment;
         munmap(ptr as usize, size);
     }
 
-    unsafe fn realloc(&mut self, old_ptr: *mut u8, oldsize: usize, newsize: usize,
-                      alignment: usize) -> Result<*mut u8> {
+    unsafe fn realloc(&mut self, old_ptr: *mut d8, oldsize: usize, newsize: usize,
+                      alignment: usize) -> Result<*mut d8> {
         let _ = alignment;
         if newsize > MAX_SIZE {
             return Err(error::InvalidArgument);
@@ -61,7 +61,7 @@ impl MemPool for Bda {
         if new_ptr < 0 && -new_ptr < 4096 {
             Err(Errno(-new_ptr as c_int))
         } else {
-            Ok(new_ptr as usize as *mut u8)
+            Ok(new_ptr as usize as *mut d8)
         }
     }
 }

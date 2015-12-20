@@ -10,20 +10,20 @@ use base::{error};
 use super::{Zone};
 
 macro_rules! rd {
-    ($ip:expr, $t:ty, $sz:expr) => {
-        if $ip.len() < $sz {
+    ($ip:expr, $t:ty) => {
+        if $ip.len() < mem::size_of::<$t>() {
             Err(error::InvalidSequence)
         } else {
-            let mut v = [0; $sz];
-            let _ = $ip.read(&mut v);
-            unsafe { Ok(mem::cast::<_, $t>(v).from_be()) }
+            let mut v: $t = 0;
+            let _ = $ip.read(v.as_mut());
+            Ok(v.from_be())
         }
     }
 }
 
-fn read_u8(ip:  &mut &[u8]) -> Result<u8> { rd!(ip, u8,  1) }
-fn read_i32(ip: &mut &[u8]) -> Result<i32> { rd!(ip, i32, 4) }
-fn read_i64(ip: &mut &[u8]) -> Result<i64> { rd!(ip, i64, 8) }
+fn read_u8(ip:  &mut &[u8]) -> Result<u8> { rd!(ip, u8) }
+fn read_i32(ip: &mut &[u8]) -> Result<i32> { rd!(ip, i32) }
+fn read_i64(ip: &mut &[u8]) -> Result<i64> { rd!(ip, i64) }
 
 trait TReader {
     fn read_seconds(ip: &mut &[u8]) -> Result<i64>;

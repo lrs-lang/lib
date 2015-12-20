@@ -142,6 +142,17 @@ impl<T, H: ?Sized = alloc::Heap> Vec<T, H>
         self.cap - self.len
     }
 
+    pub fn unused(&mut self) -> &mut [d8] {
+        if mem::size_of::<T>() == 0 {
+            &mut []
+        } else {
+            let size = (self.cap - self.len) * mem::size_of::<T>();
+            unsafe {
+                slice::from_ptr(self.ptr.get().add(self.len) as *mut d8, size)
+            }
+        }
+    }
+
     /// Reserves memory for additional elements.
     ///
     /// [argument, n]

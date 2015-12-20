@@ -22,9 +22,9 @@ extern { }
 
 #[allow(improper_ctypes)]
 extern {
-    fn je_mallocx(size: usize, flags: c_int) -> *mut u8;
-    fn je_rallocx(ptr: *mut u8, size: usize, flags: c_int) -> *mut u8;
-    fn je_sdallocx(ptr: *mut u8, size: usize, flags: c_int) -> *mut u8;
+    fn je_mallocx(size: usize, flags: c_int) -> *mut d8;
+    fn je_rallocx(ptr: *mut d8, size: usize, flags: c_int) -> *mut d8;
+    fn je_sdallocx(ptr: *mut d8, size: usize, flags: c_int) -> *mut d8;
 }
 
 /// The jemalloc allocator
@@ -44,7 +44,7 @@ impl Default for JeMalloc {
 }
 
 impl MemPool for JeMalloc {
-    unsafe fn alloc(&mut self, size: usize, alignment: usize) -> Result<*mut u8> {
+    unsafe fn alloc(&mut self, size: usize, alignment: usize) -> Result<*mut d8> {
         if size > MAX_SIZE {
             Err(error::InvalidArgument)
         } else {
@@ -58,13 +58,13 @@ impl MemPool for JeMalloc {
         }
     }
 
-    unsafe fn free(&mut self, ptr: *mut u8, size: usize, alignment: usize) {
+    unsafe fn free(&mut self, ptr: *mut d8, size: usize, alignment: usize) {
         let flags = mallocx_align!(alignment);
         je_sdallocx(ptr, size, flags);
     }
 
-    unsafe fn realloc(&mut self, old_ptr: *mut u8, oldsize: usize, newsize: usize,
-                      alignment: usize) -> Result<*mut u8> {
+    unsafe fn realloc(&mut self, old_ptr: *mut d8, oldsize: usize, newsize: usize,
+                      alignment: usize) -> Result<*mut d8> {
         let _ = oldsize;
         if newsize > MAX_SIZE {
             Err(error::InvalidArgument)

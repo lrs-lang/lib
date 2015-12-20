@@ -12,7 +12,7 @@ pub struct GetRandom;
 impl Rng for GetRandom { }
 
 impl Read for GetRandom {
-    fn scatter_read(&mut self, buf: &mut [&mut [u8]]) -> Result<usize> {
+    fn scatter_read(&mut self, buf: &mut [&mut [d8]]) -> Result<usize> {
         retry(|| syscall::getrandom(buf[0], cty::GRND_RANDOM)).map(|r| r as usize)
     }
 }
@@ -22,7 +22,7 @@ pub struct GetUrandom;
 impl Rng for GetUrandom { }
 
 impl Read for GetUrandom {
-    fn scatter_read(&mut self, buf: &mut [&mut [u8]]) -> Result<usize> {
+    fn scatter_read(&mut self, buf: &mut [&mut [d8]]) -> Result<usize> {
         retry(|| syscall::getrandom(buf[0], 0)).map(|r| r as usize)
     }
 }

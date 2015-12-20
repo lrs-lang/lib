@@ -13,6 +13,7 @@ use {
     MIN_ALLOC,
 };
 
+/// A thread-local memory cache.
 pub struct Cache {
     cache_size: [usize; 20],
     cache: [Option<P<Slot>>; 20],
@@ -22,11 +23,22 @@ pub struct Cache {
 }
 
 impl Cache {
-    pub const fn new() -> Cache {
+    /// Creates a new cache.
+    ///
+    /// [return_value]
+    /// Returns the new cache.
+    ///
+    /// = Remarks
+    ///
+    /// The cache lives in thread-local storage and is never moved.
+    pub const unsafe fn new() -> Cache {
         Cache {
             cache_size: [0; 20],
             cache: [None; 20],
-            chunk: unsafe { P::zero() },
+
+            // This pointer is not valid but we won't access it until we've initialized
+            // everything.
+            chunk: P::new(1 as *const _),
             free_chunk: None,
             init: false,
         }
@@ -39,7 +51,12 @@ impl Cache {
     ///
     /// [return_value]
     /// Returns the allocated memory or an error.
-    pub unsafe fn alloc(&mut self, size: usize) -> Result<*mut u8> {
+    ///
+    /// = Remarks
+    ///
+    /// The returned pointer does not alias any other pointer. The pointer points to an
+    /// object of size `usable_size(size)`.
+    pub unsafe fn alloc(&mut self, size: usize) -> Result<*mut d8> {
         if unlikely!(size > MAX_SMALL) {
             return self.alloc_large(size);
         }
@@ -49,7 +66,22 @@ impl Cache {
         self.alloc_bin(size, class)
     }
 
-    pub unsafe fn free(&mut self, ptr: *mut u8, size: usize) {
+    /// Frees memory.
+    ///
+    /// [argument, ptr]
+    /// The pointer to free.
+    ///
+    /// [argument, size]
+    /// The size of the object pointed to by `ptr`.
+    ///
+    /// = Remarks
+    ///
+    /// The pointer has been returned by a call to `alloc` or `realloc` on the same
+    /// `Cache` object. The size is anywhere in the range between the size used in said
+    /// calls (inclusive) and the size returned by `usable_size` (inclusive).
+    ///
+    /// The pointer is no longer used after the function returns.
+    pub unsafe fn free(&mut self, ptr: *mut d8, size: usize) {
         if unlikely!(size > MAX_SMALL) {
             return self.free_large(ptr, size);
         }
@@ -59,12 +91,39 @@ impl Cache {
         self.free_bin(ptr, size, class)
     }
 
-    pub unsafe fn realloc(&mut self, ptr: *mut u8, old_size: usize,
-                          new_size: usize) -> Result<*mut u8> {
+
+    /// Reallocates memory.
+    ///
+    /// [argument, ptr]
+    /// The pointer to reallocate.
+    ///
+    /// [argument, old_size]
+    /// The current size of the object pointed to by `ptr`.
+    ///
+    /// [argument, new_size]
+    /// The size of the new object. Bounded above by `!0 >> 1`.
+    ///
+    /// [return_value]
+    /// Returns the allocated memory or an error.
+    ///
+    /// = Remarks
+    ///
+    /// The `ptr` argument has been returned by a call to `alloc` or `realloc` on the same
+    /// `Cache` object. The `old_size` argument is anywhere in the size used in said call
+    /// (inclusive) and the size returned by `usable_size` (inclusive).
+    ///
+    /// If the function returns successfully, the returned pointer does not alias any
+    /// other pointer. The returned pointer points to an object of size
+    /// `usable_size(new_size)`. In this case, `ptr` argument is no longer used.
+    ///
+    /// If the function returns an error, the `ptr` can be continued to be used and the
+    /// pointed to object has not been modified.
+    pub unsafe fn realloc(&mut self, ptr: *mut d8, old_size: usize,
+                          new_size: usize) -> Result<*mut d8> {
         unsafe fn size_to_class(size: usize) -> (usize, usize) {
             if likely!(size <= MAX_SMALL) {
                 let class = (size - 1) / MIN_ALLOC;
-                let size = (size + MIN_ALLOC - 1) & !(MIN_ALLOC - 1);
+                let size = align!(size, [%] MIN_ALLOC);
                 (size, class)
             } else {
                 let class = usize::bits() - (size - 1).leading_zeros() + LARGE_CLASS_SHIFT;
@@ -97,30 +156,24 @@ impl Cache {
             return Ok(ptr);
         }
 
+        if likely!(old_size_block != BLOCK_SIZE && new_size_block != BLOCK_SIZE) {
+            let new = try!(sys::remap(ptr, old_size_block, new_size_block));
+            return Ok(new);
+        }
+
         if old_size_block == BLOCK_SIZE {
             let (old_size, old_class) = size_to_class(old_size);
             let new = try!(sys::map(new_size_block));
             arch_fns::memcpy_aligned_16_16(new, ptr, old_size);
             self.free_bin(ptr, old_size, old_class);
-            return Ok(new);
-        }
-
-        if new_size_block == BLOCK_SIZE {
+            Ok(new)
+        } else {
             let (new_size, new_class) = size_to_class(new_size);
             let slot = try!(self.alloc_bin(new_size, new_class));
             arch_fns::memcpy_aligned_16_16(slot, ptr, new_size);
             sys::unmap(ptr, old_size_block);
-            return Ok(slot);
+            Ok(slot)
         }
-
-        let new = try!(sys::map(new_size_block));
-        if new_size_block < old_size_block {
-            arch_fns::memcpy_aligned_16_64(new, ptr, new_size_block);
-        } else {
-            arch_fns::memcpy_aligned_16_64(new, ptr, old_size_block);
-        }
-        sys::unmap(ptr, old_size_block);
-        Ok(new)
     }
 }
 
@@ -132,7 +185,7 @@ impl Cache {
     ///
     /// [return_value]
     /// Returns the allocated memory or an error.
-    unsafe fn alloc_large(&mut self, size: usize) -> Result<*mut u8> {
+    unsafe fn alloc_large(&mut self, size: usize) -> Result<*mut d8> {
         if likely!(size > BLOCK_SIZE) {
             return sys::map((size + BLOCK_SIZE - 1) & (BLOCK_SIZE - 1));
         }
@@ -153,7 +206,7 @@ impl Cache {
     /// [return_value]
     /// Returns the allocated memory or an error.
     #[inline]
-    unsafe fn alloc_bin(&mut self, size: usize, class: usize) -> Result<*mut u8> {
+    unsafe fn alloc_bin(&mut self, size: usize, class: usize) -> Result<*mut d8> {
         let slot = self.cache[class];
 
         if unlikely!(slot.is_none()) {
@@ -163,7 +216,7 @@ impl Cache {
         let slot = slot.unwrap();
         self.cache[class] = slot.next;
         self.cache_size[class] -= size;
-        Ok(slot.ptr() as *mut u8)
+        Ok(slot.ptr() as *mut d8)
     }
 
     /// Allocates memory from a bin.
@@ -177,7 +230,7 @@ impl Cache {
     /// [return_value]
     /// Returns the allocated memory or an error.
     #[cold]
-    unsafe fn alloc_bin_slow(&mut self, size: usize, class: usize) -> Result<*mut u8> {
+    unsafe fn alloc_bin_slow(&mut self, size: usize, class: usize) -> Result<*mut d8> {
         if unlikely!(!self.init) {
             try!(self.initialize());
         }
@@ -246,7 +299,7 @@ impl Cache {
         Ok(())
     }
 
-    unsafe fn free_large(&mut self, ptr: *mut u8, size: usize) {
+    unsafe fn free_large(&mut self, ptr: *mut d8, size: usize) {
         if unlikely!(size > BLOCK_SIZE) {
             sys::unmap(ptr, (size + BLOCK_SIZE - 1) & (BLOCK_SIZE - 1));
             return;
@@ -258,7 +311,7 @@ impl Cache {
     }
 
     #[inline]
-    unsafe fn free_bin(&mut self, ptr: *mut u8, size: usize, class: usize) {
+    unsafe fn free_bin(&mut self, ptr: *mut d8, size: usize, class: usize) {
         let mut slot = P::new(ptr as *mut Slot);
         slot.next = self.cache[class];
         self.cache[class] = slot.to_opt();

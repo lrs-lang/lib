@@ -45,7 +45,7 @@ use {rmo_cstr, Pool};
 pub fn unmount<P>(dst: P, flags: UnmountFlags) -> Result
     where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
-    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
     let dst = try!(rmo_cstr(&dst, &mut buf));
     rv!(syscall::umount(&dst, flags.0))
 }

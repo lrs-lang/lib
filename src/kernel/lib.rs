@@ -36,7 +36,7 @@ fn init() {
     if STATUS.compare_exchange(0, 1) == 0 {
         let mut name = mem::zeroed();
         if uname(&mut name) == 0 {
-            let release = mem::as_bytes(&name.release);
+            let release = unsafe { mem::as_data(&name.release).as_bytes() };
             if let Ok((major, bytes)) = u8::parse_bytes_init(release) {
                 if let Ok((minor, _)) = u8::parse_bytes_init(&release[bytes+1..]) {
                     unsafe {

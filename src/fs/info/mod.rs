@@ -36,7 +36,7 @@ impl FileSystemInfo {
     pub fn from_path<P>(path: P) -> Result<FileSystemInfo>
         where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
     {
-        let mut path_buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+        let mut path_buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
         let path = try!(rmo_cstr(&path, &mut path_buf));
         let mut buf = mem::zeroed();
         retry(|| statfs(&path, &mut buf)).map(|_| FileSystemInfo(buf))

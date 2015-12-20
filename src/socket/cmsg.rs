@@ -218,7 +218,7 @@ impl<H> CMsgBuf<H>
         Ok(())
     }
 
-    fn bytes(&mut self, bytes: &[u8], level: c_int, ty: c_int) -> Result {
+    fn bytes(&mut self, bytes: &[d8], level: c_int, ty: c_int) -> Result {
         let msg_space = msg_space!(bytes.len());
         try!(self.reserve(msg_space));
         unsafe {
@@ -227,7 +227,7 @@ impl<H> CMsgBuf<H>
             (*hdr).cmsg_level = level;
             (*hdr).cmsg_type = ty;
             let data = data_ptr!(self);
-            ptr::memcpy(data, bytes.as_ptr(), bytes.len());
+            ptr::memcpy(data as *mut d8, bytes.as_ptr(), bytes.len());
             self.len += msg_space;
         }
         Ok(())
@@ -238,7 +238,7 @@ impl<H> CMsgBuf<H>
     /// [argument, fds]
     /// The file descriptors to be added.
     pub fn fds(&mut self, fds: &[c_int]) -> Result {
-        self.bytes(fds.as_bytes(), SOL_SOCKET, SCM_RIGHTS)
+        self.bytes(fds.as_ref(), SOL_SOCKET, SCM_RIGHTS)
     }
 
     /// Adds process credentials to the buffer.
@@ -246,7 +246,7 @@ impl<H> CMsgBuf<H>
     /// [argument, creds]
     /// The credentials to be added.
     pub fn credentials(&mut self, creds: Credentials) -> Result {
-        self.bytes(mem::as_bytes(&creds), SOL_SOCKET, SCM_CREDENTIALS)
+        self.bytes(creds.as_ref(), SOL_SOCKET, SCM_CREDENTIALS)
     }
 
     /// Creates an iterator over the messages.

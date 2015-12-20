@@ -6,13 +6,7 @@ use base::prelude::*;
 use core::ptr::{AliasMutObjPtr};
 use core::{mem};
 
-/// A aliasing raw pointer wrapper.
-///
-/// = Remarks
-///
-/// This can be used to conveniently access raw pointers without having to worry about
-/// aliasing. Careful not to create references, always pass the value instead of creating
-/// a reference. Otherwise you have to take care not to violate the noalias rules.
+/// An aliasing raw pointer wrapper.
 pub struct P<T>(AliasMutObjPtr<T>);
 
 impl<T> Copy for P<T> { }
@@ -21,14 +15,9 @@ impl<T> P<T> {
     /// Creates a new `P`.
     ///
     /// [argument, ptr]
-    /// The pointer that will be wrapped.
+    /// The pointer that will be wrapped. Must be a valid pointer.
     pub const unsafe fn new(ptr: *const T) -> P<T> {
         P(AliasMutObjPtr::new(ptr as *mut T))
-    }
-
-    /// Creates a new `P` wrapping a zero value.
-    pub const unsafe fn zero() -> P<T> {
-        P(AliasMutObjPtr::new(0 as *mut T))
     }
 
     pub fn ptr(self) -> *mut T {

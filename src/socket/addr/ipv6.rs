@@ -290,14 +290,14 @@ impl Ipv6SockAddr {
             sin6_addr: in6_addr { u6_addr16: addr.to_be_bytes() },
             .. mem::zeroed()
         };
-        mem::copy(bytes, mem::as_bytes(&addr));
+        mem::copy::<d8>(bytes.as_mut(), addr.as_ref());
         Ok(unsafe { mem::cast(&mut bytes[..IPV6_SOCK_ADDR_SIZE]) })
     }
 
     /// Returns the Ipv6 address of an Ipv6 socket address.
     pub fn addr(&self) -> Ipv6Addr {
         let mut addr = [0; 8];
-        mem::copy(addr.as_mut(), &self.data[ADDR_OFF..]);
+        mem::copy::<d8>(addr.as_mut(), self.data[ADDR_OFF..].as_ref());
         Ipv6Addr::from_be_bytes(addr)
     }
 
@@ -306,7 +306,7 @@ impl Ipv6SockAddr {
     /// [argument, addr]
     /// The new address.
     pub fn set_addr(&mut self, addr: Ipv6Addr) {
-        mem::copy(&mut self.data[ADDR_OFF..], addr.to_be_bytes().as_ref());
+        mem::copy::<d8>(self.data[ADDR_OFF..].as_mut(), addr.to_be_bytes().as_ref());
     }
 
     /// Returns the port of an Ipv6 socket address.
@@ -321,7 +321,7 @@ impl Ipv6SockAddr {
     /// [argument, port]
     /// The new port.
     pub fn set_port(&mut self, port: u16) {
-        mem::copy(&mut self.data[PORT_OFF..], port.to_be().as_ref());
+        mem::copy::<d8>(self.data[PORT_OFF..].as_mut(), port.to_be().as_ref());
     }
 
     /// Returns the flow label of an Ipv6 socket address.

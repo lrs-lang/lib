@@ -63,10 +63,10 @@ pub fn mount<P, Q, R, S>(src: P, dst: Q, ty: R, flags: MountFlags, data: S) -> R
           R: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
           S: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
-    let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let mut buf3: [u8; 256] = unsafe { mem::uninit() };
-    let mut buf4: [u8; 256] = unsafe { mem::uninit() };
+    let mut buf1: [d8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf2: [d8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf3: [d8; 256] = unsafe { mem::uninit() };
+    let mut buf4: [d8; 256] = unsafe { mem::uninit() };
     let src  = try!(rmo_cstr(&src,  &mut buf1));
     let dst  = try!(rmo_cstr(&dst,  &mut buf2));
     let ty   = try!(rmo_cstr(&ty,   &mut buf3));

@@ -87,7 +87,7 @@ impl Pipe {
     /// * link:man:write(2)
     /// * link:lrs::pipe::Pipe::gather_write
     pub fn write(&self, buf: &[u8]) -> Result<usize> {
-        retry(|| write(self.fd, buf)).map(|r| r as usize)
+        retry(|| write(self.fd, buf.as_ref())).map(|r| r as usize)
     }
 
     /// Writes from multiple buffers to the pipe.
@@ -111,7 +111,7 @@ impl Pipe {
     /// * link:man:writev(2)
     /// * link:lrs::pipe::pipe::write
     pub fn gather_write(&self, bufs: &[&[u8]]) -> Result<usize> {
-        retry(|| writev(self.fd, bufs)).map(|r| r as usize)
+        retry(|| writev(self.fd, bufs.as_ref())).map(|r| r as usize)
     }
 
     /// Reads from the pipe.
@@ -134,7 +134,7 @@ impl Pipe {
     ///
     /// * link:man:read(2)
     /// * link:lrs::pipe::Pipe::scatter_read
-    pub fn read(&self, buf: &mut [u8]) -> Result<usize> {
+    pub fn read(&self, buf: &mut [d8]) -> Result<usize> {
         retry(|| read(self.fd, buf)).map(|r| r as usize)
     }
 
@@ -161,7 +161,7 @@ impl Pipe {
     ///
     /// * link:man:readv(2)
     /// * link:lrs::pipe::Pipe::read
-    pub fn scatter_read(&self, bufs: &mut [&mut [u8]]) -> Result<usize> {
+    pub fn scatter_read(&self, bufs: &mut [&mut [d8]]) -> Result<usize> {
         retry(|| readv(self.fd, bufs)).map(|r| r as usize)
     }
 
@@ -379,7 +379,7 @@ unsafe impl UndefState for Pipe {
 }
 
 impl Read for Pipe {
-    fn scatter_read(&mut self, buf: &mut [&mut [u8]]) -> Result<usize> {
+    fn scatter_read(&mut self, buf: &mut [&mut [d8]]) -> Result<usize> {
         Pipe::scatter_read(self, buf)
     }
 }

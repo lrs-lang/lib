@@ -80,9 +80,9 @@ impl Timer {
 
     /// Returns the number of times the timer expired since this function was last called.
     pub fn ticks(&self) -> Result<u64> {
-        let mut buf = [0; 8];
-        try!(retry(|| read(self.fd, &mut buf[..])));
-        Ok(unsafe { mem::cast(buf) })
+        let mut buf = 0;
+        try!(retry(|| read(self.fd, buf.as_mut())));
+        Ok(buf)
     }
 }
 

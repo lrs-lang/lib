@@ -217,7 +217,7 @@ impl Debug for CpuMask {
 pub fn cpus(thread: ProcessId, mut buf: &mut [u8]) -> Result<&mut CpuMask> {
     let len = buf.len();
     let buf = &mut buf[..len/8*8];
-    let len = try!(rv!(syscall::sched_getaffinity(thread, buf), -> usize));
+    let len = try!(rv!(syscall::sched_getaffinity(thread, buf.as_mut()), -> usize));
     Ok(CpuMask::new_mut(&mut buf[..len]))
 }
 
@@ -233,7 +233,7 @@ pub fn cpus(thread: ProcessId, mut buf: &mut [u8]) -> Result<&mut CpuMask> {
 ///
 /// * link:man:sched_setaffinity(2)
 pub fn set_cpus(thread: ProcessId, cpus: &CpuMask) -> Result {
-    rv!(syscall::sched_setaffinity(thread, &cpus.buf))
+    rv!(syscall::sched_setaffinity(thread, cpus.buf.as_ref()))
 }
 
 /// Returns the thread id of the calling thread.

@@ -71,43 +71,49 @@ impl StrInfo {
     /// Retrieves information from the system and stores it in the object.
     pub fn update(&mut self) -> Result {
         try!(rv!(uname(&mut self.buf)));
-        self.sysname_len    = try!(self.buf.sysname.try_as_ref()).len()    as u8;
-        self.nodename_len   = try!(self.buf.nodename.try_as_ref()).len()   as u8;
-        self.release_len    = try!(self.buf.release.try_as_ref()).len()    as u8;
-        self.version_len    = try!(self.buf.version.try_as_ref()).len()    as u8;
-        self.machine_len    = try!(self.buf.machine.try_as_ref()).len()    as u8;
-        self.domainname_len = try!(self.buf.domainname.try_as_ref()).len() as u8;
+        self.sysname_len    = try!(TryAsRef::<CStr>::try_as_ref(&self.buf.sysname[..])).len()    as u8;
+        self.nodename_len   = try!(TryAsRef::<CStr>::try_as_ref(&self.buf.nodename[..])).len()   as u8;
+        self.release_len    = try!(TryAsRef::<CStr>::try_as_ref(&self.buf.release[..])).len()    as u8;
+        self.version_len    = try!(TryAsRef::<CStr>::try_as_ref(&self.buf.version[..])).len()    as u8;
+        self.machine_len    = try!(TryAsRef::<CStr>::try_as_ref(&self.buf.machine[..])).len()    as u8;
+        self.domainname_len = try!(TryAsRef::<CStr>::try_as_ref(&self.buf.domainname[..])).len() as u8;
         Ok(())
     }
 
     /// Returns the name of the system.
     pub fn system_name(&self) -> &ByteStr {
-        self.buf.sysname[..self.sysname_len as usize].as_ref().as_ref()
+        let bytes: &[u8] = self.buf.sysname[..self.sysname_len as usize].as_ref();
+        bytes.as_ref()
     }
 
     /// Returns the hostname of the system.
     pub fn host_name(&self) -> &ByteStr {
-        self.buf.nodename[..self.nodename_len as usize].as_ref().as_ref()
+        let bytes: &[u8] = self.buf.nodename[..self.nodename_len as usize].as_ref();
+        bytes.as_ref()
     }
 
     /// Returns the kernel release of the system.
     pub fn release(&self) -> &ByteStr {
-        self.buf.release[..self.release_len as usize].as_ref().as_ref()
+        let bytes: &[u8] = self.buf.release[..self.release_len as usize].as_ref();
+        bytes.as_ref()
     }
 
     /// Returns the kernel version of the system.
     pub fn version(&self) -> &ByteStr {
-        self.buf.version[..self.version_len as usize].as_ref().as_ref()
+        let bytes: &[u8] = self.buf.version[..self.version_len as usize].as_ref();
+        bytes.as_ref()
     }
 
     /// Returns the machine.
     pub fn machine(&self) -> &ByteStr {
-        self.buf.machine[..self.machine_len as usize].as_ref().as_ref()
+        let bytes: &[u8] = self.buf.machine[..self.machine_len as usize].as_ref();
+        bytes.as_ref()
     }
 
     /// Returns the domain name of the system.
     pub fn domain_name(&self) -> &ByteStr {
-        self.buf.domainname[..self.domainname_len as usize].as_ref().as_ref()
+        let bytes: &[u8] = self.buf.domainname[..self.domainname_len as usize].as_ref();
+        bytes.as_ref()
     }
 }
 
@@ -258,9 +264,9 @@ impl fmt::Debug for NumInfo {
 ///
 /// [return_value]
 /// Returns an initial sequence of the slice that contains random bytes.
-pub fn get_random(buf: &mut [u8]) -> Result<&mut [u8]> {
+pub fn get_random(buf: &mut [d8]) -> Result<&mut [u8]> {
     let num = try!(retry(|| getrandom(buf, 0)));
-    Ok(&mut buf[..num as usize])
+    unsafe { Ok(buf[..num as usize].as_mut_bytes()) }
 }
 
 /// Retrieves random bytes from the system without blocking.
@@ -270,15 +276,15 @@ pub fn get_random(buf: &mut [u8]) -> Result<&mut [u8]> {
 ///
 /// [return_value]
 /// Returns an initial sequence of the slice that contains random bytes.
-pub fn get_random_non_blocking(buf: &mut [u8]) -> Result<&mut [u8]> {
+pub fn get_random_non_blocking(buf: &mut [d8]) -> Result<&mut [u8]> {
     let num = try!(retry(|| getrandom(buf, GRND_NONBLOCK)));
-    Ok(&mut buf[..num as usize])
+    unsafe { Ok(buf[..num as usize].as_mut_bytes()) }
 }
 
 type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
 
 fn rmo_cstr<'a, S>(s: &'a S,
-                   buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
+                   buf: &'a mut [d8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
     where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
 {
     s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::out_of(())))
@@ -291,7 +297,7 @@ fn rmo_cstr<'a, S>(s: &'a S,
 pub fn enable_accounting<P>(path: P) -> Result
     where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
-    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
     let path = try!(rmo_cstr(&path, &mut buf));
     rv!(acct(Some(&path)))
 }
@@ -301,7 +307,7 @@ pub fn enable_accounting<P>(path: P) -> Result
 /// [argument, name]
 /// The new hostname.
 pub fn set_host_name<P: ?Sized>(name: &P) -> Result
-    where P: AsRef<[u8]>,
+    where P: AsRef<[d8]>,
 {
     rv!(sethostname(name.as_ref()))
 }
@@ -311,7 +317,7 @@ pub fn set_host_name<P: ?Sized>(name: &P) -> Result
 /// [argument, name]
 /// The new domain name.
 pub fn set_domain_name<P: ?Sized>(name: &P) -> Result
-    where P: AsRef<[u8]>,
+    where P: AsRef<[d8]>,
 {
     rv!(setdomainname(name.as_ref()))
 }
@@ -373,7 +379,7 @@ pub fn power_off() -> Result {
 pub fn restart<T>(msg: Option<T>) -> Result
     where T: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
-    let mut buf = [0; 256];
+    let mut buf: [d8; 256] = unsafe { mem::uninit() };
     let (cmd, arg): (_, _) = match msg {
         Some(ref msg) => (LINUX_REBOOT_CMD_RESTART2, try!(rmo_cstr(msg, &mut buf))),
         _ => (LINUX_REBOOT_CMD_RESTART, Rmo::Ref(&CStr::empty())),

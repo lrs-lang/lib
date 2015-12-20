@@ -164,7 +164,7 @@ pub fn spin() {
 ///
 /// [argument, len]
 /// The number of bytes to copy. A multiple of 16.
-pub unsafe fn memcpy_aligned_16_16(dst: *mut u8, src: *const u8, len: usize) {
+pub unsafe fn memcpy_aligned_16_16(dst: *mut d8, src: *const d8, len: usize) {
     let (div, mut rem) = (len / 64, len % 64);
     let mut dst = dst as *mut u64;
     let mut src = src as *const u64;
@@ -189,7 +189,7 @@ pub unsafe fn memcpy_aligned_16_16(dst: *mut u8, src: *const u8, len: usize) {
 ///
 /// [argument, len]
 /// The number of bytes to copy. A multiple of 64.
-pub unsafe fn memcpy_aligned_16_64(dst: *mut u8, src: *const u8, len: usize) {
+pub unsafe fn memcpy_aligned_16_64(dst: *mut d8, src: *const d8, len: usize) {
     let mut dst = dst as *mut u64;
     let mut src = src as *const u64;
     let dst_end = dst.add(len / 8);

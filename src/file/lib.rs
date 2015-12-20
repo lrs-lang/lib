@@ -61,7 +61,7 @@ mod file;
 type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
 
 fn rmo_cstr<'a, S>(s: &'a S,
-                   buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
+                   buf: &'a mut [d8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
     where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
 {
     s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::out_of(())))
@@ -195,7 +195,7 @@ pub fn can_access<P>(path: P, mode: AccessMode) -> Result<bool>
 pub fn set_len<P>(path: P, len: u64) -> Result
     where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
-    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
     let path = try!(rmo_cstr(&path, &mut buf));
     try!(retry(|| truncate(&path, len as loff_t)));
     Ok(())
@@ -226,8 +226,8 @@ pub fn link<P, Q>(source: P, link: Q) -> Result
     where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
           Q: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
-    let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf1: [d8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf2: [d8; PATH_MAX] = unsafe { mem::uninit() };
     let old = try!(rmo_cstr(&source, &mut buf1));
     let new = try!(rmo_cstr(&link, &mut buf2));
     rv!(linkat(AT_FDCWD, &old, AT_FDCWD, &new, 0))
@@ -645,10 +645,10 @@ pub fn create_device<P>(path: P, dev: Device, mode: Mode) -> Result
 pub fn set_attr<P, S, V: ?Sized>(path: P, name: S, val: &V) -> Result
     where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
           S: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
-          V: AsRef<[u8]>,
+          V: AsRef<[d8]>,
 {
-    let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let mut buf2: [u8; 128] = unsafe { mem::uninit() };
+    let mut buf1: [d8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf2: [d8; 128] = unsafe { mem::uninit() };
     let path = try!(rmo_cstr(&path, &mut buf1));
     let name = try!(rmo_cstr(&name, &mut buf2));
     rv!(setxattr(&path, &name, val.as_ref(), 0))
@@ -683,10 +683,10 @@ pub fn set_attr<P, S, V: ?Sized>(path: P, name: S, val: &V) -> Result
 pub fn set_attr_no_follow<P, S, V: ?Sized>(path: P, name: S, val: &V) -> Result
     where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
           S: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
-          V: AsRef<[u8]>,
+          V: AsRef<[d8]>,
 {
-    let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let mut buf2: [u8; 128] = unsafe { mem::uninit() };
+    let mut buf1: [d8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf2: [d8; 128] = unsafe { mem::uninit() };
     let path = try!(rmo_cstr(&path, &mut buf1));
     let name = try!(rmo_cstr(&name, &mut buf2));
     rv!(lsetxattr(&path, &name, val.as_ref(), 0))
@@ -720,12 +720,12 @@ pub fn set_attr_no_follow<P, S, V: ?Sized>(path: P, name: S, val: &V) -> Result
 /// * link:lrs::file::get_attr_no_follow_buf
 /// * link:lrs::file::get_attr
 /// * link:lrs::file::File::get_attr_buf
-pub fn get_attr_buf<P, S>(path: P, name: S, buf: &mut [u8]) -> Result<usize>
+pub fn get_attr_buf<P, S>(path: P, name: S, buf: &mut [d8]) -> Result<usize>
     where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
           S: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
-    let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let mut buf2: [u8; 128] = unsafe { mem::uninit() };
+    let mut buf1: [d8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf2: [d8; 128] = unsafe { mem::uninit() };
     let path = try!(rmo_cstr(&path, &mut buf1));
     let name = try!(rmo_cstr(&name, &mut buf2));
     rv!(getxattr(&path, &name, buf), -> usize)
@@ -758,35 +758,31 @@ pub fn get_attr_buf<P, S>(path: P, name: S, buf: &mut [u8]) -> Result<usize>
 /// * link:lrs::file::get_attr_buf
 /// * link:lrs::file::get_attr_no_follow
 /// * link:lrs::file::File::get_attr_buf
-pub fn get_attr_no_follow_buf<P, S, V>(path: P, name: S, buf: &mut [u8]) -> Result<usize>
+pub fn get_attr_no_follow_buf<P, S, V>(path: P, name: S, buf: &mut [d8]) -> Result<usize>
     where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
           S: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
-    let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let mut buf2: [u8; 128] = unsafe { mem::uninit() };
+    let mut buf1: [d8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf2: [d8; 128] = unsafe { mem::uninit() };
     let path = try!(rmo_cstr(&path, &mut buf1));
     let name = try!(rmo_cstr(&name, &mut buf2));
     rv!(lgetxattr(&path, &name, buf), -> usize)
 }
 
 fn get_attr_common<F>(mut f: F) -> Result<Vec<u8>>
-    where F: FnMut(&mut [u8]) -> ssize_t,
+    where F: FnMut(&mut [d8]) -> ssize_t,
 {
     let mut vec = vec!();
     loop {
         let size = try!(rv!(f(&mut []), -> usize));
-        unsafe {
-            vec.set_len(0);
-            vec.reserve(size);
-            vec.set_len(size);
-            match rv!(f(&mut vec[..]), -> usize) {
-                Ok(n) => {
-                    vec.set_len(n);
-                    return Ok(vec);
-                },
-                Err(error::RangeError) => { },
-                Err(e) => return Err(e),
-            }
+        vec.reserve(size);
+        match rv!(f(vec.unused()), -> usize) {
+            Ok(n) => {
+                unsafe { vec.set_len(n); }
+                return Ok(vec);
+            },
+            Err(error::RangeError) => { },
+            Err(e) => return Err(e),
         }
     }
 }
@@ -820,8 +816,8 @@ pub fn get_attr<P, S>(path: P, name: S) -> Result<Vec<u8>>
     where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
           S: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
-    let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let mut buf2: [u8; 128] = unsafe { mem::uninit() };
+    let mut buf1: [d8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf2: [d8; 128] = unsafe { mem::uninit() };
     let path = try!(rmo_cstr(&path, &mut buf1));
     let name = try!(rmo_cstr(&name, &mut buf2));
     get_attr_common(|buf| getxattr(&path, &name, buf))
@@ -855,8 +851,8 @@ pub fn get_attr_no_follow<P, S>(path: P, name: S) -> Result<Vec<u8>>
     where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
           S: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
-    let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let mut buf2: [u8; 128] = unsafe { mem::uninit() };
+    let mut buf1: [d8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf2: [d8; 128] = unsafe { mem::uninit() };
     let path = try!(rmo_cstr(&path, &mut buf1));
     let name = try!(rmo_cstr(&name, &mut buf2));
     get_attr_common(|buf| lgetxattr(&path, &name, buf))
@@ -887,8 +883,8 @@ pub fn remove_attr<P, S>(path: P, name: S) -> Result
     where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
           S: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
-    let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let mut buf2: [u8; 128] = unsafe { mem::uninit() };
+    let mut buf1: [d8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf2: [d8; 128] = unsafe { mem::uninit() };
     let path = try!(rmo_cstr(&path, &mut buf1));
     let name = try!(rmo_cstr(&name, &mut buf2));
     rv!(removexattr(&path, &name))
@@ -918,8 +914,8 @@ pub fn remove_attr_no_follow<P, S>(path: P, name: S) -> Result
     where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
           S: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
-    let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let mut buf2: [u8; 128] = unsafe { mem::uninit() };
+    let mut buf1: [d8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf2: [d8; 128] = unsafe { mem::uninit() };
     let path = try!(rmo_cstr(&path, &mut buf1));
     let name = try!(rmo_cstr(&name, &mut buf2));
     rv!(lremovexattr(&path, &name))
@@ -950,7 +946,7 @@ pub fn remove_attr_no_follow<P, S>(path: P, name: S) -> Result
 pub fn list_attr_size<P>(path: P) -> Result<usize>
     where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
-    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
     let path = try!(rmo_cstr(&path, &mut buf));
     rv!(listxattr(&path, &mut []), -> usize)
 }
@@ -981,20 +977,20 @@ pub fn list_attr_size<P>(path: P) -> Result<usize>
 pub fn list_attr_size_no_follow<P>(path: P) -> Result<usize>
     where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
-    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
     let path = try!(rmo_cstr(&path, &mut buf));
     rv!(llistxattr(&path, &mut []), -> usize)
 }
 
 fn list_attr_common<F, P>(pool: P, mut f: F) -> Result<ListAttrIter<P>>
-    where F: FnMut(&mut [u8]) -> ssize_t,
+    where F: FnMut(&mut [d8]) -> ssize_t,
           P: MemPool,
 {
     let mut vec = Vec::with_pool(pool);
     loop {
         let size = try!(rv!(f(&mut []), -> usize));
         vec.reserve(size);
-        match rv!(f(unsafe { vec.unused() }), -> usize) {
+        match rv!(f(vec.unused()), -> usize) {
             Ok(n) => {
                 unsafe { vec.set_len(n); }
                 return Ok(ListAttrIter { buf: vec, pos: Cell::new(0) });
@@ -1037,7 +1033,7 @@ pub fn list_attr_pool<L, P>(path: L, pool: P) -> Result<ListAttrIter<P>>
     where L: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
           P: MemPool,
 {
-    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
     let path = try!(rmo_cstr(&path, &mut buf));
     list_attr_common(pool, |buf| listxattr(&path, buf))
 }
@@ -1109,7 +1105,7 @@ pub fn list_attr_no_follow_pool<L, P>(path: L, pool: P) -> Result<ListAttrIter<P
     where L: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
           P: MemPool,
 {
-    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
     let path = try!(rmo_cstr(&path, &mut buf));
     list_attr_common(pool, |buf| llistxattr(&path, buf))
 }

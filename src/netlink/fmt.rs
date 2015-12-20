@@ -6,7 +6,7 @@ use base::prelude::*;
 use alloc::{self};
 use core::{mem};
 use cty::{nlmsghdr, nlattr};
-use alloc::{Dummy, MemPool, AlignAlloc};
+use alloc::{MemPool, AlignAlloc};
 use vec::{Vec};
 use kind::{self};
 use flags::{self};
@@ -16,26 +16,23 @@ macro_rules! align { ($val:expr) => { ($val + 3) & !3 } }
 pub struct NlBuf<H = alloc::Heap>
     where H: MemPool
 {
-    buf: Vec<u8, AlignAlloc<u32, H>>,
-}
-
-impl<'a> NlBuf<Dummy<'a>> {
-    pub fn buffered(buf: &'a mut [u8]) -> NlBuf<Dummy<'a>> {
-        let buf = mem::align_for_mut::<u32>(buf);
-        NlBuf {
-            buf: unsafe {
-                Vec::from_raw_parts(buf.as_mut_ptr(), 0, buf.len(), AlignAlloc::out_of(()))
-            },
-        }
-    }
+    buf: Vec<d8, AlignAlloc<u32, H>>,
 }
 
 impl<H> NlBuf<H>
-    where H: MemPool+OutOf,
+    where H: MemPool,
 {
-    pub fn new() -> NlBuf<H> {
+    pub fn new() -> NlBuf<H>
+        where H: OutOf
+    {
         NlBuf {
             buf: Vec::new(),
+        }
+    }
+
+    pub fn with_pool(pool: H) -> NlBuf<H> {
+        NlBuf {
+            buf: Vec::with_pool(AlignAlloc::new(pool)),
         }
     }
 }
@@ -63,18 +60,18 @@ impl<H> NlBuf<H>
     }
 }
 
-impl<H> AsRef<[u8]> for NlBuf<H>
+impl<H> AsRef<[d8]> for NlBuf<H>
     where H: MemPool,
 {
-    fn as_ref(&self) -> &[u8] {
+    fn as_ref(&self) -> &[d8] {
         &self.buf
     }
 }
 
-impl<H> TryAsRef<[u8]> for NlBuf<H>
+impl<H> TryAsRef<[d8]> for NlBuf<H>
     where H: MemPool,
 {
-    fn try_as_ref(&self) -> Result<&[u8]> {
+    fn try_as_ref(&self) -> Result<&[d8]> {
         Ok(&self.buf)
     }
 }
@@ -170,13 +167,13 @@ impl<'a, H> Drop for NlAttr<'a, H>
 pub struct NlData<'a, H = alloc::Heap>
     where H: MemPool+'a,
 {
-    buf: &'a mut Vec<u8, AlignAlloc<u32, H>>,
+    buf: &'a mut Vec<d8, AlignAlloc<u32, H>>,
 }
 
 impl<'a, H> NlData<'a, H>
     where H: MemPool+'a,
 {
-    unsafe fn add_attr(&mut self, payload: usize) -> Result<(&mut nlattr, &mut [u8])> {
+    unsafe fn add_attr(&mut self, payload: usize) -> Result<(&mut nlattr, &mut [d8])> {
         let size = mem::size_of::<nlattr>() + align!(payload);
         try!(self.buf.reserve(size));
         let len = self.buf.len();
@@ -195,14 +192,14 @@ impl<'a, H> NlData<'a, H>
         }
     }
 
-    pub fn add_simple<T: Copy>(&mut self, ty: u16, val: T) -> Result {
+    pub fn add_simple<T: Pod>(&mut self, ty: u16, val: T) -> Result {
         unsafe {
             let (attr, data) = try!(self.add_attr(mem::size_of::<T>()));
             attr.nla_type = ty;
             if mem::align_of::<T>() <= 4 {
                 *(data.as_mut_ptr() as *mut T) = val;
             } else {
-                mem::copy(data, mem::as_bytes(&val));
+                mem::copy(data.as_mut(), val.as_ref());
             }
             Ok(())
         }
@@ -218,20 +215,20 @@ impl<'a, H> NlData<'a, H>
     pub fn add_i64 (&mut self, ty: u16, val: i64) -> Result { self.add_simple(ty, val) }
 
     pub fn add_string<T: ?Sized>(&mut self, ty: u16, val: &T) -> Result
-        where T: AsRef<[u8]>,
+        where T: AsRef<[d8]>,
     {
         let val = val.as_ref();
         let (attr, data) = unsafe { try!(self.add_attr(val.len() + 1)) };
         attr.nla_type = ty;
         mem::copy(data, val);
-        data[val.len()] = 0;
+        unsafe { *data[val.len()].as_mut_byte() = 0; }
         Ok(())
     }
 
     pub fn add_data(&mut self, ty: u16, val: &[u8]) -> Result {
         let (attr, data) = unsafe { try!(self.add_attr(val.len())) };
         attr.nla_type = ty;
-        mem::copy(data, val);
+        mem::copy(data, val.as_ref());
         Ok(())
     }
 
@@ -240,7 +237,7 @@ impl<'a, H> NlData<'a, H>
         try!(self.buf.reserve(size));
         let len = self.buf.len();
         unsafe { self.buf.set_len(len + size); }
-        mem::copy(&mut self.buf[len..], val);
+        mem::copy(&mut self.buf[len..], val.as_ref());
         Ok(())
     }
 

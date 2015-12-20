@@ -85,16 +85,16 @@ impl<T, H> MemPool for AlignAlloc<T, H>
     where T: 'static,
           H: MemPool,
 {
-    unsafe fn alloc(&mut self, size: usize, alignment: usize) -> Result<*mut u8> {
+    unsafe fn alloc(&mut self, size: usize, alignment: usize) -> Result<*mut d8> {
         self.alloc.alloc(size, max(mem::align_of::<T>(), alignment))
     }
 
-    unsafe fn free(&mut self, ptr: *mut u8, size: usize, alignment: usize) {
+    unsafe fn free(&mut self, ptr: *mut d8, size: usize, alignment: usize) {
         self.alloc.free(ptr, size, max(mem::align_of::<T>(), alignment))
     }
 
-    unsafe fn realloc(&mut self, old_ptr: *mut u8, oldsize: usize, newsize: usize,
-                      alignment: usize) -> Result<*mut u8> {
+    unsafe fn realloc(&mut self, old_ptr: *mut d8, oldsize: usize, newsize: usize,
+                      alignment: usize) -> Result<*mut d8> {
         self.alloc.realloc(old_ptr, oldsize, newsize, max(mem::align_of::<T>(),
                            alignment))
     }

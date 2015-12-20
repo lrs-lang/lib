@@ -23,16 +23,16 @@ impl OutOf for Libc {
 }
 
 impl MemPool for Libc {
-    unsafe fn alloc(&mut self, size: usize, alignment: usize) -> Result<*mut u8> {
-        self.realloc(0 as *mut u8, 0, size, alignment)
+    unsafe fn alloc(&mut self, size: usize, alignment: usize) -> Result<*mut d8> {
+        self.realloc(0 as *mut d8, 0, size, alignment)
     }
 
-    unsafe fn free(&mut self, ptr: *mut u8, size: usize, alignment: usize) {
+    unsafe fn free(&mut self, ptr: *mut d8, size: usize, alignment: usize) {
         self.realloc(ptr, size, 0, alignment);
     }
 
-    unsafe fn realloc(&mut self, old_ptr: *mut u8, oldsize: usize, newsize: usize,
-                      alignment: usize) -> Result<*mut u8> {
+    unsafe fn realloc(&mut self, old_ptr: *mut d8, oldsize: usize, newsize: usize,
+                      alignment: usize) -> Result<*mut d8> {
         let _ = oldsize;
         let _ = alignment;
         if newsize > MAX_SIZE {

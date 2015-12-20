@@ -104,7 +104,7 @@ impl Sigfd {
     /// [return_value]
     /// Returns a slice of received signals.
     pub fn read<'a>(&self, buf: &'a mut [SigfdInfo]) -> Result<&'a mut [SigfdInfo]> {
-        let len = try!(retry(|| read(self.fd, buf.as_mut_bytes())));
+        let len = try!(retry(|| read(self.fd, buf.as_mut())));
         let num = len as usize / mem::size_of::<SigfdInfo>();
         Ok(&mut buf[..num])
     }

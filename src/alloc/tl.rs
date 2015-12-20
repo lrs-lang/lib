@@ -21,11 +21,13 @@ impl OutOf for TlAlc {
 }
 
 thread_local! {
-    static CACHE: SingleThreadMutex<Cache> = SingleThreadMutex::new(Cache::new());
+    static CACHE: SingleThreadMutex<Cache> = unsafe {
+        SingleThreadMutex::new(Cache::new())
+    };
 }
 
 impl MemPool for TlAlc {
-    unsafe fn alloc(&mut self, size: usize, _: usize) -> Result<*mut u8> {
+    unsafe fn alloc(&mut self, size: usize, _: usize) -> Result<*mut d8> {
         if let Some(mut c) = CACHE.try_lock() {
             c.alloc(size)
         } else {
@@ -33,12 +35,12 @@ impl MemPool for TlAlc {
         }
     }
 
-    unsafe fn free(&mut self, ptr: *mut u8, size: usize, _: usize) {
+    unsafe fn free(&mut self, ptr: *mut d8, size: usize, _: usize) {
         CACHE.lock().free(ptr, size)
     }
 
-    unsafe fn realloc(&mut self, old_ptr: *mut u8, oldsize: usize, newsize: usize,
-                      _: usize) -> Result<*mut u8> {
+    unsafe fn realloc(&mut self, old_ptr: *mut d8, oldsize: usize, newsize: usize,
+                      _: usize) -> Result<*mut d8> {
         CACHE.lock().realloc(old_ptr, oldsize, newsize)
     }
 }

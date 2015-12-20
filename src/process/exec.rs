@@ -17,7 +17,7 @@ use {env, file};
 type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
 
 fn rmo_cstr<'a, S>(s: &'a S,
-                   buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
+                   buf: &'a mut [d8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
     where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
 {
     s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::out_of(())))
@@ -58,7 +58,7 @@ fn rmo_cstr<'a, S>(s: &'a S,
 pub fn exec<P>(path: P, argv: &[*const c_char]) -> Result
     where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
-    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
     let file = try!(rmo_cstr(&path, &mut buf));
     if file.len() == 0 {
         return Err(error::InvalidArgument);
@@ -72,7 +72,7 @@ pub fn exec<P>(path: P, argv: &[*const c_char]) -> Result
 
     // Try first without allocating
 
-    let mut abs_buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut abs_buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
     match exec_rel(&file, OncePool::new(&mut abs_buf), argv) {
         Err(error::NoMemory) => { },
         x => return x,

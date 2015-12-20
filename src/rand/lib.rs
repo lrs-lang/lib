@@ -40,8 +40,8 @@ pub trait Gen: Sized {
 
 impl<T: Pod> Gen for T {
     fn gen<G: Rng+?Sized>(g: &mut G) -> Result<T> {
-        let mut t = unsafe { mem::uninit() };
-        if try!(g.read_all(mem::as_mut_bytes(&mut t))) < mem::size_of::<T>() {
+        let mut t: T = unsafe { mem::uninit() };
+        if try!(g.read_all(t.as_mut())) < mem::size_of::<T>() {
             Err(error::WouldBlock)
         } else {
             Ok(t)

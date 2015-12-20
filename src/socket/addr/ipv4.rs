@@ -173,7 +173,7 @@ impl Ipv4SockAddr {
             sin_addr: in_addr { s_addr: addr.to_be() },
             .. mem::zeroed()
         };
-        mem::copy(bytes, mem::as_bytes(&addr));
+        mem::copy::<d8>(bytes.as_mut(), addr.as_ref());
         Ok(unsafe { mem::cast(&mut bytes[..IPV4_SOCK_ADDR_SIZE]) })
     }
 

@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use base::prelude::*;
-use core::{slice, mem};
+use core::{mem};
 use core::marker::{Leak};
 use {Vec};
 use alloc::{MemPool};
@@ -19,10 +19,6 @@ impl<H: ?Sized> Vec<u8, H>
 
     pub fn as_mut_str(&mut self) -> &mut ByteStr {
         self.deref_mut().as_mut()
-    }
-
-    pub unsafe fn unused(&mut self) -> &mut [u8] {
-        slice::from_ptr(self.ptr.get().add(self.len), self.cap - self.len)
     }
 
     pub fn leak<'a>(mut self) -> &'a mut ByteStr
@@ -69,7 +65,7 @@ impl<H: ?Sized> BufWrite for Vec<u8, H>
             let self_len = self.len();
             try!(self.reserve(BUF_READ_STEP_SIZE));
             unsafe { self.set_len(self_len + BUF_READ_STEP_SIZE); }
-            match r.read_all(&mut self[self_len..self_len+BUF_READ_STEP_SIZE]) {
+            match r.read_all(self[self_len..self_len+BUF_READ_STEP_SIZE].as_mut()) {
                 Ok(BUF_READ_STEP_SIZE) => len += BUF_READ_STEP_SIZE,
                 Ok(n) => {
                     unsafe { self.set_len(self_len + n); }

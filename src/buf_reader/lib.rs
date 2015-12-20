@@ -100,7 +100,7 @@ impl<R, H = alloc::Heap> BufReader<R, H>
         }
         let res = {
             let (mut read, mut slices) = self.write_slices();
-            try!(read.scatter_read(&mut slices))
+            try!(read.scatter_read((&mut slices[..]).as_mut()))
         };
         self.end = self.end.wrapping_add(res);
         Ok(res)
@@ -141,7 +141,7 @@ impl<R, H> Read for BufReader<R, H>
     where R: Read,
           H: MemPool,
 {
-    fn read(&mut self, mut buf: &mut [u8]) -> Result<usize> {
+    fn read(&mut self, mut buf: &mut [d8]) -> Result<usize> {
         if self.available() == 0 {
             self.start = 0;
             self.end = 0;
@@ -157,7 +157,7 @@ impl<R, H> Read for BufReader<R, H>
         Ok(res)
     }
 
-    fn scatter_read(&mut self, mut buf: &mut [&mut [u8]]) -> Result<usize> {
+    fn scatter_read(&mut self, mut buf: &mut [&mut [d8]]) -> Result<usize> {
         if self.available() == 0 {
             self.start = 0;
             self.end = 0;

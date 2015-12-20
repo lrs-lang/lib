@@ -7,6 +7,28 @@
 #![feature(no_std, link_llvm_intrinsics, thread_local, const_fn)]
 #![no_std]
 
+//! The tlalc allocator.
+//!
+//! = Definitions
+//!
+//! This section defines various terms used in the remained of the documentation.
+//!
+//! == object
+//!
+//! A continuous region of memory.
+//!
+//! == size of an object
+//!
+//! The extent of an object.
+//!
+//! == address of an object
+//!
+//! The lowest address pointing to an object.
+//!
+//! == pointer to an object
+//!
+//! A pointer that contains the address of an object.
+
 extern crate lrs_base as base;
 extern crate lrs_cty as cty;
 extern crate lrs_syscall as syscall;
@@ -35,3 +57,15 @@ const MIN_ALLOC: usize = 0x10;
 const MAX_SMALL: usize = 0x100;
 const MAX_SMALL_SHIFT: usize = 8;
 const LARGE_CLASS_SHIFT: usize = (MAX_SMALL / MIN_ALLOC) - MAX_SMALL_SHIFT - 1; // 7
+
+pub fn usable_size(size: usize) -> usize {
+    unsafe {
+        if likely!(size <= MAX_SMALL) {
+            align!(size, [%] MIN_ALLOC)
+        } else if size <= BLOCK_SIZE {
+            size.next_power_of_two()
+        } else {
+            align!(size, [%] BLOCK_SIZE)
+        }
+    }
+}

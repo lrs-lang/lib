@@ -15,15 +15,15 @@ use {MemPool};
 /// memory and reallocations will always allocate a new object.
 #[derive(Copy)]
 pub struct TaPool<'a> {
-    pool: *mut *mut [u8],
+    pool: *mut *mut [d8],
     _data: PhantomData<&'a ()>,
 }
 
 impl<'a> OutOf for TaPool<'a> {
     fn out_of(_: ()) -> Self {
-        static B: &'static [u8] = &[];
+        static B: &'static [d8] = &[];
         TaPool {
-            pool: &B as *const &[u8] as *mut *mut [u8],
+            pool: &B as *const &[d8] as *mut *mut [d8],
             _data: PhantomData,
         }
     }
@@ -34,7 +34,7 @@ impl<'a> TaPool<'a> {
     ///
     /// [argument, pool]
     /// A reference to the slice that will be used for allocation.
-    pub fn new(pool: &'a mut &mut [u8]) -> TaPool<'a> {
+    pub fn new(pool: &'a mut &mut [d8]) -> TaPool<'a> {
         TaPool {
             pool: unsafe { mem::cast(pool) },
             _data: PhantomData,
@@ -44,13 +44,13 @@ impl<'a> TaPool<'a> {
     // It would be better if the return value here were *mut *mut, but this is a bit more
     // convenient. Just remember that you cannot move a slice into here whose lifetime is
     // shorter than the lifetime of the original slice.
-    unsafe fn get(&mut self) -> &mut &mut [u8] {
+    unsafe fn get(&mut self) -> &mut &mut [d8] {
         mem::cast(self.pool)
     }
 }
 
 impl<'a> MemPool for TaPool<'a> {
-    unsafe fn alloc(&mut self, size: usize, alignment: usize) -> Result<*mut u8> {
+    unsafe fn alloc(&mut self, size: usize, alignment: usize) -> Result<*mut d8> {
         let pool = self.get();
         let mask = alignment - 1;
         let start = ((!(pool.as_ptr() as usize) & mask) + 1) & mask;
@@ -67,10 +67,10 @@ impl<'a> MemPool for TaPool<'a> {
         Ok(ptr)
     }
 
-    unsafe fn free(&mut self, _: *mut u8, _: usize, _: usize) { }
+    unsafe fn free(&mut self, _: *mut d8, _: usize, _: usize) { }
 
-    unsafe fn realloc(&mut self, ptr: *mut u8, oldsize: usize,
-                             newsize: usize, alignment: usize) -> Result<*mut u8> {
+    unsafe fn realloc(&mut self, ptr: *mut d8, oldsize: usize,
+                             newsize: usize, alignment: usize) -> Result<*mut d8> {
         {
             let pool = self.get();
             if ptr.add(oldsize) == pool.as_mut_ptr() {

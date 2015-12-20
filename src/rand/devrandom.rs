@@ -18,7 +18,7 @@ impl DevRandom {
 impl Rng for DevRandom { }
 
 impl Read for DevRandom {
-    fn scatter_read(&mut self, buf: &mut [&mut [u8]]) -> Result<usize> {
+    fn scatter_read(&mut self, buf: &mut [&mut [d8]]) -> Result<usize> {
         self.0.scatter_read(buf)
     }
 }
@@ -34,7 +34,7 @@ impl DevUrandom {
 impl Rng for DevUrandom { }
 
 impl Read for DevUrandom {
-    fn scatter_read(&mut self, buf: &mut [&mut [u8]]) -> Result<usize> {
+    fn scatter_read(&mut self, buf: &mut [&mut [d8]]) -> Result<usize> {
         self.0.scatter_read(buf)
     }
 }

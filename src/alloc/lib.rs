@@ -73,101 +73,101 @@ pub fn empty_ptr<T>() -> *mut T {
     &EMPTY as *const _ as *mut _
 }
 
-/// Allocators.
+/// Memory pools.
 ///
-/// = Remarks
+/// = Description
 ///
-/// == Bugs
+/// == Definitions
 ///
-/// This needs better documentation.
+/// This section defines various terms used in the remained of the documentation.
+///
+/// === slot
+///
+/// An opaque object representing an allocation.
+///
+/// === range of a slot
+///
+/// A non-empty continuous memory region.
+///
+/// === address of a slot
+///
+/// The positive minimal address of the range of the slot.
+///
+/// === alignment of a slot
+///
+/// A power of two that is a factor of the address of the slot.
+///
+/// === pointer to a slot
+///
+/// A pointer that contains the address of the slot.
+///
+/// === size of a slot
+///
+/// The size of the range of the slot that is bounded above by the largest value that can
+/// be stored in an `isize` object.
+///
+/// === content of a slot
+///
+/// The bytes stored in the range of the slot.
+///
+/// === minimal size of a slot
+///
+/// A positive unsigned integer bounded above by the size of the slot.
 pub trait MemPool: Leak {
-    /// Allocates a chunk of bytes with the specified properties.
+    /// Attempts to create a slot.
     ///
     /// [argument, size]
-    /// The size of the allocated object.
+    /// A lower bound of the size of the slot.
     ///
     /// [argument, alignment]
-    /// The alignment of the allocated object.
+    /// See the description.
     ///
     /// [return_value]
-    /// Returns the allocated object.
+    /// Returns a pointer to the slot or an error.
     ///
-    /// = Remarks
+    /// = Description
     ///
-    /// The alignment must be a power of two or the behavior is undefined. Not all
-    /// allocators support all alignments. In general, only alignments that are required
-    /// by the hardware can be satisfied.
+    /// On success: the returned pointer does not alias any other pointer; the minimal
+    /// size of the slot is bounded above by the `size` argument.
     ///
-    /// If `size` is zero, the behavior is undefined.
-    unsafe fn alloc(&mut self, size: usize, alignment: usize) -> Result<*mut u8>;
+    /// The `alignment` argument is a power of two. It is implementation defined whether
+    /// it has any influence on the alignment of the slot.
+    ///
+    /// The contents of the slot are unspecified. The caller has exclusive read and write
+    /// access to the range of the slot.
+    unsafe fn alloc(&mut self, size: usize, alignment: usize) -> Result<*mut d8>;
 
-    /// Reallocates a chunk of bytes.
+    /// Attempts to resize a slot.
     ///
-    /// [argument, pool]
-    /// The pool from which to draw memory.
+    /// [argument, self]
+    /// The allocator that created the slot.
     ///
     /// [argument, ptr]
-    /// The pointer that should be reallocated.
+    /// A pointer to the slot.
     ///
-    /// [argument, oldsize]
-    /// The previous size of the allocation.
+    /// [argument, cur_size]
+    /// An integer bounded below by the minimal size of the slot and above by the size of
+    /// the slot.
     ///
-    /// [argument, newsize]
-    /// The new size.
+    /// [argument, new_size]
+    /// A lower bound for the new size of the slot.
     ///
     /// [argument, alignment]
-    /// The alignment of the allocation.
+    /// The same value as the `alignment` argument used to create the slot.
     ///
     /// [return_value]
-    /// Returns the new object.
+    /// Returns a pointer to the resized slot or an error.
     ///
-    /// = Remarks
+    /// = Description
     ///
-    /// The pointer argument must have been returned by a previous invocation of
-    /// `allocate_raw` or `reallocate_raw` with the same allocator and pool. The alignment
-    /// argument must be the same alignment that was previously used to allocate the
-    /// object. The oldsize argument must be the current size of the object.
-    ///
-    /// Otherwise the behavior is undefined.
-    ///
-    /// If this function returns successfully, the pointer argument becomes invalid and
-    /// must no longer be used. Otherwise the pointer argument can continued to be used.
-    ///
-    /// If the function returns successfully, the first `oldsize` bytes in the new object
-    /// are the same as the first `oldsize` bytes in the old object.
-    ///
-    /// If `newsize` is `0`, the behavior is undefined.
-    unsafe fn realloc(&mut self, ptr: *mut u8, oldsize: usize,
-                      newsize: usize, alignment: usize) -> Result<*mut u8>;
+    /// On success: the address of the slot can have changed; the minimal size of the slot
+    /// is bounded above by the `new_size` argument.
+    unsafe fn realloc(&mut self, ptr: *mut d8, cur_size: usize,
+                      new_size: usize, alignment: usize) -> Result<*mut d8>;
 
-    /// Deallocates a chunk of bytes with the specified properties.
-    ///
-    /// [argument, pool]
-    /// The pool to which the memory is returned.
-    ///
-    /// [argument, ptr]
-    /// The pointer that should be deallocated.
-    ///
-    /// [argument, size]
-    /// The size of the allocation.
-    ///
-    /// [argument, alignment]
-    /// The alignment of the allocation.
-    ///
-    /// = Remarks
-    ///
-    /// The pointer argument must have been returned by a previous invocation of
-    /// `allocate_raw` or `reallocate_raw` with the same allocator and pool. The alignment
-    /// argument must be the same alignment that was previously used to allocate the
-    /// object. The size argument must be the current size of the object.
-    ///
-    /// Otherwise the behavior is undefined.
-    ///
-    /// This function always succeeds and the pointer argument must no longer be used
-    /// after this call.
-    unsafe fn free(&mut self, ptr: *mut u8, size: usize, alignment: usize);
+    unsafe fn free(&mut self, ptr: *mut d8, size: usize, alignment: usize);
 
-    unsafe fn realloc_in_place(&mut self, ptr: *mut u8, oldsize: usize,
+    unsafe fn realloc_in_place(&mut self, ptr: *mut d8, oldsize: usize,
                                newsize: usize, alignment: usize) -> Result {
         let _ = ptr;
         let _ = oldsize;
@@ -176,7 +176,7 @@ pub trait MemPool: Leak {
         Err(error::NoMemory)
     }
 
-    unsafe fn usable_size(&self, ptr: *mut u8, size: usize, alignment: usize) -> usize {
+    unsafe fn usable_size(&self, ptr: *mut d8, size: usize, alignment: usize) -> usize {
         let _ = ptr;
         let _ = alignment;
         size
@@ -184,16 +184,16 @@ pub trait MemPool: Leak {
 }
 
 impl<'a, T: MemPool> MemPool for &'a mut T {
-    unsafe fn alloc(&mut self, size: usize, alignment: usize) -> Result<*mut u8> {
+    unsafe fn alloc(&mut self, size: usize, alignment: usize) -> Result<*mut d8> {
         (**self).alloc(size, alignment)
     }
 
-    unsafe fn realloc(&mut self, ptr: *mut u8, oldsize: usize,
-                      newsize: usize, alignment: usize) -> Result<*mut u8> {
+    unsafe fn realloc(&mut self, ptr: *mut d8, oldsize: usize,
+                      newsize: usize, alignment: usize) -> Result<*mut d8> {
         (**self).realloc(ptr, oldsize, newsize, alignment)
     }
 
-    unsafe fn free(&mut self, ptr: *mut u8, size: usize, alignment: usize) {
+    unsafe fn free(&mut self, ptr: *mut d8, size: usize, alignment: usize) {
         (**self).free(ptr, size, alignment)
     }
 }
@@ -297,7 +297,7 @@ pub unsafe fn realloc_array<T, M: ?Sized>(pool: &mut M, old_ptr: *mut T, old_num
         match new_num.checked_mul(size) {
             Some(new_size) => {
                 let align = mem::align_of::<T>();
-                let old_ptr = old_ptr as *mut u8;
+                let old_ptr = old_ptr as *mut d8;
                 let old_size = old_num * size;
                 let new_ptr = try!(pool.realloc(old_ptr, old_size, new_size, align));
                 let new_num = pool.usable_size(new_ptr, new_size, align) / size;
@@ -332,7 +332,7 @@ pub unsafe fn free_array<T, M: ?Sized>(pool: &mut M, ptr: *mut T, num: usize)
     where M: MemPool,
 {
     if mem::size_of::<T>() != 0 {
-        pool.free(ptr as *mut u8, num * mem::size_of::<T>(), mem::align_of::<T>());
+        pool.free(ptr as *mut d8, num * mem::size_of::<T>(), mem::align_of::<T>());
     }
 }
 
@@ -358,6 +358,6 @@ pub unsafe fn free<T: ?Sized, M: ?Sized>(pool: &mut M, ptr: *mut T)
 {
     let size = mem::size_of_val(&*ptr);
     if size != 0 {
-        pool.free(ptr as *mut u8, size, mem::align_of_val(&*ptr));
+        pool.free(ptr as *mut d8, size, mem::align_of_val(&*ptr));
     }
 }

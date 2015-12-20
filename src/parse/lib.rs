@@ -28,9 +28,9 @@ pub trait Parse {
     fn parse<P: Parsable>(&self) -> Result<P>;
 }
 
-impl Parse for [u8] { fn parse<P: Parsable>(&self) -> Result<P> { P::parse_bytes(self)  } }
-impl Parse for [i8] { fn parse<P: Parsable>(&self) -> Result<P> { self.as_bytes().parse() } }
-impl Parse for str  { fn parse<P: Parsable>(&self) -> Result<P> { self.as_bytes().parse() } }
+impl Parse for [u8] { fn parse<P: Parsable>(&self) -> Result<P> { P::parse_bytes(self) } }
+impl Parse for [i8] { fn parse<P: Parsable>(&self) -> Result<P> { P::parse_bytes(self.as_ref()) } }
+impl Parse for str  { fn parse<P: Parsable>(&self) -> Result<P> { P::parse_bytes(self.as_ref()) } }
 
 impl<'a, T: Parse+?Sized> Parse for &'a T {
     fn parse<P: Parsable>(&self) -> Result<P> {

@@ -9,6 +9,7 @@ use cmp::{self};
 use slice::{self};
 use option::{Option};
 use option::Option::{Some, None};
+use data::{d8};
 
 pub use intrinsics::{
     uninit,
@@ -17,34 +18,46 @@ pub use intrinsics::{
 // TODO: We need a safe version of cast for Pod
 pub use intrinsics::transmute as cast;
 
-/// Creates an object that has all bytes set to zero.
+/// Creates a sequence of zero bytes.
+///
+/// [return_value]
+/// A value that contains a sequence of zero bytes.
 pub fn zeroed<T>() -> T
     where T: Pod,
 {
     unsafe { intrinsics::init() }
 }
 
-/// Returns the in-memory representation of an object.
+/// Returns an unspecified byte sequence of a value.
 ///
 /// [argument, val]
-/// The object whose representation is returned.
-pub fn as_bytes<T>(val: &T) -> &[u8] {
-    unsafe { slice::from_ptr(val as *const _ as *const u8, size_of::<T>()) }
+/// The value.
+///
+/// [return_value]
+/// An unspecified byte sequence of the value.
+///
+/// = Description
+///
+/// Each byte in the returned slice can be undefined for its type.
+pub fn as_data<T: ?Sized>(val: &T) -> &[d8] {
+    unsafe { slice::from_ptr(val as *const _ as *const d8, size_of_val(val)) }
 }
 
-/// Returns the mutable in-memory representation of an object.
+/// Returns an unspecified mutable byte sequence of a value.
 ///
 /// [argument, val]
-/// The object whose representation is returned.
+/// The value.
 ///
-/// = Remarks
+/// [return_value]
+/// An unspecified mutable byte sequence of the value.
 ///
-/// This only accepts `Pod` data because the return value can be used to store arbitrary
-/// data in `val`.
-pub fn as_mut_bytes<T>(val: &mut T) -> &mut [u8]
+/// = Description
+///
+/// Each byte in the returned slice can be undefined for its type.
+pub fn as_mut_data<T: ?Sized>(val: &mut T) -> &mut [d8]
     where T: Pod,
 {
-    unsafe { slice::from_ptr(val as *mut _ as *const u8, size_of::<T>()) }
+    unsafe { slice::from_ptr(val as *mut _ as *const d8, size_of_val(val)) }
 }
 
 /// Returns whether a buffer is suitable to hold an object of a certain type.

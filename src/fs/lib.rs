@@ -37,7 +37,7 @@ pub mod unmount;
 type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
 
 fn rmo_cstr<'a, S>(s: &'a S,
-                   buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
+                   buf: &'a mut [d8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
     where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
 {
     s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::out_of(())))
@@ -59,7 +59,7 @@ pub fn sync_all() {
 pub fn set_root<P>(path: P) -> Result
     where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
-    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
     let path = try!(rmo_cstr(&path, &mut buf));
     rv!(chroot(&path))
 }
@@ -79,8 +79,8 @@ pub fn move_root<P, Q>(new_root: P, put_old: Q) -> Result
     where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
           Q: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
-    let mut buf1: [u8; PATH_MAX] = unsafe { mem::uninit() };
-    let mut buf2: [u8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf1: [d8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf2: [d8; PATH_MAX] = unsafe { mem::uninit() };
     let new_root = try!(rmo_cstr(&new_root, &mut buf1));
     let put_old = try!(rmo_cstr(&put_old, &mut buf2));
     rv!(pivot_root(&new_root, &put_old))

@@ -35,7 +35,7 @@ pub mod flags;
 type Pool<'a> = FcPool<OncePool<'a>, FbHeap>;
 
 fn rmo_cstr<'a, S>(s: &'a S,
-                   buf: &'a mut [u8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
+                   buf: &'a mut [d8]) -> Result<Rmo<'a, CStr, CString<Pool<'a>>>>
     where S: for<'b> ToRmo<Pool<'b>, CStr, CString<Pool<'b>>>,
 {
     s.to_rmo_with(FcPool::new(OncePool::new(buf), FbHeap::out_of(())))
@@ -74,7 +74,7 @@ pub fn swap_on<P>(path: P, flags: SwapFlags, priority: Option<i16>) -> Result
         Some(p) => flags |= p as c_int | SWAP_FLAG_PREFER,
         _ => flags &= !SWAP_FLAG_PREFER,
     }
-    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
     let path = try!(rmo_cstr(&path, &mut buf));
     rv!(swapon(&path, flags))
 }
@@ -90,7 +90,7 @@ pub fn swap_on<P>(path: P, flags: SwapFlags, priority: Option<i16>) -> Result
 pub fn swap_off<P>(path: P) -> Result
     where P: for<'a> ToRmo<Pool<'a>, CStr, CString<Pool<'a>>>,
 {
-    let mut buf: [u8; PATH_MAX] = unsafe { mem::uninit() };
+    let mut buf: [d8; PATH_MAX] = unsafe { mem::uninit() };
     let path = try!(rmo_cstr(&path, &mut buf));
     rv!(swapoff(&path))
 }
