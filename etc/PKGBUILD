@@ -1,5 +1,5 @@
 pkgname=rust-nightly-lrs
-pkgver=2015.10.30
+pkgver=2015.12.20
 pkgrel=1
 arch=('i686' 'x86_64')
 pkgdesc='The Rust compiler and libraries.'
@@ -13,11 +13,11 @@ source=("https://static.rust-lang.org/dist/$(echo $pkgver | sed 's/\./-/g')/rust
         "https://static.rust-lang.org/dist/$(echo $pkgver | sed 's/\./-/g')/rust-std-nightly-i686-unknown-linux-gnu.tar.gz"
         "https://static.rust-lang.org/dist/$(echo $pkgver | sed 's/\./-/g')/rust-std-nightly-x86_64-unknown-linux-gnu.tar.gz"
         )
-sha256sums=('12611ee4ab4ea4e34382e0d1ec3ccebff30c8299111ac1e49e929e94f8665989'
-            'fb04c70a54973a7c49737e85d471e7dd50264b2679be5c3e6fdbf149aff69ac0'
-            '33ddabe954ed9dc4258ee6523ecbc189fb2fba1986295eca3559c661de84710f'
-            'd73a6d1e3509a5bb37d3866413e736c37512ff4a681f4ac5510a79625eb19293'
-            '1094e32ab70de76517cfcc024ff9ff4ae01d2363248732fe04442e685bf31bb2')
+sha256sums=('b86747ed797bbaabfd288d2033955f727d04eb789315561b9f453bcf00704ede'
+            'ef55c26ce772d8d796429f9a1b00f8debeeab15bd21d8dc15cc6853b29f6772a'
+            'f59f578c0fe58bfa9eeebdbbff487645f3c06aae7c11ddc6bfe328d5319be7a2'
+            'b88270a2c5a9e194a83fc258624c2874e0ef48af1ae50a3ade172fd34ec915a9'
+            'ce5493654bfc0cb52fb9a997a7f7590ba1930930364a33feba10e65e3061701f')
 options=(staticlibs !strip)
 
 package() {
