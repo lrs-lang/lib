@@ -231,6 +231,16 @@ pub trait BufWrite : Write {
     /// copied is lost. No data is lost even if an error occurs.
     fn read_to_eof<R>(&mut self, r: R) -> Result<usize>
         where R: Read;
+
+    /// Reads up to a specified number of bytes for a `Read` object.
+    ///
+    /// [argument, r]
+    /// The object from which to read.
+    ///
+    /// [argument, n]
+    /// The maximum number of bytes to read.
+    fn read<R>(&mut self, r: R, n: usize) -> Result<usize>
+        where R: Read;
 }
 
 impl<'a> Read for &'a [u8] {

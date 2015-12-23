@@ -21,6 +21,7 @@ pub mod std {
 
 use base::prelude::*;
 use core::{mem, ptr, cmp, slice};
+use core::marker::{Leak};
 use core::ptr::{NoAliasMemPtr};
 use base::undef::{UndefState};
 use core::iter::{IntoIterator};
@@ -167,6 +168,23 @@ impl<T, H: ?Sized = alloc::Heap> Vec<T, H>
         }
 
         let new_cap = self.len + cmp::max(n, self.cap / 2 + 1);
+        self.reserve_(new_cap)
+    }
+
+    pub fn reserve_exact(&mut self, n: usize) -> Result {
+        if self.cap - self.len >= n {
+            return Ok(());
+        }
+        if mem::size_of::<T>() == 0 {
+            self.cap = self.len + n;
+            return Ok(());
+        }
+
+        let len = self.len;
+        self.reserve_(len + n)
+    }
+
+    fn reserve_(&mut self, new_cap: usize) -> Result {
         let (ptr, new_cap) = unsafe {
             if self.ptr.get() == empty_ptr() {
                 try!(alloc::alloc_array(&mut self.pool, new_cap))
@@ -329,6 +347,15 @@ impl<T, H: ?Sized = alloc::Heap> Vec<T, H>
         } else {
             abort!();
         }
+    }
+
+    pub fn leak<'a>(mut self) -> &'a mut [T]
+        where Self: Leak+Sized,
+              H: 'a,
+    {
+        let p = unsafe { mem::cast(self.deref_mut()) };
+        mem::forget(self);
+        p
     }
 }
 

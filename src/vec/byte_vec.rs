@@ -4,7 +4,6 @@
 
 use base::prelude::*;
 use core::{mem};
-use core::marker::{Leak};
 use {Vec};
 use alloc::{MemPool};
 use io::{Write, BufWrite, Read};
@@ -19,15 +18,6 @@ impl<H: ?Sized> Vec<u8, H>
 
     pub fn as_mut_str(&mut self) -> &mut ByteStr {
         self.deref_mut().as_mut()
-    }
-
-    pub fn leak<'a>(mut self) -> &'a mut ByteStr
-        where Self: Leak+Sized,
-              H: 'a,
-    {
-        let p = unsafe { mem::cast(self.as_mut_str()) };
-        mem::forget(self);
-        p
     }
 }
 
@@ -76,5 +66,14 @@ impl<H: ?Sized> BufWrite for Vec<u8, H>
             }
         }
         Ok(len)
+    }
+
+    fn read<R>(&mut self, mut r: R, n: usize) -> Result<usize>
+        where R: Read,
+    {
+        try!(self.reserve_exact(n));
+        let n = try!(r.read(&mut self.unused()[..n]));
+        self.len += n;
+        Ok(n)
     }
 }
