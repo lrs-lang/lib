@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 function trans {
     case "$1" in
