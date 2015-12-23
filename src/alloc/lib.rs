@@ -140,7 +140,7 @@ pub trait MemPool: Leak {
     /// Attempts to resize a slot.
     ///
     /// [argument, self]
-    /// The allocator that created the slot.
+    /// The pool that created the slot.
     ///
     /// [argument, ptr]
     /// A pointer to the slot.
@@ -153,18 +153,47 @@ pub trait MemPool: Leak {
     /// A lower bound for the new size of the slot.
     ///
     /// [argument, alignment]
-    /// The same value as the `alignment` argument used to create the slot.
+    /// The same value as the `alignment` argument used to create the slot. A factor of
+    /// `new_size`.
     ///
     /// [return_value]
     /// Returns a pointer to the resized slot or an error.
     ///
     /// = Description
     ///
+    /// At the point of this call, the caller has exclusive access to the range of the
+    /// slot.
+    ///
     /// On success: the address of the slot can have changed; the minimal size of the slot
     /// is bounded above by the `new_size` argument.
+    ///
+    /// On error: the properties of the slot are unchanged.
+    ///
+    /// In any case: let `n` the the minimum of `cur_size` and `new_size`. Then the
+    /// initial `n` bytes of the range of the slot before the call agree with the initial
+    /// `n` bytes of the range of the slot after the call.
     unsafe fn realloc(&mut self, ptr: *mut d8, cur_size: usize,
                       new_size: usize, alignment: usize) -> Result<*mut d8>;
 
+    /// Destroys a slot.
+    ///
+    /// [argument, self]
+    /// The pool that created the slot.
+    ///
+    /// [argument, ptr]
+    /// A pointer to the slot.
+    ///
+    /// [argument, size]
+    /// An integer bounded below by the minimal size of the slot and above by the size of
+    /// the slot.
+    ///
+    /// [argument, alignment]
+    /// The same value as the `alignment` argument used to create the slot.
+    ///
+    /// = Description
+    ///
+    /// At the point of this call, the caller has exclusive access to the range of the
+    /// slot. After the call, the caller no longer has access to the range of the slot.
     unsafe fn free(&mut self, ptr: *mut d8, size: usize, alignment: usize);
 
     unsafe fn realloc_in_place(&mut self, ptr: *mut d8, oldsize: usize,
