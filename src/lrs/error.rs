@@ -29,9 +29,8 @@ pub use lrs_base::error::{
     ProtoFamilyNotSupported, ProtoNotSupported, ProtoNotSupported2, ProtocolError, RFKill,
     RFSError, RangeError, ReadOnlyFileSystem, RemoteAddrChanged, RemoteIOError,
     ResourceBusy, Restart, SharedLibCorrupted, SharedLibExec, SharedLibInaccessible,
-    SocketConnected, SocketNotConnected, SocketShutDown, SocketTimedOut,
-    SocketTypeNotSupported, SrmountError, StaleFileHandle, StreamPipeError,
-    SystemFileLimit, TimerExpired, TooManyArguemnts, TooManyLinks, TooManyReferences,
-    TooManySharedLibs, TooManySymlinks, TooManyUsers, WouldBlock, WrongDeviceType,
-    WrongMediumType,
+    SocketConnected, SocketNotConnected, SocketShutDown, TimedOut, SocketTypeNotSupported,
+    SrmountError, StaleFileHandle, StreamPipeError, SystemFileLimit, TimerExpired,
+    TooManyArguemnts, TooManyLinks, TooManyReferences, TooManySharedLibs, TooManySymlinks,
+    TooManyUsers, WouldBlock, WrongDeviceType, WrongMediumType,
 };

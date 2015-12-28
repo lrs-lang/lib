@@ -8,7 +8,7 @@ use std::io::{BufRead};
 fn read_u8() {
     let mut src = &mut "Hello World".as_bytes();
     let mut dst = [0; 11];
-    test!(src.read(&mut dst).unwrap() == dst.len());
+    test!(src.read(dst.as_mut()).unwrap() == dst.len());
     test!(&dst[..] == "Hello World");
 }
 
@@ -17,7 +17,7 @@ fn scatter_read_u8() {
     let mut src = &mut "Hello World".as_bytes();
     let mut dst1 = [0; 6];
     let mut dst2 = [0; 5];
-    test!(src.scatter_read(&mut [&mut dst1, &mut dst2]).unwrap() == 11);
+    test!(src.scatter_read(&mut [dst1.as_mut(), dst2.as_mut()]).unwrap() == 11);
     test!(&dst1[..] == "Hello ");
     test!(&dst2[..] == "World");
 }

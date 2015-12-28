@@ -33,10 +33,10 @@ fn addr() {
 }
 
 #[test]
-fn as_bytes() {
+fn as_data() {
     let mut x = &mut [0u64; 2];
-    test!(x.as_bytes().len() == 16);
-    test!(x.as_mut_bytes().len() == 16);
+    test!(x.as_data().len() == 16);
+    test!(x.as_mut_data().len() == 16);
 }
 
 #[test]

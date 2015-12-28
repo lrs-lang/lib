@@ -2,12 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use std::alloc::{OncePool};
+
 macro_rules! tt {
     ($fmt:expr, $name:ident) => {
         #[test]
         fn $name() {
             let mut buf = [0; 10];
-            let mut buf = Vec::buffered(&mut buf);
+            let mut buf = Vec::with_pool(OncePool::new(buf.as_mut()));
             write!(&mut buf, $fmt, true).unwrap();
             test!(&*buf == "true");
 

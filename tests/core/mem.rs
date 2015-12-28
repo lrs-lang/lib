@@ -17,18 +17,22 @@ fn zeroed() {
 
 #[test]
 fn as_bytes() {
-    test!(mem::as_bytes(&mem::zeroed::<T>()) == &[0; 16][..]);
+    unsafe {
+        test!(mem::as_data(&mem::zeroed::<T>()).as_bytes() == &[0; 16][..]);
+    }
 }
 
 #[test]
 fn as_mut_bytes() {
-    test!(mem::as_bytes(&mut mem::zeroed::<T>()) == &mut [0; 16][..]);
+    unsafe {
+        test!(mem::as_mut_data(&mut mem::zeroed::<T>()).as_mut_bytes() == &mut [0; 16][..]);
+    }
 }
 
 #[test]
 fn is_suitable_for() {
-    test!(mem::is_suitable_for::<u64>([0u64; 1].as_ref()));
-    test!(!mem::is_suitable_for::<u64>([0u8; 1].as_ref()));
+    test!(mem::is_suitable_for::<u64>([0u64; 1][..].as_ref()));
+    test!(!mem::is_suitable_for::<u64>([0u8; 1][..].as_ref()));
 
     let val = [0u8; 9];
     if val.as_ptr() as usize & 7 != 0 {
@@ -40,12 +44,12 @@ fn is_suitable_for() {
 
 #[test]
 fn from_bytes() {
-    test!(mem::from_bytes::<T>([0u64; 2].as_ref()).unwrap() == &mem::zeroed::<T>());
+    test!(mem::from_bytes::<T>([0u64; 2][..].as_ref()).unwrap() == &mem::zeroed::<T>());
 }
 
 #[test]
 fn from_mut_bytes() {
-    test!(mem::from_mut_bytes::<T>([0u64; 2].as_mut()).unwrap() ==
+    test!(mem::from_mut_bytes::<T>([0u64; 2][..].as_mut()).unwrap() ==
             &mut mem::zeroed::<T>());
 }
 

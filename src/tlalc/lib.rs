@@ -8,26 +8,6 @@
 #![no_std]
 
 //! The tlalc allocator.
-//!
-//! = Definitions
-//!
-//! This section defines various terms used in the remained of the documentation.
-//!
-//! == object
-//!
-//! A continuous region of memory.
-//!
-//! == size of an object
-//!
-//! The extent of an object.
-//!
-//! == address of an object
-//!
-//! The lowest address pointing to an object.
-//!
-//! == pointer to an object
-//!
-//! A pointer that contains the address of an object.
 
 extern crate lrs_base as base;
 extern crate lrs_cty as cty;

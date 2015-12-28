@@ -17,6 +17,10 @@ impl Copy for d8 { }
 // impl !NotD8 for d8 { }
 
 impl d8 {
+    pub const fn new(byte: u8) -> d8 {
+        d8(byte)
+    }
+
     pub unsafe fn as_byte(&self) -> &u8 {
         &self.0
     }

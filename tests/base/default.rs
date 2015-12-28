@@ -4,19 +4,19 @@
 
 #[test]
 fn zero() {
-    test!(u8::default() == 0);
-    test!(u16::default() == 0);
-    test!(u32::default() == 0);
-    test!(u64::default() == 0);
-    test!(usize::default() == 0);
-    test!(i8::default() == 0);
-    test!(i16::default() == 0);
-    test!(i32::default() == 0);
-    test!(i64::default() == 0);
-    test!(isize::default() == 0);
+    test!(u8::out_of(()) == 0);
+    test!(u16::out_of(()) == 0);
+    test!(u32::out_of(()) == 0);
+    test!(u64::out_of(()) == 0);
+    test!(usize::out_of(()) == 0);
+    test!(i8::out_of(()) == 0);
+    test!(i16::out_of(()) == 0);
+    test!(i32::out_of(()) == 0);
+    test!(i64::out_of(()) == 0);
+    test!(isize::out_of(()) == 0);
 }
 
 #[test]
 fn option() {
-    test!(Option::<u8>::default() == None);
+    test!(Option::<u8>::out_of(()) == None);
 }

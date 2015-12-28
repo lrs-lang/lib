@@ -2,13 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::string::{AsCStr};
 use std::getopt::{Getopt};
 use std::iter::{IteratorExt};
+use std::string::{CStr};
 
 macro_rules! cs {
     ($t:expr) => {
-        concat!($t, "\0").as_cstr().unwrap()
+        concat!($t, "\0").try_as_ref().unwrap():&CStr
     }
 }
 

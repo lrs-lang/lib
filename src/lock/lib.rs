@@ -12,6 +12,7 @@ extern crate lrs_io as io;
 extern crate lrs_fmt as fmt;
 extern crate lrs_cell as cell;
 extern crate lrs_atomic as atomic;
+extern crate lrs_time_base as time_base;
 extern crate lrs_cty as cty;
 
 #[cfg(not(freestanding))]extern crate lrs_syscall as syscall;
@@ -24,7 +25,7 @@ extern crate lrs_cty as cty;
 pub use stlock::{SingleThreadLock, SingleThreadLockGuard};
 pub use stmutex::{SingleThreadMutex, SingleThreadMutexGuard};
 
-mod std { pub use fmt::std::*; }
+mod std { pub use fmt::std::*; pub use cty; }
 
 #[cfg(not(freestanding))] mod raw_condvar;
 #[cfg(not(freestanding))] mod condvar;

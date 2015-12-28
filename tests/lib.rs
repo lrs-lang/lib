@@ -4,7 +4,7 @@
 
 #![crate_type = "lib"]
 #![crate_name = "tests"]
-#![feature(custom_derive)]
+#![feature(custom_derive, type_ascription)]
 
 macro_rules! test {
     ($e:expr) => {

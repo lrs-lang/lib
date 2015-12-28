@@ -20,9 +20,9 @@ fn allocate_raw() {
 #[test]
 fn reallocate_raw() {
     unsafe {
-        let alloc = Bda.alloc(1, 1).unwrap();
+        let alloc = Bda.alloc(1, 1).unwrap() as *mut u8;
         *alloc = 1;
-        let realloc = Bda.realloc(alloc, 1, ps()+1, 1).unwrap();
+        let realloc = Bda.realloc(alloc as *mut d8, 1, ps()+1, 1).unwrap() as *mut u8;
         test!(realloc as usize % ps() == 0);
         test!(*realloc == 1);
         *realloc.add(ps()) = 1;
@@ -32,8 +32,8 @@ fn reallocate_raw() {
 #[test]
 fn free_raw() {
     unsafe {
-        let alloc = Bda.alloc(1, 1).unwrap();
-        Bda.free(alloc, 1, 1);
+        let alloc = Bda.alloc(1, 1).unwrap() as *mut u8;
+        Bda.free(alloc as *mut d8, 1, 1);
     }
 }
 
@@ -41,8 +41,8 @@ fn free_raw() {
 #[should_panic]
 fn segfault() {
     unsafe {
-        let alloc = Bda.alloc(1, 1).unwrap();
-        Bda.free(alloc, 1, 1);
+        let alloc = Bda.alloc(1, 1).unwrap() as *mut u8;
+        Bda.free(alloc as *mut d8, 1, 1);
         *alloc = 1;
     }
 }
@@ -61,21 +61,21 @@ fn allocate() {
 #[test]
 fn allocate_array() {
     unsafe {
-        let alloc = alloc::alloc_array(&mut Bda, 2).unwrap();
+        let alloc = alloc::alloc_array(&mut Bda, 2).unwrap().0;
         test!(alloc as usize % ps() == 0);
         *alloc = 1;
         *alloc.add(1) = 1;
 
-        test!(alloc::alloc_array::<(), _>(&mut Bda, 2).unwrap() == empty_ptr());
+        test!(alloc::alloc_array::<(), _>(&mut Bda, 2).unwrap().0 == empty_ptr());
     }
 }
 
 #[test]
 fn reallocate_array() {
     unsafe {
-        let alloc = alloc::alloc_array(&mut Bda, 1).unwrap();
+        let alloc = alloc::alloc_array(&mut Bda, 1).unwrap().0;
         *alloc = 1;
-        let realloc = alloc::realloc_array(&mut Bda, alloc, 1, 2).unwrap();
+        let realloc = alloc::realloc_array(&mut Bda, alloc, 1, 2).unwrap().0;
         test!(realloc as usize % ps() == 0);
         test!(*realloc == 1);
         *realloc.add(1) = 1;
@@ -85,7 +85,7 @@ fn reallocate_array() {
 #[test]
 fn free_array() {
     unsafe {
-        let alloc = alloc::alloc_array::<i32, _>(&mut Bda, 2).unwrap();
+        let alloc = alloc::alloc_array::<i32, _>(&mut Bda, 2).unwrap().0;
         alloc::free_array(&mut Bda, alloc, 2);
     }
 }

@@ -2,7 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::{mem};
 use std::signal::{Sigset};
 use std::util::{all_bytes};
 use std::signal::signals::{Window, Interrupted};
@@ -10,9 +9,9 @@ use std::signal::signals::{Window, Interrupted};
 #[test]
 fn test() {
     let mut set = Sigset::new();
-    test!(all_bytes(mem::as_bytes(&set), 0));
+    unsafe { test!(all_bytes((set.as_ref():&[d8]).as_bytes(), 0)); }
     set.fill();
-    test!(all_bytes(mem::as_bytes(&set), !0));
+    unsafe { test!(all_bytes((set.as_ref():&[d8]).as_bytes(), !0)); }
     set.clear();
     set.set(Window).unwrap();
     test!(set.is_set(Window).unwrap());

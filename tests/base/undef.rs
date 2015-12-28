@@ -4,7 +4,6 @@
 
 use std::undef::{UndefState};
 use std::{mem};
-use std::ptr::{OwnedPtr};
 
 #[test]
 fn bool() {
@@ -62,21 +61,6 @@ fn ref_() {
             <&mut u8>::set_undef(&mut x as *mut _ as *mut _, i);
             test!(<&mut u8>::is_undef(&x as *const _ as *const _, i));
             test!(x == i);
-        }
-    }
-}
-
-#[test]
-fn owned_ptr() {
-    test!(OwnedPtr::<usize>::num() == 4096);
-
-    unsafe {
-        let mut x = OwnedPtr::new(0 as *mut usize);
-
-        for i in 0..(OwnedPtr::<usize>::num()) {
-            OwnedPtr::set_undef(&mut x as *mut _ as *mut _, i);
-            test!(OwnedPtr::is_undef(&x as *const _ as *const _, i));
-            test!(*x as usize == i);
         }
     }
 }

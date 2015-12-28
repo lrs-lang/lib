@@ -179,7 +179,7 @@ create! {
     SocketNotConnected      = ENOTCONN        , "Socket is not connected",
     SocketShutDown          = ESHUTDOWN       , "Socket has shut down",
     TooManyReferences       = ETOOMANYREFS    , "Too many references",
-    SocketTimedOut          = ETIMEDOUT       , "Socket operation timed out",
+    TimedOut                = ETIMEDOUT       , "Operation timed out",
     ConnectionRefused       = ECONNREFUSED    , "Remote host is down",
     HostDown                = EHOSTDOWN       , "Remote host is unreachable",
     HostUnreachable         = EHOSTUNREACH    , "Remote host refused connection",

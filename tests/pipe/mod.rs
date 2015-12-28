@@ -10,12 +10,12 @@ fn read_write() {
     let (write, read) = Pipe::new(PIPE_NONE).unwrap();
     test!(write.write(b"Hello World").unwrap() == 11);
     let mut buf = [0; 12];
-    test!(read.read(&mut buf).unwrap() == 11);
+    test!(read.read(buf.as_mut()).unwrap() == 11);
     test!(&buf[..] == "Hello World\0");
     test!(write.gather_write(&[b"Hello", b"World"]).unwrap() == 10);
     let mut buf1 = [0; 5];
     let mut buf2 = [0; 6];
-    test!(read.scatter_read(&mut [&mut buf1, &mut buf2]).unwrap() == 10);
+    test!(read.scatter_read(&mut [buf1.as_mut(), buf2.as_mut()]).unwrap() == 10);
     test!(&buf1[..] == "Hello");
     test!(&buf2[..] == "World\0");
 }
@@ -45,9 +45,9 @@ fn copy_to() {
     write1.write(b"Hello World").unwrap();
     test!(read1.copy_to(&write2, 6, TEE_NONE).unwrap() == 6);
     let mut buf = [0; 12];
-    test!(read1.read(&mut buf).unwrap() == 11);
+    test!(read1.read(buf.as_mut()).unwrap() == 11);
     test!(buf.starts_with(b"Hello World"));
-    test!(read2.read(&mut buf).unwrap() == 6);
+    test!(read2.read(buf.as_mut()).unwrap() == 6);
     test!(buf.starts_with(b"Hello "));
 }
 
@@ -58,9 +58,9 @@ fn read_from() {
     write1.write(b"Hello World").unwrap();
     test!(write2.read_from(&read1, 6, SPLICE_NONE).unwrap() == 6);
     let mut buf = [0; 12];
-    test!(read1.read(&mut buf).unwrap() == 5);
+    test!(read1.read(buf.as_mut()).unwrap() == 5);
     test!(buf.starts_with(b"World"));
-    test!(read2.read(&mut buf).unwrap() == 6);
+    test!(read2.read(buf.as_mut()).unwrap() == 6);
     test!(buf.starts_with(b"Hello "));
 }
 
@@ -76,9 +76,9 @@ fn write_to() {
     write1.write(b"Hello World").unwrap();
     test!(read1.write_to(&write2, 6, SPLICE_NONE).unwrap() == 6);
     let mut buf = [0; 12];
-    test!(read1.read(&mut buf).unwrap() == 5);
+    test!(read1.read(buf.as_mut()).unwrap() == 5);
     test!(buf.starts_with(b"World"));
-    test!(read2.read(&mut buf).unwrap() == 6);
+    test!(read2.read(buf.as_mut()).unwrap() == 6);
     test!(buf.starts_with(b"Hello "));
 }
 

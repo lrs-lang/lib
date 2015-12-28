@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::string::{CStr, AsCStr, ToCStr};
+use std::string::{CStr};
 use std::cty::{c_char};
 
 #[test]
@@ -25,32 +25,8 @@ fn empty() {
 
 #[test]
 fn as_cstr() {
-    test!("abc".as_cstr().is_err());
-    test!("abc\0a".as_cstr().is_err());
-    test!("abc\0\0".as_cstr().unwrap() == "abc");
-    test!("abc\0".as_cstr().unwrap() == "abc");
-}
-
-#[test]
-fn to_cstr() {
-    let mut buf = [0; 4];
-    test!("abc\0".as_cstr().unwrap().to_cstr(&mut buf).unwrap() == "abc");
-
-    let mut buf = [0; 4];
-    test!("abc\0".as_cstr().unwrap().to_or_as_cstr(&mut buf).unwrap() == "abc");
-    test!(buf == [0; 4]);
-}
-
-#[test]
-fn bytes_to_cstr() {
-    let mut buf = [0; 4];
-    test!("abc".to_cstr(&mut buf).unwrap() == "abc");
-    test!("abc\0".to_cstr(&mut buf).unwrap() == "abc");
-    test!("abc\0\0".to_cstr(&mut buf).unwrap() == "abc");
-    test!("abc\0\0\0".to_cstr(&mut buf).unwrap() == "abc");
-
-    let mut buf = [0; 3];
-    test!("abc".to_cstr(&mut buf).is_err());
-    test!("abc\0".to_cstr(&mut buf).is_err());
-    test!("abc\0".to_or_as_cstr(&mut buf).unwrap() == "abc");
+    test!(("abc".try_as_ref():Result<&CStr>).is_err());
+    test!(("abc\0a".try_as_ref():Result<&CStr>).is_err());
+    test!(("abc\0\0".try_as_ref():Result<&CStr>).is_err());
+    test!("abc\0".try_as_ref().unwrap():&CStr == "abc");
 }

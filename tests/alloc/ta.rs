@@ -6,7 +6,7 @@ use std::alloc::{TaPool, MemPool};
 
 #[test]
 fn alloc() {
-    let mut buf = &mut [0; 5][..];
+    let mut buf = &mut [d8::new(0); 5][..];
     let addr = buf.as_ptr() as usize;
     unsafe {
         let mut pool1 = TaPool::new(&mut buf);
@@ -26,12 +26,12 @@ fn alloc() {
 
 #[test]
 fn realloc() {
-    let mut buf = &mut [0; 5][..];
+    let mut buf = &mut [d8::new(0); 5][..];
     unsafe {
         let mut pool = TaPool::new(&mut buf);
-        let alloc = pool.alloc(1, 1).unwrap();
+        let alloc = pool.alloc(1, 1).unwrap() as *mut u8;
         *alloc = 1;
-        let realloc = pool.realloc(alloc, 1, 2, 1).unwrap();
+        let realloc = pool.realloc(alloc as *mut d8, 1, 2, 1).unwrap() as *mut u8;
         test!(*realloc == 1);
     }
     test!(buf.len() == 3);

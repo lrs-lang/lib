@@ -10,7 +10,7 @@ fn allocate_raw() {
     unsafe {
         let mut buf = [0u32; 4];
         let addr = mem::addr(&buf);
-        let mut buf = buf.as_mut_bytes();
+        let mut buf = buf.as_mut();
         let mut aa = AlignAlloc::<u32, _>::new(TaPool::new(&mut buf));
         let alloc = aa.alloc(1, 1).unwrap();
         test!(alloc as usize == addr);

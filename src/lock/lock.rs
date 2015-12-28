@@ -6,9 +6,11 @@ use base::prelude::*;
 use core::{mem};
 use core::ops::{Eq};
 use base::undef::{UndefState};
+use base::{error};
 use atomic::{AtomicCInt, ATOMIC_CINT_INIT};
 use syscall::{futex_wait, futex_wake};
 use cty::{c_int, c_uint};
+use time_base::{time_to_timespec, Time, clock};
 
 pub const LOCK_INIT: Lock = Lock { val: ATOMIC_CINT_INIT };
 
@@ -57,6 +59,10 @@ impl<'a> Lock {
         LockGuard { lock: self }
     }
 
+    pub unsafe fn unlock(&self) {
+        self.guard();
+    }
+
     pub unsafe fn as_atomic(&self) -> &AtomicCInt {
         &self.val
     }
@@ -74,11 +80,11 @@ impl<'a> Lock {
     ///
     /// [return_value]
     /// Returns a guard if the operation succeeded.
-    pub fn try_lock(&'a self) -> Option<LockGuard<'a>> {
+    pub fn try_lock(&'a self) -> Result<LockGuard<'a>> {
         if self.val.compare_exchange(UNLOCKED, LOCKED) == UNLOCKED {
-            Some(self.guard())
+            Ok(self.guard())
         } else {
-            None
+            Err(error::ResourceBusy)
         }
     }
 
@@ -101,6 +107,52 @@ impl<'a> Lock {
                 return self.guard();
             }
         }
+    }
+
+    /// Locks the lock by sleeping until the lock is unlocked if it's currently locked or
+    /// until a certain amount of time has expired.
+    ///
+    /// [argument, time]
+    /// An upper bound for the amount of time until this function returns.
+    ///
+    /// [return_value]
+    /// Returns a lock guard or an error.
+    ///
+    /// = Remarks
+    ///
+    /// The function may take longer to return than allowed by the `time` parameter.
+    pub fn try_lock_for(&'a self, mut time: Time) -> Result<LockGuard<'a>> {
+        let mut status = self.val.compare_exchange(UNLOCKED, LOCKED);
+        if status == UNLOCKED {
+            return Ok(self.guard());
+        }
+
+        let now = try!(clock::MONO_RAW.get_time());
+        let then = now + time;
+
+        loop {
+            if status == WAITING ||
+                        self.val.compare_exchange(LOCKED, WAITING) != UNLOCKED {
+                let spec = time_to_timespec(time);
+                match rv!(futex_wait(&self.val, WAITING, Some(&spec))) {
+                    Err(error::TimedOut) => break,
+                    _ => { },
+                }
+            }
+            status = self.val.compare_exchange(UNLOCKED, WAITING);
+            if status == UNLOCKED {
+                return Ok(self.guard());
+            }
+
+            let now = try!(clock::MONO_RAW.get_time());
+            if now < then {
+                time = then - now;
+            } else {
+                break;
+            }
+        }
+
+        Err(error::TimedOut)
     }
 }
 

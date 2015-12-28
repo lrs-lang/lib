@@ -7,7 +7,7 @@ use io::{Write};
 use fmt::{Debug};
 use cell::cell::{Cell};
 use lock::{Lock, LockGuard};
-// use lock::{Lock, LockGuard};
+use time_base::{Time};
 
 /// A mutex protecting some data.
 pub struct Mutex<T>
@@ -45,7 +45,7 @@ impl<T> Mutex<T> {
     ///
     /// [return_value]
     /// Returns a guard if the operation succeeded.
-    pub fn try_lock<'a>(&'a self) -> Option<MutexGuard<'a, T>> {
+    pub fn try_lock<'a>(&'a self) -> Result<MutexGuard<'a, T>> {
         self.lock.try_lock().map(|g| self.guard(g))
     }
 
@@ -55,6 +55,22 @@ impl<T> Mutex<T> {
     /// Returns a mutex-guard.
     pub fn lock<'a>(&'a self) -> MutexGuard<'a, T> {
         self.guard(self.lock.lock())
+    }
+
+    /// Locks the mutex by sleeping until the mutex is unlocked if it's currently locked
+    /// or until a certain amount of time has expired.
+    ///
+    /// [argument, time]
+    /// An upper bound for the amount of time until this function returns.
+    ///
+    /// [return_value]
+    /// Returns a mutex guard or an error.
+    ///
+    /// = Remarks
+    ///
+    /// The function may take longer to return than allowed by the `time` parameter.
+    pub fn try_lock_until<'a>(&'a self, time: Time) -> Result<MutexGuard<'a, T>> {
+        self.lock.try_lock_for(time).map(|g| self.guard(g))
     }
 
     /// Turns a lock-guard of the underlying lock into a mutex-guard.

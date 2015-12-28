@@ -43,7 +43,7 @@ let
         syscall = hobj "syscall" [core, saturating, base, str_one, cty, r_syscall,
                                   atomic],
         kernel = hobj "kernel" [core, base, atomic, cty, syscall, parse, arch_fns],
-        lock = obj "lock" ([core, base, cell, io, fmt, atomic, cty] ++ hdep [syscall]),
+        lock = obj "lock" ([core, base, cell, io, fmt, atomic, cty, time_base] ++ hdep [syscall]),
         rt = hobj "rt" ([core, base, str_one, r_syscall, syscall, cty, atomic, lock]
                             ++ cdep [libc]),
         clone = hobj "clone" ([core, base, cty, syscall, fmt, r_syscall] ++ cdep [libc]),

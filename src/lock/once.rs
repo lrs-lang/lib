@@ -36,24 +36,24 @@ impl<'a> Once {
         }
     }
 
-    pub fn once<F>(&self, f: F) -> bool
-        where F: FnOnce(),
+    pub fn once<F, T>(&self, f: F) -> Option<T>
+        where F: FnOnce() -> T,
     {
         let mut status = self.status.load_acquire();
         if status == INITIALIZED {
-            return false;
+            return None;
         }
         if status == UNINITIALIZED {
             status = self.status.compare_exchange(UNINITIALIZED, WORKING);
         }
         if status == UNINITIALIZED {
-            f();
+            let res = f();
             self.status.store_release(INITIALIZED);
-            return true;
+            return Some(res);
         }
         while status == WORKING {
             status = self.status.load_acquire();
         }
-        false
+        None
     }
 }

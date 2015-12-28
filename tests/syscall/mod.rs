@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use std::{cty, syscall, mem, process};
-use std::string::{AsCStr};
+use std::string::{CStr};
 
 macro_rules! rv {
     ($e:expr) => {
@@ -21,24 +21,26 @@ fn iovec() {
     // Tests that iovec == &[T] so that we don't have to convert between those two in
     // syscalls.
 
-    let slice = &[0u8; 2][..];
+    let slice: &[u8] = &[0u8; 2];
     let iovec = cty::iovec {
         iov_base: &slice[0] as *const _ as *mut _,
         iov_len: 2,
     };
-    let slice_bytes = mem::as_bytes::<&[u8]>(&slice);
-    let iovec_bytes = mem::as_bytes(&iovec);
-    test!(slice_bytes == iovec_bytes);
+    unsafe {
+        let slice_bytes = mem::as_data::<&[u8]>(&slice).as_bytes();
+        let iovec_bytes = mem::as_data(&iovec).as_bytes();
+        test!(slice_bytes == iovec_bytes);
+    }
 }
 
 fn generic_file() -> cty::c_int {
-    rv!(syscall::openat(cty::AT_FDCWD, "lib.rs\0".as_cstr().unwrap(), 0, 0))
+    rv!(syscall::openat(cty::AT_FDCWD, "lib.rs\0".try_as_ref().unwrap():&CStr, 0, 0))
 }
 
 #[test]
 fn openat() {
-    let dir = rv!(syscall::openat(cty::AT_FDCWD, "syscall\0".as_cstr().unwrap(), 0, 0));
-    let file = rv!(syscall::openat(dir, "mod.rs\0".as_cstr().unwrap(), 0, 0));
+    let dir = rv!(syscall::openat(cty::AT_FDCWD, "syscall\0".try_as_ref().unwrap():&CStr, 0, 0));
+    let file = rv!(syscall::openat(dir, "mod.rs\0".try_as_ref().unwrap():&CStr, 0, 0));
     let fd_flags = rv!(syscall::fcntl_getfd(file));
     if cfg!(not(no_auto_cloexec)) {
         test!(fd_flags & cty::FD_CLOEXEC == cty::FD_CLOEXEC);

@@ -116,19 +116,3 @@ fn non_zero_ord() {
                     < ptr::NonZeroPtr::new(1 as *const u8));
     }
 }
-
-#[test]
-fn owned_eq() {
-    unsafe {
-        test!(ptr::OwnedPtr::new(0 as *const u8)
-                    == ptr::OwnedPtr::new(0 as *const u8));
-    }
-}
-
-#[test]
-fn owned_ord() {
-    unsafe {
-        test!(ptr::OwnedPtr::new(0 as *const u8)
-                < ptr::OwnedPtr::new(1 as *const u8));
-    }
-}
