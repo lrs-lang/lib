@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![allow(non_camel_case_types, raw_pointer_derive)]
+#![allow(non_camel_case_types)]
 
 #[repr(u8)]
 #[derive(Copy, Eq)]

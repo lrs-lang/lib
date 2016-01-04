@@ -12,7 +12,7 @@ extern crate lrs_cty as cty;
 extern crate lrs_syscall as syscall;
 extern crate lrs_fmt as fmt;
 extern crate lrs_r_syscall as r_syscall;
-extern crate lrs_libc as libc;
+#[cfg(not(no_libc))] extern crate lrs_libc as libc;
 
 use base::prelude::*;
 use cty::alias::{ProcessId};

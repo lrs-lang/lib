@@ -9,7 +9,6 @@
 #![no_std]
 
 extern crate lrs_base as base;
-extern crate lrs_libc as libc;
 extern crate lrs_syscall as syscall;
 extern crate lrs_cty as cty;
 extern crate lrs_lock as lock;
@@ -22,6 +21,7 @@ extern crate lrs_mem as mmem;
 extern crate lrs_rt as rt;
 extern crate lrs_atomic as atomic;
 extern crate lrs_signal as signal;
+#[cfg(not(no_libc))] extern crate lrs_libc as libc;
 
 use base::prelude::*;
 use core::ops::{Index};

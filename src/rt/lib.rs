@@ -13,7 +13,7 @@ extern crate lrs_cty_base as cty_base;
 extern crate lrs_cty as cty;
 extern crate lrs_lock as lock;
 extern crate lrs_str_one as str_one;
-extern crate lrs_libc as libc;
+#[cfg(not(no_libc))] extern crate lrs_libc as libc;
 extern crate lrs_syscall as syscall;
 extern crate lrs_r_syscall as r_syscall;
 extern crate lrs_atomic as atomic;
