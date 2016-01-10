@@ -293,6 +293,8 @@ extern "rust-intrinsic" {
     /// * {copy}
     pub fn copy_nonoverlapping<T>(src: *const T, dst: *mut T, count: usize);
 
+    pub fn type_id<T: ?Sized>() -> u64;
+
     pub fn volatile_load<T>(src: *const T) -> T;
     pub fn volatile_store<T>(dst: *mut T, val: T);
     pub fn assume(b: bool);

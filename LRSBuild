@@ -39,6 +39,7 @@ let
         getopt = obj "getopt" [core, base, str_one],
         atomic = obj "atomic" [core, base, cell],
         cty = obj "cty" [core, base, cty_base],
+        varargs = cobj "varargs" [core, cty],
         r_syscall = hobj "r_syscall" [core, cty],
         syscall = hobj "syscall" [core, saturating, base, str_one, cty, r_syscall,
                                   atomic],
