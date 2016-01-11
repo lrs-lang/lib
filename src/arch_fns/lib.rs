@@ -6,6 +6,7 @@
 #![crate_type = "lib"]
 #![feature(asm, lang_items)]
 #![no_std]
+#![no_builtins]
 
 #[cfg(not(no_libc))] extern crate lrs_libc as libc;
 extern crate lrs_cty_base as cty_base;

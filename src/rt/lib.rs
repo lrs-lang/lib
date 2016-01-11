@@ -4,8 +4,8 @@
 
 #![crate_name = "lrs_rt"]
 #![crate_type = "lib"]
-#![feature(lang_items, link_args, asm, braced_empty_structs,
-           optin_builtin_traits, thread_local, const_fn)]
+#![feature(lang_items, link_args, asm, braced_empty_structs, optin_builtin_traits,
+           thread_local, const_fn, linkage)]
 #![no_std]
 
 extern crate lrs_base as base;
