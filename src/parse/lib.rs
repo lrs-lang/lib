@@ -14,12 +14,15 @@ use base::{error};
 
 mod std { pub use base::std::*; }
 
-pub use int::{
+pub use impls::int::{
     HexU8, HexU16, HexU32, HexU64, HexUsize, OctU8, OctU16, OctU32, OctU64, OctUsize,
     BinU8, BinU16, BinU32, BinU64, BinUsize,
 };
 
-mod int;
+mod impls {
+    pub mod int;
+    pub mod float;
+}
 
 /// Types that can be parsed.
 pub trait Parse {

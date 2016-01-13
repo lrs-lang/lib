@@ -19,7 +19,8 @@ pub mod std {
 }
 
 pub mod impls {
-    pub mod num;
+    pub mod int;
+    pub mod float;
     pub mod str;
     pub mod option;
     pub mod boolean;

@@ -22,7 +22,7 @@ pub mod iter;
 pub mod marker;
 pub mod tuple;
 pub mod mem;
-pub mod num;
+pub mod int;
 pub mod ops;
 pub mod option;
 pub mod panicking;
@@ -33,6 +33,7 @@ pub mod str;
 pub mod thread_local;
 pub mod non_zero;
 pub mod data;
+pub mod float;
 
 mod sort;
 
