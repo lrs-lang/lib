@@ -22,7 +22,7 @@ use arch_fns::{spin};
 use atomic::{AtomicUsize};
 use cell::cell::{Cell};
 use core::{ptr, mem};
-use lock::{Lock, LockGuard, RawCondvar, LOCK_INIT, RAW_CONDVAR_INIT};
+use lock::{Lock, LockGuard, RawCondvar};
 
 pub mod std { pub use base::std::*; }
 
@@ -116,12 +116,12 @@ impl<T, H> Queue<T, H>
             next_read: AtomicUsize::new(0),
 
             sleeping_senders: AtomicUsize::new(0),
-            send_condvar:     RAW_CONDVAR_INIT,
+            send_condvar:     RawCondvar::new(),
 
             sleeping_receivers: AtomicUsize::new(0),
-            recv_condvar:       RAW_CONDVAR_INIT,
+            recv_condvar:       RawCondvar::new(),
 
-            sleep_lock: LOCK_INIT,
+            sleep_lock: Lock::new(),
 
             pool: pool,
 

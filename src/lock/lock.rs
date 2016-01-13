@@ -7,14 +7,12 @@ use core::{mem};
 use core::ops::{Eq};
 use base::undef::{UndefState};
 use base::{error};
-use atomic::{AtomicCInt, ATOMIC_CINT_INIT};
+use atomic::{AtomicCInt};
 use syscall::{futex_wait, futex_wake};
 use cty::{c_int, c_uint};
 use time_base::{time_to_timespec, Time, clock};
 
-pub const LOCK_INIT: Lock = Lock { val: ATOMIC_CINT_INIT };
-
-pub static DUMMY: Lock = LOCK_INIT;
+pub static DUMMY: Lock = Lock::new();
 
 const UNLOCKED: c_int = 0;
 const LOCKED:   c_int = 1;
@@ -52,7 +50,7 @@ impl Eq for Lock {
 impl<'a> Lock {
     /// Creates a new, unlocked, lock.
     pub const fn new() -> Lock {
-        Lock { val: ATOMIC_CINT_INIT }
+        Lock { val: AtomicCInt::new(UNLOCKED) }
     }
 
     fn guard(&'a self) -> LockGuard<'a> {

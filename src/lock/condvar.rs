@@ -3,9 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use mutex::{Mutex, MutexGuard};
-use raw_condvar::{RAW_CONDVAR_INIT, RawCondvar};
-
-pub const CONDVAR_INIT: Condvar = Condvar { raw: RAW_CONDVAR_INIT };
+use raw_condvar::{RawCondvar};
 
 /// A condition variable to wait on mutexes.
 ///
@@ -17,6 +15,10 @@ pub struct Condvar {
 }
 
 impl Condvar {
+    pub const fn new() -> Condvar {
+        Condvar { raw: RawCondvar::new() }
+    }
+
     /// Atomically unlocks a mutex guard and waits for a signal on this condvar before
     /// re-locking the mutex.
     ///

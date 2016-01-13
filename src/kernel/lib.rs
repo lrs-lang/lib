@@ -4,7 +4,7 @@
 
 #![crate_name = "lrs_kernel"]
 #![crate_type = "lib"]
-#![feature(custom_derive)]
+#![feature(const_fn)]
 #![no_std]
 
 extern crate lrs_base as base;
@@ -18,7 +18,7 @@ use base::prelude::*;
 use core::{mem};
 use base::{error};
 use syscall::{uname};
-use atomic::{AtomicU8, ATOMIC_U8_INIT};
+use atomic::{AtomicU8};
 use parse::{Parsable};
 
 mod std { pub use base::std::*; }
@@ -27,7 +27,7 @@ static mut MAJOR: u8 = 0;
 static mut MINOR: u8 = 0;
 
 fn init() {
-    static STATUS: AtomicU8 = ATOMIC_U8_INIT;
+    static STATUS: AtomicU8 = AtomicU8::new(0);
 
     if STATUS.load_weak() == 2 {
         return;

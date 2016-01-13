@@ -8,7 +8,7 @@ use core::{mem, ptr};
 use core::marker::{Leak};
 use mmem::{MemMap};
 use mmem::flags::{PROT_WRITE, PROT_READ, PROT_NONE, MMAP_NONE};
-use lock::{Lock, LockGuard, LOCK_INIT};
+use lock::{Lock, LockGuard};
 use rt::imp::tls::{self, Private};
 use rt::{aux};
 use syscall::{self};
@@ -198,7 +198,7 @@ impl Builder {
         // before it had time to set up its stack.
         let set = signal::block_all().unwrap();
 
-        let lock = LOCK_INIT;
+        let lock = Lock::new();
         let guard = lock.lock();
         let mut payload = Payload {
             guard: guard,
@@ -248,7 +248,7 @@ unsafe extern fn start<'a, F>(data: *mut Payload<'a, F>) -> !
         // isn't so easy, we temporarily swap out our own stack for a globally shared
         // stack. This stack is protected by a lock.
 
-        static LOCK: Lock = LOCK_INIT;
+        static LOCK: Lock = Lock::new();
         static mut STACK: [u8; 256] = [0; 256];
 
         let _guard = LOCK.lock();

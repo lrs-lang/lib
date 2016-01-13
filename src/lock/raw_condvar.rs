@@ -8,7 +8,7 @@ use cell::cell::{Cell};
 use atomic::{AtomicCInt};
 use syscall::{futex_wait, futex_wake};
 use cty::{c_int};
-use lock::{Lock, LockGuard, LOCK_INIT};
+use lock::{Lock, LockGuard};
 
 const WAITING:  c_int = 0;
 const SIGNALED: c_int = 1;
@@ -25,16 +25,6 @@ struct Inner {
     user_lock: Option<*const Lock>,
 }
 
-/// An initializer for static condition variables.
-pub const RAW_CONDVAR_INIT: RawCondvar = RawCondvar {
-    lock: LOCK_INIT,
-    inner: Cell::new(Inner {
-        left_end: 0 as *mut Node,
-        right_end: 0 as *mut Node,
-        user_lock: None,
-    }),
-};
-
 /// A condition variable to wait on locks.
 ///
 /// = Remarks
@@ -46,6 +36,18 @@ pub struct RawCondvar {
 }
 
 impl RawCondvar {
+    /// An initializer for static condition variables.
+    pub const fn new() -> RawCondvar {
+        RawCondvar {
+            lock: Lock::new(),
+            inner: Cell::new(Inner {
+                left_end: 0 as *mut Node,
+                right_end: 0 as *mut Node,
+                user_lock: None,
+            }),
+        }
+    }
+
     /// Atomically unlocks a lock guard and waits for a signal on this condvar before
     /// re-locking the lock.
     ///

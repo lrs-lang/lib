@@ -17,9 +17,9 @@ extern crate lrs_cty as cty;
 
 #[cfg(not(freestanding))]extern crate lrs_syscall as syscall;
 
-#[cfg(not(freestanding))] pub use raw_condvar::{RawCondvar, RAW_CONDVAR_INIT};
-#[cfg(not(freestanding))] pub use condvar::{Condvar, CONDVAR_INIT};
-#[cfg(not(freestanding))] pub use lock::{Lock, LockGuard, LOCK_INIT, DUMMY, LockStatus};
+#[cfg(not(freestanding))] pub use raw_condvar::{RawCondvar};
+#[cfg(not(freestanding))] pub use condvar::{Condvar};
+#[cfg(not(freestanding))] pub use lock::{Lock, LockGuard, DUMMY, LockStatus};
 #[cfg(not(freestanding))] pub use mutex::{Mutex, MutexGuard};
 #[cfg(not(freestanding))] pub use once::{Once, OnceStatus};
 pub use stlock::{SingleThreadLock, SingleThreadLockGuard};

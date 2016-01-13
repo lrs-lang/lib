@@ -6,7 +6,7 @@ use base::prelude::*;
 use libc::{self, pthread_t, pthread_attr_t, pthread_key_t, PTHREAD_CREATE_DETACHED};
 use core::{mem, ptr, intrinsics};
 use core::marker::{Leak};
-use lock::{LockGuard, LOCK_INIT, Once, SingleThreadMutex};
+use lock::{LockGuard, Once, Lock, SingleThreadMutex};
 use {at_exit_};
 
 /// A join-guard
@@ -141,7 +141,7 @@ impl Builder {
         //   other thread and forget `f` because the other thread now owns it.
 
         let mut thread = mem::zeroed();
-        let lock = LOCK_INIT;
+        let lock = Lock::new();
         let guard = lock.lock();
 
         // Avoid moving f around. If we move it into the structure then the compiler

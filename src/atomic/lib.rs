@@ -65,9 +65,6 @@ macro_rules! impl_atomic {
             val: Cell<$raw>,
         }
 
-        /// A zero initializer for static variables.
-        pub const $init: $name = $name { val: Cell::new(0) };
-
         unsafe impl Sync for $name { }
         unsafe impl Send for $name { }
 
@@ -852,4 +849,243 @@ impl_atomic!(AtomicI64,   ATOMIC_I64_INIT,   i64,   true);
 
 /// Atomic `c_int`.
 pub type AtomicCInt = AtomicI32;
-pub const ATOMIC_CINT_INIT: AtomicCInt = ATOMIC_I32_INIT;
+
+/// An atomic pointer wrapper.
+#[repr(C)]
+pub struct AtomicPtr<T> {
+    val: Cell<*const T>,
+}
+
+unsafe impl<T> Sync for AtomicPtr<T> { }
+unsafe impl<T> Send for AtomicPtr<T> { }
+
+impl<T> AtomicPtr<T> {
+    /// Creates a new atomic pointer.
+    ///
+    /// [argument, val]
+    /// The value which is initially stored in the atomic pointer.
+    pub const fn new(val: *const T) -> Self {
+        AtomicPtr { val: Cell::new(val) }
+    }
+
+    pub unsafe fn wrap(val: *mut *const T) -> &'static Self {
+        mem::cast(val)
+    }
+
+    pub unsafe fn as_ptr(&self) -> *mut *mut T {
+        self.val.ptr() as *mut _
+    }
+
+    /// Loads the value of the atomic pointer without ordering guarantees.
+    pub fn load_unordered(&self) -> *mut T {
+        unsafe { intrinsics::atomic_load_unordered(self.val.ptr()) as *mut T } 
+    }
+
+    /// Loads the value of the atomic pointer with relaxed ordering guarantees.
+    pub fn load_weak(&self) -> *mut T {
+        unsafe { intrinsics::atomic_load_relaxed(self.val.ptr()) as *mut T }
+    }
+
+    /// Loads the value of the atomic pointer with acquire semantics.
+    pub fn load_acquire(&self) -> *mut T {
+        unsafe { intrinsics::atomic_load_acq(self.val.ptr()) as *mut T }
+    }
+
+    /// Loads the value of the atomic pointer with sequentially consistent
+    /// semantics.
+    pub fn load(&self) -> *mut T {
+        unsafe { intrinsics::atomic_load(self.val.ptr()) as *mut T }
+    }
+
+    /// Stores a new value in the atomic pointer without ordering guarantees.
+    ///
+    /// [argument, val]
+    /// The value to be stored in the atomic pointer.
+    pub fn store_unordered(&self, val: *const T) {
+        unsafe { intrinsics::atomic_store_unordered(self.val.ptr(), val) }
+    }
+
+    /// Stores a new value in the atomic pointer with relaxed ordering guarantees.
+    ///
+    /// [argument, val]
+    /// The value to be stored in the atomic pointer.
+    pub fn store_weak(&self, val: *const T) {
+        unsafe { intrinsics::atomic_store_relaxed(self.val.ptr(), val) }
+    }
+
+    /// Stores a new value in the atomic pointer with release semantics.
+    ///
+    /// [argument, val]
+    /// The value to be stored in the atomic pointer.
+    pub fn store_release(&self, val: *const T) {
+        unsafe { intrinsics::atomic_store_rel(self.val.ptr(), val) }
+    }
+
+    /// Stores a new value in the atomic pointer with sequentially consistent.
+    ///
+    /// [argument, val]
+    /// The value to be stored in the atomic pointer.
+    pub fn store(&self, val: *const T) {
+        unsafe { intrinsics::atomic_store(self.val.ptr(), val) }
+    }
+
+    /// Replaces the value in the atomic pointer by a new one with relaxed
+    /// ordering guarantees.
+    ///
+    /// [argument, val]
+    /// The value to be stored in the atomic pointer.
+    ///
+    /// [return_value]
+    /// Returns the previous value.
+    pub fn exchange_weak(&self, val: *const T) -> *mut T {
+        unsafe { intrinsics::atomic_xchg_relaxed(self.val.ptr(), val) as *mut T }
+    }
+
+    /// Replaces the value in the atomic pointer by a new one with release
+    /// semantics.
+    ///
+    /// [argument, val]
+    /// The value to be stored in the atomic pointer.
+    ///
+    /// [return_value]
+    /// Returns the previous value.
+    pub fn exchange_release(&self, val: *const T) -> *mut T {
+        unsafe { intrinsics::atomic_xchg_rel(self.val.ptr(), val) as *mut T }
+    }
+
+    /// Replaces the value in the atomic pointer by a new one with acquire
+    /// semantics.
+    ///
+    /// [argument, val]
+    /// The value to be stored in the atomic pointer.
+    ///
+    /// [return_value]
+    /// Returns the previous value.
+    pub fn exchange_acquire(&self, val: *const T) -> *mut T {
+        unsafe { intrinsics::atomic_xchg_acq(self.val.ptr(), val) as *mut T }
+    }
+
+    /// Replaces the value in the atomic pointer by a new one with acquire-release
+    /// semantics.
+    ///
+    /// [argument, val]
+    /// The value to be stored in the atomic pointer.
+    ///
+    /// [return_value]
+    /// Returns the previous value.
+    pub fn exchange_acquire_release(&self, val: *const T) -> *mut T {
+        unsafe { intrinsics::atomic_xchg_acqrel(self.val.ptr(), val) as *mut T }
+    }
+
+    /// Replaces the value in the atomic pointer by a new one with sequentially
+    /// consistent semantics.
+    ///
+    /// [argument, val]
+    /// The value to be stored in the atomic pointer.
+    ///
+    /// [return_value]
+    /// Returns the previous value.
+    pub fn exchange(&self, val: *const T) -> *mut T {
+        unsafe { intrinsics::atomic_xchg(self.val.ptr(), val) as *mut T }
+    }
+
+    /// Conditionally replaces the value in the atomic pointer by a new one with
+    /// relaxed ordering guarantees.
+    ///
+    /// [argument, old]
+    /// The value the atomic pointer is compared to.
+    ///
+    /// [argument, new]
+    /// The value to be stored in the atomic pointer.
+    ///
+    /// [return_value]
+    /// Returns the value previously stored in the atomic pointer.
+    ///
+    /// = Remarks
+    ///
+    /// If the returned value is the same as `old`, the value in the atomic
+    /// pointer has been replaced by `new`.
+    pub fn compare_exchange_weak(&self, old: *const T, new: *const T) -> *mut T {
+        unsafe { intrinsics::atomic_cxchg_relaxed(self.val.ptr(), old, new) as *mut T }
+    }
+
+    /// Conditionally replaces the value in the atomic pointer by a new one with
+    /// release semantics.
+    ///
+    /// [argument, old]
+    /// The value the atomic pointer is compared to.
+    ///
+    /// [argument, new]
+    /// The value to be stored in the atomic pointer.
+    ///
+    /// [return_value]
+    /// Returns the value previously stored in the atomic pointer.
+    ///
+    /// = Remarks
+    ///
+    /// If the returned value is the same as `old`, the value in the atomic
+    /// pointer has been replaced by `new`.
+    pub fn compare_exchange_release(&self, old: *const T, new: *const T) -> *mut T {
+        unsafe { intrinsics::atomic_cxchg_rel(self.val.ptr(), old, new) as *mut T }
+    }
+
+    /// Conditionally replaces the value in the atomic pointer by a new one with
+    /// acquire semantics.
+    ///
+    /// [argument, old]
+    /// The value the atomic pointer is compared to.
+    ///
+    /// [argument, new]
+    /// The value to be stored in the atomic pointer.
+    ///
+    /// [return_value]
+    /// Returns the value previously stored in the atomic pointer.
+    ///
+    /// = Remarks
+    ///
+    /// If the returned value is the same as `old`, the value in the atomic
+    /// pointer has been replaced by `new`.
+    pub fn compare_exchange_acquire(&self, old: *const T, new: *const T) -> *mut T {
+        unsafe { intrinsics::atomic_cxchg_acq(self.val.ptr(), old, new) as *mut T }
+    }
+
+    /// Conditionally replaces the value in the atomic pointer by a new one with
+    /// acquire-release semantics.
+    ///
+    /// [argument, old]
+    /// The value the atomic pointer is compared to.
+    ///
+    /// [argument, new]
+    /// The value to be stored in the atomic pointer.
+    ///
+    /// [return_value]
+    /// Returns the value previously stored in the atomic pointer.
+    ///
+    /// = Remarks
+    ///
+    /// If the returned value is the same as `old`, the value in the atomic
+    /// pointer has been replaced by `new`.
+    pub fn compare_exchange_acquire_release(&self, old: *const T, new: *const T) -> *mut T {
+        unsafe { intrinsics::atomic_cxchg_acqrel(self.val.ptr(), old, new) as *mut T }
+    }
+
+    /// Conditionally replaces the value in the atomic pointer by a new one with
+    /// sequentially consistent semantics.
+    ///
+    /// [argument, old]
+    /// The value the atomic pointer is compared to.
+    ///
+    /// [argument, new]
+    /// The value to be stored in the atomic pointer.
+    ///
+    /// [return_value]
+    /// Returns the value previously stored in the atomic pointer.
+    ///
+    /// = Remarks
+    ///
+    /// If the returned value is the same as `old`, the value in the atomic
+    /// pointer has been replaced by `new`.
+    pub fn compare_exchange(&self, old: *const T, new: *const T) -> *mut T {
+        unsafe { intrinsics::atomic_cxchg(self.val.ptr(), old, new) as *mut T }
+    }
+}
