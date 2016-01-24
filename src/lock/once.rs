@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use base::prelude::*;
-use atomic::{AtomicU8};
+use atomic::{Atomic};
 
 const UNINITIALIZED: u8 = 0;
 const WORKING:       u8 = 1;
@@ -18,13 +18,13 @@ pub enum OnceStatus {
 
 #[repr(C)]
 pub struct Once {
-    status: AtomicU8,
+    status: Atomic<u8>,
 }
 
 impl<'a> Once {
     /// Creates a new, uninitialized, once.
     pub const fn new() -> Once {
-        Once { status: AtomicU8::new(UNINITIALIZED) }
+        Once { status: Atomic::new(UNINITIALIZED) }
     }
 
     /// Returns the status of the once.

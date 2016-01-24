@@ -9,14 +9,14 @@ use core::iter::{IntoIterator};
 use core::marker::{Leak, Unsize};
 use core::ops::{CoerceUnsized};
 use base::undef::{UndefState};
-use atomic::{AtomicUsize};
+use atomic::{Atomic};
 use fmt::{Debug, Write};
 use alloc::{self, MemPool};
 
 struct Inner<T: ?Sized, H = alloc::Heap>
     where H: MemPool,
 {
-    count: AtomicUsize,
+    count: Atomic<usize>,
     pool: H,
     val: T,
 }

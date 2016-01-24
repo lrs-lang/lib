@@ -60,6 +60,23 @@ impl<T: ?Sized> Cell<T> {
     }
 }
 
+impl<T> Cell<T> {
+    /// Replaces the stored value by a new one.
+    ///
+    /// [argument, data]
+    /// The replacement.
+    ///
+    /// [return_value]
+    /// The old value.
+    pub fn replace(&self, data: T) -> T {
+        unsafe {
+            let old = ptr::read(self.ptr());
+            ptr::write(self.ptr(), data);
+            old
+        }
+    }
+}
+
 impl<T: Copy> Cell<T> {
     /// Returns a copy of the contained data.
     pub fn get(&self) -> T {

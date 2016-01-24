@@ -19,7 +19,7 @@ use core::ptr::{NoAliasMemPtr};
 use base::{error};
 use alloc::{MemPool, empty_ptr};
 use arch_fns::{spin};
-use atomic::{AtomicUsize};
+use atomic::{Atomic};
 use cell::cell::{Cell};
 use core::{ptr, mem};
 use lock::{Lock, LockGuard, RawCondvar};
@@ -41,22 +41,22 @@ pub struct Queue<T, Heap = alloc::Heap>
     cap_mask: usize,
 
     // The place before which all elements in the buffer have been read.
-    read_start: AtomicUsize,
+    read_start: Atomic<usize>,
     // The next place that's free for writing.
-    next_write: AtomicUsize,
+    next_write: Atomic<usize>,
 
     // The place before which all elements in the buffer have been written.
-    write_end:   AtomicUsize,
+    write_end:   Atomic<usize>,
     // The next place that's free for reading.
-    next_read:   AtomicUsize,
+    next_read:   Atomic<usize>,
 
     // Number of senders that are currently sleeping.
-    sleeping_senders: AtomicUsize,
+    sleeping_senders: Atomic<usize>,
     // Condvar the senders are sleeping on.
     send_condvar:     RawCondvar,
 
     // Number of receivers that are currently sleeping.
-    sleeping_receivers: AtomicUsize,
+    sleeping_receivers: Atomic<usize>,
     // Condvar the senders are sleeping on.
     recv_condvar:       RawCondvar,
 
@@ -109,16 +109,16 @@ impl<T, H> Queue<T, H>
             buf: unsafe { NoAliasMemPtr::new(buf) },
             cap_mask: cap - 1,
 
-            read_start: AtomicUsize::new(0),
-            next_write: AtomicUsize::new(0),
+            read_start: Atomic::new(0),
+            next_write: Atomic::new(0),
 
-            write_end: AtomicUsize::new(0),
-            next_read: AtomicUsize::new(0),
+            write_end: Atomic::new(0),
+            next_read: Atomic::new(0),
 
-            sleeping_senders: AtomicUsize::new(0),
+            sleeping_senders: Atomic::new(0),
             send_condvar:     RawCondvar::new(),
 
-            sleeping_receivers: AtomicUsize::new(0),
+            sleeping_receivers: Atomic::new(0),
             recv_condvar:       RawCondvar::new(),
 
             sleep_lock: Lock::new(),

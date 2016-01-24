@@ -18,7 +18,7 @@ use base::prelude::*;
 use core::{mem};
 use base::{error};
 use syscall::{uname};
-use atomic::{AtomicU8};
+use atomic::{Atomic};
 use parse::{Parsable};
 
 mod std { pub use base::std::*; }
@@ -27,13 +27,16 @@ static mut MAJOR: u8 = 0;
 static mut MINOR: u8 = 0;
 
 fn init() {
-    static STATUS: AtomicU8 = AtomicU8::new(0);
+    static STATUS: Atomic<u8> = Atomic::new(0);
+    const NONE: u8 = 0;
+    const WORKING: u8 = 1;
+    const DONE: u8 = 2;
 
-    if STATUS.load_weak() == 2 {
+    if STATUS.load_acquire() == DONE {
         return;
     }
 
-    if STATUS.compare_exchange(0, 1) == 0 {
+    if STATUS.compare_exchange_monotonic(NONE, WORKING) == NONE {
         let mut name = mem::zeroed();
         if uname(&mut name) == 0 {
             let release = unsafe { mem::as_data(&name.release).as_bytes() };
@@ -46,9 +49,9 @@ fn init() {
                 }
             }
         }
-        STATUS.store(2);
+        STATUS.store_release(DONE);
     } else {
-        while STATUS.load_weak() != 2 {
+        while STATUS.load_acquire() != DONE {
             arch_fns::spin();
         }
     }

@@ -146,7 +146,12 @@ pub fn spin() {
         unsafe { asm!("pause" : : : "memory"); }
     }
 
-    #[cfg(any(target_arch = "arm", target_arch = "aarch64"))]
+    #[cfg(target_arch = "aarch64")]
+    fn spin_int() {
+        unsafe { asm!("yield"); }
+    }
+
+    #[cfg(target_arch = "arm")]
     fn spin_int() {
         unsafe { core::intrinsics::atomic_fence(); }
     }

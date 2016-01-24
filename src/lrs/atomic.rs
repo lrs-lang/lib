@@ -42,18 +42,11 @@
 //!
 //! * `unordered`: No ordering guarantees but races with this mode are not undefined \
 //!                behavior.
-//! * `weak`: Relaxed in C++11. Note that this is called `weak` instead of `relaxed` to \
-//!           make it visually easier to distinguish from `release`.
+//! * `monotonic`: Relaxed in C++11.
 //! * `release`, `acquire`, `acquire_release`: As in C++11.
 //!
 //! See the C++11 standard for a concise description of these orderings.
 
 pub use lrs_atomic::{
-    fence_release, fence_acquire, fence_acquire_release, fence, AtomicU8, AtomicU16,
-    AtomicU32, AtomicUsize, AtomicI8, AtomicI16, AtomicI32, AtomicIsize, AtomicCInt,
-};
-
-#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
-pub use lrs_atomic::{
-    AtomicU64, AtomicI64,
+    fence_release, fence_acquire, fence_acquire_release, fence, Atomic,
 };

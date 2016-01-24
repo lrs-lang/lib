@@ -10,6 +10,7 @@
 extern crate lrs_base as base;
 extern crate lrs_io as io;
 extern crate lrs_fmt as fmt;
+extern crate lrs_arch_fns as arch_fns;
 extern crate lrs_cell as cell;
 extern crate lrs_atomic as atomic;
 extern crate lrs_time_base as time_base;
@@ -24,6 +25,7 @@ extern crate lrs_cty as cty;
 #[cfg(not(freestanding))] pub use once::{Once, OnceStatus};
 pub use stlock::{SingleThreadLock, SingleThreadLockGuard};
 pub use stmutex::{SingleThreadMutex, SingleThreadMutexGuard};
+pub use spinlock::{SpinLock, SpinLockGuard, SpinLockStatus};
 
 mod std { pub use fmt::std::*; pub use cty; }
 
@@ -34,3 +36,4 @@ mod std { pub use fmt::std::*; pub use cty; }
 #[cfg(not(freestanding))] mod once;
 mod stlock;
 mod stmutex;
+mod spinlock;

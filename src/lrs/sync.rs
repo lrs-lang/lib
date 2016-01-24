@@ -7,6 +7,7 @@
 pub use lrs_lock::{
     RawCondvar, Lock, LockGuard, DUMMY, Mutex,
     MutexGuard, Condvar, LockStatus, Once,
+    SpinLock, SpinLockGuard, SpinLockStatus,
 };
 pub use lrs_queue::{
     Queue,

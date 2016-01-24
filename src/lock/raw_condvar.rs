@@ -5,7 +5,7 @@
 use base::prelude::*;
 use core::{mem};
 use cell::cell::{Cell};
-use atomic::{AtomicCInt};
+use atomic::{Atomic};
 use syscall::{futex_wait, futex_wake};
 use cty::{c_int};
 use lock::{Lock, LockGuard};
@@ -16,7 +16,7 @@ const SIGNALED: c_int = 1;
 struct Node {
     left: *mut Node,
     right: *mut Node,
-    lock: AtomicCInt,
+    lock: Atomic<c_int>,
 }
 
 struct Inner {

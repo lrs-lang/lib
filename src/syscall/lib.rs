@@ -18,7 +18,7 @@ use core::{mem};
 use base::{error};
 use str_one::{CStr};
 use saturating::{SaturatingCast};
-use atomic::{AtomicCInt};
+use atomic::{Atomic};
 use cty::{
     c_int, ssize_t, rlimit64, pid_t, uid_t, gid_t, c_char, size_t,
     timespec, dev_t, c_void, clockid_t, itimerspec, epoll_event, sigset_t, new_utsname,
@@ -2217,7 +2217,7 @@ pub fn getsockopt(sockfd: c_int, level: c_int, optname: c_int, optval: &mut [d8]
 /// = See also
 ///
 /// * link:man:futex(2) and FUTEX_WAIT therein
-pub fn futex_wait(addr: &AtomicCInt, val: c_int, timeout: Option<&timespec>) -> c_int {
+pub fn futex_wait(addr: &Atomic<c_int>, val: c_int, timeout: Option<&timespec>) -> c_int {
     let timeout = timeout.map(|t| t as *const _ as *mut _).unwrap_or(0 as *mut _);
     unsafe {
         r::futex(addr.as_ptr() as *mut _, FUTEX_WAIT, val as c_uint, timeout, 0 as *mut _,
@@ -2239,7 +2239,7 @@ pub fn futex_wait(addr: &AtomicCInt, val: c_int, timeout: Option<&timespec>) -> 
 /// = See also
 ///
 /// * link:man:futex(2) and FUTEX_WAKE therein
-pub fn futex_wake(addr: &AtomicCInt, num: usize) -> c_int {
+pub fn futex_wake(addr: &Atomic<c_int>, num: usize) -> c_int {
     let num: c_int = num.saturating_cast();
     unsafe {
         r::futex(addr.as_ptr() as *mut _, FUTEX_WAKE, num as c_uint, 0 as *mut _,
@@ -4101,7 +4101,7 @@ pub fn pivot_root(new: &CStr, old: &CStr) -> c_int {
 /// = See also
 ///
 /// * link:man:set_tid_address(2)
-pub unsafe fn set_tid_address(tidptr: Option<&AtomicCInt>) -> c_int {
+pub unsafe fn set_tid_address(tidptr: Option<&Atomic<c_int>>) -> c_int {
     let addr = tidptr.map(|t| t.as_ptr()).unwrap_or(0 as *mut _);
     r::set_tid_address(addr) as c_int
 }

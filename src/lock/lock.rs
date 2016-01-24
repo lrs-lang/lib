@@ -7,7 +7,7 @@ use core::{mem};
 use core::ops::{Eq};
 use base::undef::{UndefState};
 use base::{error};
-use atomic::{AtomicCInt};
+use atomic::{Atomic};
 use syscall::{futex_wait, futex_wake};
 use cty::{c_int, c_uint};
 use time_base::{time_to_timespec, Time, clock};
@@ -35,7 +35,7 @@ pub enum LockStatus {
 /// This lock can be used for inter-process synchronization.
 #[repr(C)]
 pub struct Lock {
-    val: AtomicCInt,
+    val: Atomic<c_int>,
 }
 
 /// = Remarks
@@ -50,7 +50,7 @@ impl Eq for Lock {
 impl<'a> Lock {
     /// Creates a new, unlocked, lock.
     pub const fn new() -> Lock {
-        Lock { val: AtomicCInt::new(UNLOCKED) }
+        Lock { val: Atomic::new(UNLOCKED) }
     }
 
     fn guard(&'a self) -> LockGuard<'a> {
@@ -61,7 +61,7 @@ impl<'a> Lock {
         self.guard();
     }
 
-    pub unsafe fn as_atomic(&self) -> &AtomicCInt {
+    pub unsafe fn as_atomic(&self) -> &Atomic<c_int> {
         &self.val
     }
 
