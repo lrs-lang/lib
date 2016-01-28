@@ -9,8 +9,6 @@ use ops::{Eq};
 #[fundamental]
 pub trait Sized { }
 
-impl Sized for .. { }
-
 /// Plain old data types.
 #[fundamental]
 pub unsafe trait Pod {
@@ -45,7 +43,7 @@ impl !Sync for NoSync { }
 pub unsafe trait Interrupt { }
 
 unsafe impl Interrupt for .. { }
-unsafe impl<T: Sync> Interrupt for T { }
+unsafe impl<T: Sync+?Sized> Interrupt for T { }
 
 impl<T> !Interrupt for *const T { }
 impl<T> !Interrupt for *mut T { }

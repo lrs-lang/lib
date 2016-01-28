@@ -3,6 +3,7 @@ let
     obj = name: deps: {
         crate_name = "lrs_" ++ name,
         path = "src/\{name}/lib.rs",
+        type = "lib",
         inherit name deps,
     };
 
@@ -102,6 +103,7 @@ let
         crate_name = "lrs",
         path = "src/lrs/lib.rs",
         name = "lrs",
+        type = "lib",
         deps = std.filter (std.to_list objs) o: o != null,
     };
 
@@ -109,6 +111,7 @@ let
         crate_name = "test",
         path = "src/test/lib.rs",
         name = "libtest",
+        type = "lib",
         deps = [lrs],
     };
 
