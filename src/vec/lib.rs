@@ -220,23 +220,14 @@ impl<T, H: ?Sized = alloc::Heap> Vec<T, H>
     /// [argument, val]
     /// The element to append.
     ///
-    /// = Remarks
+    /// [return_value]
+    /// Returns nothing on success and an error if no memory is available and allocating
+    /// additional memory fails.
     ///
-    /// This method aborts the process if no memory is available and allocating additional
-    /// memory fails. To avoid this, use `reserve` or `try_push`.
-    pub fn push(&mut self, val: T) {
-        if self.cap == self.len {
-            self.reserve(1).unwrap();
-        }
-        unsafe { ptr::write(self.ptr.get().add(self.len), val); }
-        self.len += 1;
-    }
-
-    /// Tries to append a copyable element to the vector.
+    /// = Description
     ///
-    /// [argument, val]
-    /// The element to append.
-    pub fn try_push(&mut self, val: T) -> Result where T: Copy {
+    /// If an error occurs, the passed value will be dropped.
+    pub fn push(&mut self, val: T) -> Result {
         if self.cap == self.len {
             try!(self.reserve(1));
         }

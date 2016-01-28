@@ -5,5 +5,5 @@
 //! Type markers
 
 pub use lrs_core::marker::{
-    Sized, Pod, Copy, Sync, NoSync, Send, NoSend, Leak, PhantomData,
+    Sized, Pod, Copy, Sync, NoSync, Send, NoSend, Leak, PhantomData, Unsize,
 };

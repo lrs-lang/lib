@@ -12,5 +12,5 @@
 pub use lrs_core::ops::{
     Drop, Add, Sub, Mul, Div, Rem, Neg, Not, BitAnd, BitOr, Shl, Shr, Index, IndexMut,
     RangeFull, Range, RangeFrom, RangeTo, Deref, DerefMut, Eq, PartialOrd, Fn, FnMut,
-    FnOnce,
+    FnOnce, CoerceUnsized,
 };
