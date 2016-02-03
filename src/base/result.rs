@@ -52,6 +52,16 @@ impl<T, E> Result<T, E> {
     pub fn chain<U, F>(self, f: F) -> Result<U, E>
         where F: FnOnce(T) -> Result<U, E>,
     {
+        self.and(f)
+    }
+
+    /// Applies a function to the success value (if any) and returns the result.
+    ///
+    /// [argument, f]
+    /// The function that will be applied to the value.
+    pub fn and<U, F>(self, f: F) -> Result<U, E>
+        where F: FnOnce(T) -> Result<U, E>,
+    {
         match self {
             Ok(t) => f(t),
             Err(e) => Err(e),

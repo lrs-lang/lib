@@ -125,6 +125,19 @@ impl<T: ?Sized, H> Box<T, H>
     }
 }
 
+impl<T, U, H1, H2> TryTo<Box<U, H2>> for Box<T, H1>
+    where H1: alloc::MemPool,
+          H2: alloc::MemPool+OutOf,
+          T: TryTo<U>,
+{
+    fn try_to(&self) -> Result<Box<U, H2>> {
+        let u = try!((**self).try_to());
+        let bx = try!(Box::new());
+        Ok(bx.set(u))
+    }
+}
+
+
 impl<T: ?Sized, H> Deref for Box<T, H>
     where H: alloc::MemPool,
 {
