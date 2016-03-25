@@ -170,7 +170,7 @@ All APIs are designed to not allocate memory in the common case. For example,
 `File::open` will only allocate memory if the requested path is longer than
 `PATH_MAX`. In those cases the API uses the so called fallback allocator.  If
 the user does not want memory to be allocated in those exceptional situations,
-he can disable said allocator at compile time.
+they can disable said allocator at compile time.
 
 === Fast compilation
 
