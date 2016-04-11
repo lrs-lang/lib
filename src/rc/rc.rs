@@ -94,6 +94,20 @@ impl<T: ?Sized, H = alloc::ThreadHeap> Rc<T, H>
         Self::with_pool(H::out_of(()))
     }
 
+    /// Creates a new Rc with contents.
+    ///
+    /// = Examples
+    ///
+    /// ----
+    /// let arc: Rc<Vec<u8>> = try!(Rc::with_data(Vec::new()));
+    /// ----
+    pub fn with_data(t: T) -> Result<Rc<T, H>>
+        where H: OutOf,
+              T: Sized,
+    {
+        Ok(try!(Self::new()).set(t))
+    }
+
     /// Creates a new Rc.
     ///
     /// = Remarks

@@ -94,6 +94,20 @@ impl<T: ?Sized, H = alloc::Heap> Arc<T, H>
         Self::with_pool(H::out_of(()))
     }
 
+    /// Creates a new Arc with contents.
+    ///
+    /// = Examples
+    ///
+    /// ----
+    /// let arc: Arc<Vec<u8>> = try!(Arc::with_data(Vec::new()));
+    /// ----
+    pub fn with_data(t: T) -> Result<Arc<T, H>>
+        where H: OutOf,
+              T: Sized,
+    {
+        Ok(try!(Self::new()).set(t))
+    }
+
     /// Creates a new Arc.
     ///
     /// = Remarks
