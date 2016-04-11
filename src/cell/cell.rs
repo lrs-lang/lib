@@ -106,3 +106,19 @@ impl<T: Copy> Cell<T> {
         unsafe { ptr::volatile_store(self.ptr(), data); }
     }
 }
+
+impl<T, U> TryFrom<Cell<U>> for Cell<T>
+    where U: TryTo<T>,
+{
+    fn try_from(from: &Cell<U>) -> Result<Cell<T>> {
+        Ok(Cell::new(try!(from.data.try_to())))
+    }
+}
+
+impl<T, U> From<Cell<U>> for Cell<T>
+    where U: To<T>,
+{
+    fn from(from: &Cell<U>) -> Cell<T> {
+        Cell::new(from.data.to())
+    }
+}
