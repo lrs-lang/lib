@@ -135,6 +135,7 @@ extern crate lrs_base;
 extern crate lrs_buf_reader;
 extern crate lrs_cell;
 extern crate lrs_cty;
+extern crate lrs_slice;
 extern crate lrs_varargs;
 extern crate lrs_cty_base;
 extern crate lrs_box;
@@ -271,6 +272,7 @@ pub mod prelude {
         pub use lrs_parse::{Parse};
         pub use lrs_vec::{Vec};
         pub use lrs_io::{Read, Write, BufRead, BufWrite};
+        pub use lrs_slice::{SliceExt};
         #[cfg(not(freestanding))] pub use lrs_fd::{FdContainer};
     }
 }

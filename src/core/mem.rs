@@ -345,3 +345,31 @@ pub fn volatile_load<T>(src: &T) -> T {
 pub fn volatile_store<T>(dst: &mut T, val: T) {
     unsafe { intrinsics::volatile_store(dst, val); }
 }
+
+/// Calculates the discriminant of an enum variant.
+///
+/// [argument, v]
+/// The variant whose discriminant will be calculated.
+///
+/// [return_value]
+/// Returns the discriminant value cast to an `u64` or `0` if the argument does not
+/// have a discriminant value.
+///
+/// = Remarks
+///
+/// If the discriminant cannot be represented in an `i64`, the result is unspecified.
+/// Note that it is `i64`, not `u64`.
+///
+/// = Examples
+///
+/// ----
+/// enum T {
+///     X,
+///     Y,
+/// }
+///
+/// assert!(unsafe { discriminant_value(&T::X) } == 0);
+/// ----
+pub fn discriminant_value<T>(v: &T) -> u64 {
+    unsafe { intrinsics::discriminant_value(v) }
+}

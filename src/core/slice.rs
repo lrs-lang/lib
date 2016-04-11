@@ -155,6 +155,14 @@ impl<T> [T] {
         }
     }
 
+    /// Returns a mutable reference to the last element in the slice (if any.)
+    pub fn last_mut(&mut self) -> Option<&mut T> {
+        match self.len() {
+            0 => None,
+            n => Some(&mut self[n - 1]),
+        }
+    }
+
     /// Returns an iterator over the sub-slices which are separated by elements that
     /// satisfy a predicate.
     ///

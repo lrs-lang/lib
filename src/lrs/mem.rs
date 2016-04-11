@@ -8,7 +8,7 @@ pub use lrs_core::mem::{
     uninit, cast, zeroed, copy_as, forget, unsafe_forget, drop, copy, unsafe_copy,
     swap, replace, size_of, align_of, needs_drop, align_for, is_suitable_for, from_bytes,
     from_mut_bytes, align_for_mut, addr, as_slice, as_mut_slice, unsafe_zeroed,
-    as_data, as_mut_data,
+    as_data, as_mut_data, discriminant_value,
 };
 
 #[cfg(not(freestanding))]

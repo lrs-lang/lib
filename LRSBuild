@@ -29,6 +29,7 @@ let
         arch_fns = obj "arch_fns" ([core, cty_base] ++ cdep [libc]),
         base = obj "base" [core, cty_base, wrapping],
         iter = obj "iter" [core, base],
+        slice = obj "slice" [core, base],
         hash = obj "hash" [core, base, wrapping],
         rv = obj "rv" [core, base, int],
         parse = obj "parse" [core, base],

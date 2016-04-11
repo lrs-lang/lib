@@ -4,6 +4,7 @@
 
 use base::prelude::*;
 use core::{ptr};
+use core::ops::{Eq};
 
 /// A container with interior mutability.
 ///
@@ -38,6 +39,12 @@ pub struct Cell<T: ?Sized> {
 
 impl<T: ?Sized> !Interrupt for Cell<T> { }
 impl<T: ?Sized> !Sync for Cell<T> { }
+
+impl<T: Eq> Eq for Cell<T> {
+    fn eq(&self, other: &Cell<T>) -> bool {
+        self.data.eq(&other.data)
+    }
+}
 
 impl<T: ?Sized> Cell<T> {
     /// Creates a new cell.

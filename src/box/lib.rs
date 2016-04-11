@@ -104,6 +104,16 @@ impl<T, H> Box<T, H>
             Ok(BoxBuf { data: NoAliasMemPtr::new(ptr), pool: pool })
         }
     }
+
+    /// Unwraps the contained value.
+    pub fn into(mut self) -> T {
+        unsafe {
+            let val = ptr::read(&*self);
+            alloc::free(&mut self.pool, self.data.get());
+            mem::unsafe_forget(self);
+            val
+        }
+    }
 }
 
 impl<T: ?Sized, H> Box<T, H>
@@ -136,7 +146,6 @@ impl<T, U, H1, H2> TryTo<Box<U, H2>> for Box<T, H1>
         Ok(bx.set(u))
     }
 }
-
 
 impl<T: ?Sized, H> Deref for Box<T, H>
     where H: alloc::MemPool,
