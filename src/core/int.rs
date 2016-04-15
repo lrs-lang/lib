@@ -111,6 +111,42 @@ macro_rules! int_impls {
                 }
             }
 
+            /// Adds another integer to this one and returns the value and whether an
+            /// overflow occurred.
+            ///
+            /// [argument, other]
+            /// The integer that will be added to this one.
+            ///
+            /// [return_value]
+            /// Returns the (wrapped) result and whether an overflow occured.
+            pub fn add_with_overflow(self, other: $t) -> ($t, bool) {
+                unsafe { intrinsics::add_with_overflow(self, other) }
+            }
+
+            /// Subtracts another integer from this one and returns the value and whether
+            /// an overflow occurred.
+            ///
+            /// [argument, other]
+            /// The integer that will be subtracted from this one.
+            ///
+            /// [return_value]
+            /// Returns the (wrapped) result and whether an overflow occured.
+            pub fn sub_with_overflow(self, other: $t) -> ($t, bool) {
+                unsafe { intrinsics::sub_with_overflow(self, other) }
+            }
+
+            /// Multiplies this integer by another one and returns the value and whether
+            /// an overflow occured.
+            ///
+            /// [argument, other]
+            /// The integer that will be multiplied.
+            ///
+            /// [return_value]
+            /// Returns the (wrapped) product and whether an overflow occured.
+            pub fn mul_with_overflow(self, other: $t) -> ($t, bool) {
+                unsafe { intrinsics::mul_with_overflow(self, other) }
+            }
+
             /// Adds another integer to this one without overflow, trimming the value to
             /// the range that can be represented in this type.
             ///
