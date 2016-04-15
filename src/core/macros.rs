@@ -225,8 +225,19 @@ macro_rules! impl_try_as_mut {
 macro_rules! impl_try_to {
     ($target:ty, $source:ty) => {
         impl ::std::conv::TryTo<$target> for $source {
-            fn try_to(&mut self) -> ::std::result::Result<&mut $target> {
+            fn try_to(&self) -> ::std::result::Result<$target> {
                 ::std::result::Result::Ok(self.to())
+            }
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! impl_try_from {
+    ($source:ident, $target:ident) => {
+        impl ::std::conv::TryFrom<$source> for $target {
+            fn try_from(src: &$source) -> ::std::result::Result<$target> {
+                ::std::result::Result::Ok($target::from(src))
             }
         }
     }

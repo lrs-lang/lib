@@ -126,7 +126,7 @@
 
 #[macro_use]
 #[macro_reexport(abort, assert, try, print, println, err, errln, vec, format, matches,
-                 thread_local, writeln)]
+                 thread_local, writeln, impl_try_to, impl_try_from)]
 extern crate lrs_core;
 extern crate lrs_alloc;
 extern crate lrs_arch_fns;
